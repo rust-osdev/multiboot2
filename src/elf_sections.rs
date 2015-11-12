@@ -6,15 +6,14 @@ pub struct ElfSectionsTag {
     size: u32,
     pub number_of_sections: u32,
     entry_size: u32,
-    shndx: u32,
+    shndx: u32, // string table
     first_section: ElfSection,
 }
 
 impl ElfSectionsTag {
-    pub fn sections(&self) -> ElfSectionIter {
-        let start_section = (&self.first_section) as *const _;
+    pub fn sections(&'static self) -> ElfSectionIter {
         ElfSectionIter {
-            current_section: start_section,
+            current_section: &self.first_section,
             remaining_sections: self.number_of_sections - 1,
             entry_size: self.entry_size,
         }
@@ -22,9 +21,8 @@ impl ElfSectionsTag {
 }
 
 #[derive(Clone)]
-#[allow(raw_pointer_derive)]
 pub struct ElfSectionIter {
-    current_section: *const ElfSection,
+    current_section: &'static ElfSection,
     remaining_sections: u32,
     entry_size: u32,
 }
@@ -35,11 +33,11 @@ impl Iterator for ElfSectionIter {
         if self.remaining_sections == 0 {
             None
         } else {
-            let section = unsafe{&*self.current_section};
-            self.current_section = ((self.current_section as u32) +
-                self.entry_size) as *const ElfSection;
+            let section = self.current_section;
+            let next_section_addr = (self.current_section as *const _ as u32) + self.entry_size;
+            self.current_section = unsafe{ &*(next_section_addr as *const ElfSection) };
             self.remaining_sections -= 1;
-			if section.typ == 0 {
+			if section.typ == ElfSectionType::Unused as u32 {
 				self.next()
 			} else {
 	            Some(section)
