@@ -7,20 +7,20 @@ pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
 mod elf_sections;
 mod memory_map;
 
-pub unsafe fn load(address: usize) -> &'static Multiboot {
-    let multiboot = &*(address as *const Multiboot);
+pub unsafe fn load(address: usize) -> &'static BootInformation {
+    let multiboot = &*(address as *const BootInformation);
     assert!(multiboot.has_valid_end_tag());
     multiboot
 }
 
 #[repr(C)]
-pub struct Multiboot {
+pub struct BootInformation {
     pub total_size: u32,
     _reserved: u32,
     first_tag: Tag,
 }
 
-impl Multiboot {
+impl BootInformation {
     pub fn elf_sections_tag(&self) -> Option<&'static ElfSectionsTag> {
         self.get_tag(9).map(|tag| unsafe{&*(tag as *const Tag as *const ElfSectionsTag)})
     }
