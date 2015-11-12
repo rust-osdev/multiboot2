@@ -3,8 +3,6 @@
 
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter};
 
-use core::mem::size_of;
-
 mod elf_sections;
 
 pub unsafe fn load(address: usize) -> &'static Multiboot {
@@ -17,7 +15,7 @@ pub unsafe fn load(address: usize) -> &'static Multiboot {
 pub struct Multiboot {
     pub total_size: u32,
     _reserved: u32,
-    // tags
+    first_tag: Tag,
 }
 
 impl Multiboot {
@@ -40,9 +38,7 @@ impl Multiboot {
     }
 
     fn tags(&self) -> TagIter {
-        let self_addr = self as *const _ as usize;
-        let first_tag = (self_addr + size_of::<Multiboot>()) as *const Tag;
-        TagIter{current: first_tag}
+        TagIter{current: &self.first_tag as *const _}
     }
 }
 
