@@ -2,8 +2,10 @@
 #![no_std]
 
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags};
+pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
 
 mod elf_sections;
+mod memory_map;
 
 pub unsafe fn load(address: usize) -> &'static Multiboot {
     let multiboot = &*(address as *const Multiboot);
@@ -21,6 +23,10 @@ pub struct Multiboot {
 impl Multiboot {
     pub fn elf_sections_tag(&self) -> Option<&'static ElfSectionsTag> {
         self.get_tag(9).map(|tag| unsafe{&*(tag as *const Tag as *const ElfSectionsTag)})
+    }
+
+    pub fn memory_area_tag(&self) -> Option<&'static MemoryMapTag> {
+        self.get_tag(6).map(|tag| unsafe{&*(tag as *const Tag as *const MemoryMapTag)})
     }
 
     fn has_valid_end_tag(&self) -> bool {
