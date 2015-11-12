@@ -1,6 +1,6 @@
 
 #[derive(Debug)]
-#[repr(C)]
+#[repr(packed)] // repr(C) would add unwanted padding before first_section
 pub struct ElfSectionsTag {
     typ: u32,
     size: u32,
