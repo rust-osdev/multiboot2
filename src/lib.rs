@@ -25,7 +25,7 @@ impl BootInformation {
         self.get_tag(9).map(|tag| unsafe{&*(tag as *const Tag as *const ElfSectionsTag)})
     }
 
-    pub fn memory_area_tag(&self) -> Option<&'static MemoryMapTag> {
+    pub fn memory_map_tag(&self) -> Option<&'static MemoryMapTag> {
         self.get_tag(6).map(|tag| unsafe{&*(tag as *const Tag as *const MemoryMapTag)})
     }
 
