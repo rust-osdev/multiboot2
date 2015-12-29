@@ -4,6 +4,9 @@
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags};
 pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
 
+#[macro_use]
+extern crate bitflags;
+
 mod elf_sections;
 mod memory_map;
 

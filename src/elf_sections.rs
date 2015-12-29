@@ -79,11 +79,12 @@ pub enum ElfSectionType {
     // plus processor-specific use from 0x70000000 to 0x7FFFFFFF
 }
 
-#[repr(u32)]
-pub enum ElfSectionFlags {
-    Writable = 0x1,
-    Allocated = 0x2,
-    Executable = 0x4,
-    // plus environment-specific use at 0x0F000000
-    // plus processor-specific use at 0xF0000000
+bitflags! {
+    flags ElfSectionFlags: u64 {
+        const WRITABLE = 0x1,
+        const ALLOCATED = 0x2,
+        const EXECUTABLE = 0x4,
+        // plus environment-specific use at 0x0F000000
+        // plus processor-specific use at 0xF0000000
+    }
 }
