@@ -1,4 +1,3 @@
-#![feature(no_std)]
 #![no_std]
 
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags};

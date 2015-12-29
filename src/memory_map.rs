@@ -27,7 +27,6 @@ pub struct MemoryArea {
     _reserved: u32,
 }
 
-#[allow(raw_pointer_derive)]
 #[derive(Clone)]
 pub struct MemoryAreaIter {
     current_area: *const MemoryArea,
