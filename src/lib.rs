@@ -1,6 +1,7 @@
 #![no_std]
 
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags};
+pub use elf_sections::{ELF_SECTION_WRITABLE, ELF_SECTION_ALLOCATED, ELF_SECTION_EXECUTABLE};
 pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
 
 #[macro_use]
