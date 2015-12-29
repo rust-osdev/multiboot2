@@ -61,6 +61,12 @@ pub struct ElfSection {
     entry_size: u64,
 }
 
+impl ElfSection {
+    pub fn flags(&self) -> ElfSectionFlags {
+        ElfSectionFlags::from_bits_truncate(self.flags)
+    }
+}
+
 #[repr(u32)]
 pub enum ElfSectionType {
     Unused = 0,
