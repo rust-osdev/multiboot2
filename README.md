@@ -1,4 +1,6 @@
 # multiboot2-elf64
+[![Build Status](https://travis-ci.org/phil-opp/multiboot2-elf64.svg?branch=master)](https://travis-ci.org/phil-opp/multiboot2-elf64)
+
 An experimental Multiboot 2 crate for ELF-64 kernels. It's very incomplete and completely untested. I wrote it for the [blog OS project](https://github.com/phil-opp/blog_os).
 
 Contributions welcome! **If someone wants to maintain this crate, please contact me!**
