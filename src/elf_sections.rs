@@ -65,6 +65,10 @@ impl ElfSection {
     pub fn flags(&self) -> ElfSectionFlags {
         ElfSectionFlags::from_bits_truncate(self.flags)
     }
+
+    pub fn is_allocated(&self) -> bool {
+        self.flags().contains(ELF_SECTION_ALLOCATED)
+    }
 }
 
 #[repr(u32)]
