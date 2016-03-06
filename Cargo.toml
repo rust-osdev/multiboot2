@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Philipp Oppermann <dev@phil-opp.com>"]
 
 [dependencies.bitflags]
-git = "https://github.com/phil-opp/bitflags.git"
-branch = "no_std"
+version = "0.4.0"
+features = ["no_std"]
