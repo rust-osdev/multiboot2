@@ -62,6 +62,14 @@ pub struct ElfSection {
 }
 
 impl ElfSection {
+    pub fn start_address(&self) -> usize {
+        self.addr as usize
+    }
+
+    pub fn end_address(&self) -> usize {
+        (self.addr + self.size) as usize
+    }
+
     pub fn flags(&self) -> ElfSectionFlags {
         ElfSectionFlags::from_bits_truncate(self.flags)
     }
