@@ -24,6 +24,14 @@ pub struct BootInformation {
 }
 
 impl BootInformation {
+    pub fn start_address(&self) -> usize {
+        self as *const _ as usize
+    }
+
+    pub fn end_address(&self) -> usize {
+        self.start_address() + self.total_size as usize
+    }
+
     pub fn elf_sections_tag(&self) -> Option<&'static ElfSectionsTag> {
         self.get_tag(9).map(|tag| unsafe{&*(tag as *const Tag as *const ElfSectionsTag)})
     }
