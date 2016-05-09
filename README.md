@@ -67,3 +67,19 @@ link                        | u32              | associated section (only for so
 info                        | u32              | extra information (only for some section types)
 address align               | u64              | required alignment of section (power of 2)
 entry size                  | u64              | contains the entry size for table sections (e.g. string table)
+
+## License
+
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+  http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the
+work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any
+additional terms or conditions.
