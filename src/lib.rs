@@ -1,5 +1,6 @@
 #![no_std]
 
+pub use boot_loader_name::BootLoaderNameTag;
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags};
 pub use elf_sections::{ELF_SECTION_WRITABLE, ELF_SECTION_ALLOCATED, ELF_SECTION_EXECUTABLE};
 pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
@@ -7,6 +8,7 @@ pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
 #[macro_use]
 extern crate bitflags;
 
+mod boot_loader_name;
 mod elf_sections;
 mod memory_map;
 
@@ -38,6 +40,10 @@ impl BootInformation {
 
     pub fn memory_map_tag(&self) -> Option<&'static MemoryMapTag> {
         self.get_tag(6).map(|tag| unsafe{&*(tag as *const Tag as *const MemoryMapTag)})
+    }
+
+    pub fn boot_loader_name_tag(&self) -> Option<&'static BootLoaderNameTag> {
+        self.get_tag(2).map(|tag| unsafe{&*(tag as *const Tag as *const BootLoaderNameTag)})
     }
 
     fn has_valid_end_tag(&self) -> bool {
