@@ -4,7 +4,7 @@ pub use boot_loader_name::BootLoaderNameTag;
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags};
 pub use elf_sections::{ELF_SECTION_WRITABLE, ELF_SECTION_ALLOCATED, ELF_SECTION_EXECUTABLE};
 pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
-pub use module::{ModuleTag};
+pub use module::{ModuleTag, ModuleIter};
 
 #[macro_use]
 extern crate bitflags;
@@ -44,8 +44,8 @@ impl BootInformation {
         self.get_tag(6).map(|tag| unsafe{&*(tag as *const Tag as *const MemoryMapTag)})
     }
 
-    pub fn module_tag(&self) -> Option<&'static ModuleTag> {
-        self.get_tag(3).map(|tag| unsafe{&*(tag as *const Tag as *const ModuleTag)})
+    pub fn module_tags(&self) -> ModuleIter {
+        ModuleIter::new(self.tags())
     }
 
     pub fn boot_loader_name_tag(&self) -> Option<&'static BootLoaderNameTag> {
@@ -72,13 +72,13 @@ impl BootInformation {
 }
 
 #[repr(C)]
-struct Tag {
+pub struct Tag {
     typ: u32,
     size: u32,
     // tag specific fields
 }
 
-struct TagIter {
+pub struct TagIter {
     current: *const Tag,
 }
 
