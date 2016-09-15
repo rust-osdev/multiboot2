@@ -1,4 +1,4 @@
-use {Tag, TagIter};
+use header::{Tag, TagIter};
 
 #[repr(packed)]
 #[derive(Debug)]
@@ -33,13 +33,7 @@ impl ModuleTag {
 }
 
 pub struct ModuleIter {
-    iter: TagIter,
-}
-
-impl ModuleIter {
-    pub fn new(iter: TagIter) -> ModuleIter {
-        ModuleIter{ iter: iter }
-    }
+    pub iter: TagIter,
 }
 
 impl Iterator for ModuleIter {
