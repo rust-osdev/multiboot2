@@ -1,14 +1,16 @@
 #![no_std]
 
+use header::{Tag, TagIter};
 pub use boot_loader_name::BootLoaderNameTag;
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags};
 pub use elf_sections::{ELF_SECTION_WRITABLE, ELF_SECTION_ALLOCATED, ELF_SECTION_EXECUTABLE};
 pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
-pub use module::{ModuleTag};
+pub use module::{ModuleTag, ModuleIter};
 
 #[macro_use]
 extern crate bitflags;
 
+mod header;
 mod boot_loader_name;
 mod elf_sections;
 mod memory_map;
@@ -44,8 +46,8 @@ impl BootInformation {
         self.get_tag(6).map(|tag| unsafe{&*(tag as *const Tag as *const MemoryMapTag)})
     }
 
-    pub fn module_tag(&self) -> Option<&'static ModuleTag> {
-        self.get_tag(3).map(|tag| unsafe{&*(tag as *const Tag as *const ModuleTag)})
+    pub fn module_tags(&self) -> ModuleIter {
+        ModuleIter{ iter: self.tags() }
     }
 
     pub fn boot_loader_name_tag(&self) -> Option<&'static BootLoaderNameTag> {
@@ -68,35 +70,5 @@ impl BootInformation {
 
     fn tags(&self) -> TagIter {
         TagIter{current: &self.first_tag as *const _}
-    }
-}
-
-#[repr(C)]
-struct Tag {
-    typ: u32,
-    size: u32,
-    // tag specific fields
-}
-
-struct TagIter {
-    current: *const Tag,
-}
-
-impl Iterator for TagIter {
-    type Item = &'static Tag;
-
-    fn next(&mut self) -> Option<&'static Tag> {
-        match unsafe{&*self.current} {
-            &Tag{typ:0, size:8} => None, // end tag
-            tag => {
-                // go to next tag
-                let mut tag_addr = self.current as usize;
-                tag_addr += tag.size as usize;
-                tag_addr = ((tag_addr-1) & !0x7) + 0x8; //align at 8 byte
-                self.current = tag_addr as *const _;
-
-                Some(tag)
-            },
-        }
     }
 }

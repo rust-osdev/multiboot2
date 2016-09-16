@@ -1,3 +1,5 @@
+use header::{Tag, TagIter};
+
 #[repr(packed)]
 #[derive(Debug)]
 pub struct ModuleTag {
@@ -27,5 +29,18 @@ impl ModuleTag {
 
     pub fn end_address(&self) -> u32 {
         self.mod_end
+    }
+}
+
+pub struct ModuleIter {
+    pub iter: TagIter,
+}
+
+impl Iterator for ModuleIter {
+    type Item = &'static ModuleTag;
+
+    fn next(&mut self) -> Option<&'static ModuleTag> {
+        self.iter.find(|x| x.typ == 3)
+            .map(|tag| unsafe{&*(tag as *const Tag as *const ModuleTag)})
     }
 }
