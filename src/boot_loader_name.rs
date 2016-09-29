@@ -9,6 +9,11 @@ pub struct BootLoaderNameTag {
 
 impl BootLoaderNameTag {
     pub fn name(&self) -> &str {
-        unsafe { ::core::str::from_utf8_unchecked(::core::slice::from_raw_parts((&self.string) as *const u8, self.size as usize - 8)) }
+        use core::{mem,str,slice};
+        unsafe {
+            let strlen = self.size as usize - mem::size_of::<BootLoaderNameTag>();
+            str::from_utf8_unchecked(
+                slice::from_raw_parts((&self.string) as *const u8, strlen))
+        }
     }
 }
