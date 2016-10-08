@@ -62,6 +62,29 @@ pub struct ElfSection {
 }
 
 impl ElfSection {
+    pub fn name(&self, tag: &ElfSectionsTag) -> &'static str {
+        use core::{str, slice};
+
+        let strtabs = unsafe {
+            &*(&tag.first_section as *const ElfSection).offset(tag.shndx as isize)
+        };
+
+        let name_byte = (strtabs.addr + self.name as u64) as *const _;
+
+        unsafe {
+            let mut strlen = 0;
+            for i in 0.. {
+                if *name_byte.offset(i) == 0 {
+                    strlen = i as usize;
+                    break;
+                }
+            }
+
+            str::from_utf8_unchecked(
+                slice::from_raw_parts(name_byte, strlen))
+        }
+    }
+
     pub fn start_address(&self) -> usize {
         self.addr as usize
     }
