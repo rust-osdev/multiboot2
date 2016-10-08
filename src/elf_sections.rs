@@ -34,7 +34,7 @@ impl Iterator for ElfSectionIter {
             None
         } else {
             let section = self.current_section;
-            let next_section_addr = (self.current_section as *const _ as u32) + self.entry_size;
+            let next_section_addr = (self.current_section as *const _ as u64) + self.entry_size as u64;
             self.current_section = unsafe{ &*(next_section_addr as *const ElfSection) };
             self.remaining_sections -= 1;
             if section.typ == ElfSectionType::Unused as u32 {
