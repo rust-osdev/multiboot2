@@ -32,25 +32,22 @@ pub struct StringTable(u8);
 
 impl StringTable {
     pub fn section_name(&self, section: &ElfSection) -> &'static str {
-        unsafe fn strlen(start: *const u8) -> usize {
-            for i in 0.. {
-                if *start.offset(i) == 0 {
-                    return i as usize;
-                }
-            }
-            unreachable!()
-        }
         use core::{str, slice};
 
         let name_ptr = unsafe {
             (&self.0 as *const u8).offset(section.name_index as isize)
         };
-        let strlen = unsafe { strlen(name_ptr) };
+        let strlen = {
+            let mut len = 0;
+            while unsafe { *name_ptr.offset(len) } != 0 {
+                len += 1;
+            }
+            len as usize
+        };
 
-        unsafe {
-            str::from_utf8(
-                slice::from_raw_parts(name_ptr, strlen)).unwrap()
-        }
+        str::from_utf8( unsafe {
+            slice::from_raw_parts(name_ptr, strlen)
+        }).unwrap()
     }
 }
 
