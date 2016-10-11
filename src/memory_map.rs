@@ -13,9 +13,8 @@ impl MemoryMapTag {
         let start_area = (&self.first_area) as *const MemoryArea;
         MemoryAreaIter {
             current_area: start_area,
-            last_area: unsafe {
-                self_ptr.offset((self.size - self.entry_size) as isize) as *const MemoryArea
-            },
+            last_area: (self_ptr as u64 + (self.size - self.entry_size) as u64)
+                as *const MemoryArea,
             entry_size: self.entry_size,
         }
     }
@@ -43,9 +42,8 @@ impl Iterator for MemoryAreaIter {
             None
         } else {
             let area = unsafe{&*self.current_area};
-            self.current_area = unsafe {
-                (self.current_area).offset(self.entry_size as isize)
-            };
+            self.current_area = ((self.current_area as u64) + self.entry_size as u64)
+                as *const MemoryArea;
             if area.typ == 1 {
                 Some(area)
             } else {self.next()}
