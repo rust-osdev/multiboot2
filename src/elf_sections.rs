@@ -18,6 +18,37 @@ impl ElfSectionsTag {
             entry_size: self.entry_size,
         }
     }
+
+    pub fn string_table(&self) -> &'static StringTable {
+        unsafe {
+            let string_table_ptr =
+                (&self.first_section as *const ElfSection).offset(self.shndx as isize);
+            &*((*string_table_ptr).addr as *const StringTable)
+        }
+    }
+}
+
+pub struct StringTable(u8);
+
+impl StringTable {
+    pub fn section_name(&self, section: &ElfSection) -> &'static str {
+        use core::{str, slice};
+
+        let name_ptr = unsafe {
+            (&self.0 as *const u8).offset(section.name_index as isize)
+        };
+        let strlen = {
+            let mut len = 0;
+            while unsafe { *name_ptr.offset(len) } != 0 {
+                len += 1;
+            }
+            len as usize
+        };
+
+        str::from_utf8( unsafe {
+            slice::from_raw_parts(name_ptr, strlen)
+        }).unwrap()
+    }
 }
 
 #[derive(Clone)]
@@ -49,7 +80,7 @@ impl Iterator for ElfSectionIter {
 #[derive(Debug)]
 #[repr(C)]
 pub struct ElfSection {
-    name: u32,
+    name_index: u32,
     typ: u32,
     pub flags: u64,
     pub addr: u64,
