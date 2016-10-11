@@ -18,6 +18,40 @@ impl ElfSectionsTag {
             entry_size: self.entry_size,
         }
     }
+
+    pub fn string_table(&self) -> &'static StringTable {
+        unsafe {
+            let string_table_ptr =
+                (&self.first_section as *const ElfSection).offset(self.shndx as isize);
+            &*((*string_table_ptr).addr as *const StringTable)
+        }
+    }
+}
+
+pub struct StringTable(u8);
+
+impl StringTable {
+    pub fn section_name(&self, section: &ElfSection) -> &'static str {
+        unsafe fn strlen(start: *const u8) -> usize {
+            for i in 0.. {
+                if *start.offset(i) == 0 {
+                    return i as usize;
+                }
+            }
+            unreachable!()
+        }
+        use core::{str, slice};
+
+        let name_ptr = unsafe {
+            (&self.0 as *const u8).offset(section.name_index as isize)
+        };
+        let strlen = unsafe { strlen(name_ptr) };
+
+        unsafe {
+            str::from_utf8(
+                slice::from_raw_parts(name_ptr, strlen)).unwrap()
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -49,7 +83,7 @@ impl Iterator for ElfSectionIter {
 #[derive(Debug)]
 #[repr(C)]
 pub struct ElfSection {
-    name: u32,
+    name_index: u32,
     typ: u32,
     pub flags: u64,
     pub addr: u64,
@@ -62,29 +96,6 @@ pub struct ElfSection {
 }
 
 impl ElfSection {
-    pub fn name(&self, tag: &ElfSectionsTag) -> &'static str {
-        use core::{str, slice};
-
-        let strtabs = unsafe {
-            &*(&tag.first_section as *const ElfSection).offset(tag.shndx as isize)
-        };
-
-        let name_byte = (strtabs.addr + self.name as u64) as *const _;
-
-        unsafe {
-            let mut strlen = 0;
-            for i in 0.. {
-                if *name_byte.offset(i) == 0 {
-                    strlen = i as usize;
-                    break;
-                }
-            }
-
-            str::from_utf8_unchecked(
-                slice::from_raw_parts(name_byte, strlen))
-        }
-    }
-
     pub fn start_address(&self) -> usize {
         self.addr as usize
     }
