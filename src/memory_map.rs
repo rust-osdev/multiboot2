@@ -1,3 +1,4 @@
+#[derive(Debug)]
 #[repr(C)]
 pub struct MemoryMapTag {
     typ: u32,
@@ -20,6 +21,7 @@ impl MemoryMapTag {
     }
 }
 
+#[derive(Debug)]
 #[repr(C)]
 pub struct MemoryArea {
     pub base_addr: u64,
@@ -28,7 +30,7 @@ pub struct MemoryArea {
     _reserved: u32,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MemoryAreaIter {
     current_area: *const MemoryArea,
     last_area: *const MemoryArea,
