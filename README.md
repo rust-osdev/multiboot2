@@ -47,7 +47,7 @@ entry size                  | u32
 string table                | u32
 section headers             | variable
 
-Note that this format differs from the description in the Multiboot specification because if seems to be wrong for ELF 64 kernels: The `number of entries`, `entry size`, and `string table` fields seem to be `u32` instead of `u16`. The reason is that [GRUB2 does it this way](https://github.com/josefbacik/grub2/blob/96695ad84ce9c93f057ba53ae77d04d8561586e9/include/multiboot2.h#L298-L300).
+Note that this format differs from the description in the Multiboot specification because it seems to be wrong for ELF 64 kernels: The `number of entries`, `entry size`, and `string table` fields seem to be `u32` instead of `u16`. The `multiboot2.h` file in the example section of the specification also specifies these fields as being `u32`, which suggests that the `u16` fields are an editing error. The GRUB2 bootloader [uses u32 fields](https://github.com/josefbacik/grub2/blob/96695ad84ce9c93f057ba53ae77d04d8561586e9/include/multiboot2.h#L298-L300), too.
 
 The section headers are just copied from the ELF file, so we need to look at the ELF specification to find the corresponding structure definition. Our kernel is a 64-bit ELF file, so we need to look at the ELF-64 specification ([PDF][ELF specification]). According to section 4 and figure 3, a section header has the following format:
 
