@@ -1,5 +1,7 @@
 #![no_std]
 
+use core::fmt;
+
 use header::{Tag, TagIter};
 pub use boot_loader_name::BootLoaderNameTag;
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags, StringTable};
@@ -76,5 +78,47 @@ impl BootInformation {
 
     fn tags(&self) -> TagIter {
         TagIter{current: &self.first_tag as *const _}
+    }
+}
+
+impl fmt::Debug for BootInformation {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "multiboot information")?;
+
+        writeln!(f, "S: {:#010X}, E: {:#010X}, L: {:#010X}",
+            self.start_address(), self.end_address(), self.total_size)?;
+
+        if let Some(boot_loader_name_tag) = self.boot_loader_name_tag() {
+            writeln!(f, "boot loader name: {}", boot_loader_name_tag.name())?;
+        }
+
+        if let Some(command_line_tag) = self.command_line_tag() {
+            writeln!(f, "command line: {}", command_line_tag.command_line())?;
+        }
+
+        if let Some(memory_map_tag) = self.memory_map_tag() {
+            writeln!(f, "memory areas:")?;
+            for area in memory_map_tag.memory_areas() {
+                writeln!(f, "    S: {:#010X}, E: {:#010X}, L: {:#010X}",
+                    area.base_addr, area.base_addr + area.length, area.length)?;
+            }
+        }
+
+        if let Some(elf_sections_tag) = self.elf_sections_tag() {
+            let string_table = elf_sections_tag.string_table();
+            writeln!(f, "kernel sections:")?;
+            for s in elf_sections_tag.sections() {
+                writeln!(f, "    name: {:15}, S: {:#08X}, E: {:#08X}, L: {:#08X}, F: {:#04X}",
+                    string_table.section_name(s), s.addr, s.addr + s.size, s.size, s.flags)?;
+            }
+        }
+
+        writeln!(f, "module tags:")?;
+        for mt in self.module_tags() {
+            writeln!(f, "    name: {:15}, S: {:#010X}, E: {:#010X}",
+                mt.name(), mt.start_address(), mt.end_address())?;
+        }
+
+        Ok(())
     }
 }
