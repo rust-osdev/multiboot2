@@ -21,7 +21,11 @@ mod module;
 mod command_line;
 
 pub unsafe fn load(address: usize) -> &'static BootInformation {
+    if !cfg!(test) {
+        assert!(address & 0b111 == 0);
+    }
     let multiboot = &*(address as *const BootInformation);
+    assert!(multiboot.total_size & 0b111 == 0);
     assert!(multiboot.has_valid_end_tag());
     multiboot
 }
@@ -120,5 +124,98 @@ impl fmt::Debug for BootInformation {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::load;
+
+    #[test]
+    fn no_tags() {
+        let bytes: [u8; 16] = [
+            16, 0, 0, 0, // total_size
+            0, 0, 0, 0,  // reserved
+            0, 0, 0, 0,  // end tag type
+            8, 0, 0, 0,  // end tag size
+        ];
+        let addr = bytes.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        assert_eq!(addr, bi.start_address());
+        assert_eq!(addr + bytes.len(), bi.end_address());
+        assert_eq!(bytes.len(), bi.total_size as usize);
+        assert!(bi.elf_sections_tag().is_none());
+        assert!(bi.memory_map_tag().is_none());
+        assert!(bi.module_tags().next().is_none());
+        assert!(bi.boot_loader_name_tag().is_none());
+        assert!(bi.command_line_tag().is_none());
+    }
+
+
+    #[test]
+    #[should_panic]
+    fn invalid_total_size() {
+        let bytes: [u8; 15] = [
+            15, 0, 0, 0, // total_size
+            0, 0, 0, 0,  // reserved
+            0, 0, 0, 0,  // end tag type
+            8, 0, 0,     // end tag size
+        ];
+        let addr = bytes.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        assert_eq!(addr, bi.start_address());
+        assert_eq!(addr + bytes.len(), bi.end_address());
+        assert_eq!(bytes.len(), bi.total_size as usize);
+        assert!(bi.elf_sections_tag().is_none());
+        assert!(bi.memory_map_tag().is_none());
+        assert!(bi.module_tags().next().is_none());
+        assert!(bi.boot_loader_name_tag().is_none());
+        assert!(bi.command_line_tag().is_none());
+    }
+
+
+    #[test]
+    #[should_panic]
+    fn invalid_end_tag() {
+        let bytes: [u8; 16] = [
+            16, 0, 0, 0, // total_size
+            0, 0, 0, 0,  // reserved
+            0, 0, 0, 0,  // end tag type
+            9, 0, 0, 0,  // end tag size
+        ];
+        let addr = bytes.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        assert_eq!(addr, bi.start_address());
+        assert_eq!(addr + bytes.len(), bi.end_address());
+        assert_eq!(bytes.len(), bi.total_size as usize);
+        assert!(bi.elf_sections_tag().is_none());
+        assert!(bi.memory_map_tag().is_none());
+        assert!(bi.module_tags().next().is_none());
+        assert!(bi.boot_loader_name_tag().is_none());
+        assert!(bi.command_line_tag().is_none());
+    }
+
+    #[test]
+    fn name_tag() {
+        let bytes: [u8; 32] = [
+            32, 0, 0, 0,       // total_size
+            0, 0, 0, 0,        // reserved
+            2, 0, 0, 0,        // boot loader name tag type
+            13, 0, 0, 0,       // boot loader name tag size
+            110, 97, 109, 101, // boot loader name 'name'
+            0, 0, 0, 0,        // boot loader name null + padding
+            0, 0, 0, 0,        // end tag type
+            8, 0, 0, 0,        // end tag size
+        ];
+        let addr = bytes.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        assert_eq!(addr, bi.start_address());
+        assert_eq!(addr + bytes.len(), bi.end_address());
+        assert_eq!(bytes.len(), bi.total_size as usize);
+        assert!(bi.elf_sections_tag().is_none());
+        assert!(bi.memory_map_tag().is_none());
+        assert!(bi.module_tags().next().is_none());
+        assert_eq!("name", bi.boot_loader_name_tag().unwrap().name());
+        assert!(bi.command_line_tag().is_none());
     }
 }
