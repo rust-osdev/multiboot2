@@ -18,8 +18,7 @@ impl Iterator for TagIter {
             tag => {
                 // go to next tag
                 let mut tag_addr = self.current as usize;
-                tag_addr += tag.size as usize;
-                tag_addr = ((tag_addr-1) & !0x7) + 0x8; //align at 8 byte
+                tag_addr += ((tag.size + 7) & !7) as usize; //align at 8 byte
                 self.current = tag_addr as *const _;
 
                 Some(tag)
