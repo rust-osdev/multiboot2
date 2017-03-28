@@ -149,7 +149,7 @@ pub enum ElfSectionType {
 type ElfSectionFlagsType = u32;
 
 #[cfg(not(feature = "elf32"))]
-type ElfSectionFlagsType = u32;
+type ElfSectionFlagsType = u64;
 
 bitflags! {
     flags ElfSectionFlags: ElfSectionFlagsType {
