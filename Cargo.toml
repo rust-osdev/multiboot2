@@ -8,3 +8,6 @@ description = "An experimental Multiboot 2 crate for ELF-64 kernels."
 [dependencies.bitflags]
 version = "0.4.0"
 features = ["no_std"]
+
+[features]
+elf32 = []
