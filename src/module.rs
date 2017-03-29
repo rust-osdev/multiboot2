@@ -32,8 +32,12 @@ impl ModuleTag {
     }
 }
 
+pub fn module_iter(iter: TagIter) -> ModuleIter {
+    ModuleIter { iter: iter }
+}
+
 pub struct ModuleIter {
-    pub iter: TagIter,
+    iter: TagIter,
 }
 
 impl Iterator for ModuleIter {

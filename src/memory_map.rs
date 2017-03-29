@@ -24,10 +24,24 @@ impl MemoryMapTag {
 #[derive(Debug)]
 #[repr(C)]
 pub struct MemoryArea {
-    pub base_addr: u64,
-    pub length: u64,
+    base_addr: u64,
+    length: u64,
     typ: u32,
     _reserved: u32,
+}
+
+impl MemoryArea {
+    pub fn start_address(&self) -> usize {
+        self.base_addr as usize
+    }
+
+    pub fn end_address(&self) -> usize {
+        (self.base_addr + self.length) as usize
+    }
+
+    pub fn size(&self) -> usize {
+        self.length as usize
+    }
 }
 
 #[derive(Clone, Debug)]
