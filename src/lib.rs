@@ -32,7 +32,7 @@ pub unsafe fn load(address: usize) -> &'static BootInformation {
 
 #[repr(C)]
 pub struct BootInformation {
-    pub total_size: u32,
+    total_size: u32,
     _reserved: u32,
     first_tag: Tag,
 }
@@ -43,27 +43,31 @@ impl BootInformation {
     }
 
     pub fn end_address(&self) -> usize {
-        self.start_address() + self.total_size as usize
+        self.start_address() + self.total_size()
+    }
+
+    pub fn total_size(&self) -> usize {
+        self.total_size as usize
     }
 
     pub fn elf_sections_tag(&self) -> Option<&'static ElfSectionsTag> {
-        self.get_tag(9).map(|tag| unsafe{&*(tag as *const Tag as *const ElfSectionsTag)})
+        self.get_tag(9).map(|tag| unsafe { &*(tag as *const Tag as *const ElfSectionsTag) })
     }
 
     pub fn memory_map_tag(&self) -> Option<&'static MemoryMapTag> {
-        self.get_tag(6).map(|tag| unsafe{&*(tag as *const Tag as *const MemoryMapTag)})
+        self.get_tag(6).map(|tag| unsafe { &*(tag as *const Tag as *const MemoryMapTag) })
     }
 
     pub fn module_tags(&self) -> ModuleIter {
-        ModuleIter{ iter: self.tags() }
+        module::module_iter(self.tags())
     }
 
     pub fn boot_loader_name_tag(&self) -> Option<&'static BootLoaderNameTag> {
-        self.get_tag(2).map(|tag| unsafe{&*(tag as *const Tag as *const BootLoaderNameTag)})
+        self.get_tag(2).map(|tag| unsafe { &*(tag as *const Tag as *const BootLoaderNameTag) })
     }
 
     pub fn command_line_tag(&self) -> Option<&'static CommandLineTag> {
-        self.get_tag(1).map(|tag| unsafe{&*(tag as *const Tag as *const CommandLineTag)})
+        self.get_tag(1).map(|tag| unsafe { &*(tag as *const Tag as *const CommandLineTag) })
     }
 
     fn has_valid_end_tag(&self) -> bool {
@@ -81,7 +85,7 @@ impl BootInformation {
     }
 
     fn tags(&self) -> TagIter {
-        TagIter{current: &self.first_tag as *const _}
+        TagIter { current: &self.first_tag as *const _ }
     }
 }
 
@@ -90,7 +94,7 @@ impl fmt::Debug for BootInformation {
         writeln!(f, "multiboot information")?;
 
         writeln!(f, "S: {:#010X}, E: {:#010X}, L: {:#010X}",
-            self.start_address(), self.end_address(), self.total_size)?;
+            self.start_address(), self.end_address(), self.total_size())?;
 
         if let Some(boot_loader_name_tag) = self.boot_loader_name_tag() {
             writeln!(f, "boot loader name: {}", boot_loader_name_tag.name())?;
@@ -104,7 +108,7 @@ impl fmt::Debug for BootInformation {
             writeln!(f, "memory areas:")?;
             for area in memory_map_tag.memory_areas() {
                 writeln!(f, "    S: {:#010X}, E: {:#010X}, L: {:#010X}",
-                    area.base_addr, area.base_addr + area.length, area.length)?;
+                    area.start_address(), area.end_address(), area.size())?;
             }
         }
 
@@ -113,7 +117,8 @@ impl fmt::Debug for BootInformation {
             writeln!(f, "kernel sections:")?;
             for s in elf_sections_tag.sections() {
                 writeln!(f, "    name: {:15}, S: {:#08X}, E: {:#08X}, L: {:#08X}, F: {:#04X}",
-                    string_table.section_name(s), s.addr, s.addr + s.size, s.size, s.flags)?;
+                    string_table.section_name(s), s.start_address(),
+                    s.start_address() + s.size(), s.size(), s.flags().bits())?;
             }
         }
 
@@ -130,6 +135,8 @@ impl fmt::Debug for BootInformation {
 #[cfg(test)]
 mod tests {
     use super::load;
+    use super::{ElfSectionFlags, ELF_SECTION_EXECUTABLE, ELF_SECTION_ALLOCATED, ELF_SECTION_WRITABLE};
+    use super::ElfSectionType;
 
     #[test]
     fn no_tags() {
@@ -143,7 +150,7 @@ mod tests {
         let bi = unsafe { load(addr) };
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size as usize);
+        assert_eq!(bytes.len(), bi.total_size());
         assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
@@ -165,7 +172,7 @@ mod tests {
         let bi = unsafe { load(addr) };
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size as usize);
+        assert_eq!(bytes.len(), bi.total_size());
         assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
@@ -187,7 +194,7 @@ mod tests {
         let bi = unsafe { load(addr) };
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size as usize);
+        assert_eq!(bytes.len(), bi.total_size());
         assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
@@ -211,7 +218,7 @@ mod tests {
         let bi = unsafe { load(addr) };
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size as usize);
+        assert_eq!(bytes.len(), bi.total_size());
         assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
@@ -219,6 +226,7 @@ mod tests {
         assert!(bi.command_line_tag().is_none());
     }
 
+    #[cfg(not(feature = "elf32"))]
     #[test]
     fn grub2() {
         let mut bytes: [u8; 960] = [
@@ -490,7 +498,7 @@ mod tests {
         let bi = unsafe { load(addr) };
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size as usize);
+        assert_eq!(bytes.len(), bi.total_size() as usize);
         let es = bi.elf_sections_tag().unwrap();
         let st = es.string_table();
         assert_eq!(string_addr, st as *const _ as u64);
@@ -499,52 +507,61 @@ mod tests {
         assert_eq!(".rodata", st.section_name(s1));
         assert_eq!(0xFFFF_8000_0010_0000, s1.start_address());
         assert_eq!(0xFFFF_8000_0010_3000, s1.end_address());
-        assert_eq!(0x0000_0000_0000_3000, s1.size);
-        assert_eq!(2, s1.flags);
+        assert_eq!(0x0000_0000_0000_3000, s1.size());
+        assert_eq!(ELF_SECTION_ALLOCATED, s1.flags());
+        assert_eq!(ElfSectionType::ProgramSection, s1.section_type());
         let s2 = s.next().unwrap();
         assert_eq!(".text", st.section_name(s2));
         assert_eq!(0xFFFF_8000_0010_3000, s2.start_address());
         assert_eq!(0xFFFF_8000_0010_C000, s2.end_address());
-        assert_eq!(0x0000_0000_0000_9000, s2.size);
-        assert_eq!(6, s2.flags);
+        assert_eq!(0x0000_0000_0000_9000, s2.size());
+        assert_eq!(ELF_SECTION_EXECUTABLE | ELF_SECTION_ALLOCATED, s2.flags());
+        assert_eq!(ElfSectionType::ProgramSection, s2.section_type());
         let s3 = s.next().unwrap();
         assert_eq!(".data", st.section_name(s3));
         assert_eq!(0xFFFF_8000_0010_C000, s3.start_address());
         assert_eq!(0xFFFF_8000_0010_E000, s3.end_address());
-        assert_eq!(0x0000_0000_0000_2000, s3.size);
-        assert_eq!(3, s3.flags);
+        assert_eq!(0x0000_0000_0000_2000, s3.size());
+        assert_eq!(ELF_SECTION_ALLOCATED | ELF_SECTION_WRITABLE, s3.flags());
+        assert_eq!(ElfSectionType::ProgramSection, s3.section_type());
         let s4 = s.next().unwrap();
         assert_eq!(".bss", st.section_name(s4));
         assert_eq!(0xFFFF_8000_0010_E000, s4.start_address());
         assert_eq!(0xFFFF_8000_0011_3000, s4.end_address());
-        assert_eq!(0x0000_0000_0000_5000, s4.size);
-        assert_eq!(3, s4.flags);
+        assert_eq!(0x0000_0000_0000_5000, s4.size());
+        assert_eq!(ELF_SECTION_ALLOCATED | ELF_SECTION_WRITABLE, s4.flags());
+        assert_eq!(ElfSectionType::Uninitialized, s4.section_type());
         let s5 = s.next().unwrap();
         assert_eq!(".data.rel.ro", st.section_name(s5));
         assert_eq!(0xFFFF_8000_0011_3000, s5.start_address());
         assert_eq!(0xFFFF_8000_0011_3000, s5.end_address());
-        assert_eq!(0x0000_0000_0000_0000, s5.size);
-        assert_eq!(3, s5.flags);
+        assert_eq!(0x0000_0000_0000_0000, s5.size());
+        assert_eq!(ELF_SECTION_ALLOCATED | ELF_SECTION_WRITABLE, s5.flags());
+        assert_eq!(ElfSectionType::ProgramSection, s5.section_type());
         let s6 = s.next().unwrap();
         assert_eq!(".symtab", st.section_name(s6));
         assert_eq!(0x0000_0000_0011_3000, s6.start_address());
         assert_eq!(0x0000_0000_0011_5BE0, s6.end_address());
-        assert_eq!(0x0000_0000_0000_2BE0, s6.size);
-        assert_eq!(0, s6.flags);
+        assert_eq!(0x0000_0000_0000_2BE0, s6.size());
+        assert_eq!(ElfSectionFlags::empty(), s6.flags());
+        assert_eq!(ElfSectionType::LinkerSymbolTable, s6.section_type());
         let s7 = s.next().unwrap();
         assert_eq!(".strtab", st.section_name(s7));
         assert_eq!(0x0000_0000_0011_5BE0, s7.start_address());
         assert_eq!(0x0000_0000_0011_9371, s7.end_address());
-        assert_eq!(0x0000_0000_0000_3791, s7.size);
-        assert_eq!(0, s7.flags);
+        assert_eq!(0x0000_0000_0000_3791, s7.size());
+        assert_eq!(ElfSectionFlags::empty(), s7.flags());
+        assert_eq!(ElfSectionType::StringTable, s7.section_type());
         assert!(s.next().is_none());
         let mut mm = bi.memory_map_tag().unwrap().memory_areas();
         let mm1 = mm.next().unwrap();
-        assert_eq!(0x00000000, mm1.base_addr);
-        assert_eq!(0x009_FC00, mm1.length);
+        assert_eq!(0x00000000, mm1.start_address());
+        assert_eq!(0x009_FC00, mm1.end_address());
+        assert_eq!(0x009_FC00, mm1.size());
         let mm2 = mm.next().unwrap();
-        assert_eq!(0x010_0000, mm2.base_addr);
-        assert_eq!(0x7EE_0000, mm2.length);
+        assert_eq!(0x010_0000, mm2.start_address());
+        assert_eq!(0x7FE_0000, mm2.end_address());
+        assert_eq!(0x7EE_0000, mm2.size());
         assert!(mm.next().is_none());
         assert!(bi.module_tags().next().is_none());
         assert_eq!("GRUB 2.02~beta3-5", bi.boot_loader_name_tag().unwrap().name());
