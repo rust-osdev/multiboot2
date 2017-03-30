@@ -234,7 +234,6 @@ mod tests {
         assert!(bi.command_line_tag().is_none());
     }
 
-    #[cfg(not(feature = "elf32"))]
     #[test]
     fn grub2() {
         let mut bytes: [u8; 960] = [
