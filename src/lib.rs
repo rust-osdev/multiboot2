@@ -4,7 +4,7 @@ use core::fmt;
 
 use header::{Tag, TagIter};
 pub use boot_loader_name::BootLoaderNameTag;
-pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags, StringTable};
+pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags};
 pub use elf_sections::{ELF_SECTION_WRITABLE, ELF_SECTION_ALLOCATED, ELF_SECTION_EXECUTABLE};
 pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
 pub use module::{ModuleTag, ModuleIter};
@@ -20,26 +20,29 @@ mod memory_map;
 mod module;
 mod command_line;
 
-pub unsafe fn load(address: usize) -> &'static BootInformation {
+pub unsafe fn load(address: usize) -> BootInformation {
     if !cfg!(test) {
         assert_eq!(0, address & 0b111);
     }
-    let multiboot = &*(address as *const BootInformation);
+    let multiboot = &*(address as *const BootInformationInner);
     assert_eq!(0, multiboot.total_size & 0b111);
     assert!(multiboot.has_valid_end_tag());
-    multiboot
+    BootInformation { inner: multiboot }
+}
+
+pub struct BootInformation {
+    inner: *const BootInformationInner,
 }
 
 #[repr(C)]
-pub struct BootInformation {
+struct BootInformationInner {
     total_size: u32,
     _reserved: u32,
-    first_tag: Tag,
 }
 
 impl BootInformation {
     pub fn start_address(&self) -> usize {
-        self as *const _ as usize
+        self.inner as usize
     }
 
     pub fn end_address(&self) -> usize {
@@ -47,11 +50,11 @@ impl BootInformation {
     }
 
     pub fn total_size(&self) -> usize {
-        self.total_size as usize
+        self.get().total_size as usize
     }
 
-    pub fn elf_sections_tag(&self) -> Option<&'static ElfSectionsTag> {
-        self.get_tag(9).map(|tag| unsafe { &*(tag as *const Tag as *const ElfSectionsTag) })
+    pub fn elf_sections_tag(&self) -> Option<ElfSectionsTag> {
+        self.get_tag(9).map(|tag| elf_sections::elf_sections_tag(tag))
     }
 
     pub fn memory_map_tag(&self) -> Option<&'static MemoryMapTag> {
@@ -70,14 +73,8 @@ impl BootInformation {
         self.get_tag(1).map(|tag| unsafe { &*(tag as *const Tag as *const CommandLineTag) })
     }
 
-    fn has_valid_end_tag(&self) -> bool {
-        const END_TAG: Tag = Tag{typ:0, size:8};
-
-        let self_ptr = self as *const _;
-        let end_tag_addr = self_ptr as usize + (self.total_size - END_TAG.size) as usize;
-        let end_tag = unsafe{&*(end_tag_addr as *const Tag)};
-
-        end_tag.typ == END_TAG.typ && end_tag.size == END_TAG.size
+    fn get(&self) -> &BootInformationInner {
+        unsafe { &*self.inner }
     }
 
     fn get_tag(&self, typ: u32) -> Option<&'static Tag> {
@@ -85,7 +82,19 @@ impl BootInformation {
     }
 
     fn tags(&self) -> TagIter {
-        TagIter { current: &self.first_tag as *const _ }
+        TagIter { current: unsafe { self.inner.offset(1) } as *const _ }
+    }
+}
+
+impl BootInformationInner {
+    fn has_valid_end_tag(&self) -> bool {
+        const END_TAG: Tag = Tag { typ: 0, size: 8 };
+
+        let self_ptr = self as *const _;
+        let end_tag_addr = self_ptr as usize + (self.total_size - END_TAG.size) as usize;
+        let end_tag = unsafe { &*(end_tag_addr as *const Tag) };
+
+        end_tag.typ == END_TAG.typ && end_tag.size == END_TAG.size
     }
 }
 
@@ -113,11 +122,10 @@ impl fmt::Debug for BootInformation {
         }
 
         if let Some(elf_sections_tag) = self.elf_sections_tag() {
-            let string_table = elf_sections_tag.string_table();
             writeln!(f, "kernel sections:")?;
             for s in elf_sections_tag.sections() {
                 writeln!(f, "    name: {:15}, S: {:#08X}, E: {:#08X}, L: {:#08X}, F: {:#04X}",
-                    string_table.section_name(s), s.start_address(),
+                    s.name(), s.start_address(),
                     s.start_address() + s.size(), s.size(), s.flags().bits())?;
             }
         }
@@ -500,53 +508,51 @@ mod tests {
         assert_eq!(addr + bytes.len(), bi.end_address());
         assert_eq!(bytes.len(), bi.total_size() as usize);
         let es = bi.elf_sections_tag().unwrap();
-        let st = es.string_table();
-        assert_eq!(string_addr, st as *const _ as u64);
         let mut s = es.sections();
         let s1 = s.next().unwrap();
-        assert_eq!(".rodata", st.section_name(s1));
+        assert_eq!(".rodata", s1.name());
         assert_eq!(0xFFFF_8000_0010_0000, s1.start_address());
         assert_eq!(0xFFFF_8000_0010_3000, s1.end_address());
         assert_eq!(0x0000_0000_0000_3000, s1.size());
         assert_eq!(ELF_SECTION_ALLOCATED, s1.flags());
         assert_eq!(ElfSectionType::ProgramSection, s1.section_type());
         let s2 = s.next().unwrap();
-        assert_eq!(".text", st.section_name(s2));
+        assert_eq!(".text", s2.name());
         assert_eq!(0xFFFF_8000_0010_3000, s2.start_address());
         assert_eq!(0xFFFF_8000_0010_C000, s2.end_address());
         assert_eq!(0x0000_0000_0000_9000, s2.size());
         assert_eq!(ELF_SECTION_EXECUTABLE | ELF_SECTION_ALLOCATED, s2.flags());
         assert_eq!(ElfSectionType::ProgramSection, s2.section_type());
         let s3 = s.next().unwrap();
-        assert_eq!(".data", st.section_name(s3));
+        assert_eq!(".data", s3.name());
         assert_eq!(0xFFFF_8000_0010_C000, s3.start_address());
         assert_eq!(0xFFFF_8000_0010_E000, s3.end_address());
         assert_eq!(0x0000_0000_0000_2000, s3.size());
         assert_eq!(ELF_SECTION_ALLOCATED | ELF_SECTION_WRITABLE, s3.flags());
         assert_eq!(ElfSectionType::ProgramSection, s3.section_type());
         let s4 = s.next().unwrap();
-        assert_eq!(".bss", st.section_name(s4));
+        assert_eq!(".bss", s4.name());
         assert_eq!(0xFFFF_8000_0010_E000, s4.start_address());
         assert_eq!(0xFFFF_8000_0011_3000, s4.end_address());
         assert_eq!(0x0000_0000_0000_5000, s4.size());
         assert_eq!(ELF_SECTION_ALLOCATED | ELF_SECTION_WRITABLE, s4.flags());
         assert_eq!(ElfSectionType::Uninitialized, s4.section_type());
         let s5 = s.next().unwrap();
-        assert_eq!(".data.rel.ro", st.section_name(s5));
+        assert_eq!(".data.rel.ro", s5.name());
         assert_eq!(0xFFFF_8000_0011_3000, s5.start_address());
         assert_eq!(0xFFFF_8000_0011_3000, s5.end_address());
         assert_eq!(0x0000_0000_0000_0000, s5.size());
         assert_eq!(ELF_SECTION_ALLOCATED | ELF_SECTION_WRITABLE, s5.flags());
         assert_eq!(ElfSectionType::ProgramSection, s5.section_type());
         let s6 = s.next().unwrap();
-        assert_eq!(".symtab", st.section_name(s6));
+        assert_eq!(".symtab", s6.name());
         assert_eq!(0x0000_0000_0011_3000, s6.start_address());
         assert_eq!(0x0000_0000_0011_5BE0, s6.end_address());
         assert_eq!(0x0000_0000_0000_2BE0, s6.size());
         assert_eq!(ElfSectionFlags::empty(), s6.flags());
         assert_eq!(ElfSectionType::LinkerSymbolTable, s6.section_type());
         let s7 = s.next().unwrap();
-        assert_eq!(".strtab", st.section_name(s7));
+        assert_eq!(".strtab", s7.name());
         assert_eq!(0x0000_0000_0011_5BE0, s7.start_address());
         assert_eq!(0x0000_0000_0011_9371, s7.end_address());
         assert_eq!(0x0000_0000_0000_3791, s7.size());
