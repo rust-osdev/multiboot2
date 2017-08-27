@@ -36,14 +36,14 @@ pub fn module_iter(iter: TagIter) -> ModuleIter {
     ModuleIter { iter: iter }
 }
 
-pub struct ModuleIter {
-    iter: TagIter,
+pub struct ModuleIter<'a> {
+    iter: TagIter<'a>,
 }
 
-impl Iterator for ModuleIter {
-    type Item = &'static ModuleTag;
+impl<'a> Iterator for ModuleIter<'a> {
+    type Item = &'a ModuleTag;
 
-    fn next(&mut self) -> Option<&'static ModuleTag> {
+    fn next(&mut self) -> Option<&'a ModuleTag> {
         self.iter.find(|x| x.typ == 3)
             .map(|tag| unsafe{&*(tag as *const Tag as *const ModuleTag)})
     }

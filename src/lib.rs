@@ -1,6 +1,7 @@
 #![no_std]
 
 use core::fmt;
+use core::marker::PhantomData;
 
 use header::{Tag, TagIter};
 pub use boot_loader_name::BootLoaderNameTag;
@@ -80,12 +81,12 @@ impl BootInformation {
         end_tag.typ == END_TAG.typ && end_tag.size == END_TAG.size
     }
 
-    fn get_tag(&self, typ: u32) -> Option<&'static Tag> {
+    fn get_tag<'a>(&'a self, typ: u32) -> Option<&'a Tag> {
         self.tags().find(|tag| tag.typ == typ)
     }
 
     fn tags(&self) -> TagIter {
-        TagIter { current: &self.first_tag as *const _ }
+        TagIter { current: &self.first_tag as *const _, phantom: PhantomData }
     }
 }
 
