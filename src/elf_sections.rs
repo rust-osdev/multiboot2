@@ -1,86 +1,92 @@
+use header::Tag;
 
 #[derive(Debug)]
-#[repr(packed)] // repr(C) would add unwanted padding before first_section
 pub struct ElfSectionsTag {
-    typ: u32,
-    size: u32,
+    inner: *const ElfSectionsTagInner,
+}
+
+pub fn elf_sections_tag(tag: &Tag) -> ElfSectionsTag {
+    assert_eq!(9, tag.typ);
+    let es = ElfSectionsTag {
+        inner: unsafe { (tag as *const _).offset(1) } as *const _,
+    };
+    assert!((es.get().entry_size * es.get().shndx) <= tag.size);
+    es
+}
+
+#[derive(Debug)]
+#[repr(C, packed)] // only repr(C) would add unwanted padding at the end
+struct ElfSectionsTagInner {
     number_of_sections: u32,
     entry_size: u32,
     shndx: u32, // string table
-    first_section: ElfSection,
 }
 
 impl ElfSectionsTag {
-    pub fn sections(&'static self) -> ElfSectionIter {
+    pub fn sections(&self) -> ElfSectionIter {
+        let string_section_offset = (self.get().shndx * self.get().entry_size) as isize;
+        let string_section_ptr = unsafe {
+            self.first_section().offset(string_section_offset) as *const _
+        };
         ElfSectionIter {
-            current_section: &self.first_section,
-            remaining_sections: self.number_of_sections - 1,
-            entry_size: self.entry_size,
+            current_section: self.first_section(),
+            remaining_sections: self.get().number_of_sections - 1,
+            entry_size: self.get().entry_size,
+            string_section: string_section_ptr,
         }
     }
 
-    pub fn string_table(&self) -> &'static StringTable {
-        unsafe {
-            let string_table_ptr =
-                (&self.first_section as *const ElfSection).offset(self.shndx as isize);
-            &*((*string_table_ptr).addr as *const StringTable)
-        }
+    fn first_section(&self) -> *const u8 {
+        (unsafe { self.inner.offset(1) }) as *const _
     }
-}
 
-pub struct StringTable(u8);
-
-impl StringTable {
-    pub fn section_name(&self, section: &ElfSection) -> &'static str {
-        use core::{str, slice};
-
-        let name_ptr = unsafe {
-            (&self.0 as *const u8).offset(section.name_index as isize)
-        };
-        let strlen = {
-            let mut len = 0;
-            while unsafe { *name_ptr.offset(len) } != 0 {
-                len += 1;
-            }
-            len as usize
-        };
-
-        str::from_utf8( unsafe {
-            slice::from_raw_parts(name_ptr, strlen)
-        }).unwrap()
+    fn get(&self) -> &ElfSectionsTagInner {
+        unsafe { &*self.inner }
     }
 }
 
 #[derive(Clone)]
 pub struct ElfSectionIter {
-    current_section: &'static ElfSection,
+    current_section: *const u8,
     remaining_sections: u32,
     entry_size: u32,
+    string_section: *const u8,
 }
 
 impl Iterator for ElfSectionIter {
-    type Item = &'static ElfSection;
-    fn next(&mut self) -> Option<&'static ElfSection> {
+    type Item = ElfSection;
+
+    fn next(&mut self) -> Option<ElfSection> {
         if self.remaining_sections == 0 {
-            None
-        } else {
-            let section = self.current_section;
-            let next_section_addr = (self.current_section as *const _ as u64) + self.entry_size as u64;
-            self.current_section = unsafe{ &*(next_section_addr as *const ElfSection) };
+            return None;
+        }
+
+        loop {
+            let section = ElfSection {
+                inner: self.current_section,
+                string_section: self.string_section,
+                entry_size: self.entry_size,
+            };
+
+            self.current_section = unsafe { self.current_section.offset(self.entry_size as isize) };
             self.remaining_sections -= 1;
-            if section.typ == ElfSectionType::Unused as u32 {
-                self.next()
-            } else {
-                Some(section)
+
+            if section.section_type() != ElfSectionType::Unused {
+                return Some(section);
             }
         }
     }
 }
 
-#[cfg(feature = "elf32")]
+pub struct ElfSection {
+    inner: *const u8,
+    string_section: *const u8,
+    entry_size: u32,
+}
+
 #[derive(Debug)]
 #[repr(C)]
-pub struct ElfSection {
+struct ElfSectionInner32 {
     name_index: u32,
     typ: u32,
     flags: u32,
@@ -93,10 +99,9 @@ pub struct ElfSection {
     entry_size: u32,
 }
 
-#[cfg(not(feature = "elf32"))]
 #[derive(Debug)]
 #[repr(C)]
-pub struct ElfSection {
+struct ElfSectionInner64 {
     name_index: u32,
     typ: u32,
     flags: u64,
@@ -111,7 +116,7 @@ pub struct ElfSection {
 
 impl ElfSection {
     pub fn section_type(&self) -> ElfSectionType {
-        match self.typ {
+        match self.get().typ() {
             0 => ElfSectionType::Unused,
             1 => ElfSectionType::ProgramSection,
             2 => ElfSectionType::LinkerSymbolTable,
@@ -131,27 +136,116 @@ impl ElfSection {
     }
 
     pub fn section_type_raw(&self) -> u32 {
-        self.typ
+        self.get().typ()
+    }
+
+    pub fn name(&self) -> &str {
+        use core::{str, slice};
+
+        let name_ptr = unsafe {
+            self.string_table().offset(self.get().name_index() as isize)
+        };
+        let strlen = {
+            let mut len = 0;
+            while unsafe { *name_ptr.offset(len) } != 0 {
+                len += 1;
+            }
+            len as usize
+        };
+
+        str::from_utf8(unsafe { slice::from_raw_parts(name_ptr, strlen) }).unwrap()
     }
 
     pub fn start_address(&self) -> usize {
-        self.addr as usize
+        self.get().addr()
     }
 
     pub fn end_address(&self) -> usize {
-        (self.addr + self.size) as usize
+        self.get().addr() + self.get().size()
     }
 
     pub fn size(&self) -> usize {
-        self.size as usize
+        self.get().size()
     }
 
     pub fn flags(&self) -> ElfSectionFlags {
-        ElfSectionFlags::from_bits_truncate(self.flags)
+        ElfSectionFlags::from_bits_truncate(self.get().flags())
     }
 
     pub fn is_allocated(&self) -> bool {
         self.flags().contains(ELF_SECTION_ALLOCATED)
+    }
+
+    fn get(&self) -> &ElfSectionInner {
+        match self.entry_size {
+            40 => unsafe { &*(self.inner as *const ElfSectionInner32) },
+            64 => unsafe { &*(self.inner as *const ElfSectionInner64) },
+            _ => panic!(),
+        }
+    }
+
+    unsafe fn string_table(&self) -> *const u8 {
+        match self.entry_size {
+            40 => (*(self.string_section as *const ElfSectionInner32)).addr as *const _,
+            64 => (*(self.string_section as *const ElfSectionInner64)).addr as *const _,
+            _ => panic!(),
+        }
+    }
+}
+
+trait ElfSectionInner {
+    fn name_index(&self) -> u32;
+
+    fn typ(&self) -> u32;
+
+    fn flags(&self) -> u32;
+
+    fn addr(&self) -> usize;
+
+    fn size(&self) -> usize;
+}
+
+impl ElfSectionInner for ElfSectionInner32 {
+    fn name_index(&self) -> u32 {
+        self.name_index
+    }
+
+    fn typ(&self) -> u32 {
+        self.typ
+    }
+
+    fn flags(&self) -> u32 {
+        self.flags
+    }
+
+    fn addr(&self) -> usize {
+        self.addr as usize
+    }
+
+    fn size(&self) -> usize {
+        self.size as usize
+    }
+}
+
+impl ElfSectionInner for ElfSectionInner64 {
+    fn name_index(&self) -> u32 {
+        self.name_index
+    }
+
+    fn typ(&self) -> u32 {
+        self.typ
+    }
+
+    fn flags(&self) -> u32 {
+        self.flags as u32
+    }
+
+    fn addr(&self) -> usize {
+        self.addr as usize
+    }
+
+    fn size(&self) -> usize {
+        self.size as usize
     }
 }
 
@@ -174,14 +268,8 @@ pub enum ElfSectionType {
     ProcessorSpecific = 0x7000_0000,
 }
 
-#[cfg(feature = "elf32")]
-type ElfSectionFlagsType = u32;
-
-#[cfg(not(feature = "elf32"))]
-type ElfSectionFlagsType = u64;
-
 bitflags! {
-    flags ElfSectionFlags: ElfSectionFlagsType {
+    flags ElfSectionFlags: u32 {
         const ELF_SECTION_WRITABLE = 0x1,
         const ELF_SECTION_ALLOCATED = 0x2,
         const ELF_SECTION_EXECUTABLE = 0x4,
