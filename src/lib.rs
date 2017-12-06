@@ -5,7 +5,6 @@ use core::fmt;
 use header::{Tag, TagIter};
 pub use boot_loader_name::BootLoaderNameTag;
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags};
-pub use elf_sections::{ELF_SECTION_WRITABLE, ELF_SECTION_ALLOCATED, ELF_SECTION_EXECUTABLE};
 pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
 pub use module::{ModuleTag, ModuleIter};
 pub use command_line::CommandLineTag;
@@ -143,8 +142,7 @@ impl fmt::Debug for BootInformation {
 #[cfg(test)]
 mod tests {
     use super::load;
-    use super::{ElfSectionFlags, ELF_SECTION_EXECUTABLE, ELF_SECTION_ALLOCATED, ELF_SECTION_WRITABLE};
-    use super::ElfSectionType;
+    use super::{ElfSectionFlags, ElfSectionType};
 
     #[test]
     fn no_tags() {
@@ -513,35 +511,35 @@ mod tests {
         assert_eq!(0xFFFF_8000_0010_0000, s1.start_address());
         assert_eq!(0xFFFF_8000_0010_3000, s1.end_address());
         assert_eq!(0x0000_0000_0000_3000, s1.size());
-        assert_eq!(ELF_SECTION_ALLOCATED, s1.flags());
+        assert_eq!(ElfSectionFlags::ALLOCATED, s1.flags());
         assert_eq!(ElfSectionType::ProgramSection, s1.section_type());
         let s2 = s.next().unwrap();
         assert_eq!(".text", s2.name());
         assert_eq!(0xFFFF_8000_0010_3000, s2.start_address());
         assert_eq!(0xFFFF_8000_0010_C000, s2.end_address());
         assert_eq!(0x0000_0000_0000_9000, s2.size());
-        assert_eq!(ELF_SECTION_EXECUTABLE | ELF_SECTION_ALLOCATED, s2.flags());
+        assert_eq!(ElfSectionFlags::EXECUTABLE | ElfSectionFlags::ALLOCATED, s2.flags());
         assert_eq!(ElfSectionType::ProgramSection, s2.section_type());
         let s3 = s.next().unwrap();
         assert_eq!(".data", s3.name());
         assert_eq!(0xFFFF_8000_0010_C000, s3.start_address());
         assert_eq!(0xFFFF_8000_0010_E000, s3.end_address());
         assert_eq!(0x0000_0000_0000_2000, s3.size());
-        assert_eq!(ELF_SECTION_ALLOCATED | ELF_SECTION_WRITABLE, s3.flags());
+        assert_eq!(ElfSectionFlags::ALLOCATED | ElfSectionFlags::WRITABLE, s3.flags());
         assert_eq!(ElfSectionType::ProgramSection, s3.section_type());
         let s4 = s.next().unwrap();
         assert_eq!(".bss", s4.name());
         assert_eq!(0xFFFF_8000_0010_E000, s4.start_address());
         assert_eq!(0xFFFF_8000_0011_3000, s4.end_address());
         assert_eq!(0x0000_0000_0000_5000, s4.size());
-        assert_eq!(ELF_SECTION_ALLOCATED | ELF_SECTION_WRITABLE, s4.flags());
+        assert_eq!(ElfSectionFlags::ALLOCATED | ElfSectionFlags::WRITABLE, s4.flags());
         assert_eq!(ElfSectionType::Uninitialized, s4.section_type());
         let s5 = s.next().unwrap();
         assert_eq!(".data.rel.ro", s5.name());
         assert_eq!(0xFFFF_8000_0011_3000, s5.start_address());
         assert_eq!(0xFFFF_8000_0011_3000, s5.end_address());
         assert_eq!(0x0000_0000_0000_0000, s5.size());
-        assert_eq!(ELF_SECTION_ALLOCATED | ELF_SECTION_WRITABLE, s5.flags());
+        assert_eq!(ElfSectionFlags::ALLOCATED | ElfSectionFlags::WRITABLE, s5.flags());
         assert_eq!(ElfSectionType::ProgramSection, s5.section_type());
         let s6 = s.next().unwrap();
         assert_eq!(".symtab", s6.name());
