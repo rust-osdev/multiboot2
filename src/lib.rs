@@ -1,5 +1,7 @@
 #![no_std]
 
+#![deny(missing_debug_implementations)]
+
 use core::fmt;
 
 use header::{Tag, TagIter};
@@ -33,7 +35,7 @@ pub struct BootInformation {
     inner: *const BootInformationInner,
 }
 
-#[repr(C)]
+#[repr(C, packed)]
 struct BootInformationInner {
     total_size: u32,
     _reserved: u32,

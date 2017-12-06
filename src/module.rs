@@ -1,7 +1,7 @@
 use header::{Tag, TagIter};
 
-#[repr(packed)]
 #[derive(Debug)]
+#[repr(C, packed)]
 pub struct ModuleTag {
     typ: u32,
     size: u32,
@@ -36,6 +36,7 @@ pub fn module_iter(iter: TagIter) -> ModuleIter {
     ModuleIter { iter: iter }
 }
 
+#[derive(Debug)]
 pub struct ModuleIter {
     iter: TagIter,
 }
