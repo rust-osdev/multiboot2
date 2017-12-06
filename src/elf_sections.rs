@@ -156,15 +156,15 @@ impl ElfSection {
         str::from_utf8(unsafe { slice::from_raw_parts(name_ptr, strlen) }).unwrap()
     }
 
-    pub fn start_address(&self) -> usize {
+    pub fn start_address(&self) -> u64 {
         self.get().addr()
     }
 
-    pub fn end_address(&self) -> usize {
+    pub fn end_address(&self) -> u64 {
         self.get().addr() + self.get().size()
     }
 
-    pub fn size(&self) -> usize {
+    pub fn size(&self) -> u64 {
         self.get().size()
     }
 
@@ -198,11 +198,11 @@ trait ElfSectionInner {
 
     fn typ(&self) -> u32;
 
-    fn flags(&self) -> u32;
+    fn flags(&self) -> u64;
 
-    fn addr(&self) -> usize;
+    fn addr(&self) -> u64;
 
-    fn size(&self) -> usize;
+    fn size(&self) -> u64;
 }
 
 impl ElfSectionInner for ElfSectionInner32 {
@@ -214,16 +214,16 @@ impl ElfSectionInner for ElfSectionInner32 {
         self.typ
     }
 
-    fn flags(&self) -> u32 {
-        self.flags
+    fn flags(&self) -> u64 {
+        self.flags.into()
     }
 
-    fn addr(&self) -> usize {
-        self.addr as usize
+    fn addr(&self) -> u64 {
+        self.addr.into()
     }
 
-    fn size(&self) -> usize {
-        self.size as usize
+    fn size(&self) -> u64 {
+        self.size.into()
     }
 }
 
@@ -236,16 +236,16 @@ impl ElfSectionInner for ElfSectionInner64 {
         self.typ
     }
 
-    fn flags(&self) -> u32 {
-        self.flags as u32
+    fn flags(&self) -> u64 {
+        self.flags
     }
 
-    fn addr(&self) -> usize {
-        self.addr as usize
+    fn addr(&self) -> u64 {
+        self.addr
     }
 
-    fn size(&self) -> usize {
-        self.size as usize
+    fn size(&self) -> u64 {
+        self.size
     }
 }
 
@@ -269,7 +269,7 @@ pub enum ElfSectionType {
 }
 
 bitflags! {
-    pub struct ElfSectionFlags: u32 {
+    pub struct ElfSectionFlags: u64 {
         const WRITABLE = 0x1;
         const ALLOCATED = 0x2;
         const EXECUTABLE = 0x4;
