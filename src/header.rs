@@ -1,10 +1,12 @@
-#[repr(C)]
+#[derive(Debug)]
+#[repr(C, packed)]
 pub struct Tag {
     pub typ: u32,
     pub size: u32,
     // tag specific fields
 }
 
+#[derive(Debug)]
 pub struct TagIter {
     pub current: *const Tag,
 }

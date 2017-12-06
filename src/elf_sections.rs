@@ -45,7 +45,7 @@ impl ElfSectionsTag {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ElfSectionIter {
     current_section: *const u8,
     remaining_sections: u32,
@@ -78,6 +78,7 @@ impl Iterator for ElfSectionIter {
     }
 }
 
+#[derive(Debug)]
 pub struct ElfSection {
     inner: *const u8,
     string_section: *const u8,
@@ -85,7 +86,7 @@ pub struct ElfSection {
 }
 
 #[derive(Debug)]
-#[repr(C)]
+#[repr(C, packed)]
 struct ElfSectionInner32 {
     name_index: u32,
     typ: u32,
@@ -100,7 +101,7 @@ struct ElfSectionInner32 {
 }
 
 #[derive(Debug)]
-#[repr(C)]
+#[repr(C, packed)]
 struct ElfSectionInner64 {
     name_index: u32,
     typ: u32,
