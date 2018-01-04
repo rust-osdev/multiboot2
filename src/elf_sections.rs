@@ -8,7 +8,7 @@ pub struct ElfSectionsTag {
 pub fn elf_sections_tag(tag: &Tag) -> ElfSectionsTag {
     assert_eq!(9, tag.typ);
     let es = ElfSectionsTag {
-        inner: unsafe { (tag as *const _).offset(1) } as *const _,
+        inner: unsafe { (tag as *const Tag).offset(1) } as *const ElfSectionsTagInner,
     };
     assert!((es.get().entry_size * es.get().shndx) <= tag.size);
     es
