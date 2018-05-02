@@ -1,6 +1,6 @@
 
 #[derive(Debug)]
-#[repr(packed)] // repr(C) would add unwanted padding before first_section
+#[repr(C, packed)] // only repr(C) would add unwanted padding before first_section
 pub struct CommandLineTag {
     typ: u32,
     size: u32,
