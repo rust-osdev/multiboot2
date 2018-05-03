@@ -10,6 +10,7 @@ pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionTyp
 pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
 pub use module::{ModuleTag, ModuleIter};
 pub use command_line::CommandLineTag;
+pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
 
 #[macro_use]
 extern crate bitflags;
@@ -20,6 +21,7 @@ mod elf_sections;
 mod memory_map;
 mod module;
 mod command_line;
+mod rsdp;
 
 pub unsafe fn load(address: usize) -> BootInformation {
     if !cfg!(test) {
@@ -72,6 +74,14 @@ impl BootInformation {
 
     pub fn command_line_tag(&self) -> Option<&'static CommandLineTag> {
         self.get_tag(1).map(|tag| unsafe { &*(tag as *const Tag as *const CommandLineTag) })
+    }
+
+    pub fn rsdp_v1_tag(&self) -> Option<&'static RsdpV1Tag> {
+        self.get_tag(14).map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV1Tag) })
+    }
+
+    pub fn rsdp_v2_tag(&self) -> Option<&'static RsdpV2Tag> {
+        self.get_tag(15).map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV2Tag) })
     }
 
     fn get(&self) -> &BootInformationInner {
@@ -568,6 +578,15 @@ mod tests {
         assert_eq!(0x7FE_0000, mm2.end_address());
         assert_eq!(0x7EE_0000, mm2.size());
         assert!(mm.next().is_none());
+
+        // Test the RSDP tag
+        let rsdp_old = bi.rsdp_v1_tag().unwrap();
+        assert_eq!("RSD PTR ", rsdp_old.signature().unwrap());
+        assert_eq!(89, rsdp_old.checksum());
+        assert_eq!("BOCHS ", rsdp_old.oem_id().unwrap());
+        assert_eq!(0, rsdp_old.revision());
+        assert_eq!(0x7FE18DC, rsdp_old.rsdt_address());
+
         assert!(bi.module_tags().next().is_none());
         assert_eq!("GRUB 2.02~beta3-5", bi.boot_loader_name_tag().unwrap().name());
         assert_eq!("", bi.command_line_tag().unwrap().command_line());
