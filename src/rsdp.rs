@@ -21,28 +21,23 @@ pub struct RsdpV1Tag {
 }
 
 impl RsdpV1Tag {
-    pub fn signature<'a>(&'a self) -> Option<&'a str>
-    {
+    pub fn signature<'a>(&'a self) -> Option<&'a str> {
         str::from_utf8(&self.signature).ok()
     }
 
-    pub fn checksum(&self) -> u8
-    {
+    pub fn checksum(&self) -> u8 {
         self.checksum
     }
 
-    pub fn oem_id<'a>(&'a self) -> Option<&'a str>
-    {
+    pub fn oem_id<'a>(&'a self) -> Option<&'a str> {
         str::from_utf8(&self.oem_id).ok()
     }
 
-    pub fn revision(&self) -> u8
-    {
+    pub fn revision(&self) -> u8 {
         self.revision
     }
 
-    pub fn rsdt_address(&self) -> usize
-    {
+    pub fn rsdt_address(&self) -> usize {
         self.rsdt_address as usize
     }
 }
@@ -59,32 +54,32 @@ pub struct RsdpV2Tag {
     _rsdt_address: u32,
     length: u32,
     xsdt_address: u64,  // This is the PHYSICAL address of the XSDT
+    ext_checksum: u8,
     _reserved: [u8; 3],
 }
 
 impl RsdpV2Tag {
-    pub fn signature<'a>(&'a self) -> Option<&'a str>
-    {
+    pub fn signature<'a>(&'a self) -> Option<&'a str> {
         str::from_utf8(&self.signature).ok()
     }
 
-    pub fn checksum(&self) -> u8
-    {
+    pub fn checksum(&self) -> u8 {
         self.checksum
     }
 
-    pub fn oem_id<'a>(&'a self) -> Option<&'a str>
-    {
+    pub fn oem_id<'a>(&'a self) -> Option<&'a str> {
         str::from_utf8(&self.oem_id).ok()
     }
 
-    pub fn revision(&self) -> u8
-    {
+    pub fn revision(&self) -> u8 {
         self.revision
     }
 
-    pub fn xsdt_address(&self) -> usize
-    {
+    pub fn xsdt_address(&self) -> usize {
         self.xsdt_address as usize
+    }
+
+    pub fn ext_checksum(&self) -> u8 {
+        self.ext_checksum
     }
 }
