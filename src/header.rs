@@ -6,7 +6,7 @@ pub struct Tag {
     // tag specific fields
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct TagIter {
     pub current: *const Tag,
 }

@@ -36,7 +36,7 @@ pub fn module_iter(iter: TagIter) -> ModuleIter {
     ModuleIter { iter: iter }
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct ModuleIter {
     iter: TagIter,
 }
