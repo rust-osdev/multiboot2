@@ -3,19 +3,19 @@ use core::slice;
 use header::Tag;
 
 #[derive(Debug)]
-pub struct FramebufferTag {
+pub struct FramebufferTag<'a> {
     pub address: u64,
     pub pitch: u32,
     pub width: u32,
     pub height: u32,
     pub bpp: u8,
-    pub buffer_type: FramebufferType
+    pub buffer_type: FramebufferType<'a>
 }
 
 #[derive(Debug)]
-pub enum FramebufferType {
+pub enum FramebufferType<'a> {
     Indexed {
-        palette: &'static [FramebufferColor]   
+        palette: &'a [FramebufferColor]   
     },
     RGB {
         red: FramebufferField,
@@ -76,7 +76,7 @@ impl Reader {
     }
 }
 
-pub fn framebuffer_tag(tag: &Tag) -> FramebufferTag {
+pub fn framebuffer_tag<'a>(tag: &'a Tag) -> FramebufferTag<'a> {
     let mut reader = Reader::new(tag as *const Tag);
     reader.skip(8);
     let address = reader.read_u64();
@@ -85,8 +85,7 @@ pub fn framebuffer_tag(tag: &Tag) -> FramebufferTag {
     let height = reader.read_u32();
     let bpp = reader.read_u8();
     let type_no = reader.read_u8();
-    reader.skip(2); // RAAAAAAAAAAAAARGH THIS WAS _NOT_ IN THE MULTIBOOT SPEC AAAASDAUHSDKJAHSDKJAHSD.
-                    // In the multiboot spec, it has this listed as a u8 _NOT_ a u16.
+    reader.skip(2); // In the multiboot spec, it has this listed as a u8 _NOT_ a u16.
                     // Reading the GRUB2 source code reveals it is in fact a u16.
     let buffer_type = match type_no {
         0 =>  {
@@ -97,10 +96,10 @@ pub fn framebuffer_tag(tag: &Tag) -> FramebufferTag {
             FramebufferType::Indexed { palette }
         },
         1 => {
-            let red_pos = reader.read_u8();     //Also.... WHAT DO THESE MEAN????
-            let red_mask = reader.read_u8();    //i mean, i can guess
-            let green_pos = reader.read_u8();   //but i shouldn't have to.
-            let green_mask = reader.read_u8();  //come on multiboot... why is your spec so shite??
+            let red_pos = reader.read_u8();     
+            let red_mask = reader.read_u8();    
+            let green_pos = reader.read_u8();   
+            let green_mask = reader.read_u8();
             let blue_pos = reader.read_u8();
             let blue_mask = reader.read_u8();
             FramebufferType::RGB {

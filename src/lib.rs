@@ -78,7 +78,7 @@ impl BootInformation {
         self.get_tag(1).map(|tag| unsafe { &*(tag as *const Tag as *const CommandLineTag) })
     }
 
-    pub fn framebuffer_tag(&self) -> Option<FramebufferTag> {
+    pub fn framebuffer_tag(&self) -> Option<FramebufferTag<'static>> {
         self.get_tag(8).map(|tag| framebuffer::framebuffer_tag(tag))
     }
 
