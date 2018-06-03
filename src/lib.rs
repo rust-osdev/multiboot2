@@ -7,6 +7,7 @@ use core::fmt;
 use header::{Tag, TagIter};
 pub use boot_loader_name::BootLoaderNameTag;
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags};
+pub use framebuffer::{FramebufferTag, FramebufferType, FramebufferField, FramebufferColor};
 pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
 pub use module::{ModuleTag, ModuleIter};
 pub use command_line::CommandLineTag;
@@ -22,6 +23,7 @@ mod memory_map;
 mod module;
 mod command_line;
 mod rsdp;
+mod framebuffer;
 
 pub unsafe fn load(address: usize) -> BootInformation {
     if !cfg!(test) {
@@ -74,6 +76,10 @@ impl BootInformation {
 
     pub fn command_line_tag(&self) -> Option<&'static CommandLineTag> {
         self.get_tag(1).map(|tag| unsafe { &*(tag as *const Tag as *const CommandLineTag) })
+    }
+
+    pub fn framebuffer_tag(&self) -> Option<FramebufferTag> {
+        self.get_tag(8).map(|tag| framebuffer::framebuffer_tag(tag))
     }
 
     pub fn rsdp_v1_tag(&self) -> Option<&'static RsdpV1Tag> {
