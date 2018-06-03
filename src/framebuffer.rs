@@ -96,10 +96,10 @@ pub fn framebuffer_tag<'a>(tag: &'a Tag) -> FramebufferTag<'a> {
             FramebufferType::Indexed { palette }
         },
         1 => {
-            let red_pos = reader.read_u8();     
-            let red_mask = reader.read_u8();    
+            let red_pos = reader.read_u8();     //These refer to the bit positions of the MSB of each field
+            let red_mask = reader.read_u8();    //And then the length of the field from MSB to LSB
             let green_pos = reader.read_u8();   
-            let green_mask = reader.read_u8();
+            let green_mask = reader.read_u8();  
             let blue_pos = reader.read_u8();
             let blue_mask = reader.read_u8();
             FramebufferType::RGB {
