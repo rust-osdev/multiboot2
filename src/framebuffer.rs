@@ -2,7 +2,7 @@ use core::ptr;
 use core::slice;
 use header::Tag;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct FramebufferTag<'a> {
     pub address: u64,
     pub pitch: u32,
@@ -12,7 +12,7 @@ pub struct FramebufferTag<'a> {
     pub buffer_type: FramebufferType<'a>
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum FramebufferType<'a> {
     Indexed {
         palette: &'a [FramebufferColor]   
@@ -25,13 +25,13 @@ pub enum FramebufferType<'a> {
     Text
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct FramebufferField {
     position: u8,
     size: u8
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[repr(C, packed)]
 pub struct FramebufferColor {
     red: u8,

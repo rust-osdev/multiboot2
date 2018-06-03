@@ -161,6 +161,7 @@ impl fmt::Debug for BootInformation {
 mod tests {
     use super::load;
     use super::{ElfSectionFlags, ElfSectionType};
+    use super::FramebufferType;
 
     #[test]
     fn no_tags() {
@@ -596,5 +597,14 @@ mod tests {
         assert!(bi.module_tags().next().is_none());
         assert_eq!("GRUB 2.02~beta3-5", bi.boot_loader_name_tag().unwrap().name());
         assert_eq!("", bi.command_line_tag().unwrap().command_line());
+
+        //Test the Framebuffer tag
+        let fbi = bi.framebuffer_tag().unwrap();
+        assert_eq!(fbi.address, 753664);
+        assert_eq!(fbi.pitch, 160);
+        assert_eq!(fbi.width, 80);
+        assert_eq!(fbi.height, 25);
+        assert_eq!(fbi.bpp, 16);
+        assert_eq!(fbi.buffer_type, FramebufferType::Text);
     }
 }
