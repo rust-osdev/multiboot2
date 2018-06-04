@@ -27,16 +27,16 @@ pub enum FramebufferType<'a> {
 
 #[derive(Debug, PartialEq)]
 pub struct FramebufferField {
-    position: u8,
-    size: u8
+    pub position: u8,
+    pub size: u8
 }
 
 #[derive(Debug, PartialEq)]
 #[repr(C, packed)]
 pub struct FramebufferColor {
-    red: u8,
-    green: u8,
-    blue: u8
+    pub red: u8,
+    pub green: u8,
+    pub blue: u8
 }
 
 struct Reader {
