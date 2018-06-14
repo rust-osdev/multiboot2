@@ -1,6 +1,6 @@
-use core::ptr;
-use core::slice;
 use header::Tag;
+use ::Reader;
+use core::slice;
 
 #[derive(Debug, PartialEq)]
 pub struct FramebufferTag<'a> {
@@ -39,43 +39,6 @@ pub struct FramebufferColor {
     pub blue: u8
 }
 
-struct Reader {
-    ptr: *const u8,
-    off: usize
-}
-
-impl Reader {
-    fn new<T>(ptr: *const T) -> Reader {
-        Reader {
-            ptr: ptr as *const u8,
-            off: 0
-        }
-    }
-
-    fn read_u8(&mut self) -> u8 {
-        self.off += 1;
-        unsafe {
-            ptr::read(self.ptr.offset((self.off - 1) as isize))
-        }
-    }
-
-    fn read_u16(&mut self) -> u16 {
-        self.read_u8() as u16 | (self.read_u8() as u16) << 8
-    }
-
-    fn read_u32(&mut self) -> u32 {
-        self.read_u16() as u32 | (self.read_u16() as u32) << 16
-    }
-
-    fn read_u64(&mut self) -> u64 {
-        self.read_u32() as u64 | (self.read_u32() as u64) << 32
-    }
-
-    fn skip(&mut self, n: usize) {
-        self.off += n;
-    }
-}
-
 pub fn framebuffer_tag<'a>(tag: &'a Tag) -> FramebufferTag<'a> {
     let mut reader = Reader::new(tag as *const Tag);
     reader.skip(8);
@@ -91,13 +54,13 @@ pub fn framebuffer_tag<'a>(tag: &'a Tag) -> FramebufferTag<'a> {
         0 =>  {
             let num_colors = reader.read_u32();
             let palette = unsafe {
-                slice::from_raw_parts(reader.ptr.offset(reader.off as isize) as *const FramebufferColor, num_colors as usize)
+                slice::from_raw_parts(reader.read_u32() as usize as *const FramebufferColor, num_colors as usize)
             } as &'static [FramebufferColor];
             FramebufferType::Indexed { palette }
         },
         1 => {
-            let red_pos = reader.read_u8();     //These refer to the bit positions of the MSB of each field
-            let red_mask = reader.read_u8();    //And then the length of the field from MSB to LSB
+            let red_pos = reader.read_u8();     // These refer to the bit positions of the MSB of each field
+            let red_mask = reader.read_u8();    // And then the length of the field from MSB to LSB
             let green_pos = reader.read_u8();   
             let green_mask = reader.read_u8();  
             let blue_pos = reader.read_u8();

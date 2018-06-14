@@ -157,6 +157,43 @@ impl fmt::Debug for BootInformation {
     }
 }
 
+pub(crate) struct Reader {
+    pub(crate) ptr: *const u8,
+    pub(crate) off: usize
+}
+
+impl Reader {
+    pub(crate) fn new<T>(ptr: *const T) -> Reader {
+        Reader {
+            ptr: ptr as *const u8,
+            off: 0
+        }
+    }
+
+    pub(crate) fn read_u8(&mut self) -> u8 {
+        self.off += 1;
+        unsafe {
+            core::ptr::read(self.ptr.offset((self.off - 1) as isize))
+        }
+    }
+
+    pub(crate) fn read_u16(&mut self) -> u16 {
+        self.read_u8() as u16 | (self.read_u8() as u16) << 8
+    }
+
+    pub(crate) fn read_u32(&mut self) -> u32 {
+        self.read_u16() as u32 | (self.read_u16() as u32) << 16
+    }
+
+    pub(crate) fn read_u64(&mut self) -> u64 {
+        self.read_u32() as u64 | (self.read_u32() as u64) << 32
+    }
+
+    pub(crate) fn skip(&mut self, n: usize) {
+        self.off += n;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::load;
@@ -249,6 +286,96 @@ mod tests {
         assert!(bi.module_tags().next().is_none());
         assert_eq!("name", bi.boot_loader_name_tag().unwrap().name());
         assert!(bi.command_line_tag().is_none());
+    }
+
+    #[test]
+    fn framebuffer_tag_rgb() {
+        // direct RGB mode test:
+        // taken from GRUB2 running in QEMU at 
+        // 1280x720 with 32bpp in BGRA format.
+        let bytes: [u8; 56] = [
+            56, 0, 0, 0,  // total size
+            0, 0, 0, 0,   // reserved
+            8, 0, 0, 0,   // framebuffer tag type
+            40, 0, 0, 0,  // framebuffer tag size
+            0, 0, 0, 253, // framebuffer low dword of address
+            0, 0, 0, 0,   // framebuffer high dword of address
+            0, 20, 0, 0,  // framebuffer pitch
+            0, 5, 0, 0,   // framebuffer width
+            208, 2, 0, 0, // framebuffer height
+            32, 1, 0, 0,  // framebuffer bpp, type, reserved word
+            16, 8, 8, 8,  // framebuffer red pos/size, green pos/size
+            0, 8, 0, 0,   // framebuffer blue pos/size, padding word
+            0, 0, 0, 0,   // end tag type
+            8, 0, 0, 0    // end tag size
+        ];
+        let addr = bytes.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        assert_eq!(addr, bi.start_address());
+        assert_eq!(addr + bytes.len(), bi.end_address());
+        assert_eq!(bytes.len(), bi.total_size());
+        use framebuffer::{FramebufferTag, FramebufferField, FramebufferType};
+        assert_eq!(bi.framebuffer_tag(), Some(FramebufferTag {
+            address: 4244635648,
+            pitch: 5120,
+            width: 1280,
+            height: 720,
+            bpp: 32,
+            buffer_type: FramebufferType::RGB {
+                red: FramebufferField {
+                    position: 16, size: 8
+                },
+                green: FramebufferField {
+                    position: 8, size: 8
+                },
+                blue: FramebufferField {
+                    position: 0, size: 8
+                }
+            }
+        }))
+    }
+
+    #[test]
+    fn framebuffer_tag_indexed() {
+        // indexed mode test:
+        // this is synthetic, as I can't get QEMU
+        // to run in indexed color mode.
+        let bytes: [u8; 56] = [
+            56, 0, 0, 0,  // total size
+            0, 0, 0, 0,   // reserved
+            8, 0, 0, 0,   // framebuffer tag type
+            40, 0, 0, 0,  // framebuffer tag size
+            0, 0, 0, 253, // framebuffer low dword of address
+            0, 0, 0, 0,   // framebuffer high dword of address
+            0, 20, 0, 0,  // framebuffer pitch
+            0, 5, 0, 0,   // framebuffer width
+            208, 2, 0, 0, // framebuffer height
+            32, 0, 0, 0,  // framebuffer bpp, type, reserved word
+            0, 1, 0, 0,   // framebuffer palette length
+            0, 24, 1, 0,  // framebuffer palette address
+            0, 0, 0, 0,   // end tag type
+            8, 0, 0, 0    // end tag size
+        ];
+        let addr = bytes.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        assert_eq!(addr, bi.start_address());
+        assert_eq!(addr + bytes.len(), bi.end_address());
+        assert_eq!(bytes.len(), bi.total_size());
+        use framebuffer::{FramebufferTag, FramebufferField, FramebufferType};
+        assert!(bi.framebuffer_tag().is_some());
+        let fbi = bi.framebuffer_tag().unwrap();
+        assert_eq!(fbi.address, 4244635648);
+        assert_eq!(fbi.pitch, 5120);
+        assert_eq!(fbi.width, 1280);
+        assert_eq!(fbi.height, 720);
+        assert_eq!(fbi.bpp, 32);
+        match fbi.buffer_type {
+            FramebufferType::Indexed { palette } => {
+                assert_eq!(palette.as_ptr() as usize, 71680);
+                assert_eq!(palette.len(), 256);
+            },
+            _ => panic!("Expected indexed framebuffer type.")
+        }
     }
 
     #[test]
@@ -598,7 +725,7 @@ mod tests {
         assert_eq!("GRUB 2.02~beta3-5", bi.boot_loader_name_tag().unwrap().name());
         assert_eq!("", bi.command_line_tag().unwrap().command_line());
 
-        //Test the Framebuffer tag
+        // Test the Framebuffer tag
         let fbi = bi.framebuffer_tag().unwrap();
         assert_eq!(fbi.address, 753664);
         assert_eq!(fbi.pitch, 160);
