@@ -1,6 +1,6 @@
 [package]
 name = "multiboot2"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Philipp Oppermann <dev@phil-opp.com>", "Calvin Lee <cyrus296@gmail.com>"]
 license = "MIT/Apache-2.0"
 description = "An experimental Multiboot 2 crate for ELF-64/32 kernels."
