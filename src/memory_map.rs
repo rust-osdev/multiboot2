@@ -30,12 +30,12 @@ pub struct MemoryArea {
 }
 
 impl MemoryArea {
-    pub fn start_address(&self) -> usize {
-        self.base_addr as usize
+    pub fn start_address(&self) -> u64 {
+        self.base_addr
     }
 
-    pub fn end_address(&self) -> usize {
-        (self.base_addr + self.length) as usize
+    pub fn end_address(&self) -> u64 {
+        (self.base_addr + self.length)
     }
 
     pub fn size(&self) -> usize {
