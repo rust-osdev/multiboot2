@@ -38,8 +38,8 @@ impl MemoryArea {
         (self.base_addr + self.length)
     }
 
-    pub fn size(&self) -> usize {
-        self.length as usize
+    pub fn size(&self) -> u64 {
+        self.length
     }
 }
 
