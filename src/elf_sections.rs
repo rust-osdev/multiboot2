@@ -169,6 +169,10 @@ impl ElfSection {
         self.get().size()
     }
 
+    pub fn addralign(&self) -> u64 {
+        self.get().addralign()
+    }
+
     pub fn flags(&self) -> ElfSectionFlags {
         ElfSectionFlags::from_bits_truncate(self.get().flags())
     }
@@ -204,6 +208,8 @@ trait ElfSectionInner {
     fn addr(&self) -> u64;
 
     fn size(&self) -> u64;
+
+    fn addralign(&self) -> u64;
 }
 
 impl ElfSectionInner for ElfSectionInner32 {
@@ -226,6 +232,10 @@ impl ElfSectionInner for ElfSectionInner32 {
     fn size(&self) -> u64 {
         self.size.into()
     }
+
+    fn addralign(&self) -> u64 {
+        self.addralign.into()
+    }
 }
 
 impl ElfSectionInner for ElfSectionInner64 {
@@ -247,6 +257,10 @@ impl ElfSectionInner for ElfSectionInner64 {
 
     fn size(&self) -> u64 {
         self.size
+    }
+
+    fn addralign(&self) -> u64 {
+        self.addralign.into()
     }
 }
 
