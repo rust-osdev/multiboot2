@@ -37,6 +37,7 @@ impl RsdpV1Tag {
         self.revision
     }
 
+    /// Get the physical address of the RSDT.
     pub fn rsdt_address(&self) -> usize {
         self.rsdt_address as usize
     }
@@ -75,6 +76,7 @@ impl RsdpV2Tag {
         self.revision
     }
 
+    /// Get the physical address of the XSDT. On x86, this is truncated from 64-bit to 32-bit.
     pub fn xsdt_address(&self) -> usize {
         self.xsdt_address as usize
     }
