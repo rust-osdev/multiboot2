@@ -30,7 +30,7 @@ impl ElfSectionsTag {
         };
         ElfSectionIter {
             current_section: self.first_section(),
-            remaining_sections: self.get().number_of_sections - 1,
+            remaining_sections: self.get().number_of_sections,
             entry_size: self.get().entry_size,
             string_section: string_section_ptr,
         }
@@ -57,11 +57,7 @@ impl Iterator for ElfSectionIter {
     type Item = ElfSection;
 
     fn next(&mut self) -> Option<ElfSection> {
-        if self.remaining_sections == 0 {
-            return None;
-        }
-
-        loop {
+        while self.remaining_sections != 0 {
             let section = ElfSection {
                 inner: self.current_section,
                 string_section: self.string_section,
@@ -75,6 +71,7 @@ impl Iterator for ElfSectionIter {
                 return Some(section);
             }
         }
+        None
     }
 }
 
