@@ -701,6 +701,13 @@ mod tests {
         assert_eq!(0x0000_0000_0000_3791, s7.size());
         assert_eq!(ElfSectionFlags::empty(), s7.flags());
         assert_eq!(ElfSectionType::StringTable, s7.section_type());
+        let s8 = s.next().unwrap();
+        assert_eq!(".shstrtab", s8.name());
+        assert_eq!(string_addr, s8.start_address());
+        assert_eq!(string_addr + string_bytes.len() as u64, s8.end_address());
+        assert_eq!(string_bytes.len() as u64, s8.size());
+        assert_eq!(ElfSectionFlags::empty(), s8.flags());
+        assert_eq!(ElfSectionType::StringTable, s8.section_type());
         assert!(s.next().is_none());
         let mut mm = bi.memory_map_tag().unwrap().memory_areas();
         let mm1 = mm.next().unwrap();
@@ -733,5 +740,79 @@ mod tests {
         assert_eq!(fbi.height, 25);
         assert_eq!(fbi.bpp, 16);
         assert_eq!(fbi.buffer_type, FramebufferType::Text);
+    }
+
+    #[test]
+    fn elf_sections() {
+        let mut bytes: [u8; 168] = [
+            168, 0, 0, 0,       // total_size
+            0, 0, 0, 0,         // reserved
+            9, 0, 0, 0,         // elf symbols tag type
+            20, 2, 0, 0,        // elf symbols tag size
+            2, 0, 0, 0,         // elf symbols num
+            64, 0, 0, 0,        // elf symbols entsize
+            1, 0, 0, 0,         // elf symbols shndx
+            0, 0, 0, 0,         // elf symbols entry 0 name
+            0, 0, 0, 0,         // elf symbols entry 0 type
+            0, 0, 0, 0,         // elf symbols entry 0 flags
+            0, 0, 0, 0,         // elf symbols entry 0 flags
+            0, 0, 0, 0,         // elf symbols entry 0 addr
+            0, 0, 0, 0,         // elf symbols entry 0 addr
+            0, 0, 0, 0,         // elf symbols entry 0 offset
+            0, 0, 0, 0,         // elf symbols entry 0 offset
+            0, 0, 0, 0,         // elf symbols entry 0 size
+            0, 0, 0, 0,         // elf symbols entry 0 size
+            0, 0, 0, 0,         // elf symbols entry 0 link
+            0, 0, 0, 0,         // elf symbols entry 0 info
+            0, 0, 0, 0,         // elf symbols entry 0 addralign
+            0, 0, 0, 0,         // elf symbols entry 0 addralign
+            0, 0, 0, 0,         // elf symbols entry 0 entsize
+            0, 0, 0, 0,         // elf symbols entry 0 entsize
+            1, 0, 0, 0,         // elf symbols entry 1 name
+            3, 0, 0, 0,         // elf symbols entry 1 type
+            0, 0, 0, 0,         // elf symbols entry 1 flags
+            0, 0, 0, 0,         // elf symbols entry 1 flags
+            255, 255, 255, 255, // elf symbols entry 1 addr
+            255, 255, 255, 255, // elf symbols entry 1 addr
+            113, 83, 1, 0,      // elf symbols entry 1 offset
+            0, 0, 0, 0,         // elf symbols entry 1 offset
+            11, 0, 0, 0,        // elf symbols entry 1 size
+            0, 0, 0, 0,         // elf symbols entry 1 size
+            0, 0, 0, 0,         // elf symbols entry 1 link
+            0, 0, 0, 0,         // elf symbols entry 1 info
+            1, 0, 0, 0,         // elf symbols entry 1 addralign
+            0, 0, 0, 0,         // elf symbols entry 1 addralign
+            0, 0, 0, 0,         // elf symbols entry 1 entsize
+            0, 0, 0, 0,         // elf symbols entry 1 entsize
+            0, 0, 0, 0,         // elf symbols padding
+            0, 0, 0, 0,         // end tag type
+            8, 0, 0, 0,         // end tag size
+        ];
+        let string_bytes: [u8; 11] = [
+            0, 46, 115, 104,
+            115, 116, 114, 116,
+            97, 98, 0,
+        ];
+        let string_addr = string_bytes.as_ptr() as u64;
+        for i in 0..8 {
+            let offset = 108;
+            assert_eq!(255, bytes[offset + i]);
+            bytes[offset + i] = (string_addr >> (i * 8)) as u8;
+        }
+        let addr = bytes.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        assert_eq!(addr, bi.start_address());
+        assert_eq!(addr + bytes.len(), bi.end_address());
+        assert_eq!(bytes.len(), bi.total_size() as usize);
+        let es = bi.elf_sections_tag().unwrap();
+        let mut s = es.sections();
+        let s1 = s.next().unwrap();
+        assert_eq!(".shstrtab", s1.name());
+        assert_eq!(string_addr, s1.start_address());
+        assert_eq!(string_addr + string_bytes.len() as u64, s1.end_address());
+        assert_eq!(string_bytes.len() as u64, s1.size());
+        assert_eq!(ElfSectionFlags::empty(), s1.flags());
+        assert_eq!(ElfSectionType::StringTable, s1.section_type());
+        assert!(s.next().is_none());
     }
 }
