@@ -3,12 +3,14 @@ use header::Tag;
 #[derive(Debug)]
 pub struct ElfSectionsTag {
     inner: *const ElfSectionsTagInner,
+    offset: usize,
 }
 
-pub fn elf_sections_tag(tag: &Tag) -> ElfSectionsTag {
+pub unsafe fn elf_sections_tag(tag: &Tag, offset: usize) -> ElfSectionsTag {
     assert_eq!(9, tag.typ);
     let es = ElfSectionsTag {
-        inner: unsafe { (tag as *const Tag).offset(1) } as *const ElfSectionsTagInner,
+        inner: (tag as *const Tag).offset(1) as *const ElfSectionsTagInner,
+        offset: offset,
     };
     assert!((es.get().entry_size * es.get().shndx) <= tag.size);
     es
@@ -33,6 +35,7 @@ impl ElfSectionsTag {
             remaining_sections: self.get().number_of_sections,
             entry_size: self.get().entry_size,
             string_section: string_section_ptr,
+            offset: self.offset,
         }
     }
 
@@ -51,6 +54,7 @@ pub struct ElfSectionIter {
     remaining_sections: u32,
     entry_size: u32,
     string_section: *const u8,
+    offset: usize,
 }
 
 impl Iterator for ElfSectionIter {
@@ -62,6 +66,7 @@ impl Iterator for ElfSectionIter {
                 inner: self.current_section,
                 string_section: self.string_section,
                 entry_size: self.entry_size,
+                offset: self.offset,
             };
 
             self.current_section = unsafe { self.current_section.offset(self.entry_size as isize) };
@@ -80,6 +85,7 @@ pub struct ElfSection {
     inner: *const u8,
     string_section: *const u8,
     entry_size: u32,
+    offset: usize,
 }
 
 #[derive(Debug)]
@@ -187,11 +193,12 @@ impl ElfSection {
     }
 
     unsafe fn string_table(&self) -> *const u8 {
-        match self.entry_size {
-            40 => (*(self.string_section as *const ElfSectionInner32)).addr as *const _,
-            64 => (*(self.string_section as *const ElfSectionInner64)).addr as *const _,
+        let addr = match self.entry_size {
+            40 => (*(self.string_section as *const ElfSectionInner32)).addr as usize,
+            64 => (*(self.string_section as *const ElfSectionInner64)).addr as usize,
             _ => panic!(),
-        }
+        };
+        (addr + self.offset) as *const _
     }
 }
 
