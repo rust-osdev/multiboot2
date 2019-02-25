@@ -32,11 +32,23 @@ pub unsafe fn load(address: usize) -> BootInformation {
     let multiboot = &*(address as *const BootInformationInner);
     assert_eq!(0, multiboot.total_size & 0b111);
     assert!(multiboot.has_valid_end_tag());
-    BootInformation { inner: multiboot }
+    BootInformation { inner: multiboot, offset: 0 }
+}
+
+pub unsafe fn load_with_offset(address: usize, offset: usize) -> BootInformation {
+    if !cfg!(test) {
+        assert_eq!(0, address & 0b111);
+        assert_eq!(0, offset & 0b111);
+    }
+    let multiboot = &*((address + offset) as *const BootInformationInner);
+    assert_eq!(0, multiboot.total_size & 0b111);
+    assert!(multiboot.has_valid_end_tag());
+    BootInformation { inner: multiboot, offset: offset }
 }
 
 pub struct BootInformation {
     inner: *const BootInformationInner,
+    offset: usize,
 }
 
 #[repr(C, packed)]
@@ -59,7 +71,9 @@ impl BootInformation {
     }
 
     pub fn elf_sections_tag(&self) -> Option<ElfSectionsTag> {
-        self.get_tag(9).map(|tag| elf_sections::elf_sections_tag(tag))
+        self.get_tag(9).map(|tag| unsafe {
+            elf_sections::elf_sections_tag(tag, self.offset)
+        })
     }
 
     pub fn memory_map_tag(&self) -> Option<&'static MemoryMapTag> {
@@ -196,8 +210,8 @@ impl Reader {
 
 #[cfg(test)]
 mod tests {
-    use super::load;
-    use super::{ElfSectionFlags, ElfSectionType};
+    use super::{load, load_with_offset};
+    use super::{BootInformation, ElfSectionFlags, ElfSectionType};
     use super::FramebufferType;
 
     #[test]
@@ -646,10 +660,43 @@ mod tests {
             bytes[796 + i] = (string_addr >> (i * 8)) as u8;
         }
         let addr = bytes.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        test_grub2_boot_info(
+            unsafe { load(addr) },
+            addr,
+            string_addr,
+            &bytes,
+            &string_bytes,
+        );
+        test_grub2_boot_info(
+            unsafe { load_with_offset(addr, 0) },
+            addr,
+            string_addr,
+            &bytes,
+            &string_bytes,
+        );
+        let offset = 8usize;
+        for i in 0..8 {
+            bytes[796 + i] = ((string_addr - offset as u64) >> (i * 8)) as u8;
+        }
+        test_grub2_boot_info(
+            unsafe { load_with_offset(addr - offset, offset) },
+            addr,
+            string_addr - offset as u64,
+            &bytes,
+            &string_bytes,
+        );
+    }
+
+    fn test_grub2_boot_info(
+        bi: BootInformation,
+        addr: usize,
+        string_addr: u64,
+        bytes: &[u8],
+        string_bytes: &[u8],
+    ) {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size() as usize);
+        assert_eq!(bytes.len(), bi.total_size());
         let es = bi.elf_sections_tag().unwrap();
         let mut s = es.sections();
         let s1 = s.next().unwrap();
