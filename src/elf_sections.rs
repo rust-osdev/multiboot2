@@ -16,7 +16,7 @@ pub unsafe fn elf_sections_tag(tag: &Tag, offset: usize) -> ElfSectionsTag {
     es
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding at the end
 struct ElfSectionsTagInner {
     number_of_sections: u32,
@@ -88,7 +88,7 @@ pub struct ElfSection {
     offset: usize,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 struct ElfSectionInner32 {
     name_index: u32,
@@ -103,7 +103,7 @@ struct ElfSectionInner32 {
     entry_size: u32,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 struct ElfSectionInner64 {
     name_index: u32,

@@ -26,9 +26,7 @@ mod rsdp;
 mod framebuffer;
 
 pub unsafe fn load(address: usize) -> BootInformation {
-    if !cfg!(test) {
-        assert_eq!(0, address & 0b111);
-    }
+    assert_eq!(0, address & 0b111);
     let multiboot = &*(address as *const BootInformationInner);
     assert_eq!(0, multiboot.total_size & 0b111);
     assert!(multiboot.has_valid_end_tag());
@@ -216,17 +214,19 @@ mod tests {
 
     #[test]
     fn no_tags() {
-        let bytes: [u8; 16] = [
+        #[repr(C, align(8))]
+        struct Bytes([u8; 16]);
+        let bytes: Bytes = Bytes([
             16, 0, 0, 0, // total_size
             0, 0, 0, 0,  // reserved
             0, 0, 0, 0,  // end tag type
             8, 0, 0, 0,  // end tag size
-        ];
-        let addr = bytes.as_ptr() as usize;
+        ]);
+        let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
         assert_eq!(addr, bi.start_address());
-        assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size());
+        assert_eq!(addr + bytes.0.len(), bi.end_address());
+        assert_eq!(bytes.0.len(), bi.total_size());
         assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
@@ -238,17 +238,19 @@ mod tests {
     #[test]
     #[should_panic]
     fn invalid_total_size() {
-        let bytes: [u8; 15] = [
+        #[repr(C, align(8))]
+        struct Bytes([u8; 15]);
+        let bytes: Bytes = Bytes([
             15, 0, 0, 0, // total_size
             0, 0, 0, 0,  // reserved
             0, 0, 0, 0,  // end tag type
             8, 0, 0,     // end tag size
-        ];
-        let addr = bytes.as_ptr() as usize;
+        ]);
+        let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
         assert_eq!(addr, bi.start_address());
-        assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size());
+        assert_eq!(addr + bytes.0.len(), bi.end_address());
+        assert_eq!(bytes.0.len(), bi.total_size());
         assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
@@ -260,17 +262,19 @@ mod tests {
     #[test]
     #[should_panic]
     fn invalid_end_tag() {
-        let bytes: [u8; 16] = [
+        #[repr(C, align(8))]
+        struct Bytes([u8; 16]);
+        let bytes: Bytes = Bytes([
             16, 0, 0, 0, // total_size
             0, 0, 0, 0,  // reserved
             0, 0, 0, 0,  // end tag type
             9, 0, 0, 0,  // end tag size
-        ];
-        let addr = bytes.as_ptr() as usize;
+        ]);
+        let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
         assert_eq!(addr, bi.start_address());
-        assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size());
+        assert_eq!(addr + bytes.0.len(), bi.end_address());
+        assert_eq!(bytes.0.len(), bi.total_size());
         assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
@@ -280,7 +284,9 @@ mod tests {
 
     #[test]
     fn name_tag() {
-        let bytes: [u8; 32] = [
+        #[repr(C, align(8))]
+        struct Bytes([u8; 32]);
+        let bytes: Bytes = Bytes([
             32, 0, 0, 0,       // total_size
             0, 0, 0, 0,        // reserved
             2, 0, 0, 0,        // boot loader name tag type
@@ -289,12 +295,12 @@ mod tests {
             0, 0, 0, 0,        // boot loader name null + padding
             0, 0, 0, 0,        // end tag type
             8, 0, 0, 0,        // end tag size
-        ];
-        let addr = bytes.as_ptr() as usize;
+        ]);
+        let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
         assert_eq!(addr, bi.start_address());
-        assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size());
+        assert_eq!(addr + bytes.0.len(), bi.end_address());
+        assert_eq!(bytes.0.len(), bi.total_size());
         assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
@@ -307,7 +313,9 @@ mod tests {
         // direct RGB mode test:
         // taken from GRUB2 running in QEMU at 
         // 1280x720 with 32bpp in BGRA format.
-        let bytes: [u8; 56] = [
+        #[repr(C, align(8))]
+        struct Bytes([u8; 56]);
+        let bytes: Bytes = Bytes([
             56, 0, 0, 0,  // total size
             0, 0, 0, 0,   // reserved
             8, 0, 0, 0,   // framebuffer tag type
@@ -322,12 +330,12 @@ mod tests {
             0, 8, 0, 0,   // framebuffer blue pos/size, padding word
             0, 0, 0, 0,   // end tag type
             8, 0, 0, 0    // end tag size
-        ];
-        let addr = bytes.as_ptr() as usize;
+        ]);
+        let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
         assert_eq!(addr, bi.start_address());
-        assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size());
+        assert_eq!(addr + bytes.0.len(), bi.end_address());
+        assert_eq!(bytes.0.len(), bi.total_size());
         use framebuffer::{FramebufferTag, FramebufferField, FramebufferType};
         assert_eq!(bi.framebuffer_tag(), Some(FramebufferTag {
             address: 4244635648,
@@ -354,7 +362,9 @@ mod tests {
         // indexed mode test:
         // this is synthetic, as I can't get QEMU
         // to run in indexed color mode.
-        let bytes: [u8; 56] = [
+        #[repr(C, align(8))]
+        struct Bytes([u8; 56]);
+        let bytes: Bytes = Bytes([
             56, 0, 0, 0,  // total size
             0, 0, 0, 0,   // reserved
             8, 0, 0, 0,   // framebuffer tag type
@@ -369,13 +379,13 @@ mod tests {
             0, 24, 1, 0,  // framebuffer palette address
             0, 0, 0, 0,   // end tag type
             8, 0, 0, 0    // end tag size
-        ];
-        let addr = bytes.as_ptr() as usize;
+        ]);
+        let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
         assert_eq!(addr, bi.start_address());
-        assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size());
-        use framebuffer::{FramebufferTag, FramebufferField, FramebufferType};
+        assert_eq!(addr + bytes.0.len(), bi.end_address());
+        assert_eq!(bytes.0.len(), bi.total_size());
+        use framebuffer::FramebufferType;
         assert!(bi.framebuffer_tag().is_some());
         let fbi = bi.framebuffer_tag().unwrap();
         assert_eq!(fbi.address, 4244635648);
@@ -394,7 +404,9 @@ mod tests {
 
     #[test]
     fn grub2() {
-        let mut bytes: [u8; 960] = [
+        #[repr(C, align(8))]
+        struct Bytes([u8; 960]);
+        let mut bytes: Bytes = Bytes([
             192, 3, 0, 0,       // total_size
             0, 0, 0, 0,         // reserved
             1, 0, 0, 0,         // boot command tag type
@@ -635,8 +647,10 @@ mod tests {
             0, 0, 0, 0,         // ACPI old padding
             0, 0, 0, 0,         // end tag type
             8, 0, 0, 0,         // end tag size
-        ];
-        let string_bytes: [u8; 65] = [
+        ]);
+        #[repr(C, align(8))]
+        struct StringBytes([u8; 65]);
+        let string_bytes: StringBytes = StringBytes([
             0, 46, 115, 121,
             109, 116, 97, 98,
             0, 46, 115, 116,
@@ -654,36 +668,36 @@ mod tests {
             97, 46, 114, 101,
             108, 46, 114, 111,
             0,
-        ];
-        let string_addr = string_bytes.as_ptr() as u64;
+        ]);
+        let string_addr = string_bytes.0.as_ptr() as u64;
         for i in 0..8 {
-            bytes[796 + i] = (string_addr >> (i * 8)) as u8;
+            bytes.0[796 + i] = (string_addr >> (i * 8)) as u8;
         }
-        let addr = bytes.as_ptr() as usize;
+        let addr = bytes.0.as_ptr() as usize;
         test_grub2_boot_info(
             unsafe { load(addr) },
             addr,
             string_addr,
-            &bytes,
-            &string_bytes,
+            &bytes.0,
+            &string_bytes.0,
         );
         test_grub2_boot_info(
             unsafe { load_with_offset(addr, 0) },
             addr,
             string_addr,
-            &bytes,
-            &string_bytes,
+            &bytes.0,
+            &string_bytes.0,
         );
         let offset = 8usize;
         for i in 0..8 {
-            bytes[796 + i] = ((string_addr - offset as u64) >> (i * 8)) as u8;
+            bytes.0[796 + i] = ((string_addr - offset as u64) >> (i * 8)) as u8;
         }
         test_grub2_boot_info(
             unsafe { load_with_offset(addr - offset, offset) },
             addr,
             string_addr - offset as u64,
-            &bytes,
-            &string_bytes,
+            &bytes.0,
+            &string_bytes.0,
         );
     }
 
@@ -791,7 +805,9 @@ mod tests {
 
     #[test]
     fn elf_sections() {
-        let mut bytes: [u8; 168] = [
+        #[repr(C, align(8))]
+        struct Bytes([u8; 168]);
+        let mut bytes: Bytes = Bytes([
             168, 0, 0, 0,       // total_size
             0, 0, 0, 0,         // reserved
             9, 0, 0, 0,         // elf symbols tag type
@@ -834,30 +850,32 @@ mod tests {
             0, 0, 0, 0,         // elf symbols padding
             0, 0, 0, 0,         // end tag type
             8, 0, 0, 0,         // end tag size
-        ];
-        let string_bytes: [u8; 11] = [
+        ]);
+        #[repr(C, align(8))]
+        struct StringBytes([u8; 11]);
+        let string_bytes: StringBytes = StringBytes([
             0, 46, 115, 104,
             115, 116, 114, 116,
             97, 98, 0,
-        ];
-        let string_addr = string_bytes.as_ptr() as u64;
+        ]);
+        let string_addr = string_bytes.0.as_ptr() as u64;
         for i in 0..8 {
             let offset = 108;
-            assert_eq!(255, bytes[offset + i]);
-            bytes[offset + i] = (string_addr >> (i * 8)) as u8;
+            assert_eq!(255, bytes.0[offset + i]);
+            bytes.0[offset + i] = (string_addr >> (i * 8)) as u8;
         }
-        let addr = bytes.as_ptr() as usize;
+        let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
         assert_eq!(addr, bi.start_address());
-        assert_eq!(addr + bytes.len(), bi.end_address());
-        assert_eq!(bytes.len(), bi.total_size() as usize);
+        assert_eq!(addr + bytes.0.len(), bi.end_address());
+        assert_eq!(bytes.0.len(), bi.total_size() as usize);
         let es = bi.elf_sections_tag().unwrap();
         let mut s = es.sections();
         let s1 = s.next().unwrap();
         assert_eq!(".shstrtab", s1.name());
         assert_eq!(string_addr, s1.start_address());
-        assert_eq!(string_addr + string_bytes.len() as u64, s1.end_address());
-        assert_eq!(string_bytes.len() as u64, s1.size());
+        assert_eq!(string_addr + string_bytes.0.len() as u64, s1.end_address());
+        assert_eq!(string_bytes.0.len() as u64, s1.size());
         assert_eq!(ElfSectionFlags::empty(), s1.flags());
         assert_eq!(ElfSectionType::StringTable, s1.section_type());
         assert!(s.next().is_none());

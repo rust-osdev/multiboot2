@@ -1,5 +1,5 @@
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding before first_section
 pub struct BootLoaderNameTag {
     typ: u32,

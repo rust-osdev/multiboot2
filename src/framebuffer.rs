@@ -31,7 +31,7 @@ pub struct FramebufferField {
     pub size: u8
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(C, packed)]
 pub struct FramebufferColor {
     pub red: u8,
