@@ -8,7 +8,7 @@
 
 use core::str;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct RsdpV1Tag {
     typ: u32,
@@ -43,7 +43,7 @@ impl RsdpV1Tag {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct RsdpV2Tag {
     typ: u32,

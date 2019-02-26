@@ -1,5 +1,5 @@
-#[derive(Debug)]
-#[repr(C, packed)]
+#[derive(Clone, Copy, Debug)]
+#[repr(C)]
 pub struct Tag {
     pub typ: u32,
     pub size: u32,
