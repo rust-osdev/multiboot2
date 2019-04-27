@@ -54,13 +54,13 @@ pub fn framebuffer_tag<'a>(tag: &'a Tag) -> FramebufferTag<'a> {
         0 =>  {
             let num_colors = reader.read_u32();
             let palette = unsafe {
-                slice::from_raw_parts(reader.read_u32() as usize as *const FramebufferColor, num_colors as usize)
+                slice::from_raw_parts(reader.current_address() as *const FramebufferColor, num_colors as usize)
             } as &'static [FramebufferColor];
             FramebufferType::Indexed { palette }
         },
         1 => {
-            let red_pos = reader.read_u8();     // These refer to the bit positions of the MSB of each field
-            let red_mask = reader.read_u8();    // And then the length of the field from MSB to LSB
+            let red_pos = reader.read_u8();     // These refer to the bit positions of the LSB of each field
+            let red_mask = reader.read_u8();    // And then the length of the field from LSB to MSB
             let green_pos = reader.read_u8();   
             let green_mask = reader.read_u8();  
             let blue_pos = reader.read_u8();

@@ -12,6 +12,8 @@ pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
 pub use module::{ModuleTag, ModuleIter};
 pub use command_line::CommandLineTag;
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
+pub use vbe_info::{VBEInfoTag, VBEControlInfo, VBEModeInfo, VBEField, VBECapabilities, 
+                   VBEModeAttributes, VBEWindowAttributes, VBEDirectColorAttributes, VBEMemoryModel};
 
 #[macro_use]
 extern crate bitflags;
@@ -24,6 +26,7 @@ mod module;
 mod command_line;
 mod rsdp;
 mod framebuffer;
+mod vbe_info;
 
 pub unsafe fn load(address: usize) -> BootInformation {
     assert_eq!(0, address & 0b111);
@@ -100,6 +103,10 @@ impl BootInformation {
 
     pub fn rsdp_v2_tag(&self) -> Option<&'static RsdpV2Tag> {
         self.get_tag(15).map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV2Tag) })
+    }
+
+    pub fn vbe_info_tag(&self) -> Option<&'static VBEInfoTag> {
+        self.get_tag(7).map(|tag| unsafe { &*(tag as *const Tag as *const VBEInfoTag) })
     }
 
     fn get(&self) -> &BootInformationInner {
@@ -203,6 +210,12 @@ impl Reader {
 
     pub(crate) fn skip(&mut self, n: usize) {
         self.off += n;
+    }
+
+    pub(crate) fn current_address(&self) -> usize {
+        unsafe {
+            self.ptr.offset(self.off as isize) as usize
+        }
     }
 }
 
@@ -363,20 +376,22 @@ mod tests {
         // this is synthetic, as I can't get QEMU
         // to run in indexed color mode.
         #[repr(C, align(8))]
-        struct Bytes([u8; 56]);
+        struct Bytes([u8; 64]);
         let bytes: Bytes = Bytes([
-            56, 0, 0, 0,  // total size
+            64, 0, 0, 0,  // total size
             0, 0, 0, 0,   // reserved
             8, 0, 0, 0,   // framebuffer tag type
-            40, 0, 0, 0,  // framebuffer tag size
+            48, 0, 0, 0,  // framebuffer tag size
             0, 0, 0, 253, // framebuffer low dword of address
             0, 0, 0, 0,   // framebuffer high dword of address
             0, 20, 0, 0,  // framebuffer pitch
             0, 5, 0, 0,   // framebuffer width
             208, 2, 0, 0, // framebuffer height
             32, 0, 0, 0,  // framebuffer bpp, type, reserved word
-            0, 1, 0, 0,   // framebuffer palette length
-            0, 24, 1, 0,  // framebuffer palette address
+            4, 0, 0, 0,   // framebuffer palette length
+            255, 0, 0, 0,  // framebuffer palette
+            255, 0, 0, 0,
+            255, 0, 0, 0, 
             0, 0, 0, 0,   // end tag type
             8, 0, 0, 0    // end tag size
         ]);
@@ -385,7 +400,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        use framebuffer::FramebufferType;
+        use framebuffer::{FramebufferType, FramebufferColor};
         assert!(bi.framebuffer_tag().is_some());
         let fbi = bi.framebuffer_tag().unwrap();
         assert_eq!(fbi.address, 4244635648);
@@ -394,11 +409,288 @@ mod tests {
         assert_eq!(fbi.height, 720);
         assert_eq!(fbi.bpp, 32);
         match fbi.buffer_type {
-            FramebufferType::Indexed { palette } => {
-                assert_eq!(palette.as_ptr() as usize, 71680);
-                assert_eq!(palette.len(), 256);
-            },
+            FramebufferType::Indexed { palette } => assert_eq!(palette, [
+                FramebufferColor { red: 255, green: 0, blue: 0 },
+                FramebufferColor { red: 0, green: 255, blue: 0 },
+                FramebufferColor { red: 0, green: 0, blue: 255 },
+                FramebufferColor { red: 0, green: 0, blue: 0}
+            ]),
             _ => panic!("Expected indexed framebuffer type.")
+        }
+    }
+
+    #[test]
+    fn vbe_info_tag() {
+        //Taken from GRUB2 running in QEMU.
+        #[repr(C, align(8))]
+        struct Bytes([u8; 800]);
+        let bytes = Bytes([
+            32, 3, 0, 0,        // Total size.
+            0, 0, 0, 0,         // Reserved
+            7, 0, 0, 0,         // Tag type.
+            16, 3, 0, 0,        // Tag size.
+            122, 65, 255, 255,  // VBE mode, protected mode interface segment,
+            0, 96, 79, 0,       // protected mode interface offset, and length.
+            86, 69, 83, 65,     // "VESA" signature.
+            0, 3, 220, 87,      // VBE version, lower half of OEM string ptr,
+            0, 192, 1, 0,       // upper half of OEM string ptr, lower half of capabilities
+            0, 0, 34, 128,      // upper half of capabilities, lower half of vide mode ptr,
+            0, 96, 0, 1,        // upper half of video mode ptr, number of 64kb memory blocks
+            0, 0, 240, 87,      // OEM software revision, lower half of OEM vendor string ptr,
+            0, 192, 3, 88,      // upper half of OEM vendor string ptr, lower half of OEM product string ptr,
+            0, 192, 23, 88,     // upper half of OEM product string ptr, lower half of OEM revision string ptr,
+            0, 192, 0, 1,       // upper half of OEM revision string ptr.
+            1, 1, 2, 1,         // Reserved data....
+            3, 1, 4, 1, 
+            5, 1, 6, 1, 
+            7, 1, 13, 1, 
+            14, 1, 15, 1, 
+            16, 1, 17, 1, 
+            18, 1, 19, 1, 
+            20, 1, 21, 1, 
+            22, 1, 23, 1, 
+            24, 1, 25, 1, 
+            26, 1, 27, 1, 
+            28, 1, 29, 1, 
+            30, 1, 31, 1, 
+            64, 1, 65, 1, 
+            66, 1, 67, 1, 
+            68, 1, 69, 1, 
+            70, 1, 71, 1, 
+            72, 1, 73, 1, 
+            74, 1, 75, 1, 
+            76, 1, 117, 1, 
+            118, 1, 119, 1, 
+            120, 1, 121, 1, 
+            122, 1, 123, 1, 
+            124, 1, 125, 1, 
+            126, 1, 127, 1, 
+            128, 1, 129, 1, 
+            130, 1, 131, 1, 
+            132, 1, 133, 1, 
+            134, 1, 135, 1, 
+            136, 1, 137, 1, 
+            138, 1, 139, 1, 
+            140, 1, 141, 1, 
+            142, 1, 143, 1, 
+            144, 1, 145, 1, 
+            146, 1, 0, 0, 
+            1, 0, 2, 0, 
+            3, 0, 4, 0, 
+            5, 0, 6, 0, 
+            7, 0, 13, 0, 
+            14, 0, 15, 0, 
+            16, 0, 17, 0, 
+            18, 0, 19, 0, 
+            106, 0, 255, 255, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0,         // Until Here
+            187, 0, 7, 0,       // Mode attributes, window A and B attributes
+            64, 0, 64, 0,       // Window granularity and size.
+            0, 160, 0, 0,       // Window A and B segments.
+            186, 84, 0, 192,    // Window relocation function pointer.
+            0, 20, 0, 5,        // Pitch, X resolution.
+            32, 3, 8, 16,       // Y resolution, X char size, Y char size.
+            1, 32, 1, 6,        // Number of planes, BPP, number of banks, memory model.
+            0, 3, 1, 8,         // Bank size, number of images, reserved, red mask size.
+            16, 8, 8, 8,        // Red mask position, green mask size, green mask position, blue mask size,
+            0, 8, 24, 2,        // blue mask position, reserved mask size, reserved mask position, color attributes.
+            0, 0, 0, 253,       // Frame buffer base address.
+            0, 0, 0, 0,         // Off screen memory offset.
+            0, 0, 0, 20,        // Off screen memory size, reserved data...
+            0, 0, 8, 16, 
+            8, 8, 8, 0, 
+            8, 24, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0, 
+            0, 0, 0, 0,         // Until here.
+            0, 0, 0, 0,         // End tag type.
+            8, 0, 0, 0          // End tag size.
+        ]);
+
+        let addr = bytes.0.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        assert_eq!(addr, bi.start_address());
+        assert_eq!(addr + bytes.0.len(), bi.end_address());
+        assert_eq!(bytes.0.len(), bi.total_size());
+        assert!(bi.vbe_info_tag().is_some());
+        let vbe = bi.vbe_info_tag().unwrap();
+        use vbe_info::*;
+        unsafe {
+            assert_eq!(vbe.mode, 16762);
+            assert_eq!(vbe.interface_segment, 65535);
+            assert_eq!(vbe.interface_offset, 24576);
+            assert_eq!(vbe.interface_length, 79);
+            assert_eq!(vbe.control_info.signature, [86, 69, 83, 65]);
+            assert_eq!(vbe.control_info.version, 768);
+            assert_eq!(vbe.control_info.oem_string_ptr, 3221247964);
+            assert_eq!(vbe.control_info.capabilities, VBECapabilities::SWITCHABLE_DAC);
+            assert_eq!(vbe.control_info.mode_list_ptr, 1610645538);
+            assert_eq!(vbe.control_info.total_memory, 256);
+            assert_eq!(vbe.control_info.oem_software_revision, 0);
+            assert_eq!(vbe.control_info.oem_vendor_name_ptr, 3221247984);
+            assert_eq!(vbe.control_info.oem_product_name_ptr, 3221248003);
+            assert_eq!(vbe.control_info.oem_product_revision_ptr, 3221248023);
+            assert!(vbe.mode_info.mode_attributes.contains(
+                VBEModeAttributes::SUPPORTED 
+                | VBEModeAttributes::COLOR
+                | VBEModeAttributes::GRAPHICS
+                | VBEModeAttributes::NOT_VGA_COMPATIBLE
+                | VBEModeAttributes::LINEAR_FRAMEBUFFER
+            ));
+            assert!(vbe.mode_info.window_a_attributes.contains(
+                VBEWindowAttributes::RELOCATABLE
+                | VBEWindowAttributes::READABLE
+                | VBEWindowAttributes::WRITEABLE
+            ));
+            assert_eq!(vbe.mode_info.window_granularity, 64);
+            assert_eq!(vbe.mode_info.window_size, 64);
+            assert_eq!(vbe.mode_info.window_a_segment, 40960);
+            assert_eq!(vbe.mode_info.window_function_ptr, 3221247162);
+            assert_eq!(vbe.mode_info.pitch, 5120);
+            assert_eq!(vbe.mode_info.resolution, (1280, 800));
+            assert_eq!(vbe.mode_info.character_size, (8, 16));
+            assert_eq!(vbe.mode_info.number_of_planes, 1);
+            assert_eq!(vbe.mode_info.bpp, 32);
+            assert_eq!(vbe.mode_info.number_of_banks, 1);
+            assert_eq!(vbe.mode_info.memory_model, VBEMemoryModel::DirectColor);
+            assert_eq!(vbe.mode_info.bank_size, 0);
+            assert_eq!(vbe.mode_info.number_of_image_pages, 3);
+            assert_eq!(vbe.mode_info.red_field, VBEField {
+                position: 16, size: 8
+            });
+            assert_eq!(vbe.mode_info.green_field, VBEField {
+                position: 8, size: 8
+            });
+            assert_eq!(vbe.mode_info.blue_field, VBEField {
+                position: 0, size: 8
+            });
+            assert_eq!(vbe.mode_info.reserved_field, VBEField {
+                position: 24, size: 8
+            });
+            assert_eq!(vbe.mode_info.direct_color_attributes, VBEDirectColorAttributes::RESERVED_USABLE);
+            assert_eq!(vbe.mode_info.framebuffer_base_ptr, 4244635648);
+            assert_eq!(vbe.mode_info.offscreen_memory_offset, 0);
+            assert_eq!(vbe.mode_info.offscreen_memory_size, 0);
         }
     }
 
