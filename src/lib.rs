@@ -311,7 +311,7 @@ mod tests {
     #[test]
     fn framebuffer_tag_rgb() {
         // direct RGB mode test:
-        // taken from GRUB2 running in QEMU at 
+        // taken from GRUB2 running in QEMU at
         // 1280x720 with 32bpp in BGRA format.
         #[repr(C, align(8))]
         struct Bytes([u8; 56]);
