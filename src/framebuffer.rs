@@ -55,7 +55,7 @@ pub fn framebuffer_tag<'a>(tag: &'a Tag) -> FramebufferTag<'a> {
             let num_colors = reader.read_u32();
             let palette = unsafe {
                 slice::from_raw_parts(reader.read_u32() as usize as *const FramebufferColor, num_colors as usize)
-            } as &'static [FramebufferColor];
+            } as &'a [FramebufferColor];
             FramebufferType::Indexed { palette }
         },
         1 => {
