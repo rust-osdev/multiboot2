@@ -1,3 +1,5 @@
+use core::marker::PhantomData;
+
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub struct Tag {
@@ -7,14 +9,24 @@ pub struct Tag {
 }
 
 #[derive(Clone, Debug)]
-pub struct TagIter {
+pub struct TagIter<'a> {
     pub current: *const Tag,
+    phantom: PhantomData<&'a Tag>,
 }
 
-impl Iterator for TagIter {
-    type Item = &'static Tag;
+impl<'a> TagIter<'a> {
+    pub fn new(first: *const Tag) -> Self {
+        TagIter {
+            current: first,
+            phantom: PhantomData,
+        }
+    }
+}
 
-    fn next(&mut self) -> Option<&'static Tag> {
+impl<'a> Iterator for TagIter<'a> {
+    type Item = &'a Tag;
+
+    fn next(&mut self) -> Option<&'a Tag> {
         match unsafe{&*self.current} {
             &Tag{typ:0, size:8} => None, // end tag
             tag => {
