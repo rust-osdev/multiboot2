@@ -1,3 +1,5 @@
+use core::marker::PhantomData;
+
 #[derive(Debug)]
 #[repr(C)]
 pub struct MemoryMapTag {
@@ -16,6 +18,7 @@ impl MemoryMapTag {
             current_area: start_area as u64,
             last_area: (self_ptr as u64 + (self.size - self.entry_size) as u64),
             entry_size: self.entry_size,
+            phantom: PhantomData,
         }
     }
 }
@@ -44,15 +47,16 @@ impl MemoryArea {
 }
 
 #[derive(Clone, Debug)]
-pub struct MemoryAreaIter {
+pub struct MemoryAreaIter<'a> {
     current_area: u64,
     last_area: u64,
     entry_size: u32,
+    phantom: PhantomData<&'a MemoryArea>,
 }
 
-impl Iterator for MemoryAreaIter {
-    type Item = &'static MemoryArea;
-    fn next(&mut self) -> Option<&'static MemoryArea> {
+impl<'a> Iterator for MemoryAreaIter<'a> {
+    type Item = &'a MemoryArea;
+    fn next(&mut self) -> Option<&'a MemoryArea> {
         if self.current_area > self.last_area {
             None
         } else {
