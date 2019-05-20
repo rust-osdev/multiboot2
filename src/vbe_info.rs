@@ -1,23 +1,10 @@
 use core::fmt;
 
-// Use this for implementing Debug on fields which are too large, or should not be printed.
-// Although I haven't found anything explicitly saying that this will _definitely_ have the same
-// representation as T, in my tests it always has. I don't know quite how alignment works either
-// for this type, the rust docs aren't totally clear, and #[repr(C, packed)] is not valid.
-#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
-struct NoDebug<T>(T);
-
-impl<T> fmt::Debug for NoDebug<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "...") // Write something, otherwise this looks funky in structs.
-    }
-}
-
 #[derive(Debug, Copy, Clone)]
 #[repr(C, packed)]
 pub struct VBEInfoTag {
-    typ: NoDebug<u32>,
-    length: NoDebug<u32>,
+    typ: u32,
+    length: u32,
     pub mode: u16,
     pub interface_segment: u16,
     pub interface_offset: u16,
@@ -26,7 +13,7 @@ pub struct VBEInfoTag {
     pub mode_info: VBEModeInfo
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct VBEControlInfo {
     pub signature: [u8; 4],
@@ -39,11 +26,29 @@ pub struct VBEControlInfo {
     pub oem_vendor_name_ptr: u32,
     pub oem_product_name_ptr: u32,
     pub oem_product_revision_ptr: u32,
-    reserved: NoDebug<[u8; 222]>,
-    oem_data: NoDebug<[u8; 256]>
+    reserved: [u8; 222],
+    oem_data: [u8; 256]
 }
 
-#[derive(Debug, Copy, Clone)]
+impl fmt::Debug for VBEControlInfo {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        unsafe {
+            f.debug_struct("VBEControlInfo")
+             .field("signature", &self.signature)
+             .field("oem_string_ptr", &self.oem_string_ptr)
+             .field("capabilities", &self.capabilities)
+             .field("mode_list_ptr", &self.mode_list_ptr)
+             .field("total_memory", &self.total_memory)
+             .field("oem_software_revision", &self.oem_software_revision)
+             .field("oem_vendor_name_ptr", &self.oem_vendor_name_ptr)
+             .field("oem_product_name_ptr", &self.oem_product_name_ptr)
+             .field("oem_product_revision_ptr", &self.oem_product_revision_ptr)
+             .finish()
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct VBEModeInfo {
     pub mode_attributes: VBEModeAttributes,
@@ -63,7 +68,7 @@ pub struct VBEModeInfo {
     pub memory_model: VBEMemoryModel,
     pub bank_size: u8, // Measured in kilobytes.
     pub number_of_image_pages: u8,
-    reserved0: NoDebug<u8>,
+    reserved0: u8,
     pub red_field: VBEField,
     pub green_field: VBEField,
     pub blue_field: VBEField,
@@ -72,7 +77,41 @@ pub struct VBEModeInfo {
     pub framebuffer_base_ptr: u32,
     pub offscreen_memory_offset: u32,
     pub offscreen_memory_size: u16,
-    reserved1: NoDebug<[u8; 206]>
+    reserved1: [u8; 206]
+}
+
+impl fmt::Debug for VBEModeInfo {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        unsafe {
+            f.debug_struct("VBEModeInfo")
+             .field("mode_attributes", &self.mode_attributes)
+             .field("window_a_attributes", &self.window_a_attributes)
+             .field("window_b_attributes", &self.window_b_attributes)
+             .field("window_granularity", &self.window_granularity)
+             .field("window_size", &self.window_size)
+             .field("window_a_segment", &self.window_a_segment)
+             .field("window_b_segment", &self.window_b_segment)
+             .field("window_function_ptr", &self.window_function_ptr)
+             .field("pitch", &self.pitch)
+             .field("resolution", &self.resolution)
+             .field("character_size", &self.character_size)
+             .field("number_of_planes", &self.number_of_planes)
+             .field("bpp", &self.bpp)
+             .field("number_of_banks", &self.number_of_banks)
+             .field("memory_model", &self.memory_model)
+             .field("bank_size", &self.bank_size)
+             .field("number_of_image_pages", &self.number_of_image_pages)
+             .field("red_field", &self.red_field)
+             .field("green_field", &self.green_field)
+             .field("blue_field", &self.blue_field)
+             .field("reserved_field", &self.reserved_field)
+             .field("direct_color_attributes", &self.direct_color_attributes)
+             .field("framebuffer_base_ptr", &self.framebuffer_base_ptr)
+             .field("offscreen_memory_offset", &self.offscreen_memory_offset)
+             .field("offscreen_memory_size", &self.offscreen_memory_size)
+             .finish()
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]

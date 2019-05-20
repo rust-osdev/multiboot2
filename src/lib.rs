@@ -1,5 +1,4 @@
 #![no_std]
-
 #![deny(missing_debug_implementations)]
 
 use core::fmt;
