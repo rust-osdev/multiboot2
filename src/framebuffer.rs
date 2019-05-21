@@ -15,7 +15,7 @@ pub struct FramebufferTag<'a> {
 #[derive(Debug, PartialEq)]
 pub enum FramebufferType<'a> {
     Indexed {
-        palette: &'a [FramebufferColor]   
+        palette: &'a [FramebufferColor]
     },
     RGB {
         red: FramebufferField,

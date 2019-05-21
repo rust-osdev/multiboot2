@@ -76,7 +76,7 @@ impl BootInformation {
         })
     }
 
-    pub fn memory_map_tag(&self) -> Option<&'static MemoryMapTag> {
+    pub fn memory_map_tag<'a>(&'a self) -> Option<&'a MemoryMapTag> {
         self.get_tag(6).map(|tag| unsafe { &*(tag as *const Tag as *const MemoryMapTag) })
     }
 
@@ -84,23 +84,23 @@ impl BootInformation {
         module::module_iter(self.tags())
     }
 
-    pub fn boot_loader_name_tag(&self) -> Option<&'static BootLoaderNameTag> {
+    pub fn boot_loader_name_tag<'a>(&'a self) -> Option<&'a BootLoaderNameTag> {
         self.get_tag(2).map(|tag| unsafe { &*(tag as *const Tag as *const BootLoaderNameTag) })
     }
 
-    pub fn command_line_tag(&self) -> Option<&'static CommandLineTag> {
+    pub fn command_line_tag<'a>(&'a self) -> Option<&'a CommandLineTag> {
         self.get_tag(1).map(|tag| unsafe { &*(tag as *const Tag as *const CommandLineTag) })
     }
 
-    pub fn framebuffer_tag(&self) -> Option<FramebufferTag<'static>> {
+    pub fn framebuffer_tag<'a>(&'a self) -> Option<FramebufferTag<'a>> {
         self.get_tag(8).map(|tag| framebuffer::framebuffer_tag(tag))
     }
 
-    pub fn rsdp_v1_tag(&self) -> Option<&'static RsdpV1Tag> {
+    pub fn rsdp_v1_tag<'a>(&self) -> Option<&'a RsdpV1Tag> {
         self.get_tag(14).map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV1Tag) })
     }
 
-    pub fn rsdp_v2_tag(&self) -> Option<&'static RsdpV2Tag> {
+    pub fn rsdp_v2_tag<'a>(&'a self) -> Option<&'a RsdpV2Tag> {
         self.get_tag(15).map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV2Tag) })
     }
 
@@ -112,12 +112,12 @@ impl BootInformation {
         unsafe { &*self.inner }
     }
 
-    fn get_tag(&self, typ: u32) -> Option<&'static Tag> {
+    fn get_tag<'a>(&'a self, typ: u32) -> Option<&'a Tag> {
         self.tags().find(|tag| tag.typ == typ)
     }
 
     fn tags(&self) -> TagIter {
-        TagIter { current: unsafe { self.inner.offset(1) } as *const _ }
+        TagIter::new(unsafe { self.inner.offset(1) } as *const _)
     }
 }
 
@@ -323,7 +323,7 @@ mod tests {
     #[test]
     fn framebuffer_tag_rgb() {
         // direct RGB mode test:
-        // taken from GRUB2 running in QEMU at 
+        // taken from GRUB2 running in QEMU at
         // 1280x720 with 32bpp in BGRA format.
         #[repr(C, align(8))]
         struct Bytes([u8; 56]);
