@@ -35,6 +35,7 @@ impl fmt::Debug for VBEControlInfo {
         unsafe {
             f.debug_struct("VBEControlInfo")
              .field("signature", &self.signature)
+             .field("version", &self.version)
              .field("oem_string_ptr", &self.oem_string_ptr)
              .field("capabilities", &self.capabilities)
              .field("mode_list_ptr", &self.mode_list_ptr)
