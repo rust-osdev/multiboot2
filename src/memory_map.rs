@@ -44,6 +44,25 @@ impl MemoryArea {
     pub fn size(&self) -> u64 {
         self.length
     }
+
+    pub fn typ(&self) -> MemoryAreaType {
+        match self.typ {
+            1 => MemoryAreaType::Available,
+            3 => MemoryAreaType::AcpiAvailable,
+            4 => MemoryAreaType::ReservedHibernate,
+            5 => MemoryAreaType::Defective,
+            _ => MemoryAreaType::Reserved,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum MemoryAreaType {
+    Reserved,
+    Available,
+    AcpiAvailable,
+    ReservedHibernate,
+    Defective,
 }
 
 #[derive(Clone, Debug)]
