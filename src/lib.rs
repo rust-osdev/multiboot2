@@ -7,7 +7,7 @@ use header::{Tag, TagIter};
 pub use boot_loader_name::BootLoaderNameTag;
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags};
 pub use framebuffer::{FramebufferTag, FramebufferType, FramebufferField, FramebufferColor};
-pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
+pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaType, MemoryAreaIter};
 pub use module::{ModuleTag, ModuleIter};
 pub use command_line::CommandLineTag;
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
