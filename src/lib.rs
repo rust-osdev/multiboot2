@@ -7,7 +7,7 @@ use header::{Tag, TagIter};
 pub use boot_loader_name::BootLoaderNameTag;
 pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags};
 pub use framebuffer::{FramebufferTag, FramebufferType, FramebufferField, FramebufferColor};
-pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
+pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaType, MemoryAreaIter};
 pub use module::{ModuleTag, ModuleIter};
 pub use command_line::CommandLineTag;
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
@@ -223,6 +223,7 @@ mod tests {
     use super::{load, load_with_offset};
     use super::{BootInformation, ElfSectionFlags, ElfSectionType};
     use super::FramebufferType;
+    use super::MemoryAreaType;
 
     #[test]
     fn no_tags() {
@@ -1066,10 +1067,12 @@ mod tests {
         assert_eq!(0x00000000, mm1.start_address());
         assert_eq!(0x009_FC00, mm1.end_address());
         assert_eq!(0x009_FC00, mm1.size());
+        assert_eq!(MemoryAreaType::Available, mm1.typ());
         let mm2 = mm.next().unwrap();
         assert_eq!(0x010_0000, mm2.start_address());
         assert_eq!(0x7FE_0000, mm2.end_address());
         assert_eq!(0x7EE_0000, mm2.size());
+        assert_eq!(MemoryAreaType::Available, mm2.typ());
         assert!(mm.next().is_none());
 
         // Test the RSDP tag
