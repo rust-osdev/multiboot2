@@ -2,40 +2,79 @@ use header::Tag;
 use ::Reader;
 use core::slice;
 
+/// The VBE Framebuffer information Tag.
 #[derive(Debug, PartialEq)]
 pub struct FramebufferTag<'a> {
+    /// Contains framebuffer physical address.
+    ///
+    /// This field is 64-bit wide but bootloader should set it under 4GiB if
+    /// possible for compatibility with payloads which aren’t aware of PAE or
+    /// amd64.
     pub address: u64,
+
+    /// Contains the pitch in bytes.
     pub pitch: u32,
+
+    /// Contain framebuffer width in pixels.
     pub width: u32,
+
+    /// Contain framebuffer height in pixels.
     pub height: u32,
+
+    /// Contains number of bits per pixel.
     pub bpp: u8,
+
+    /// The type of framebuffer, one of: Indexed, RGB or Text.
     pub buffer_type: FramebufferType<'a>
 }
 
+/// The type of framebuffer.
 #[derive(Debug, PartialEq)]
 pub enum FramebufferType<'a> {
+    /// Indexed color.
     Indexed {
+        #[allow(missing_docs)]
         palette: &'a [FramebufferColor]
     },
+
+    /// Direct RGB color.
+    #[allow(missing_docs)]
     RGB {
         red: FramebufferField,
         green: FramebufferField,
         blue: FramebufferField
     },
+
+    /// EGA Text.
+    ///
+    /// In this case the framebuffer width and height are expressed in
+    /// characters and not in pixels.
+    ///
+    /// The bpp is equal 16 (16 bits per character) and pitch is expressed in bytes per text line.
     Text
 }
 
+/// An RGB color type field.
 #[derive(Debug, PartialEq)]
 pub struct FramebufferField {
+    /// Color field position.
     pub position: u8,
+
+    /// Color mask size.
     pub size: u8
 }
 
+/// A framebuffer color descriptor in the palette.
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(C, packed)]
 pub struct FramebufferColor {
+    /// The amount of Red.
     pub red: u8,
+
+    /// The amount of Green.
     pub green: u8,
+
+    /// The amount of Blue.
     pub blue: u8
 }
 

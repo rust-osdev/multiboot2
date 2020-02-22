@@ -1,5 +1,7 @@
 use header::{Tag, TagIter};
 
+/// This tag indicates to the kernel what boot module was loaded along with
+/// the kernel image, and where it can be found. 
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct ModuleTag {
@@ -14,6 +16,7 @@ impl ModuleTag {
     // The multiboot specification defines the module str
     // as valid utf-8, therefore this function produces
     // defined behavior
+    /// Get the name of the module.
     pub fn name(&self) -> &str {
         use core::{mem,str,slice};
         let strlen = self.size as usize - mem::size_of::<ModuleTag>();
@@ -23,10 +26,12 @@ impl ModuleTag {
         }
     }
 
+    /// Start address of the module.
     pub fn start_address(&self) -> u32 {
         self.mod_start
     }
 
+    /// End address of the module
     pub fn end_address(&self) -> u32 {
         self.mod_end
     }
@@ -36,6 +41,7 @@ pub fn module_iter(iter: TagIter) -> ModuleIter {
     ModuleIter { iter: iter }
 }
 
+/// An iterator over all module tags.
 #[derive(Clone, Debug)]
 pub struct ModuleIter<'a> {
     iter: TagIter<'a>,

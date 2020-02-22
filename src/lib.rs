@@ -1,5 +1,25 @@
 #![no_std]
 #![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
+
+//! An experimental Multiboot 2 crate for ELF-64/32 kernels.
+//!
+//! The GNU Multiboot specification aims provide a standardised
+//! method of sharing commonly used information about the host machine at
+//! boot time.
+//!
+//! # Examples
+//!
+//! ```
+//! use multiboot2::load;
+//!
+//! // The Multiboot 2 specification dictates that the machine state after the
+//! // bootloader finishes its job will be that the boot information struct pointer
+//! // is stored in the `EBX` register.
+//! let multiboot_info_ptr: u32;
+//! unsafe { asm!("mov $2, %ebx" : "=r"(multiboot_info_ptr)) };
+//! let boot_info = unsafe { load(multiboot_info_ptr) };
+//! ```
 
 use core::fmt;
 
@@ -27,6 +47,21 @@ mod rsdp;
 mod framebuffer;
 mod vbe_info;
 
+/// Load the multiboot boot information struct from an address.
+///
+/// This is the same as `load_with_offset` but the offset is ommitted and set
+/// to zero.
+///
+/// Examples
+///
+/// ```
+/// use multiboot::load;
+///
+/// fn kmain(multiboot_info_ptr: u32) {
+///     let boot_info = load(ptr as usize);
+///     println!("{:?}", boot_info);
+/// }
+/// ```
 pub unsafe fn load(address: usize) -> BootInformation {
     assert_eq!(0, address & 0b111);
     let multiboot = &*(address as *const BootInformationInner);
@@ -35,6 +70,17 @@ pub unsafe fn load(address: usize) -> BootInformation {
     BootInformation { inner: multiboot, offset: 0 }
 }
 
+/// Load the multiboot boot information struct from an address at an offset.
+///
+/// Examples
+///
+/// ```
+/// use multiboot::load;
+///
+/// let ptr = 0xDEADBEEF as *const _;
+/// let boot_info = load_with_offset(ptr as usize, 0xCAFEBABE);
+/// println!("{:?}", boot_info);
+/// ```
 pub unsafe fn load_with_offset(address: usize, offset: usize) -> BootInformation {
     if !cfg!(test) {
         assert_eq!(0, address & 0b111);
@@ -46,6 +92,7 @@ pub unsafe fn load_with_offset(address: usize, offset: usize) -> BootInformation
     BootInformation { inner: multiboot, offset: offset }
 }
 
+/// A Multiboot 2 Boot Information struct.
 pub struct BootInformation {
     inner: *const BootInformationInner,
     offset: usize,
@@ -58,52 +105,70 @@ struct BootInformationInner {
 }
 
 impl BootInformation {
+    /// Get the start address of the boot info.
     pub fn start_address(&self) -> usize {
         self.inner as usize
     }
 
+    /// Get the end address of the boot info.
+    ///
+    /// This is the same as doing:
+    ///
+    /// ```
+    /// let end_addr = boot_info.start_address() + boot_info.size();
+    /// ```
     pub fn end_address(&self) -> usize {
         self.start_address() + self.total_size()
     }
 
+    /// Get the total size of the boot info struct.
     pub fn total_size(&self) -> usize {
         self.get().total_size as usize
     }
 
+    /// Search for the ELF Sections tag.
     pub fn elf_sections_tag(&self) -> Option<ElfSectionsTag> {
         self.get_tag(9).map(|tag| unsafe {
             elf_sections::elf_sections_tag(tag, self.offset)
         })
     }
 
+    /// Search for the Memory map tag.
     pub fn memory_map_tag<'a>(&'a self) -> Option<&'a MemoryMapTag> {
         self.get_tag(6).map(|tag| unsafe { &*(tag as *const Tag as *const MemoryMapTag) })
     }
 
+    /// Get an iterator of all module tags.
     pub fn module_tags(&self) -> ModuleIter {
         module::module_iter(self.tags())
     }
 
+    /// Search for the BootLoader name tag.
     pub fn boot_loader_name_tag<'a>(&'a self) -> Option<&'a BootLoaderNameTag> {
         self.get_tag(2).map(|tag| unsafe { &*(tag as *const Tag as *const BootLoaderNameTag) })
     }
 
+    /// Search for the Memory map tag.
     pub fn command_line_tag<'a>(&'a self) -> Option<&'a CommandLineTag> {
         self.get_tag(1).map(|tag| unsafe { &*(tag as *const Tag as *const CommandLineTag) })
     }
 
+    /// Search for the VBE framebuffer tag.
     pub fn framebuffer_tag<'a>(&'a self) -> Option<FramebufferTag<'a>> {
         self.get_tag(8).map(|tag| framebuffer::framebuffer_tag(tag))
     }
 
+    /// Search for the (ACPI 1.0) RSDP tag.
     pub fn rsdp_v1_tag<'a>(&self) -> Option<&'a RsdpV1Tag> {
         self.get_tag(14).map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV1Tag) })
     }
 
+    /// Search for the (ACPI 2.0 or later) RSDP tag.
     pub fn rsdp_v2_tag<'a>(&'a self) -> Option<&'a RsdpV2Tag> {
         self.get_tag(15).map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV2Tag) })
     }
 
+    /// Search for the VBE information tag.
     pub fn vbe_info_tag(&self) -> Option<&'static VBEInfoTag> {
         self.get_tag(7).map(|tag| unsafe { &*(tag as *const Tag as *const VBEInfoTag) })
     }

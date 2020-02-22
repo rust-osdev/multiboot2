@@ -8,6 +8,7 @@
 
 use core::str;
 
+/// This tag contains a copy of RSDP as defined per ACPI 1.0 specification. 
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct RsdpV1Tag {
@@ -21,28 +22,37 @@ pub struct RsdpV1Tag {
 }
 
 impl RsdpV1Tag {
+    /// The "RSD PTR " marker singature.
+    ///
+    /// This is originally a 8-byte C string (not null terminated!) must contain "RSD PTR ".
     pub fn signature<'a>(&'a self) -> Option<&'a str> {
         str::from_utf8(&self.signature).ok()
     }
 
+    /// The value to add to all the other bytes (of the Version 1.0 table) to calculate the Checksum of the table.
+    ///
+    /// If this value added to all the others and casted to byte isn't equal to 0, the table must be ignored. 
     pub fn checksum(&self) -> u8 {
         self.checksum
     }
 
+    /// An OEM-supplied string that identifies the OEM. 
     pub fn oem_id<'a>(&'a self) -> Option<&'a str> {
         str::from_utf8(&self.oem_id).ok()
     }
 
+    /// The revision of the ACPI.
     pub fn revision(&self) -> u8 {
         self.revision
     }
 
-    /// Get the physical address of the RSDT.
+    /// 32-bit physical (I repeat: physical) address of the RSDT table.
     pub fn rsdt_address(&self) -> usize {
         self.rsdt_address as usize
     }
 }
 
+/// This tag contains a copy of RSDP as defined per ACPI 2.0 or later specification. 
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct RsdpV2Tag {
@@ -60,27 +70,38 @@ pub struct RsdpV2Tag {
 }
 
 impl RsdpV2Tag {
+    /// The "RSD PTR " marker singature.
+    ///
+    /// This is originally a 8-byte C string (not null terminated!) must contain "RSD PTR ".
     pub fn signature<'a>(&'a self) -> Option<&'a str> {
         str::from_utf8(&self.signature).ok()
     }
 
+    /// The value to add to all the other bytes (of the Version 1.0 table) to calculate the Checksum of the table.
+    ///
+    /// If this value added to all the others and casted to byte isn't equal to 0, the table must be ignored. 
     pub fn checksum(&self) -> u8 {
         self.checksum
     }
 
+    /// An OEM-supplied string that identifies the OEM. 
     pub fn oem_id<'a>(&'a self) -> Option<&'a str> {
         str::from_utf8(&self.oem_id).ok()
     }
 
+    /// The revision of the ACPI.
     pub fn revision(&self) -> u8 {
         self.revision
     }
 
-    /// Get the physical address of the XSDT. On x86, this is truncated from 64-bit to 32-bit.
+    /// Physical address of the XSDT table.
+    ///
+    /// On x86, this is truncated from 64-bit to 32-bit.
     pub fn xsdt_address(&self) -> usize {
         self.xsdt_address as usize
     }
 
+    /// This field is used to calculate the checksum of the entire table, including both checksum fields. 
     pub fn ext_checksum(&self) -> u8 {
         self.ext_checksum
     }
