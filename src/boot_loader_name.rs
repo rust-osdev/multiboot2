@@ -16,7 +16,7 @@ impl BootLoaderNameTag {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// if let Some(tag) = boot_info.boot_loader_name_tag() {
     ///     let name = tag.name();
     ///     // println!("Booted by: {:?}!", name);

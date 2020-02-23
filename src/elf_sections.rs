@@ -32,7 +32,7 @@ impl ElfSectionsTag {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// if let Some(elf_tag) = boot_info.elf_sections_tag() {
     ///     let mut total = 0;
     ///     for section in elf_tag.sections() {

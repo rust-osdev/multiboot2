@@ -15,7 +15,7 @@ impl CommandLineTag {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// if let Some(tag) = boot_info.command_line_tag() {
     ///     let command_line = tag.command_line();
     ///     // println!("Command line: {:?}!", command_line);

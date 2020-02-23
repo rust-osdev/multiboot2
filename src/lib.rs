@@ -10,7 +10,7 @@
 //!
 //! # Examples
 //!
-//! ```
+//! ```ignore
 //! use multiboot2::load;
 //!
 //! // The Multiboot 2 specification dictates that the machine state after the
@@ -54,7 +54,7 @@ mod vbe_info;
 ///
 /// Examples
 ///
-/// ```
+/// ```ignore
 /// use multiboot::load;
 ///
 /// fn kmain(multiboot_info_ptr: u32) {
@@ -74,7 +74,7 @@ pub unsafe fn load(address: usize) -> BootInformation {
 ///
 /// Examples
 ///
-/// ```
+/// ```ignore
 /// use multiboot::load;
 ///
 /// let ptr = 0xDEADBEEF as *const _;
@@ -114,7 +114,7 @@ impl BootInformation {
     ///
     /// This is the same as doing:
     ///
-    /// ```
+    /// ```ignore
     /// let end_addr = boot_info.start_address() + boot_info.size();
     /// ```
     pub fn end_address(&self) -> usize {
