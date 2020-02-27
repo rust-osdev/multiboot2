@@ -8,8 +8,8 @@ use core::marker::PhantomData;
 /// overwrite these regions.
 ///
 /// This tag may not be provided by some boot loaders on EFI platforms if EFI
-/// boot services are enabled and available for the loaded image
-/// (EFI boot services not terminated tag exists in Multiboot2 information structure).   
+/// boot services are enabled and available for the loaded image (The EFI boot
+/// services tag may exist in the Multiboot2 boot information structure).
 #[derive(Debug)]
 #[repr(C)]
 pub struct MemoryMapTag {
@@ -91,7 +91,7 @@ pub enum MemoryAreaType {
     Defective,
 }
 
-/// An area over Available memory areas.
+/// An iterator over Available memory areas.
 #[derive(Clone, Debug)]
 pub struct MemoryAreaIter<'a> {
     current_area: u64,

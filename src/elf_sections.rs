@@ -64,7 +64,7 @@ impl ElfSectionsTag {
     }
 }
 
-/// An iterator over some elf sections.
+/// An iterator over some ELF sections.
 #[derive(Clone, Debug)]
 pub struct ElfSectionIter {
     current_section: *const u8,
@@ -163,7 +163,7 @@ impl ElfSection {
         self.get().typ()
     }
 
-    /// Read the name of the section from the string table and an offset.
+    /// Read the name of the section.
     pub fn name(&self) -> &str {
         use core::{str, slice};
 
@@ -193,12 +193,12 @@ impl ElfSection {
         self.get().addr() + self.get().size()
     }
 
-    /// This member gives the section's size in bytes.
+    /// Get the section's size in bytes.
     pub fn size(&self) -> u64 {
         self.get().size()
     }
 
-    /// Get the sections address alignment constraints.
+    /// Get the section's address alignment constraints.
     ///
     /// That is, the value of `start_address` must be congruent to 0,
     /// modulo the value of `addrlign`. Currently, only 0 and positive
@@ -208,7 +208,7 @@ impl ElfSection {
         self.get().addralign()
     }
 
-    /// Get the sections flags.
+    /// Get the section's flags.
     pub fn flags(&self) -> ElfSectionFlags {
         ElfSectionFlags::from_bits_truncate(self.get().flags())
     }
@@ -315,7 +315,7 @@ pub enum ElfSectionType {
     /// meaning are determined solely by the program.
     ProgramSection = 1,
 
-    /// This section holds a symbol table.
+    /// This section holds a linker symbol table.
     LinkerSymbolTable = 2,
 
     /// The section holds a string table.
@@ -329,14 +329,14 @@ pub enum ElfSectionType {
     /// The section holds a symbol hash table.
     SymbolHashTable = 5,
 
-    /// The section holds information for dynamic linking.
+    /// The section holds dynamic linking tables.
     DynamicLinkingTable = 6,
 
     /// This section holds information that marks the file in some way.
     Note = 7,
 
     /// A section of this type occupies no space in the file but otherwise resembles
-    /// SHT_PROGBITS. Although this section contains no bytes, the
+    /// `ProgramSection`. Although this section contains no bytes, the
     /// sh_offset member contains the conceptual file offset.
     Uninitialized = 8,
 
@@ -348,13 +348,15 @@ pub enum ElfSectionType {
     /// This section type is reserved but has unspecified semantics.
     Reserved = 10,
 
-    /// This section holds a symbol table.
+    /// This section holds a dynamic loader symbol table.
     DynamicLoaderSymbolTable = 11,
 
-    /// Values in this inclusive range are reserved for environment-specific semantics.
+    /// Values in this inclusive range (`[0x6000_0000, 0x6FFF_FFFF)`) are
+    /// reserved for environment-specific semantics.
     EnvironmentSpecific = 0x6000_0000,
 
-    /// Values in this inclusive range are reserved for processor-specific semantics.
+    /// Values in this inclusive range (`[0x7000_0000, 0x7FFF_FFFF)`) are
+    /// reserved for processor-specific semantics.
     ProcessorSpecific = 0x7000_0000,
 }
 

@@ -24,7 +24,7 @@ pub struct RsdpV1Tag {
 impl RsdpV1Tag {
     /// The "RSD PTR " marker singature.
     ///
-    /// This is originally a 8-byte C string (not null terminated!) must contain "RSD PTR ".
+    /// This is originally a 8-byte C string (not null terminated!) that must contain "RSD PTR "
     pub fn signature<'a>(&'a self) -> Option<&'a str> {
         str::from_utf8(&self.signature).ok()
     }
@@ -46,7 +46,7 @@ impl RsdpV1Tag {
         self.revision
     }
 
-    /// 32-bit physical (I repeat: physical) address of the RSDT table.
+    /// The physical (I repeat: physical) address of the RSDT table.
     pub fn rsdt_address(&self) -> usize {
         self.rsdt_address as usize
     }
@@ -72,7 +72,7 @@ pub struct RsdpV2Tag {
 impl RsdpV2Tag {
     /// The "RSD PTR " marker singature.
     ///
-    /// This is originally a 8-byte C string (not null terminated!) must contain "RSD PTR ".
+    /// This is originally a 8-byte C string (not null terminated!) that must contain "RSD PTR ".
     pub fn signature<'a>(&'a self) -> Option<&'a str> {
         str::from_utf8(&self.signature).ok()
     }

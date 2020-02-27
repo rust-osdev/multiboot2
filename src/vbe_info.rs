@@ -12,12 +12,21 @@ pub struct VBEInfoTag {
     pub mode: u16,
 
     /// Contain the segment of the table of a protected mode interface defined in VBE 2.0+.
+    ///
+    /// If the information for a protected mode interface is not available
+    /// this field is set to zero.
     pub interface_segment: u16,
 
     /// Contain the segment offset of the table of a protected mode interface defined in VBE 2.0+.
+    ///
+    /// If the information for a protected mode interface is not available
+    /// this field is set to zero.
     pub interface_offset: u16,
 
     /// Contain the segment length of the table of a protected mode interface defined in VBE 2.0+.
+    ///
+    /// If the information for a protected mode interface is not available
+    /// this field is set to zero.
     pub interface_length: u16,
 
     /// Contains VBE controller information returned by the VBE Function `00h`.
@@ -234,13 +243,15 @@ bitflags! {
     /// The Capabilities field indicates the support of specific features in the graphics environment.
     pub struct VBECapabilities: u32 {
         /// Can the DAC be switched between 6 and 8 bit modes.
-        const SWITCHABLE_DAC = 0x1;     // The DAC can be switched between 6 and 8-bit modes.
+        const SWITCHABLE_DAC = 0x1;
 
         /// Is the controller VGA compatible.
-        const NOT_VGA_COMPATIBLE = 0x2; // The controller can be switched into VGA modes.
+        const NOT_VGA_COMPATIBLE = 0x2;
 
-        /// The operating behaviour of the RAMDAC
-        const RAMDAC_FIX = 0x4;         // When writing lots of information to the palette, the blank bit should be used.
+        /// The operating behaviour of the RAMDAC.
+        ///
+        /// When writing lots of information to the RAMDAC, use the blank bit in Function `09h`.
+        const RAMDAC_FIX = 0x4;
     }
 }
 
@@ -248,10 +259,10 @@ bitflags! {
     /// A Mode attributes bitfield.
     pub struct VBEModeAttributes: u16 {
         /// Mode supported by hardware configuration.
-        const SUPPORTED = 0x1;           // This mode is supported by the hardware.
+        const SUPPORTED = 0x1;
 
         /// TTY Output functions supported by BIOS
-        const TTY_SUPPORTED = 0x4;       // TTY output is supported.
+        const TTY_SUPPORTED = 0x4;
 
         /// Color support.
         const COLOR = 0x8;
@@ -267,7 +278,7 @@ bitflags! {
         /// If this is set, the window A and B fields of VBEModeInfo are invalid. 
         const NO_VGA_WINDOW = 0x40;
 
-        /// Linear framebugger availability.
+        /// Linear framebuffer availability.
         ///
         /// Set if a linear framebuffer is available for this mode.
         const LINEAR_FRAMEBUFFER = 0x80;
@@ -296,15 +307,15 @@ bitflags! {
     /// Bit D0 specifies whether the color ramp of the DAC is fixed or
     /// programmable. If the color ramp is fixed, then it can not be changed.
     /// If the color ramp is programmable, it is assumed that the red, green,
-    /// and blue lookup tables can be loaded by using VBE Function 09h
+    /// and blue lookup tables can be loaded by using VBE Function `09h`
     /// (it is assumed all color ramp data is 8 bits per primary).
     /// Bit D1 specifies whether the bits in the Rsvd field of the direct color
     /// pixel can be used by the application or are reserved, and thus unusable.
     pub struct VBEDirectColorAttributes: u8 {
-        /// Color ramp is fixed/programmable
+        /// Color ramp is fixed when cleared and programmable when set.
         const PROGRAMMABLE = 0x1;
 
-        /// Bits in Rsvd field are usable/reserved
+        /// Bits in Rsvd field when cleared are reserved and usable when set.
         const RESERVED_USABLE = 0x2;
     }
 }

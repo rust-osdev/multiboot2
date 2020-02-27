@@ -19,7 +19,7 @@ impl BootLoaderNameTag {
     /// ```ignore
     /// if let Some(tag) = boot_info.boot_loader_name_tag() {
     ///     let name = tag.name();
-    ///     // println!("Booted by: {:?}!", name);
+    ///     assert_eq!("GRUB 2.02~beta3-5", name);
     /// }
     /// ```
     pub fn name(&self) -> &str {
