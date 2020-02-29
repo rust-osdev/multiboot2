@@ -181,10 +181,18 @@ pub struct VBEModeInfo {
     /// Physical address for flat memory frame buffer
     pub framebuffer_base_ptr: u32,
 
-    /// This should be a reserved field???
+    /// A pointer to the start of off screen memory.
+    ///
+    /// # Deprecated
+    ///
+    /// In VBE3.0 and above these fields are reserved and unused.
     pub offscreen_memory_offset: u32,
 
-    /// This should be a reserved field???
+    /// The amount of off screen memory in 1k units.
+    ///
+    /// # Deprecated
+    ///
+    /// In VBE3.0 and above these fields are reserved and unused.
     pub offscreen_memory_size: u16,
 
     /// Remainder of mode info block
