@@ -1,4 +1,8 @@
 
+/// This Tag contains the name of the bootloader that is booting the kernel.
+///
+/// The name is a normal C-style UTF-8 zero-terminated string that can be
+/// obtained via the `name` method.
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding before first_section
 pub struct BootLoaderNameTag {
@@ -8,6 +12,16 @@ pub struct BootLoaderNameTag {
 }
 
 impl BootLoaderNameTag {
+    /// Read the name of the bootloader that is booting the kernel.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// if let Some(tag) = boot_info.boot_loader_name_tag() {
+    ///     let name = tag.name();
+    ///     assert_eq!("GRUB 2.02~beta3-5", name);
+    /// }
+    /// ```
     pub fn name(&self) -> &str {
         use core::{mem,str,slice};
         unsafe {

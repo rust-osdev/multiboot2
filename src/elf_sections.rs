@@ -1,5 +1,8 @@
 use header::Tag;
 
+/// This tag contains section header table from an ELF kernel.
+///
+/// The sections iterator is provided via the `sections` method.
 #[derive(Debug)]
 pub struct ElfSectionsTag {
     inner: *const ElfSectionsTagInner,
@@ -25,6 +28,19 @@ struct ElfSectionsTagInner {
 }
 
 impl ElfSectionsTag {
+    /// Get an iterator of loaded ELF sections.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// if let Some(elf_tag) = boot_info.elf_sections_tag() {
+    ///     let mut total = 0;
+    ///     for section in elf_tag.sections() {
+    ///         println!("Section: {:?}", section);
+    ///         total += 1;
+    ///     }
+    /// }
+    /// ```
     pub fn sections(&self) -> ElfSectionIter {
         let string_section_offset = (self.get().shndx * self.get().entry_size) as isize;
         let string_section_ptr = unsafe {
@@ -48,6 +64,7 @@ impl ElfSectionsTag {
     }
 }
 
+/// An iterator over some ELF sections.
 #[derive(Clone, Debug)]
 pub struct ElfSectionIter {
     current_section: *const u8,
@@ -80,6 +97,7 @@ impl Iterator for ElfSectionIter {
     }
 }
 
+/// A single generic ELF Section.
 #[derive(Debug)]
 pub struct ElfSection {
     inner: *const u8,
@@ -119,6 +137,7 @@ struct ElfSectionInner64 {
 }
 
 impl ElfSection {
+    /// Get the section type as a `ElfSectionType` enum variant.
     pub fn section_type(&self) -> ElfSectionType {
         match self.get().typ() {
             0 => ElfSectionType::Unused,
@@ -139,10 +158,12 @@ impl ElfSection {
         }
     }
 
+    /// Get the "raw" section type as a `u32`
     pub fn section_type_raw(&self) -> u32 {
         self.get().typ()
     }
 
+    /// Read the name of the section.
     pub fn name(&self) -> &str {
         use core::{str, slice};
 
@@ -160,26 +181,39 @@ impl ElfSection {
         str::from_utf8(unsafe { slice::from_raw_parts(name_ptr, strlen) }).unwrap()
     }
 
+    /// Get the physical start address of the section.
     pub fn start_address(&self) -> u64 {
         self.get().addr()
     }
 
+    /// Get the physical end address of the section.
+    ///
+    /// This is the same as doing `section.start_address() + section.size()`
     pub fn end_address(&self) -> u64 {
         self.get().addr() + self.get().size()
     }
 
+    /// Get the section's size in bytes.
     pub fn size(&self) -> u64 {
         self.get().size()
     }
 
+    /// Get the section's address alignment constraints.
+    ///
+    /// That is, the value of `start_address` must be congruent to 0,
+    /// modulo the value of `addrlign`. Currently, only 0 and positive
+    /// integral powers of two are allowed. Values 0 and 1 mean the section has no
+    /// alignment constraints.
     pub fn addralign(&self) -> u64 {
         self.get().addralign()
     }
 
+    /// Get the section's flags.
     pub fn flags(&self) -> ElfSectionFlags {
         ElfSectionFlags::from_bits_truncate(self.get().flags())
     }
 
+    /// Check if the `ALLOCATED` flag is set in the section flags.
     pub fn is_allocated(&self) -> bool {
         self.flags().contains(ElfSectionFlags::ALLOCATED)
     }
@@ -268,29 +302,74 @@ impl ElfSectionInner for ElfSectionInner64 {
     }
 }
 
+/// An enum abstraction over raw ELF section types.
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 #[repr(u32)]
 pub enum ElfSectionType {
+    /// This value marks the section header as inactive; it does not have an
+    /// associated section. Other members of the section header have undefined
+    /// values.
     Unused = 0,
+
+    /// The section holds information defined by the program, whose format and
+    /// meaning are determined solely by the program.
     ProgramSection = 1,
+
+    /// This section holds a linker symbol table.
     LinkerSymbolTable = 2,
+
+    /// The section holds a string table.
     StringTable = 3,
+
+    /// The section holds relocation entries with explicit addends, such as type
+    /// Elf32_Rela for the 32-bit class of object files. An object file may have
+    /// multiple relocation sections.
     RelaRelocation = 4,
+
+    /// The section holds a symbol hash table.
     SymbolHashTable = 5,
+
+    /// The section holds dynamic linking tables.
     DynamicLinkingTable = 6,
+
+    /// This section holds information that marks the file in some way.
     Note = 7,
+
+    /// A section of this type occupies no space in the file but otherwise resembles
+    /// `ProgramSection`. Although this section contains no bytes, the
+    /// sh_offset member contains the conceptual file offset.
     Uninitialized = 8,
+
+    /// The section holds relocation entries without explicit addends, such as type
+    /// Elf32_Rel for the 32-bit class of object files. An object file may have
+    /// multiple relocation sections.
     RelRelocation = 9,
+
+    /// This section type is reserved but has unspecified semantics.
     Reserved = 10,
+
+    /// This section holds a dynamic loader symbol table.
     DynamicLoaderSymbolTable = 11,
+
+    /// Values in this inclusive range (`[0x6000_0000, 0x6FFF_FFFF)`) are
+    /// reserved for environment-specific semantics.
     EnvironmentSpecific = 0x6000_0000,
+
+    /// Values in this inclusive range (`[0x7000_0000, 0x7FFF_FFFF)`) are
+    /// reserved for processor-specific semantics.
     ProcessorSpecific = 0x7000_0000,
 }
 
 bitflags! {
+    /// ELF Section bitflags.
     pub struct ElfSectionFlags: u64 {
+        /// The section contains data that should be writable during program execution.
         const WRITABLE = 0x1;
+
+        /// The section occupies memory during the process execution.
         const ALLOCATED = 0x2;
+
+        /// The section contains executable machine instructions.
         const EXECUTABLE = 0x4;
         // plus environment-specific use at 0x0F000000
         // plus processor-specific use at 0xF0000000
