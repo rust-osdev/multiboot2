@@ -6,7 +6,10 @@
 /// Even though the bootloader should give the address of the real RSDP/XSDT, the checksum and
 /// signature should be manually verified.
 
+use core::slice;
 use core::str;
+
+const RSDPV1_LENGTH: usize = 20;
 
 /// This tag contains a copy of RSDP as defined per ACPI 1.0 specification. 
 #[derive(Clone, Copy, Debug)]
@@ -29,11 +32,15 @@ impl RsdpV1Tag {
         str::from_utf8(&self.signature).ok()
     }
 
-    /// The value to add to all the other bytes (of the Version 1.0 table) to calculate the Checksum of the table.
-    ///
-    /// If this value added to all the others and casted to byte isn't equal to 0, the table must be ignored. 
-    pub fn checksum(&self) -> u8 {
-        self.checksum
+    /// Validation of the RSDPv1 checksum
+    pub fn checksum_is_valid(&self) -> bool {
+        let bytes = unsafe {
+            slice::from_raw_parts(
+                self as *const _ as *const u8,
+                RSDPV1_LENGTH + 8
+            )
+        };
+        bytes[8..].iter().fold(0u8, |acc, val| acc.wrapping_add(*val)) == 0
     }
 
     /// An OEM-supplied string that identifies the OEM. 
@@ -77,11 +84,15 @@ impl RsdpV2Tag {
         str::from_utf8(&self.signature).ok()
     }
 
-    /// The value to add to all the other bytes (of the Version 1.0 table) to calculate the Checksum of the table.
-    ///
-    /// If this value added to all the others and casted to byte isn't equal to 0, the table must be ignored. 
-    pub fn checksum(&self) -> u8 {
-        self.checksum
+    /// Validation of the RSDPv2 extended checksum
+    pub fn checksum_is_valid(&self) -> bool {
+        let bytes = unsafe {
+            slice::from_raw_parts(
+                self as *const _ as *const u8,
+                self.length as usize + 8
+            )
+        };
+        bytes[8..].iter().fold(0u8, |acc, val| acc.wrapping_add(*val)) == 0
     }
 
     /// An OEM-supplied string that identifies the OEM. 
