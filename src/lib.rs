@@ -1078,7 +1078,7 @@ mod tests {
         // Test the RSDP tag
         let rsdp_old = bi.rsdp_v1_tag().unwrap();
         assert_eq!("RSD PTR ", rsdp_old.signature().unwrap());
-        assert_eq!(89, rsdp_old.checksum());
+        assert!(rsdp_old.checksum_is_valid());
         assert_eq!("BOCHS ", rsdp_old.oem_id().unwrap());
         assert_eq!(0, rsdp_old.revision());
         assert_eq!(0x7FE18DC, rsdp_old.rsdt_address());
