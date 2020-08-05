@@ -52,7 +52,7 @@ impl MemoryArea {
 
     /// The end address of the memory region.
     pub fn end_address(&self) -> u64 {
-        (self.base_addr + self.length)
+        self.base_addr + self.length
     }
 
     /// The size, in bytes, of the memory region.
@@ -114,3 +114,197 @@ impl<'a> Iterator for MemoryAreaIter<'a> {
         }
     }
 }
+
+/// EFI memory map as per EFI specification.
+#[derive(Debug)]
+#[repr(C)]
+pub struct EFIMemoryMapTag {
+    typ: u32,
+    size: u32,
+    desc_size: u32,
+    desc_version: u32,
+    first_desc: EFIMemoryDesc,
+}
+
+impl EFIMemoryMapTag {
+    /// Return an iterator over ALL marked memory areas.
+    ///
+    /// This differs from `MemoryMapTag` as for UEFI, the OS needs some non-
+    /// available memory areas for tables and such.
+    pub fn memory_areas(&self) -> EFIMemoryAreaIter {
+        let self_ptr = self as *const EFIMemoryMapTag;
+        let start_area = (&self.first_desc) as *const EFIMemoryDesc;
+        EFIMemoryAreaIter {
+            current_area: start_area as u64,
+            last_area: (self_ptr as u64 + self.size as u64),
+            entry_size: self.desc_size,
+            phantom: PhantomData,
+        }
+    }
+}
+
+/// EFI Boot Memory Map Descriptor
+#[derive(Debug)]
+#[repr(C)]
+pub struct EFIMemoryDesc {
+    typ: u32,
+    _padding: u32,
+    phys_addr: u64,
+    virt_addr: u64,
+    num_pages: u64,
+    attr: u64,
+}
+
+/// An enum of possible reported region types.
+#[derive(Debug, PartialEq, Eq)]
+pub enum EFIMemoryAreaType {
+    /// Unusable.
+    EfiReservedMemoryType,
+    /// Code area of a UEFI application.
+    EfiLoaderCode,
+    /// Data area of a UEFI application.
+    EfiLoaderData,
+    /// Code area of a UEFI Boot Service Driver.
+    EfiBootServicesCode,
+    /// Data area of a UEFI Boot Service Driver.
+    EfiBootServicesData,
+    /// Code area of a UEFI Runtime Driver.
+    ///
+    /// Must be preserved in working and ACPI S1-S3 states.
+    EfiRuntimeServicesCode,
+    /// Data area of a UEFI Runtime Driver.
+    ///
+    /// Must be preserved in working and ACPI S1-S3 states.
+    EfiRuntimeServicesData,
+    /// Available memory.
+    EfiConventionalMemory,
+    /// Memory with errors, treat as unusable.
+    EfiUnusableMemory,
+    /// Memory containing the ACPI tables.
+    ///
+    /// Must be preserved in working and ACPI S1-S3 states.
+    EfiACPIReclaimMemory,
+    /// Memory reserved by firmware.
+    ///
+    /// Must be preserved in working and ACPI S1-S3 states.
+    EfiACPIMemoryNVS,
+    /// Memory used by firmware for requesting memory mapping of IO.
+    ///
+    /// Should not be used by the OS. Use the ACPI tables for memory mapped IO
+    /// information.
+    EfiMemoryMappedIO,
+    /// Memory used to translate memory cycles to IO cycles.
+    ///
+    /// Should not be used by the OS. Use the ACPI tables for memory mapped IO
+    /// information.
+    EfiMemoryMappedIOPortSpace,
+    /// Memory used by the processor.
+    ///
+    /// Must be preserved in working and ACPI S1-S4 states. Processor defined
+    /// otherwise.
+    EfiPalCode,
+    /// Available memory supporting byte-addressable non-volatility.
+    EfiPersistentMemory,
+    /// Unknown region type, treat as unusable.
+    EfiUnknown,
+}
+
+impl EFIMemoryDesc {
+    /// The physical address of the memory region.
+    pub fn physical_address(&self) -> u64 {
+        self.phys_addr
+    }
+
+    /// The virtual address of the memory region.
+    pub fn virtual_address(&self) -> u64 {
+        self.virt_addr
+    }
+
+    /// The size in bytes of the memory region.
+    pub fn size(&self, page_size: u64) -> usize {
+        (self.num_pages * page_size) as usize
+    }
+
+    /// The type of the memory region.
+    pub fn typ(&self) -> EFIMemoryAreaType {
+        match self.typ {
+            0 => EFIMemoryAreaType::EfiReservedMemoryType,
+            1 => EFIMemoryAreaType::EfiLoaderCode,
+            2 => EFIMemoryAreaType::EfiLoaderData,
+            3 => EFIMemoryAreaType::EfiBootServicesCode,
+            4 => EFIMemoryAreaType::EfiBootServicesData,
+            5 => EFIMemoryAreaType::EfiRuntimeServicesCode,
+            6 => EFIMemoryAreaType::EfiRuntimeServicesData,
+            7 => EFIMemoryAreaType::EfiConventionalMemory,
+            8 => EFIMemoryAreaType::EfiUnusableMemory,
+            9 => EFIMemoryAreaType::EfiACPIReclaimMemory,
+            10 => EFIMemoryAreaType::EfiACPIMemoryNVS,
+            11 => EFIMemoryAreaType::EfiMemoryMappedIO,
+            12 => EFIMemoryAreaType::EfiMemoryMappedIOPortSpace,
+            13 => EFIMemoryAreaType::EfiPalCode,
+            14 => EFIMemoryAreaType::EfiPersistentMemory,
+            _ => EFIMemoryAreaType::EfiUnknown,
+        }
+    }
+}
+
+/// EFI ExitBootServices was not called
+#[derive(Debug)]
+#[repr(C)]
+pub struct EFIBootServicesNotExited {
+    typ: u32,
+    size: u32,
+}
+
+/// Contains pointer to boot loader image handle.
+#[derive(Debug)]
+#[repr(C)]
+pub struct EFIImageHandle32 {
+    typ: u32,
+    size: u32,
+    pointer: u32,
+}
+
+/// Contains pointer to boot loader image handle.
+#[derive(Debug)]
+#[repr(C)]
+pub struct EFIImageHandle64 {
+    typ: u32,
+    size: u32,
+    pointer: u64,
+}
+
+/// If the image has relocatable header tag, this tag contains the image's 
+/// base physical address.
+#[derive(Debug)]
+#[repr(C)]
+pub struct ImageLoadPhysAddr {
+    typ: u32,
+    size: u32,
+    load_base_addr: u32,
+}
+
+/// An iterator over All EFI memory areas.
+#[derive(Clone, Debug)]
+pub struct EFIMemoryAreaIter<'a> {
+    current_area: u64,
+    last_area: u64,
+    entry_size: u32,
+    phantom: PhantomData<&'a EFIMemoryDesc>,
+}
+
+impl<'a> Iterator for EFIMemoryAreaIter<'a> {
+    type Item = &'a EFIMemoryDesc;
+    fn next(&mut self) -> Option<&'a EFIMemoryDesc> {
+        if self.current_area > self.last_area {
+            None
+        } else {
+            let area = unsafe{&*(self.current_area as *const EFIMemoryDesc)};
+            self.current_area = self.current_area + (self.entry_size as u64);
+            if area.typ() == EFIMemoryAreaType::EfiConventionalMemory {
+                Some(area)
+            } else {self.next()}
+        }
+    }
+}
+

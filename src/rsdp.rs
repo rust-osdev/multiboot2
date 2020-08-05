@@ -11,6 +11,38 @@ use core::str;
 
 const RSDPV1_LENGTH: usize = 20;
 
+/// EFI system table in 32 bit mode
+#[derive(Clone, Copy, Debug)]
+#[repr(C, packed)]
+pub struct EFISdt32 {
+    typ: u32,
+    size: u32,
+    pointer: u32,
+}
+
+impl EFISdt32 {
+    /// The Physical address of a i386 EFI system table.
+    pub fn sdt_address(&self) -> usize {
+        self.pointer as usize
+    }
+}
+
+/// EFI system table in 64 bit mode
+#[derive(Clone, Copy, Debug)]
+#[repr(C, packed)]
+pub struct EFISdt64 {
+    typ: u32,
+    size: u32,
+    pointer: u64,
+}
+
+impl EFISdt64 {
+    /// The Physical address of a x86_64 EFI system table.
+    pub fn sdt_address(&self) -> usize {
+        self.pointer as usize
+    }
+}
+
 /// This tag contains a copy of RSDP as defined per ACPI 1.0 specification. 
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]

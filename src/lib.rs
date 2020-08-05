@@ -30,9 +30,9 @@ pub use elf_sections::{
 };
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
 use header::{Tag, TagIter};
-pub use memory_map::{MemoryArea, MemoryAreaIter, MemoryAreaType, MemoryMapTag};
+pub use memory_map::{EFIMemoryAreaType, EFIMemoryMapTag, EFIMemoryDesc, MemoryArea, MemoryAreaIter, MemoryAreaType, MemoryMapTag};
 pub use module::{ModuleIter, ModuleTag};
-pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
+pub use rsdp::{EFISdt32, EFISdt64, RsdpV1Tag, RsdpV2Tag};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
@@ -170,6 +170,12 @@ impl BootInformation {
         self.get_tag(8).map(|tag| framebuffer::framebuffer_tag(tag))
     }
 
+    /// Search for the EFI 32-bit SDT tag.
+    pub fn efi_sdt_32_tag<'a>(&self) -> Option<&'a EFISdt32> {
+        self.get_tag(12)
+            .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt32) })
+    }
+
     /// Search for the (ACPI 1.0) RSDP tag.
     pub fn rsdp_v1_tag<'a>(&self) -> Option<&'a RsdpV1Tag> {
         self.get_tag(14)
@@ -180,6 +186,17 @@ impl BootInformation {
     pub fn rsdp_v2_tag<'a>(&'a self) -> Option<&'a RsdpV2Tag> {
         self.get_tag(15)
             .map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV2Tag) })
+    }
+
+    /// Search for the EFI Memory map tag.
+    pub fn efi_memory_map_tag<'a>(&'a self) -> Option<&'a EFIMemoryMapTag> {
+        match self.get_tag(18) {
+            Some(_) => {
+                self.get_tag(17)
+                    .map(|tag| unsafe { &*(tag as *const Tag as *const EFIMemoryMapTag) })
+            }, 
+            None => None
+        }
     }
 
     /// Search for the VBE information tag.
