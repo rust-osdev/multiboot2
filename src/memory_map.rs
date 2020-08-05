@@ -221,8 +221,8 @@ impl EFIMemoryDesc {
     }
 
     /// The size in bytes of the memory region.
-    pub fn size(&self, page_size: u64) -> usize {
-        (self.num_pages * page_size) as usize
+    pub fn size(&self, page_size: u64) -> u64 {
+        self.num_pages * page_size
     }
 
     /// The type of the memory region.
@@ -256,35 +256,8 @@ pub struct EFIBootServicesNotExited {
     size: u32,
 }
 
-/// Contains pointer to boot loader image handle.
-#[derive(Debug)]
-#[repr(C)]
-pub struct EFIImageHandle32 {
-    typ: u32,
-    size: u32,
-    pointer: u32,
-}
 
-/// Contains pointer to boot loader image handle.
-#[derive(Debug)]
-#[repr(C)]
-pub struct EFIImageHandle64 {
-    typ: u32,
-    size: u32,
-    pointer: u64,
-}
-
-/// If the image has relocatable header tag, this tag contains the image's 
-/// base physical address.
-#[derive(Debug)]
-#[repr(C)]
-pub struct ImageLoadPhysAddr {
-    typ: u32,
-    size: u32,
-    load_base_addr: u32,
-}
-
-/// An iterator over All EFI memory areas.
+/// An iterator over ALL EFI memory areas.
 #[derive(Clone, Debug)]
 pub struct EFIMemoryAreaIter<'a> {
     current_area: u64,
@@ -301,9 +274,7 @@ impl<'a> Iterator for EFIMemoryAreaIter<'a> {
         } else {
             let area = unsafe{&*(self.current_area as *const EFIMemoryDesc)};
             self.current_area = self.current_area + (self.entry_size as u64);
-            if area.typ() == EFIMemoryAreaType::EfiConventionalMemory {
-                Some(area)
-            } else {self.next()}
+            Some(area)
         }
     }
 }

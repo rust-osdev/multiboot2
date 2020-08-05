@@ -30,9 +30,15 @@ pub use elf_sections::{
 };
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
 use header::{Tag, TagIter};
-pub use memory_map::{EFIMemoryAreaType, EFIMemoryMapTag, EFIMemoryDesc, MemoryArea, MemoryAreaIter, MemoryAreaType, MemoryMapTag};
+pub use memory_map::{
+    EFIMemoryAreaType, EFIMemoryMapTag, EFIMemoryDesc, MemoryArea, MemoryAreaIter,
+    MemoryAreaType, MemoryMapTag,
+};
 pub use module::{ModuleIter, ModuleTag};
-pub use rsdp::{EFISdt32, EFISdt64, RsdpV1Tag, RsdpV2Tag};
+pub use rsdp::{
+    EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64, ImageLoadPhysAddr, 
+    RsdpV1Tag, RsdpV2Tag,
+};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
@@ -172,8 +178,14 @@ impl BootInformation {
 
     /// Search for the EFI 32-bit SDT tag.
     pub fn efi_sdt_32_tag<'a>(&self) -> Option<&'a EFISdt32> {
-        self.get_tag(12)
+        self.get_tag(11)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt32) })
+    }
+
+    /// Search for the EFI 64-bit SDT tag.
+    pub fn efi_sdt_64_tag<'a>(&self) -> Option<&'a EFISdt64> {
+        self.get_tag(12)
+            .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt64) })
     }
 
     /// Search for the (ACPI 1.0) RSDP tag.
@@ -190,13 +202,33 @@ impl BootInformation {
 
     /// Search for the EFI Memory map tag.
     pub fn efi_memory_map_tag<'a>(&'a self) -> Option<&'a EFIMemoryMapTag> {
+        // If the EFIBootServicesNotExited is present, then we should not use
+        // the memory map, as it could still be in use.
         match self.get_tag(18) {
-            Some(_) => {
+            Some(_tag) => None,
+            None => {
                 self.get_tag(17)
                     .map(|tag| unsafe { &*(tag as *const Tag as *const EFIMemoryMapTag) })
-            }, 
-            None => None
+            },
         }
+    }
+
+    /// Search for the EFI 32-bit image handle pointer.
+    pub fn efi_32_ih<'a>(&'a self) -> Option<&'a EFIImageHandle32> {
+        self.get_tag(19)
+            .map(|tag| unsafe { &*(tag as *const Tag as *const EFIImageHandle32) })
+    }
+
+    /// Search for the EFI 64-bit image handle pointer.
+    pub fn efi_64_ih<'a>(&'a self) -> Option<&'a EFIImageHandle64> {
+        self.get_tag(20)
+            .map(|tag| unsafe { &*(tag as *const Tag as *const EFIImageHandle64) })
+    }
+
+    /// Search for the Image Load Base Physical Address.
+    pub fn load_base_addr<'a>(&'a self) -> Option<&'a ImageLoadPhysAddr> {
+        self.get_tag(21)
+            .map(|tag| unsafe { &*(tag as *const Tag as *const ImageLoadPhysAddr) })
     }
 
     /// Search for the VBE information tag.

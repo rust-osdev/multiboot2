@@ -43,6 +43,34 @@ impl EFISdt64 {
     }
 }
 
+/// Contains pointer to boot loader image handle.
+#[derive(Debug)]
+#[repr(C)]
+pub struct EFIImageHandle32 {
+    typ: u32,
+    size: u32,
+    pointer: u32,
+}
+
+/// Contains pointer to boot loader image handle.
+#[derive(Debug)]
+#[repr(C)]
+pub struct EFIImageHandle64 {
+    typ: u32,
+    size: u32,
+    pointer: u64,
+}
+
+/// If the image has relocatable header tag, this tag contains the image's 
+/// base physical address.
+#[derive(Debug)]
+#[repr(C)]
+pub struct ImageLoadPhysAddr {
+    typ: u32,
+    size: u32,
+    load_base_addr: u32,
+}
+
 /// This tag contains a copy of RSDP as defined per ACPI 1.0 specification. 
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
