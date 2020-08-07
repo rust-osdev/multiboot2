@@ -221,8 +221,9 @@ impl EFIMemoryDesc {
     }
 
     /// The size in bytes of the memory region.
-    pub fn size(&self, page_size: u64) -> u64 {
-        self.num_pages * page_size
+    pub fn size(&self) -> u64 {
+        // Spec says this is number of 4KiB pages.
+        self.num_pages * 4096
     }
 
     /// The type of the memory region.

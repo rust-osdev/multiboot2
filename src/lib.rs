@@ -1223,4 +1223,71 @@ mod tests {
         assert_eq!(ElfSectionType::StringTable, s1.section_type());
         assert!(s.next().is_none());
     }
+
+    #[test]
+    fn efi_memory_map() {
+        use memory_map::EFIMemoryAreaType;
+        #[repr(C, align(8))]
+        struct Bytes([u8; 72]);
+        // test that the EFI memory map is detected.
+        let bytes: Bytes = Bytes([
+            72, 0, 0, 0, // size
+            0, 0, 0, 0, // reserved
+            17, 0, 0, 0, // EFI memory map type
+            56, 0, 0, 0, // EFI memory map size
+            48, 0, 0, 0, // EFI descriptor size
+            1, 0, 0, 0, // EFI descriptor version, don't think this matters.
+            7, 0, 0, 0, // Type: EfiConventionalMemory
+            0, 0, 0, 0, // Padding
+            0, 0, 16, 0,// Physical Address: should be 0x100000
+            0, 0, 0, 0, // Extension of physical address.
+            0, 0, 16, 0,// Virtual Address: should be 0x100000
+            0, 0, 0, 0, // Extension of virtual address.
+            4, 0, 0, 0, // 4 KiB Pages: 16 KiB
+            0, 0, 0, 0, // Extension of pages
+            0, 0, 0, 0, // Attributes of this memory range.
+            0, 0, 0, 0, // Extension of attributes
+            0, 0, 0, 0, // end tag type.
+            8, 0, 0, 0, // end tag size.
+        ]);
+        let addr = bytes.0.as_ptr() as usize;
+        let boot_info = unsafe { load(addr) };
+        assert_eq!(addr, boot_info.start_address());
+        assert_eq!(addr + bytes.0.len(), boot_info.end_address());
+        assert_eq!(bytes.0.len(), boot_info.total_size() as usize);
+        let efi_memory_map = boot_info.efi_memory_map_tag().unwrap();
+        let mut efi_mmap_iter = efi_memory_map.memory_areas();
+        let desc = efi_mmap_iter.next().unwrap();
+        assert_eq!(desc.physical_address(), 0x100000);
+        assert_eq!(desc.size(), 16384);
+        assert_eq!(desc.typ(), EFIMemoryAreaType::EfiConventionalMemory);
+        // test that the EFI memory map is not detected if the boot services
+        // are not exited.
+        struct Bytes2([u8; 80]);
+        let bytes2: Bytes2 = Bytes2([
+            80, 0, 0, 0, // size
+            0, 0, 0, 0, // reserved
+            17, 0, 0, 0, // EFI memory map type
+            56, 0, 0, 0, // EFI memory map size
+            48, 0, 0, 0, // EFI descriptor size
+            1, 0, 0, 0, // EFI descriptor version, don't think this matters.
+            7, 0, 0, 0, // Type: EfiConventionalMemory
+            0, 0, 0, 0, // Padding
+            0, 0, 16, 0,// Physical Address: should be 0x100000
+            0, 0, 0, 0, // Extension of physical address.
+            0, 0, 16, 0,// Virtual Address: should be 0x100000
+            0, 0, 0, 0, // Extension of virtual address.
+            4, 0, 0, 0, // 4 KiB Pages: 16 KiB
+            0, 0, 0, 0, // Extension of pages
+            0, 0, 0, 0, // Attributes of this memory range.
+            0, 0, 0, 0, // Extension of attributes
+            18, 0, 0, 0, // Tag ExitBootServices not terminated.
+            8, 0, 0, 0, // Tag ExitBootServices size.
+            0, 0, 0, 0, // end tag type.
+            8, 0, 0, 0, // end tag size.
+        ]);
+        let boot_info = unsafe { load(bytes2.0.as_ptr() as usize) };
+        let efi_mmap = boot_info.efi_memory_map_tag();
+        assert!(efi_mmap.is_none());
+    }
 }
