@@ -30,9 +30,15 @@ pub use elf_sections::{
 };
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
 use header::{Tag, TagIter};
-pub use memory_map::{MemoryArea, MemoryAreaIter, MemoryAreaType, MemoryMapTag};
+pub use memory_map::{
+    EFIMemoryAreaType, EFIMemoryMapTag, EFIMemoryDesc, MemoryArea, MemoryAreaIter,
+    MemoryAreaType, MemoryMapTag,
+};
 pub use module::{ModuleIter, ModuleTag};
-pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
+pub use rsdp::{
+    EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64, ImageLoadPhysAddr, 
+    RsdpV1Tag, RsdpV2Tag,
+};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
@@ -170,6 +176,18 @@ impl BootInformation {
         self.get_tag(8).map(|tag| framebuffer::framebuffer_tag(tag))
     }
 
+    /// Search for the EFI 32-bit SDT tag.
+    pub fn efi_sdt_32_tag<'a>(&self) -> Option<&'a EFISdt32> {
+        self.get_tag(11)
+            .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt32) })
+    }
+
+    /// Search for the EFI 64-bit SDT tag.
+    pub fn efi_sdt_64_tag<'a>(&self) -> Option<&'a EFISdt64> {
+        self.get_tag(12)
+            .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt64) })
+    }
+
     /// Search for the (ACPI 1.0) RSDP tag.
     pub fn rsdp_v1_tag<'a>(&self) -> Option<&'a RsdpV1Tag> {
         self.get_tag(14)
@@ -180,6 +198,37 @@ impl BootInformation {
     pub fn rsdp_v2_tag<'a>(&'a self) -> Option<&'a RsdpV2Tag> {
         self.get_tag(15)
             .map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV2Tag) })
+    }
+
+    /// Search for the EFI Memory map tag.
+    pub fn efi_memory_map_tag<'a>(&'a self) -> Option<&'a EFIMemoryMapTag> {
+        // If the EFIBootServicesNotExited is present, then we should not use
+        // the memory map, as it could still be in use.
+        match self.get_tag(18) {
+            Some(_tag) => None,
+            None => {
+                self.get_tag(17)
+                    .map(|tag| unsafe { &*(tag as *const Tag as *const EFIMemoryMapTag) })
+            },
+        }
+    }
+
+    /// Search for the EFI 32-bit image handle pointer.
+    pub fn efi_32_ih<'a>(&'a self) -> Option<&'a EFIImageHandle32> {
+        self.get_tag(19)
+            .map(|tag| unsafe { &*(tag as *const Tag as *const EFIImageHandle32) })
+    }
+
+    /// Search for the EFI 64-bit image handle pointer.
+    pub fn efi_64_ih<'a>(&'a self) -> Option<&'a EFIImageHandle64> {
+        self.get_tag(20)
+            .map(|tag| unsafe { &*(tag as *const Tag as *const EFIImageHandle64) })
+    }
+
+    /// Search for the Image Load Base Physical Address.
+    pub fn load_base_addr<'a>(&'a self) -> Option<&'a ImageLoadPhysAddr> {
+        self.get_tag(21)
+            .map(|tag| unsafe { &*(tag as *const Tag as *const ImageLoadPhysAddr) })
     }
 
     /// Search for the VBE information tag.
@@ -1173,5 +1222,72 @@ mod tests {
         assert_eq!(ElfSectionFlags::empty(), s1.flags());
         assert_eq!(ElfSectionType::StringTable, s1.section_type());
         assert!(s.next().is_none());
+    }
+
+    #[test]
+    fn efi_memory_map() {
+        use memory_map::EFIMemoryAreaType;
+        #[repr(C, align(8))]
+        struct Bytes([u8; 72]);
+        // test that the EFI memory map is detected.
+        let bytes: Bytes = Bytes([
+            72, 0, 0, 0, // size
+            0, 0, 0, 0, // reserved
+            17, 0, 0, 0, // EFI memory map type
+            56, 0, 0, 0, // EFI memory map size
+            48, 0, 0, 0, // EFI descriptor size
+            1, 0, 0, 0, // EFI descriptor version, don't think this matters.
+            7, 0, 0, 0, // Type: EfiConventionalMemory
+            0, 0, 0, 0, // Padding
+            0, 0, 16, 0,// Physical Address: should be 0x100000
+            0, 0, 0, 0, // Extension of physical address.
+            0, 0, 16, 0,// Virtual Address: should be 0x100000
+            0, 0, 0, 0, // Extension of virtual address.
+            4, 0, 0, 0, // 4 KiB Pages: 16 KiB
+            0, 0, 0, 0, // Extension of pages
+            0, 0, 0, 0, // Attributes of this memory range.
+            0, 0, 0, 0, // Extension of attributes
+            0, 0, 0, 0, // end tag type.
+            8, 0, 0, 0, // end tag size.
+        ]);
+        let addr = bytes.0.as_ptr() as usize;
+        let boot_info = unsafe { load(addr) };
+        assert_eq!(addr, boot_info.start_address());
+        assert_eq!(addr + bytes.0.len(), boot_info.end_address());
+        assert_eq!(bytes.0.len(), boot_info.total_size() as usize);
+        let efi_memory_map = boot_info.efi_memory_map_tag().unwrap();
+        let mut efi_mmap_iter = efi_memory_map.memory_areas();
+        let desc = efi_mmap_iter.next().unwrap();
+        assert_eq!(desc.physical_address(), 0x100000);
+        assert_eq!(desc.size(), 16384);
+        assert_eq!(desc.typ(), EFIMemoryAreaType::EfiConventionalMemory);
+        // test that the EFI memory map is not detected if the boot services
+        // are not exited.
+        struct Bytes2([u8; 80]);
+        let bytes2: Bytes2 = Bytes2([
+            80, 0, 0, 0, // size
+            0, 0, 0, 0, // reserved
+            17, 0, 0, 0, // EFI memory map type
+            56, 0, 0, 0, // EFI memory map size
+            48, 0, 0, 0, // EFI descriptor size
+            1, 0, 0, 0, // EFI descriptor version, don't think this matters.
+            7, 0, 0, 0, // Type: EfiConventionalMemory
+            0, 0, 0, 0, // Padding
+            0, 0, 16, 0,// Physical Address: should be 0x100000
+            0, 0, 0, 0, // Extension of physical address.
+            0, 0, 16, 0,// Virtual Address: should be 0x100000
+            0, 0, 0, 0, // Extension of virtual address.
+            4, 0, 0, 0, // 4 KiB Pages: 16 KiB
+            0, 0, 0, 0, // Extension of pages
+            0, 0, 0, 0, // Attributes of this memory range.
+            0, 0, 0, 0, // Extension of attributes
+            18, 0, 0, 0, // Tag ExitBootServices not terminated.
+            8, 0, 0, 0, // Tag ExitBootServices size.
+            0, 0, 0, 0, // end tag type.
+            8, 0, 0, 0, // end tag size.
+        ]);
+        let boot_info = unsafe { load(bytes2.0.as_ptr() as usize) };
+        let efi_mmap = boot_info.efi_memory_map_tag();
+        assert!(efi_mmap.is_none());
     }
 }
