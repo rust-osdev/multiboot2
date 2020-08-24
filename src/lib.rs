@@ -115,7 +115,7 @@ pub struct BootInformation {
 }
 
 #[derive(Clone, Copy)]
-#[repr(C, packed)]
+#[repr(C)]
 struct BootInformationInner {
     total_size: u32,
     _reserved: u32,

@@ -66,7 +66,7 @@ pub struct FramebufferField {
 
 /// A framebuffer color descriptor in the palette.
 #[derive(Clone, Copy, Debug, PartialEq)]
-#[repr(C, packed)]
+#[repr(C, packed)] // only repr(C) would add unwanted padding at the end
 pub struct FramebufferColor {
     /// The Red component of the color.
     pub red: u8,
