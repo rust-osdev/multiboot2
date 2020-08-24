@@ -1,5 +1,7 @@
 # multiboot2-elf64
 [![Build Status](https://travis-ci.org/rust-osdev/multiboot2-elf64.svg?branch=master)](https://travis-ci.org/rust-osdev/multiboot2-elf64)
+[![crates.io](https://img.shields.io/crates/v/multiboot2.svg)](https://crates.io/crates/multiboot2)
+[![docs](https://docs.rs/multiboot2/badge.svg)](https://docs.rs/multiboot2/)
 
 An experimental Multiboot 2 crate for ELF-64 kernels. It's still incomplete, so please open an issue if you're missing some functionality. Contributions welcome!
 
