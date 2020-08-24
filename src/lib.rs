@@ -114,6 +114,7 @@ pub struct BootInformation {
     offset: usize,
 }
 
+#[derive(Clone, Copy)]
 #[repr(C, packed)]
 struct BootInformationInner {
     total_size: u32,
