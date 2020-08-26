@@ -13,7 +13,7 @@ pub unsafe fn elf_sections_tag(tag: &Tag, offset: usize) -> ElfSectionsTag {
     assert_eq!(9, tag.typ);
     let es = ElfSectionsTag {
         inner: (tag as *const Tag).offset(1) as *const ElfSectionsTagInner,
-        offset: offset,
+        offset,
     };
     assert!((es.get().entry_size * es.get().shndx) <= tag.size);
     es

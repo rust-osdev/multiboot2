@@ -467,6 +467,15 @@ mod tests {
     }
 
     #[test]
+    /// Compile time test for `BootLoaderNameTag`.
+    fn name_tag_size() {
+        use BootLoaderNameTag;
+        unsafe {
+            core::mem::transmute::<[u8; 9], BootLoaderNameTag>([0u8; 9]);
+        }
+    }
+
+    #[test]
     fn framebuffer_tag_rgb() {
         // direct RGB mode test:
         // taken from GRUB2 running in QEMU at
@@ -584,6 +593,16 @@ mod tests {
                 ]
             ),
             _ => panic!("Expected indexed framebuffer type."),
+        }
+    }
+
+    #[test]
+    /// Compile time test for `FramebufferTag`.
+    fn framebuffer_tag_size() {
+        use crate::FramebufferTag;
+        unsafe {
+            // 24 for the start + 24 for `FramebufferType`.
+            core::mem::transmute::<[u8; 48], FramebufferTag>([0u8; 48]);
         }
     }
 
@@ -742,6 +761,16 @@ mod tests {
             assert_eq!(vbe.mode_info.framebuffer_base_ptr, 4244635648);
             assert_eq!(vbe.mode_info.offscreen_memory_offset, 0);
             assert_eq!(vbe.mode_info.offscreen_memory_size, 0);
+        }
+    }
+
+    #[test]
+    /// Compile time test for `VBEInfoTag`.
+    fn vbe_info_tag_size() {
+        use VBEInfoTag;
+        unsafe {
+            // 16 for the start + 512 from `VBEControlInfo` + 256 from `VBEModeInfo`.
+            core::mem::transmute::<[u8; 784], VBEInfoTag>([0u8; 784]);
         }
     }
 
@@ -1226,6 +1255,16 @@ mod tests {
     }
 
     #[test]
+    /// Compile time test for `ElfSectionsTag`.
+    fn elf_sections_tag_size() {
+        use super::ElfSectionsTag;
+        unsafe {
+            // `ElfSectionsTagInner` is 12 bytes + 4 in the offset.
+            core::mem::transmute::<[u8; 16], ElfSectionsTag>([0u8; 16]);
+        }
+    }
+
+    #[test]
     fn efi_memory_map() {
         use memory_map::EFIMemoryAreaType;
         #[repr(C, align(8))]
@@ -1291,4 +1330,15 @@ mod tests {
         let efi_mmap = boot_info.efi_memory_map_tag();
         assert!(efi_mmap.is_none());
     }
+
+    #[test]
+    /// Compile time test for `EFIMemoryMapTag`.
+    fn efi_memory_map_tag_size() {
+        use super::EFIMemoryMapTag;
+        unsafe {
+            // `EFIMemoryMapTag` is 16 bytes + `EFIMemoryDesc` is 40 bytes.
+            core::mem::transmute::<[u8; 56], EFIMemoryMapTag>([0u8; 56]);
+        }
+    }
+
 }
