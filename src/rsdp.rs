@@ -13,7 +13,7 @@ const RSDPV1_LENGTH: usize = 20;
 
 /// EFI system table in 32 bit mode
 #[derive(Clone, Copy, Debug)]
-#[repr(C, packed)]
+#[repr(C, packed)] // only repr(C) would add unwanted padding before first_section
 pub struct EFISdt32 {
     typ: u32,
     size: u32,
@@ -29,7 +29,7 @@ impl EFISdt32 {
 
 /// EFI system table in 64 bit mode
 #[derive(Clone, Copy, Debug)]
-#[repr(C, packed)]
+#[repr(C)] 
 pub struct EFISdt64 {
     typ: u32,
     size: u32,

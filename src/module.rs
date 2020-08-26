@@ -3,7 +3,7 @@ use header::{Tag, TagIter};
 /// This tag indicates to the kernel what boot module was loaded along with
 /// the kernel image, and where it can be found. 
 #[derive(Clone, Copy, Debug)]
-#[repr(C, packed)]
+#[repr(C, packed)] // only repr(C) would add unwanted padding near name_byte.
 pub struct ModuleTag {
     typ: u32,
     size: u32,
