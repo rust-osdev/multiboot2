@@ -23,9 +23,15 @@ pub struct MemoryMapTag {
 impl MemoryMapTag {
     /// Return an iterator over all AVAILABLE marked memory areas.
     pub fn memory_areas(&self) -> MemoryAreaIter {
+        MemoryAreaIter {
+            iter: self.all_memory_areas();
+        }
+    }
+    /// Return an iterator over all marked memory areas.
+    pub fn all_memory_areas(&self) -> AllMemoryAreaIter {
         let self_ptr = self as *const MemoryMapTag;
         let start_area = (&self.first_area) as *const MemoryArea;
-        MemoryAreaIter {
+        AllMemoryAreaIter {
             current_area: start_area as u64,
             last_area: (self_ptr as u64 + (self.size - self.entry_size) as u64),
             entry_size: self.entry_size,
@@ -91,16 +97,16 @@ pub enum MemoryAreaType {
     Defective,
 }
 
-/// An iterator over Available memory areas.
+/// An iterator over all memory areas
 #[derive(Clone, Debug)]
-pub struct MemoryAreaIter<'a> {
+pub struct AllMemoryAreaIter<'a> {
     current_area: u64,
     last_area: u64,
     entry_size: u32,
     phantom: PhantomData<&'a MemoryArea>,
 }
 
-impl<'a> Iterator for MemoryAreaIter<'a> {
+impl<'a> Iterator for AllMemoryAreaIter<'a> {
     type Item = &'a MemoryArea;
     fn next(&mut self) -> Option<&'a MemoryArea> {
         if self.current_area > self.last_area {
@@ -108,9 +114,25 @@ impl<'a> Iterator for MemoryAreaIter<'a> {
         } else {
             let area = unsafe{&*(self.current_area as *const MemoryArea)};
             self.current_area = self.current_area + (self.entry_size as u64);
-            if area.typ == 1 {
-                Some(area)
-            } else {self.next()}
+            Some(area)
+        }
+    }
+}
+
+/// An iterator over Available memory areas.
+#[derive(Clone, Debug)]
+pub struct MemoryAreaIter<'a> {
+    iter: AllMemoryAreaIter<'a>,
+}
+
+impl<'a> Iterator for MemoryAreaIter<'a> {
+    type Item = &'a MemoryArea;
+    fn next(&mut self) -> Option<&'a MemoryArea> {
+        let ret = self.iter.next()?;
+        if ret.typ == 1 {
+            Some(ret)
+        } else {
+            self.next()
         }
     }
 }
