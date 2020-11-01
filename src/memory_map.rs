@@ -24,7 +24,7 @@ impl MemoryMapTag {
     /// Return an iterator over all AVAILABLE marked memory areas.
     pub fn memory_areas(&self) -> MemoryAreaIter {
         MemoryAreaIter {
-            iter: self.all_memory_areas();
+            iter: self.all_memory_areas(),
         }
     }
     /// Return an iterator over all marked memory areas.
