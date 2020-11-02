@@ -22,7 +22,12 @@ pub struct MemoryMapTag {
 
 impl MemoryMapTag {
     /// Return an iterator over all AVAILABLE marked memory areas.
-    pub fn memory_areas(&self) -> MemoryAreaIter {
+    pub fn memory_areas(&self) -> impl Iterator<Item = &MemoryArea> {
+        self.all_memory_areas().filter(|entry| entry.typ == 1)
+    }
+
+    /// Return an iterator over all marked memory areas.
+    pub fn all_memory_areas(&self) -> MemoryAreaIter {
         let self_ptr = self as *const MemoryMapTag;
         let start_area = (&self.first_area) as *const MemoryArea;
         MemoryAreaIter {
@@ -91,7 +96,7 @@ pub enum MemoryAreaType {
     Defective,
 }
 
-/// An iterator over Available memory areas.
+/// An iterator over all memory areas
 #[derive(Clone, Debug)]
 pub struct MemoryAreaIter<'a> {
     current_area: u64,
@@ -108,9 +113,7 @@ impl<'a> Iterator for MemoryAreaIter<'a> {
         } else {
             let area = unsafe{&*(self.current_area as *const MemoryArea)};
             self.current_area = self.current_area + (self.entry_size as u64);
-            if area.typ == 1 {
-                Some(area)
-            } else {self.next()}
+            Some(area)
         }
     }
 }
