@@ -43,9 +43,8 @@ impl ElfSectionsTag {
     /// ```
     pub fn sections(&self) -> ElfSectionIter {
         let string_section_offset = (self.get().shndx * self.get().entry_size) as isize;
-        let string_section_ptr = unsafe {
-            self.first_section().offset(string_section_offset) as *const _
-        };
+        let string_section_ptr =
+            unsafe { self.first_section().offset(string_section_offset) as *const _ };
         ElfSectionIter {
             current_section: self.first_section(),
             remaining_sections: self.get().number_of_sections,
@@ -152,8 +151,8 @@ impl ElfSection {
             9 => ElfSectionType::RelRelocation,
             10 => ElfSectionType::Reserved,
             11 => ElfSectionType::DynamicLoaderSymbolTable,
-            0x6000_0000...0x6FFF_FFFF => ElfSectionType::EnvironmentSpecific,
-            0x7000_0000...0x7FFF_FFFF => ElfSectionType::ProcessorSpecific,
+            0x6000_0000..=0x6FFF_FFFF => ElfSectionType::EnvironmentSpecific,
+            0x7000_0000..=0x7FFF_FFFF => ElfSectionType::ProcessorSpecific,
             _ => panic!(),
         }
     }
@@ -165,11 +164,9 @@ impl ElfSection {
 
     /// Read the name of the section.
     pub fn name(&self) -> &str {
-        use core::{str, slice};
+        use core::{slice, str};
 
-        let name_ptr = unsafe {
-            self.string_table().offset(self.get().name_index() as isize)
-        };
+        let name_ptr = unsafe { self.string_table().offset(self.get().name_index() as isize) };
         let strlen = {
             let mut len = 0;
             while unsafe { *name_ptr.offset(len) } != 0 {
@@ -218,7 +215,7 @@ impl ElfSection {
         self.flags().contains(ElfSectionFlags::ALLOCATED)
     }
 
-    fn get(&self) -> &ElfSectionInner {
+    fn get(&self) -> &dyn ElfSectionInner {
         match self.entry_size {
             40 => unsafe { &*(self.inner as *const ElfSectionInner32) },
             64 => unsafe { &*(self.inner as *const ElfSectionInner64) },
