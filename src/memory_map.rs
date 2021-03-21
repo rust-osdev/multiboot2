@@ -27,7 +27,7 @@ impl MemoryMapTag {
     }
 
     /// Return an iterator over all marked memory areas.
-    pub fn all_memory_areas(&self) -> MemoryAreaIter {
+    pub fn all_memory_areas(&self) -> impl Iterator<Item = &MemoryArea> {
         let self_ptr = self as *const MemoryMapTag;
         let start_area = (&self.first_area) as *const MemoryArea;
         MemoryAreaIter {
@@ -111,7 +111,7 @@ impl<'a> Iterator for MemoryAreaIter<'a> {
         if self.current_area > self.last_area {
             None
         } else {
-            let area = unsafe{&*(self.current_area as *const MemoryArea)};
+            let area = unsafe { &*(self.current_area as *const MemoryArea) };
             self.current_area = self.current_area + (self.entry_size as u64);
             Some(area)
         }
@@ -260,7 +260,6 @@ pub struct EFIBootServicesNotExited {
     size: u32,
 }
 
-
 /// An iterator over ALL EFI memory areas.
 #[derive(Clone, Debug)]
 pub struct EFIMemoryAreaIter<'a> {
@@ -276,10 +275,9 @@ impl<'a> Iterator for EFIMemoryAreaIter<'a> {
         if self.current_area > self.last_area {
             None
         } else {
-            let area = unsafe{&*(self.current_area as *const EFIMemoryDesc)};
+            let area = unsafe { &*(self.current_area as *const EFIMemoryDesc) };
             self.current_area = self.current_area + (self.entry_size as u64);
             Some(area)
         }
     }
 }
-
