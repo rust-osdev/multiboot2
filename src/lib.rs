@@ -7,21 +7,6 @@
 //! The GNU Multiboot specification aims provide to a standardised
 //! method of sharing commonly used information about the host machine at
 //! boot time.
-//!
-//! # Examples
-//!
-//! ```ignore
-//! #![feature(asm)]
-//! 
-//! use multiboot2::load;
-//!
-//! // The Multiboot 2 specification dictates that the machine state after the
-//! // bootloader finishes its job will be that the boot information struct pointer
-//! // is stored in the `EBX` register.
-//! let multiboot_info_ptr: u32;
-//! unsafe { asm!("mov {}, ebx", out(reg) multiboot_info_ptr) };
-//! let boot_info = unsafe { load(multiboot_info_ptr as usize) };
-//! ```
 
 use core::fmt;
 
