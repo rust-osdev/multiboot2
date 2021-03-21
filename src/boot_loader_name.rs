@@ -1,4 +1,3 @@
-
 /// This Tag contains the name of the bootloader that is booting the kernel.
 ///
 /// The name is a normal C-style UTF-8 zero-terminated string that can be
@@ -23,11 +22,10 @@ impl BootLoaderNameTag {
     /// }
     /// ```
     pub fn name(&self) -> &str {
-        use core::{mem,str,slice};
+        use core::{mem, slice, str};
         unsafe {
             let strlen = self.size as usize - mem::size_of::<BootLoaderNameTag>();
-            str::from_utf8_unchecked(
-                slice::from_raw_parts((&self.string) as *const u8, strlen))
+            str::from_utf8_unchecked(slice::from_raw_parts((&self.string) as *const u8, strlen))
         }
     }
 }

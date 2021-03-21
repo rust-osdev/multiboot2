@@ -31,13 +31,12 @@ pub use elf_sections::{
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
 use header::{Tag, TagIter};
 pub use memory_map::{
-    EFIMemoryAreaType, EFIMemoryMapTag, EFIMemoryDesc, MemoryArea, MemoryAreaIter,
-    MemoryAreaType, MemoryMapTag,
+    EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType,
+    MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use rsdp::{
-    EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64, ImageLoadPhysAddr, 
-    RsdpV1Tag, RsdpV2Tag,
+    EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64, ImageLoadPhysAddr, RsdpV1Tag, RsdpV2Tag,
 };
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
@@ -207,10 +206,9 @@ impl BootInformation {
         // the memory map, as it could still be in use.
         match self.get_tag(18) {
             Some(_tag) => None,
-            None => {
-                self.get_tag(17)
-                    .map(|tag| unsafe { &*(tag as *const Tag as *const EFIMemoryMapTag) })
-            },
+            None => self
+                .get_tag(17)
+                .map(|tag| unsafe { &*(tag as *const Tag as *const EFIMemoryMapTag) }),
         }
     }
 
@@ -1279,9 +1277,9 @@ mod tests {
             1, 0, 0, 0, // EFI descriptor version, don't think this matters.
             7, 0, 0, 0, // Type: EfiConventionalMemory
             0, 0, 0, 0, // Padding
-            0, 0, 16, 0,// Physical Address: should be 0x100000
+            0, 0, 16, 0, // Physical Address: should be 0x100000
             0, 0, 0, 0, // Extension of physical address.
-            0, 0, 16, 0,// Virtual Address: should be 0x100000
+            0, 0, 16, 0, // Virtual Address: should be 0x100000
             0, 0, 0, 0, // Extension of virtual address.
             4, 0, 0, 0, // 4 KiB Pages: 16 KiB
             0, 0, 0, 0, // Extension of pages
@@ -1313,9 +1311,9 @@ mod tests {
             1, 0, 0, 0, // EFI descriptor version, don't think this matters.
             7, 0, 0, 0, // Type: EfiConventionalMemory
             0, 0, 0, 0, // Padding
-            0, 0, 16, 0,// Physical Address: should be 0x100000
+            0, 0, 16, 0, // Physical Address: should be 0x100000
             0, 0, 0, 0, // Extension of physical address.
-            0, 0, 16, 0,// Virtual Address: should be 0x100000
+            0, 0, 16, 0, // Virtual Address: should be 0x100000
             0, 0, 0, 0, // Extension of virtual address.
             4, 0, 0, 0, // 4 KiB Pages: 16 KiB
             0, 0, 0, 0, // Extension of pages
@@ -1340,5 +1338,4 @@ mod tests {
             core::mem::transmute::<[u8; 56], EFIMemoryMapTag>([0u8; 56]);
         }
     }
-
 }

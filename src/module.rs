@@ -1,7 +1,7 @@
 use header::{Tag, TagIter};
 
 /// This tag indicates to the kernel what boot module was loaded along with
-/// the kernel image, and where it can be found. 
+/// the kernel image, and where it can be found.
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding near name_byte.
 pub struct ModuleTag {
@@ -18,11 +18,10 @@ impl ModuleTag {
     // defined behavior
     /// Get the name of the module.
     pub fn name(&self) -> &str {
-        use core::{mem,str,slice};
+        use core::{mem, slice, str};
         let strlen = self.size as usize - mem::size_of::<ModuleTag>();
         unsafe {
-            str::from_utf8_unchecked(
-                slice::from_raw_parts(&self.name_byte as *const u8, strlen))
+            str::from_utf8_unchecked(slice::from_raw_parts(&self.name_byte as *const u8, strlen))
         }
     }
 
@@ -51,7 +50,8 @@ impl<'a> Iterator for ModuleIter<'a> {
     type Item = &'a ModuleTag;
 
     fn next(&mut self) -> Option<&'a ModuleTag> {
-        self.iter.find(|x| x.typ == 3)
-            .map(|tag| unsafe{&*(tag as *const Tag as *const ModuleTag)})
+        self.iter
+            .find(|x| x.typ == 3)
+            .map(|tag| unsafe { &*(tag as *const Tag as *const ModuleTag) })
     }
 }

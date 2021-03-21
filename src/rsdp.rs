@@ -5,7 +5,6 @@
 ///
 /// Even though the bootloader should give the address of the real RSDP/XSDT, the checksum and
 /// signature should be manually verified.
-
 use core::slice;
 use core::str;
 
@@ -29,7 +28,7 @@ impl EFISdt32 {
 
 /// EFI system table in 64 bit mode
 #[derive(Clone, Copy, Debug)]
-#[repr(C)] 
+#[repr(C)]
 pub struct EFISdt64 {
     typ: u32,
     size: u32,
@@ -61,7 +60,7 @@ pub struct EFIImageHandle64 {
     pointer: u64,
 }
 
-/// If the image has relocatable header tag, this tag contains the image's 
+/// If the image has relocatable header tag, this tag contains the image's
 /// base physical address.
 #[derive(Debug)]
 #[repr(C)]
@@ -71,7 +70,7 @@ pub struct ImageLoadPhysAddr {
     load_base_addr: u32,
 }
 
-/// This tag contains a copy of RSDP as defined per ACPI 1.0 specification. 
+/// This tag contains a copy of RSDP as defined per ACPI 1.0 specification.
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct RsdpV1Tag {
@@ -81,7 +80,7 @@ pub struct RsdpV1Tag {
     checksum: u8,
     oem_id: [u8; 6],
     revision: u8,
-    rsdt_address: u32,  // This is the PHYSICAL address of the RSDT
+    rsdt_address: u32, // This is the PHYSICAL address of the RSDT
 }
 
 impl RsdpV1Tag {
@@ -94,16 +93,15 @@ impl RsdpV1Tag {
 
     /// Validation of the RSDPv1 checksum
     pub fn checksum_is_valid(&self) -> bool {
-        let bytes = unsafe {
-            slice::from_raw_parts(
-                self as *const _ as *const u8,
-                RSDPV1_LENGTH + 8
-            )
-        };
-        bytes[8..].iter().fold(0u8, |acc, val| acc.wrapping_add(*val)) == 0
+        let bytes =
+            unsafe { slice::from_raw_parts(self as *const _ as *const u8, RSDPV1_LENGTH + 8) };
+        bytes[8..]
+            .iter()
+            .fold(0u8, |acc, val| acc.wrapping_add(*val))
+            == 0
     }
 
-    /// An OEM-supplied string that identifies the OEM. 
+    /// An OEM-supplied string that identifies the OEM.
     pub fn oem_id<'a>(&'a self) -> Option<&'a str> {
         str::from_utf8(&self.oem_id).ok()
     }
@@ -119,7 +117,7 @@ impl RsdpV1Tag {
     }
 }
 
-/// This tag contains a copy of RSDP as defined per ACPI 2.0 or later specification. 
+/// This tag contains a copy of RSDP as defined per ACPI 2.0 or later specification.
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct RsdpV2Tag {
@@ -131,7 +129,7 @@ pub struct RsdpV2Tag {
     revision: u8,
     _rsdt_address: u32,
     length: u32,
-    xsdt_address: u64,  // This is the PHYSICAL address of the XSDT
+    xsdt_address: u64, // This is the PHYSICAL address of the XSDT
     ext_checksum: u8,
     _reserved: [u8; 3],
 }
@@ -147,15 +145,15 @@ impl RsdpV2Tag {
     /// Validation of the RSDPv2 extended checksum
     pub fn checksum_is_valid(&self) -> bool {
         let bytes = unsafe {
-            slice::from_raw_parts(
-                self as *const _ as *const u8,
-                self.length as usize + 8
-            )
+            slice::from_raw_parts(self as *const _ as *const u8, self.length as usize + 8)
         };
-        bytes[8..].iter().fold(0u8, |acc, val| acc.wrapping_add(*val)) == 0
+        bytes[8..]
+            .iter()
+            .fold(0u8, |acc, val| acc.wrapping_add(*val))
+            == 0
     }
 
-    /// An OEM-supplied string that identifies the OEM. 
+    /// An OEM-supplied string that identifies the OEM.
     pub fn oem_id<'a>(&'a self) -> Option<&'a str> {
         str::from_utf8(&self.oem_id).ok()
     }
@@ -172,7 +170,7 @@ impl RsdpV2Tag {
         self.xsdt_address as usize
     }
 
-    /// This field is used to calculate the checksum of the entire table, including both checksum fields. 
+    /// This field is used to calculate the checksum of the entire table, including both checksum fields.
     pub fn ext_checksum(&self) -> u8 {
         self.ext_checksum
     }

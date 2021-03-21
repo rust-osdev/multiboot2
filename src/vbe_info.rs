@@ -8,7 +8,7 @@ pub struct VBEInfoTag {
     typ: u32,
     length: u32,
 
-    /// Indicates current video mode in the format specified in VBE 3.0. 
+    /// Indicates current video mode in the format specified in VBE 3.0.
     pub mode: u16,
 
     /// Contain the segment of the table of a protected mode interface defined in VBE 2.0+.
@@ -33,7 +33,7 @@ pub struct VBEInfoTag {
     pub control_info: VBEControlInfo,
 
     /// Contains VBE mode information returned by the VBE Function `01h`.
-    pub mode_info: VBEModeInfo
+    pub mode_info: VBEModeInfo,
 }
 
 /// VBE controller information.
@@ -81,28 +81,27 @@ pub struct VBEControlInfo {
     reserved: [u8; 222],
 
     /// Data area for OEM strings.
-    oem_data: [u8; 256]
+    oem_data: [u8; 256],
 }
 
 impl fmt::Debug for VBEControlInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         unsafe {
             f.debug_struct("VBEControlInfo")
-             .field("signature", &self.signature)
-             .field("version", &self.version)
-             .field("oem_string_ptr", &self.oem_string_ptr)
-             .field("capabilities", &self.capabilities)
-             .field("mode_list_ptr", &self.mode_list_ptr)
-             .field("total_memory", &self.total_memory)
-             .field("oem_software_revision", &self.oem_software_revision)
-             .field("oem_vendor_name_ptr", &self.oem_vendor_name_ptr)
-             .field("oem_product_name_ptr", &self.oem_product_name_ptr)
-             .field("oem_product_revision_ptr", &self.oem_product_revision_ptr)
-             .finish()
+                .field("signature", &self.signature)
+                .field("version", &self.version)
+                .field("oem_string_ptr", &self.oem_string_ptr)
+                .field("capabilities", &self.capabilities)
+                .field("mode_list_ptr", &self.mode_list_ptr)
+                .field("total_memory", &self.total_memory)
+                .field("oem_software_revision", &self.oem_software_revision)
+                .field("oem_vendor_name_ptr", &self.oem_vendor_name_ptr)
+                .field("oem_product_name_ptr", &self.oem_product_name_ptr)
+                .field("oem_product_revision_ptr", &self.oem_product_revision_ptr)
+                .finish()
         }
     }
 }
-
 
 /// Extended information about a specific VBE display mode from the
 /// mode list returned by `VBEControlInfo` (VBE Function `00h`).
@@ -196,39 +195,39 @@ pub struct VBEModeInfo {
     pub offscreen_memory_size: u16,
 
     /// Remainder of mode info block
-    reserved1: [u8; 206]
+    reserved1: [u8; 206],
 }
 
 impl fmt::Debug for VBEModeInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         unsafe {
             f.debug_struct("VBEModeInfo")
-             .field("mode_attributes", &self.mode_attributes)
-             .field("window_a_attributes", &self.window_a_attributes)
-             .field("window_b_attributes", &self.window_b_attributes)
-             .field("window_granularity", &self.window_granularity)
-             .field("window_size", &self.window_size)
-             .field("window_a_segment", &self.window_a_segment)
-             .field("window_b_segment", &self.window_b_segment)
-             .field("window_function_ptr", &self.window_function_ptr)
-             .field("pitch", &self.pitch)
-             .field("resolution", &self.resolution)
-             .field("character_size", &self.character_size)
-             .field("number_of_planes", &self.number_of_planes)
-             .field("bpp", &self.bpp)
-             .field("number_of_banks", &self.number_of_banks)
-             .field("memory_model", &self.memory_model)
-             .field("bank_size", &self.bank_size)
-             .field("number_of_image_pages", &self.number_of_image_pages)
-             .field("red_field", &self.red_field)
-             .field("green_field", &self.green_field)
-             .field("blue_field", &self.blue_field)
-             .field("reserved_field", &self.reserved_field)
-             .field("direct_color_attributes", &self.direct_color_attributes)
-             .field("framebuffer_base_ptr", &self.framebuffer_base_ptr)
-             .field("offscreen_memory_offset", &self.offscreen_memory_offset)
-             .field("offscreen_memory_size", &self.offscreen_memory_size)
-             .finish()
+                .field("mode_attributes", &self.mode_attributes)
+                .field("window_a_attributes", &self.window_a_attributes)
+                .field("window_b_attributes", &self.window_b_attributes)
+                .field("window_granularity", &self.window_granularity)
+                .field("window_size", &self.window_size)
+                .field("window_a_segment", &self.window_a_segment)
+                .field("window_b_segment", &self.window_b_segment)
+                .field("window_function_ptr", &self.window_function_ptr)
+                .field("pitch", &self.pitch)
+                .field("resolution", &self.resolution)
+                .field("character_size", &self.character_size)
+                .field("number_of_planes", &self.number_of_planes)
+                .field("bpp", &self.bpp)
+                .field("number_of_banks", &self.number_of_banks)
+                .field("memory_model", &self.memory_model)
+                .field("bank_size", &self.bank_size)
+                .field("number_of_image_pages", &self.number_of_image_pages)
+                .field("red_field", &self.red_field)
+                .field("green_field", &self.green_field)
+                .field("blue_field", &self.blue_field)
+                .field("reserved_field", &self.reserved_field)
+                .field("direct_color_attributes", &self.direct_color_attributes)
+                .field("framebuffer_base_ptr", &self.framebuffer_base_ptr)
+                .field("offscreen_memory_offset", &self.offscreen_memory_offset)
+                .field("offscreen_memory_size", &self.offscreen_memory_size)
+                .finish()
         }
     }
 }
@@ -244,7 +243,7 @@ pub struct VBEField {
 
     /// define the bit position within the direct color pixel or YUV pixel of
     /// the least significant bit of the respective color component.
-    pub position: u8
+    pub position: u8,
 }
 
 bitflags! {
@@ -283,7 +282,7 @@ bitflags! {
 
         /// VGA Window compatibility.
         ///
-        /// If this is set, the window A and B fields of VBEModeInfo are invalid. 
+        /// If this is set, the window A and B fields of VBEModeInfo are invalid.
         const NO_VGA_WINDOW = 0x40;
 
         /// Linear framebuffer availability.
@@ -340,5 +339,5 @@ pub enum VBEMemoryModel {
     PackedPixel = 0x04,
     Unchained = 0x05,
     DirectColor = 0x06,
-    YUV = 0x07
+    YUV = 0x07,
 }
