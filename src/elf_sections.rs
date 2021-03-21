@@ -41,7 +41,7 @@ impl ElfSectionsTag {
     ///     }
     /// }
     /// ```
-    pub fn sections(&self) -> ElfSectionIter {
+    pub fn sections(&self) -> impl Iterator<Item = ElfSection> {
         let string_section_offset = (self.get().shndx * self.get().entry_size) as isize;
         let string_section_ptr =
             unsafe { self.first_section().offset(string_section_offset) as *const _ };

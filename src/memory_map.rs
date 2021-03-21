@@ -27,7 +27,7 @@ impl MemoryMapTag {
     }
 
     /// Return an iterator over all marked memory areas.
-    pub fn all_memory_areas(&self) -> MemoryAreaIter {
+    pub fn all_memory_areas(&self) -> impl Iterator<Item = &MemoryArea> {
         let self_ptr = self as *const MemoryMapTag;
         let start_area = (&self.first_area) as *const MemoryArea;
         MemoryAreaIter {

@@ -155,7 +155,7 @@ impl BootInformation {
     }
 
     /// Get an iterator of all module tags.
-    pub fn module_tags(&self) -> ModuleIter {
+    pub fn module_tags(&self) -> impl Iterator<Item = &ModuleTag> {
         module::module_iter(self.tags())
     }
 
