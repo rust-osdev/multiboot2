@@ -227,11 +227,13 @@ impl BootInformation {
         unsafe { &*self.inner }
     }
 
-    fn get_tag<'a>(&'a self, typ: u32) -> Option<&'a Tag> {
+    /// Search for a tag by `type` identifier.
+    pub fn get_tag<'a>(&'a self, typ: u32) -> Option<&'a Tag> {
         self.tags().find(|tag| tag.typ == typ)
     }
 
-    fn tags(&self) -> TagIter {
+    /// Get a iterator over tags passed by bootloader.
+    pub fn tags(&self) -> TagIter {
         TagIter::new(unsafe { self.inner.offset(1) } as *const _)
     }
 }
