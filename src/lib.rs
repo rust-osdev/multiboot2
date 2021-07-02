@@ -142,7 +142,7 @@ impl BootInformation {
     }
 
     /// Get an iterator of all module tags.
-    pub fn module_tags(&self) -> impl Iterator<Item = &ModuleTag> {
+    pub fn module_tags(&self) -> ModuleIter {
         module::module_iter(self.tags())
     }
 
@@ -250,64 +250,58 @@ impl BootInformationInner {
 
 impl fmt::Debug for BootInformation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "multiboot information")?;
+        /// Limit how many Elf-Sections should be debug-formatted.
+        /// Can be thousands of sections for a Rust binary => this is useless output.
+        /// If the user really wants this, they should debug-format the field directly.
+        const ELF_SECTIONS_LIMIT: usize = 17;
 
-        writeln!(
-            f,
-            "S: {:#010X}, E: {:#010X}, L: {:#010X}",
-            self.start_address(),
-            self.end_address(),
-            self.total_size()
-        )?;
+        let mut debug = f.debug_struct("Multiboot2 Boot Information");
+        debug.field("start_address", &(self.start_address() as *const u64))
+            .field("end_address", &(self.end_address() as *const u64))
+            .field("total_size", &(self.total_size() as *const u64))
+            .field(
+                "boot_loader_name_tag",
+                &self
+                    .boot_loader_name_tag()
+                    .map(|x| x.name())
+                    .unwrap_or("<unknown>"),
+            )
+            .field(
+                "command_line",
+                &self
+                    .command_line_tag()
+                    .map(|x| x.command_line())
+                    .unwrap_or(""),
+            )
+            .field("memory_areas", &self.memory_map_tag())
+            // so far, I didn't found a nice way to connect the iterator with ".field()" because
+            // the iterator isn't Debug
+            .field("module_tags", &self.module_tags());
+            // usually this is REALLY big (thousands of tags) => skip it here
 
-        if let Some(boot_loader_name_tag) = self.boot_loader_name_tag() {
-            writeln!(f, "boot loader name: {}", boot_loader_name_tag.name())?;
+        let elf_sections_tag_entries_count = self.elf_sections_tag().map(|x| x.sections().count()).unwrap_or(0);
+
+        if elf_sections_tag_entries_count > ELF_SECTIONS_LIMIT {
+            debug.field(
+                "elf_sections_tags (count)",
+                &elf_sections_tag_entries_count,
+            );
+        } else {
+            debug.field(
+                "elf_sections_tags",
+                &self
+                    .elf_sections_tag()
+                    .map(|x| x.sections())
+                    .unwrap_or_default(),
+            );
         }
 
-        if let Some(command_line_tag) = self.command_line_tag() {
-            writeln!(f, "command line: {}", command_line_tag.command_line())?;
-        }
-
-        if let Some(memory_map_tag) = self.memory_map_tag() {
-            writeln!(f, "memory areas:")?;
-            for area in memory_map_tag.memory_areas() {
-                writeln!(
-                    f,
-                    "    S: {:#010X}, E: {:#010X}, L: {:#010X}",
-                    area.start_address(),
-                    area.end_address(),
-                    area.size()
-                )?;
-            }
-        }
-
-        if let Some(elf_sections_tag) = self.elf_sections_tag() {
-            writeln!(f, "kernel sections:")?;
-            for s in elf_sections_tag.sections() {
-                writeln!(
-                    f,
-                    "    name: {:15}, S: {:#08X}, E: {:#08X}, L: {:#08X}, F: {:#04X}",
-                    s.name(),
-                    s.start_address(),
-                    s.start_address() + s.size(),
-                    s.size(),
-                    s.flags().bits()
-                )?;
-            }
-        }
-
-        writeln!(f, "module tags:")?;
-        for mt in self.module_tags() {
-            writeln!(
-                f,
-                "    name: {:15}, S: {:#010X}, E: {:#010X}",
-                mt.name(),
-                mt.start_address(),
-                mt.end_address()
-            )?;
-        }
-
-        Ok(())
+        debug.field("efi_32_ih", &self.efi_32_ih())
+            .field("efi_64_ih", &self.efi_64_ih())
+            .field("efi_sdt_32_tag", &self.efi_sdt_32_tag())
+            .field("efi_sdt_64_tag", &self.efi_sdt_64_tag())
+            .field("efi_memory_map_tag", &self.efi_memory_map_tag())
+            .finish()
     }
 }
 
