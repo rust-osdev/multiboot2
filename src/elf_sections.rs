@@ -1,4 +1,5 @@
 use header::Tag;
+use core::fmt::{Formatter, Debug};
 
 /// This tag contains section header table from an ELF kernel.
 ///
@@ -41,7 +42,7 @@ impl ElfSectionsTag {
     ///     }
     /// }
     /// ```
-    pub fn sections(&self) -> impl Iterator<Item = ElfSection> {
+    pub fn sections(&self) -> ElfSectionIter {
         let string_section_offset = (self.get().shndx * self.get().entry_size) as isize;
         let string_section_ptr =
             unsafe { self.first_section().offset(string_section_offset) as *const _ };
@@ -64,7 +65,7 @@ impl ElfSectionsTag {
 }
 
 /// An iterator over some ELF sections.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ElfSectionIter {
     current_section: *const u8,
     remaining_sections: u32,
@@ -93,6 +94,28 @@ impl Iterator for ElfSectionIter {
             }
         }
         None
+    }
+}
+
+impl Debug for ElfSectionIter {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        let mut debug = f.debug_list();
+        self.clone().for_each(|ref e| {
+            debug.entry(e);
+        });
+        debug.finish()
+    }
+}
+
+impl Default for ElfSectionIter {
+    fn default() -> Self {
+        Self {
+            current_section: core::ptr::null(),
+            remaining_sections: 0,
+            entry_size: 0,
+            string_section: core::ptr::null(),
+            offset: 0
+        }
     }
 }
 

@@ -1,4 +1,5 @@
-use header::{Tag, TagIter};
+use header::{Tag, TagIter, TagType};
+use core::fmt::{Formatter, Debug};
 
 /// This tag indicates to the kernel what boot module was loaded along with
 /// the kernel image, and where it can be found.
@@ -41,7 +42,7 @@ pub fn module_iter(iter: TagIter) -> ModuleIter {
 }
 
 /// An iterator over all module tags.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ModuleIter<'a> {
     iter: TagIter<'a>,
 }
@@ -51,7 +52,17 @@ impl<'a> Iterator for ModuleIter<'a> {
 
     fn next(&mut self) -> Option<&'a ModuleTag> {
         self.iter
-            .find(|x| x.typ == 3)
+            .find(|x| x.typ == TagType::Module)
             .map(|tag| unsafe { &*(tag as *const Tag as *const ModuleTag) })
+    }
+}
+
+impl <'a> Debug for ModuleIter<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        let mut list = f.debug_list();
+        self.clone().for_each(|tag| {
+            list.entry(&tag);
+        });
+        list.finish()
     }
 }
