@@ -1,5 +1,5 @@
 # multiboot2-elf64
-[![Build Status](https://travis-ci.org/rust-osdev/multiboot2-elf64.svg?branch=master)](https://travis-ci.org/rust-osdev/multiboot2-elf64)
+![Build](https://github.com/rust-osdev/multiboot2-elf64/actions/workflows/rust.yml/badge.svg)
 [![crates.io](https://img.shields.io/crates/v/multiboot2.svg)](https://crates.io/crates/multiboot2)
 [![docs](https://docs.rs/multiboot2/badge.svg)](https://docs.rs/multiboot2/)
 
