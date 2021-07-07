@@ -1,4 +1,4 @@
-use header::{Tag, TagIter};
+use header::{Tag, TagIter, TagType};
 use core::fmt::{Formatter, Debug};
 
 /// This tag indicates to the kernel what boot module was loaded along with
@@ -52,7 +52,7 @@ impl<'a> Iterator for ModuleIter<'a> {
 
     fn next(&mut self) -> Option<&'a ModuleTag> {
         self.iter
-            .find(|x| x.typ == 3)
+            .find(|x| x.typ == TagType::Module)
             .map(|tag| unsafe { &*(tag as *const Tag as *const ModuleTag) })
     }
 }

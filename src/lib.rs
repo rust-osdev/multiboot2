@@ -16,7 +16,7 @@ pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
-use header::{Tag, TagIter};
+use header::{Tag, TagIter, TagType};
 pub use memory_map::{
     EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType,
     MemoryMapTag,
@@ -131,13 +131,13 @@ impl BootInformation {
 
     /// Search for the ELF Sections tag.
     pub fn elf_sections_tag(&self) -> Option<ElfSectionsTag> {
-        self.get_tag(9)
+        self.get_tag(TagType::ElfSections)
             .map(|tag| unsafe { elf_sections::elf_sections_tag(tag, self.offset) })
     }
 
     /// Search for the Memory map tag.
     pub fn memory_map_tag<'a>(&'a self) -> Option<&'a MemoryMapTag> {
-        self.get_tag(6)
+        self.get_tag(TagType::Mmap)
             .map(|tag| unsafe { &*(tag as *const Tag as *const MemoryMapTag) })
     }
 
@@ -148,42 +148,42 @@ impl BootInformation {
 
     /// Search for the BootLoader name tag.
     pub fn boot_loader_name_tag<'a>(&'a self) -> Option<&'a BootLoaderNameTag> {
-        self.get_tag(2)
+        self.get_tag(TagType::BootLoaderName)
             .map(|tag| unsafe { &*(tag as *const Tag as *const BootLoaderNameTag) })
     }
 
     /// Search for the Command line tag.
     pub fn command_line_tag<'a>(&'a self) -> Option<&'a CommandLineTag> {
-        self.get_tag(1)
+        self.get_tag(TagType::Cmdline)
             .map(|tag| unsafe { &*(tag as *const Tag as *const CommandLineTag) })
     }
 
     /// Search for the VBE framebuffer tag.
     pub fn framebuffer_tag<'a>(&'a self) -> Option<FramebufferTag<'a>> {
-        self.get_tag(8).map(|tag| framebuffer::framebuffer_tag(tag))
+        self.get_tag(TagType::Framebuffer).map(|tag| framebuffer::framebuffer_tag(tag))
     }
 
     /// Search for the EFI 32-bit SDT tag.
     pub fn efi_sdt_32_tag<'a>(&self) -> Option<&'a EFISdt32> {
-        self.get_tag(11)
+        self.get_tag(TagType::Efi32)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt32) })
     }
 
     /// Search for the EFI 64-bit SDT tag.
     pub fn efi_sdt_64_tag<'a>(&self) -> Option<&'a EFISdt64> {
-        self.get_tag(12)
+        self.get_tag(TagType::Efi64)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt64) })
     }
 
     /// Search for the (ACPI 1.0) RSDP tag.
     pub fn rsdp_v1_tag<'a>(&self) -> Option<&'a RsdpV1Tag> {
-        self.get_tag(14)
+        self.get_tag(TagType::AcpiV1)
             .map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV1Tag) })
     }
 
     /// Search for the (ACPI 2.0 or later) RSDP tag.
     pub fn rsdp_v2_tag<'a>(&'a self) -> Option<&'a RsdpV2Tag> {
-        self.get_tag(15)
+        self.get_tag(TagType::AcpiV2)
             .map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV2Tag) })
     }
 
@@ -191,35 +191,35 @@ impl BootInformation {
     pub fn efi_memory_map_tag<'a>(&'a self) -> Option<&'a EFIMemoryMapTag> {
         // If the EFIBootServicesNotExited is present, then we should not use
         // the memory map, as it could still be in use.
-        match self.get_tag(18) {
+        match self.get_tag(TagType::EfiBs) {
             Some(_tag) => None,
             None => self
-                .get_tag(17)
+                .get_tag(TagType::EfiMmap)
                 .map(|tag| unsafe { &*(tag as *const Tag as *const EFIMemoryMapTag) }),
         }
     }
 
     /// Search for the EFI 32-bit image handle pointer.
     pub fn efi_32_ih<'a>(&'a self) -> Option<&'a EFIImageHandle32> {
-        self.get_tag(19)
+        self.get_tag(TagType::Efi32Ih)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFIImageHandle32) })
     }
 
     /// Search for the EFI 64-bit image handle pointer.
     pub fn efi_64_ih<'a>(&'a self) -> Option<&'a EFIImageHandle64> {
-        self.get_tag(20)
+        self.get_tag(TagType::Efi64Ih)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFIImageHandle64) })
     }
 
     /// Search for the Image Load Base Physical Address.
     pub fn load_base_addr<'a>(&'a self) -> Option<&'a ImageLoadPhysAddr> {
-        self.get_tag(21)
+        self.get_tag(TagType::LoadBaseAddr)
             .map(|tag| unsafe { &*(tag as *const Tag as *const ImageLoadPhysAddr) })
     }
 
     /// Search for the VBE information tag.
     pub fn vbe_info_tag(&self) -> Option<&'static VBEInfoTag> {
-        self.get_tag(7)
+        self.get_tag(TagType::Vbe)
             .map(|tag| unsafe { &*(tag as *const Tag as *const VBEInfoTag) })
     }
 
@@ -227,7 +227,7 @@ impl BootInformation {
         unsafe { &*self.inner }
     }
 
-    fn get_tag<'a>(&'a self, typ: u32) -> Option<&'a Tag> {
+    fn get_tag<'a>(&'a self, typ: TagType) -> Option<&'a Tag> {
         self.tags().find(|tag| tag.typ == typ)
     }
 
@@ -238,7 +238,7 @@ impl BootInformation {
 
 impl BootInformationInner {
     fn has_valid_end_tag(&self) -> bool {
-        const END_TAG: Tag = Tag { typ: 0, size: 8 };
+        const END_TAG: Tag = Tag { typ: TagType::End, size: 8 };
 
         let self_ptr = self as *const _;
         let end_tag_addr = self_ptr as usize + (self.total_size - END_TAG.size) as usize;
@@ -296,7 +296,8 @@ impl fmt::Debug for BootInformation {
             );
         }
 
-        debug.field("efi_32_ih", &self.efi_32_ih())
+        debug
+            .field("efi_32_ih", &self.efi_32_ih())
             .field("efi_64_ih", &self.efi_64_ih())
             .field("efi_sdt_32_tag", &self.efi_sdt_32_tag())
             .field("efi_sdt_64_tag", &self.efi_sdt_64_tag())
