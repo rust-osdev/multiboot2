@@ -1,10 +1,10 @@
 [package]
 name = "multiboot2"
 version = "0.10.1"
-authors = ["Philipp Oppermann <dev@phil-opp.com>", "Calvin Lee <cyrus296@gmail.com>"]
+authors = ["Philipp Oppermann <dev@phil-opp.com>", "Calvin Lee <cyrus296@gmail.com>", "Isaac Woods"]
 license = "MIT/Apache-2.0"
 description = "An experimental Multiboot 2 crate for ELF-64/32 kernels."
 repository = "https://github.com/rust-osdev/multiboot2-elf64"
 
 [dependencies]
-bitflags = "1.0.0"
+bitflags = "1"
