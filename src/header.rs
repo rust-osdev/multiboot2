@@ -2,6 +2,15 @@ use core::marker::PhantomData;
 use core::fmt::{Debug, Formatter};
 use core::cmp::Ordering;
 
+/// Magic number that a multiboot2-compliant boot loader will store in `eax` register
+/// right before handoff to the payload (the kernel). This value can be used to check,
+/// that the kernel was indeed booted via multiboot2.
+///
+/// Caution: You might need some assembly code (e.g. GAS or NASM) first, which
+/// moves `eax` to another register, like `edi`. Otherwise it probably happens,
+/// that the Rust compiler output changes `eax` before you can access it.
+pub const MB2_MAGIC: u32 = 0x36d76289;
+
 /// Possible Types of a [`Tag`]. The names and values are taken from the example C code
 /// at the bottom of the Multiboot2 specification.
 #[repr(u32)]
