@@ -1,4 +1,4 @@
-use header::Tag;
+use tags::mbi::Tag;
 use core::fmt::{Formatter, Debug};
 
 /// This tag contains section header table from an ELF kernel.

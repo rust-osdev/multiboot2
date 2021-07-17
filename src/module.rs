@@ -1,4 +1,4 @@
-use header::{Tag, TagIter, TagType};
+use tags::mbi::{Tag, TagIter, TagType};
 use core::fmt::{Formatter, Debug};
 
 /// This tag indicates to the kernel what boot module was loaded along with

@@ -1,11 +1,20 @@
-# multiboot2-elf64
+# Rust crate: multiboot2
 ![Build](https://github.com/rust-osdev/multiboot2-elf64/actions/workflows/rust.yml/badge.svg)
 [![crates.io](https://img.shields.io/crates/v/multiboot2.svg)](https://crates.io/crates/multiboot2)
 [![docs](https://docs.rs/multiboot2/badge.svg)](https://docs.rs/multiboot2/)
 
-An experimental Multiboot 2 crate for ELF-64 kernels. It's still incomplete, so please open an issue if you're missing some functionality. Contributions welcome!
+A crate for parsing multiboot2 structures and relevant multiboot2 type definitions. The primary goal is to parse
+the tags from the "multiboot2 information structure" (also called *mbi*). This is the data structure passed 
+via `ebx` register (on `x86`) when the bootloader gives control to the payload (for example your kernel).
+Furthermore, it contains type definitions for parsing a "multiboot2 header" including the "multiboot2 header tags".
 
-It uses the Multiboot 2.0 specification at https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html and the ELF 64 specification at http://www.uclibc.org/docs/elf-64-gen.pdf.
+It's still incomplete, so please open an issue if you're missing some functionality. Contributions welcome!
+It uses the Multiboot 2.0 specification at https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html and the 
+ELF 64 specification at http://www.uclibc.org/docs/elf-64-gen.pdf.
+
+⚠ The `elf64` in the github repository url is a bit misleading. It means the crate can parse the `elf`-sections 
+provided in *mbi* properly. The crate can also do this payloads loaded from `elf32`-files. Furthermore, it should be 
+mentioned, that you can use this library of course in a `32-bit`-kernel packed in a `elf32` file. ⚠
 
 Below is the draft for a blog post about this. I don't plan to finish it but maybe it's helpful as documentation.
 

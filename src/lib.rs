@@ -16,8 +16,6 @@ pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
-use header::{Tag, TagIter, TagType};
-pub use header::MB2_MAGIC;
 pub use memory_map::{
     EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType,
     MemoryMapTag,
@@ -30,19 +28,21 @@ pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
 };
+use tags::mbi::{TagType, Tag, TagIter};
 
 #[macro_use]
 extern crate bitflags;
+extern crate alloc;
 
 mod boot_loader_name;
 mod command_line;
 mod elf_sections;
 mod framebuffer;
-mod header;
 mod memory_map;
 mod module;
 mod rsdp;
 mod vbe_info;
+pub mod tags;
 
 /// Load the multiboot boot information struct from an address.
 ///

@@ -1,6 +1,14 @@
-use core::marker::PhantomData;
-use core::fmt::{Debug, Formatter};
+//! Type definitions for tags inside the "multiboot2 information structure" (also *mbi*).
+//! These tags occur in a binary if it is multiboot2-compliant, for example a kernel.
+//!
+//! The values are taken from the example C code at the end of the official multiboot2 spec.
+
+// the names speak for themselves in most cases
+#![allow(missing_docs)]
+
 use core::cmp::Ordering;
+use core::fmt::{Formatter, Debug};
+use core::marker::PhantomData;
 
 /// Magic number that a multiboot2-compliant boot loader will store in `eax` register
 /// right before handoff to the payload (the kernel). This value can be used to check,
@@ -8,10 +16,10 @@ use core::cmp::Ordering;
 ///
 /// Caution: You might need some assembly code (e.g. GAS or NASM) first, which
 /// moves `eax` to another register, like `edi`. Otherwise it probably happens,
-/// that the Rust compiler output changes `eax` before you can access it.
-pub const MB2_MAGIC: u32 = 0x36d76289;
+/// that the Rust compiler produces output that changes `eax` before you can access it.
+pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 
-/// Possible Types of a [`Tag`]. The names and values are taken from the example C code
+/// Possible types of a [`Tag`]. The names and values are taken from the example C code
 /// at the bottom of the Multiboot2 specification.
 #[repr(u32)]
 #[derive(Copy, Clone, Debug)]

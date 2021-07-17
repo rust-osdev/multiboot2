@@ -1,5 +1,5 @@
 use core::slice;
-use header::Tag;
+use tags::mbi::Tag;
 use Reader;
 
 /// The VBE Framebuffer information Tag.
