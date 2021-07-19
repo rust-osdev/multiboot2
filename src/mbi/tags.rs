@@ -7,23 +7,14 @@
 #![allow(missing_docs)]
 
 use core::cmp::Ordering;
-use core::fmt::{Formatter, Debug};
+use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
-
-/// Magic number that a multiboot2-compliant boot loader will store in `eax` register
-/// right before handoff to the payload (the kernel). This value can be used to check,
-/// that the kernel was indeed booted via multiboot2.
-///
-/// Caution: You might need some assembly code (e.g. GAS or NASM) first, which
-/// moves `eax` to another register, like `edi`. Otherwise it probably happens,
-/// that the Rust compiler produces output that changes `eax` before you can access it.
-pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 
 /// Possible types of a [`Tag`]. The names and values are taken from the example C code
 /// at the bottom of the Multiboot2 specification.
 #[repr(u32)]
 #[derive(Copy, Clone, Debug)]
-pub enum TagType {
+pub enum MbiTagType {
     End = 0,
     Cmdline = 1,
     BootLoaderName = 2,
@@ -52,52 +43,51 @@ pub enum TagType {
 }
 
 // each compare/equal direction must be implemented manually
-impl PartialEq<u32> for TagType {
+impl PartialEq<u32> for MbiTagType {
     fn eq(&self, other: &u32) -> bool {
         *self as u32 == *other
     }
 }
 
 // each compare/equal direction must be implemented manually
-impl PartialEq<TagType> for u32 {
-    fn eq(&self, other: &TagType) -> bool {
+impl PartialEq<MbiTagType> for u32 {
+    fn eq(&self, other: &MbiTagType) -> bool {
         *self == *other as u32
     }
 }
 
-impl PartialEq<TagType> for TagType {
-    fn eq(&self, other: &TagType) -> bool {
+impl PartialEq<MbiTagType> for MbiTagType {
+    fn eq(&self, other: &MbiTagType) -> bool {
         *self as u32 == *other as u32
     }
 }
 
-impl PartialOrd<u32> for TagType {
+impl PartialOrd<u32> for MbiTagType {
     fn partial_cmp(&self, other: &u32) -> Option<Ordering> {
         let num = *self as u32;
-        Some(
-            if num < *other {
-                Ordering::Less
-            } else if num == *other {
-                Ordering::Equal
-            } else {
-                Ordering::Greater
-            }
-        )
+        Some(if num < *other {
+            Ordering::Less
+        } else if num == *other {
+            Ordering::Equal
+        } else {
+            Ordering::Greater
+        })
     }
 }
 
-/// All tags that could passed via the Multiboot2 information structure to a payload/program/kernel.
-/// Better not confuse this with the Multiboot2 header tags. They are something different.
+/// All tags that could passed via the Multiboot2 information structure ("mbi") to a
+/// payload/program/kernel. Better not confuse this with the Multiboot2 header tags. They are
+/// something different.
 #[derive(Clone, Copy)]
 #[repr(C)]
-pub struct Tag {
+pub struct MbiTag {
     // u32 value
-    pub typ: TagType,
+    pub typ: MbiTagType,
     pub size: u32,
     // tag specific fields
 }
 
-impl Debug for Tag {
+impl Debug for MbiTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Tag")
             .field("typ", &self.typ)
@@ -108,26 +98,29 @@ impl Debug for Tag {
 }
 
 #[derive(Clone, Debug)]
-pub struct TagIter<'a> {
-    pub current: *const Tag,
-    phantom: PhantomData<&'a Tag>,
+pub struct MbiTagIter<'a> {
+    pub current: *const MbiTag,
+    phantom: PhantomData<&'a MbiTag>,
 }
 
-impl<'a> TagIter<'a> {
-    pub fn new(first: *const Tag) -> Self {
-        TagIter {
+impl<'a> MbiTagIter<'a> {
+    pub fn new(first: *const MbiTag) -> Self {
+        MbiTagIter {
             current: first,
             phantom: PhantomData,
         }
     }
 }
 
-impl<'a> Iterator for TagIter<'a> {
-    type Item = &'a Tag;
+impl<'a> Iterator for MbiTagIter<'a> {
+    type Item = &'a MbiTag;
 
-    fn next(&mut self) -> Option<&'a Tag> {
+    fn next(&mut self) -> Option<&'a MbiTag> {
         match unsafe { &*self.current } {
-            &Tag { typ: TagType::End, size: 8 } => None, // end tag
+            &MbiTag {
+                typ: MbiTagType::End,
+                size: 8,
+            } => None, // end tag
             tag => {
                 // go to next tag
                 let mut tag_addr = self.current as usize;

@@ -1,3 +1,6 @@
+extern crate multiboot2;
+
+use multiboot2::load_mb2_header;
 use std::fs::File;
 use std::io::Read;
 
@@ -23,7 +26,7 @@ fn main() {
     }*/
 
     // println!("actual location: {:?}", data_ptr);
-    let mb2_header = unsafe { multiboot2::tags::header::load_mb2_header(data_ptr as usize) };
+    let mb2_header = unsafe { load_mb2_header(data_ptr as usize) };
     /*println!("0x{:x}", mb2_header.header_magic());
     println!("0x{:x}", mb2_header.length());*/
     println!("{:#?}", mb2_header);

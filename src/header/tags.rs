@@ -14,10 +14,9 @@
 use alloc::vec::Vec;
 use core::fmt;
 use core::fmt::{Debug, Formatter};
-use core::mem::size_of;
-use tags::mbi::TagType;
 use core::marker::PhantomData;
-
+use core::mem::size_of;
+use MbiTagType;
 
 /// Value must be present in multiboot2 header.
 pub const MULTIBOOT2_HEADER_MAGIC: u32 = 0xe85250d6;
@@ -206,10 +205,10 @@ impl Multiboot2HeaderInner {
 impl Debug for Multiboot2HeaderInner {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Multiboot2Header")
-            .field("header_magic", &{self.header_magic})
-            .field("arch", &{self.arch})
-            .field("length", &{self.length})
-            .field("checksum", &{self.checksum})
+            .field("header_magic", &{ self.header_magic })
+            .field("arch", &{ self.arch })
+            .field("length", &{ self.length })
+            .field("checksum", &{ self.checksum })
             .field("tags", &self.tag_iter())
             .finish()
     }
@@ -457,11 +456,11 @@ pub struct InformationRequestHeaderTag<const N: usize> {
     size: u32,
     // Length is determined by size.
     // Must be parsed during runtime with unsafe pointer magic and the size field.
-    requests: [TagType; N],
+    requests: [MbiTagType; N],
 }
 
 impl<const N: usize> InformationRequestHeaderTag<N> {
-    pub fn new(flags: HeaderTagFlag, requests: [TagType; N]) -> Self {
+    pub fn new(flags: HeaderTagFlag, requests: [MbiTagType; N]) -> Self {
         InformationRequestHeaderTag {
             typ: HeaderTagType::InformationRequest,
             flags,
@@ -480,71 +479,68 @@ impl<const N: usize> InformationRequestHeaderTag<N> {
         self.size
     }
 
-    pub fn requests(&self) -> [TagType; N] {
+    pub fn requests(&self) -> [MbiTagType; N] {
         // cheap to clone, otherwise difficult with lifetime
-        {self.requests}.clone()
+        { self.requests }.clone()
     }
 
     pub fn req_iter(&self) -> InformationRequestHeaderTagIter {
-        let base_size = size_of::<InformationRequestHeaderTag::<0>>() as u32;
+        let base_size = size_of::<InformationRequestHeaderTag<0>>() as u32;
         let count = (self.size - base_size) / size_of::<u32>() as u32;
-        let base_ptr = self as *const InformationRequestHeaderTag::<N>;
+        let base_ptr = self as *const InformationRequestHeaderTag<N>;
         let base_ptr = base_ptr as *const u8;
         let base_ptr = unsafe { base_ptr.offset(base_size as isize) };
-        let base_ptr = base_ptr as *const TagType;
-        InformationRequestHeaderTagIter::new(
-            count,
-            base_ptr
-        )
+        let base_ptr = base_ptr as *const MbiTagType;
+        InformationRequestHeaderTagIter::new(count, base_ptr)
     }
 }
 
-impl <const N: usize> Debug for InformationRequestHeaderTag::<N> {
+impl<const N: usize> Debug for InformationRequestHeaderTag<N> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("InformationRequestHeaderTag")
-            .field("type", &{self.typ})
-            .field("flags", &{self.flags})
-            .field("size", &{self.size})
+            .field("type", &{ self.typ })
+            .field("flags", &{ self.flags })
+            .field("size", &{ self.size })
             // .field("requests", &)
-            .field("req_iter", &{self.req_iter()})
+            .field("req_iter", &{ self.req_iter() })
             .finish()
     }
 }
 
 #[derive(Copy, Clone)]
 pub struct InformationRequestHeaderTagIter<'a> {
-    base_ptr: *const TagType,
+    base_ptr: *const MbiTagType,
     i: u32,
     count: u32,
     _marker: PhantomData<&'a ()>,
 }
 
-impl <'a> InformationRequestHeaderTagIter<'a> {
-    fn new(count: u32, base_ptr: *const TagType) -> Self {
+impl<'a> InformationRequestHeaderTagIter<'a> {
+    fn new(count: u32, base_ptr: *const MbiTagType) -> Self {
         Self {
             i: 0,
             count,
             base_ptr,
-            _marker: PhantomData::default()
+            _marker: PhantomData::default(),
         }
     }
 }
 
-impl <'a> Iterator for InformationRequestHeaderTagIter<'a> {
-    type Item = &'a TagType;
+impl<'a> Iterator for InformationRequestHeaderTagIter<'a> {
+    type Item = &'a MbiTagType;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.i < self.count {
             let ptr = unsafe { self.base_ptr.offset(self.i as isize) };
             self.i += 1;
-            Some(unsafe {&*ptr})
+            Some(unsafe { &*ptr })
         } else {
             None
         }
     }
 }
 
-impl <'a> Debug for InformationRequestHeaderTagIter<'a> {
+impl<'a> Debug for InformationRequestHeaderTagIter<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut debug = f.debug_list();
         self.clone().for_each(|e| {
@@ -553,8 +549,6 @@ impl <'a> Debug for InformationRequestHeaderTagIter<'a> {
         debug.finish()
     }
 }
-
-
 
 /// This information does not need to be provided if the kernel image is in ELF
 /// format, but it must be provided if the image is in a.out format or in some
@@ -659,9 +653,9 @@ impl EntryHeaderTag {
 impl Debug for EntryHeaderTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("EntryHeaderTag")
-            .field("type", &{self.typ})
-            .field("flags", &{self.flags})
-            .field("size", &{self.size})
+            .field("type", &{ self.typ })
+            .field("flags", &{ self.flags })
+            .field("size", &{ self.size })
             .field("entry_addr", &(self.entry_addr as *const u32))
             .finish()
     }
@@ -845,9 +839,9 @@ impl EntryEfi32HeaderTag {
 impl Debug for EntryEfi32HeaderTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("EntryEfi32HeaderTag")
-            .field("type", &{self.typ})
-            .field("flags", &{self.flags})
-            .field("size", &{self.size})
+            .field("type", &{ self.typ })
+            .field("flags", &{ self.flags })
+            .field("size", &{ self.size })
             .field("entry_addr", &(self.entry_addr as *const u32))
             .finish()
     }
@@ -891,9 +885,9 @@ impl EntryEfi64HeaderTag {
 impl Debug for EntryEfi64HeaderTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("EntryEfi64HeaderTag")
-            .field("type", &{self.typ})
-            .field("flags", &{self.flags})
-            .field("size", &{self.size})
+            .field("type", &{ self.typ })
+            .field("flags", &{ self.flags })
+            .field("size", &{ self.size })
             .field("entry_addr", &(self.entry_addr as *const u32))
             .finish()
     }
@@ -957,14 +951,14 @@ impl RelocatableHeaderTag {
 impl Debug for RelocatableHeaderTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("RelocatableHeaderTag")
-            .field("type", &{self.typ})
-            .field("flags", &{self.flags})
-            .field("size", &{self.size})
+            .field("type", &{ self.typ })
+            .field("flags", &{ self.flags })
+            .field("size", &{ self.size })
             // trick to print this as hexadecimal pointer
             .field("min_addr", &(self.min_addr as *const u32))
             .field("max_addr", &(self.max_addr as *const u32))
-            .field("align", &{self.align})
-            .field("preference", &{self.preference})
+            .field("align", &{ self.align })
+            .field("preference", &{ self.preference })
             .finish()
     }
 }

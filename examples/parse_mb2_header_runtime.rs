@@ -1,10 +1,9 @@
 extern crate multiboot2;
 
-use multiboot2::tags::header::{
-    EfiBootServiceHeaderTag, EndHeaderTag, HeaderTagFlag, HeaderTagISA,
-    InformationRequestHeaderTag, Multiboot2HeaderBuilder,
+use multiboot2::{
+    load_mb2_header, EfiBootServiceHeaderTag, EndHeaderTag, HeaderTagFlag, HeaderTagISA,
+    InformationRequestHeaderTag, MbiTagType, Multiboot2HeaderBuilder,
 };
-use multiboot2::tags::mbi::TagType;
 
 /// Constructs a multiboot2 header on the fly during runtime.
 fn main() {
@@ -19,11 +18,7 @@ fn main() {
         &mut mb2_header_tags_bytes,
         &get_bytes_of_structure(InformationRequestHeaderTag::new(
             HeaderTagFlag::Required,
-            [
-                TagType::AcpiV2,
-                TagType::Efi64Ih,
-                TagType::Efi64,
-            ],
+            [MbiTagType::AcpiV2, MbiTagType::Efi64Ih, MbiTagType::Efi64],
         )),
     );
     add_bytes_8_byte_aligned(
@@ -49,7 +44,7 @@ fn main() {
         println!("{:?}: {}", ptr, byte);
     }*/
 
-    let mb2_header = unsafe { multiboot2::tags::header::load_mb2_header(data_ptr as usize) };
+    let mb2_header = unsafe { load_mb2_header(data_ptr as usize) };
     println!("{:#?}", mb2_header);
 }
 

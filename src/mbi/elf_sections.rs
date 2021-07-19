@@ -1,5 +1,5 @@
-use tags::mbi::Tag;
-use core::fmt::{Formatter, Debug};
+use core::fmt::{Debug, Formatter};
+use MbiTag;
 
 /// This tag contains section header table from an ELF kernel.
 ///
@@ -10,10 +10,10 @@ pub struct ElfSectionsTag {
     offset: usize,
 }
 
-pub unsafe fn elf_sections_tag(tag: &Tag, offset: usize) -> ElfSectionsTag {
+pub unsafe fn elf_sections_tag(tag: &MbiTag, offset: usize) -> ElfSectionsTag {
     assert_eq!(9, tag.typ);
     let es = ElfSectionsTag {
-        inner: (tag as *const Tag).offset(1) as *const ElfSectionsTagInner,
+        inner: (tag as *const MbiTag).offset(1) as *const ElfSectionsTagInner,
         offset,
     };
     assert!((es.get().entry_size * es.get().shndx) <= tag.size);
@@ -114,7 +114,7 @@ impl Default for ElfSectionIter {
             remaining_sections: 0,
             entry_size: 0,
             string_section: core::ptr::null(),
-            offset: 0
+            offset: 0,
         }
     }
 }

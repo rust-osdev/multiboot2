@@ -1,6 +1,5 @@
 use core::slice;
-use tags::mbi::Tag;
-use Reader;
+use {MbiTag, Reader};
 
 /// The VBE Framebuffer information Tag.
 #[derive(Debug, PartialEq)]
@@ -78,8 +77,8 @@ pub struct FramebufferColor {
     pub blue: u8,
 }
 
-pub fn framebuffer_tag<'a>(tag: &'a Tag) -> FramebufferTag<'a> {
-    let mut reader = Reader::new(tag as *const Tag);
+pub fn framebuffer_tag<'a>(tag: &'a MbiTag) -> FramebufferTag<'a> {
+    let mut reader = Reader::new(tag as *const MbiTag);
     reader.skip(8);
     let address = reader.read_u64();
     let pitch = reader.read_u32();

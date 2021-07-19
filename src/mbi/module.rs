@@ -1,5 +1,6 @@
-use tags::mbi::{Tag, TagIter, TagType};
-use core::fmt::{Formatter, Debug};
+use core::fmt::{Debug, Formatter};
+use mbi::tags::MbiTagIter;
+use {MbiTag, MbiTagType};
 
 /// This tag indicates to the kernel what boot module was loaded along with
 /// the kernel image, and where it can be found.
@@ -37,14 +38,14 @@ impl ModuleTag {
     }
 }
 
-pub fn module_iter(iter: TagIter) -> ModuleIter {
+pub fn module_iter(iter: MbiTagIter) -> ModuleIter {
     ModuleIter { iter: iter }
 }
 
 /// An iterator over all module tags.
 #[derive(Clone)]
 pub struct ModuleIter<'a> {
-    iter: TagIter<'a>,
+    iter: MbiTagIter<'a>,
 }
 
 impl<'a> Iterator for ModuleIter<'a> {
@@ -52,12 +53,12 @@ impl<'a> Iterator for ModuleIter<'a> {
 
     fn next(&mut self) -> Option<&'a ModuleTag> {
         self.iter
-            .find(|x| x.typ == TagType::Module)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const ModuleTag) })
+            .find(|x| x.typ == MbiTagType::Module)
+            .map(|tag| unsafe { &*(tag as *const MbiTag as *const ModuleTag) })
     }
 }
 
-impl <'a> Debug for ModuleIter<'a> {
+impl<'a> Debug for ModuleIter<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         let mut list = f.debug_list();
         self.clone().for_each(|tag| {
