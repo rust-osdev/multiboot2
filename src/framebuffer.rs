@@ -1,6 +1,6 @@
+use crate::header::Tag;
+use crate::Reader;
 use core::slice;
-use header::Tag;
-use Reader;
 
 /// The VBE Framebuffer information Tag.
 #[derive(Debug, PartialEq)]

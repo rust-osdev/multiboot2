@@ -16,8 +16,8 @@ pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
-use header::{Tag, TagIter, TagType};
 pub use header::MB2_MAGIC;
+use header::{Tag, TagIter, TagType};
 pub use memory_map::{
     EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType,
     MemoryMapTag,
@@ -161,7 +161,8 @@ impl BootInformation {
 
     /// Search for the VBE framebuffer tag.
     pub fn framebuffer_tag<'a>(&'a self) -> Option<FramebufferTag<'a>> {
-        self.get_tag(TagType::Framebuffer).map(|tag| framebuffer::framebuffer_tag(tag))
+        self.get_tag(TagType::Framebuffer)
+            .map(|tag| framebuffer::framebuffer_tag(tag))
     }
 
     /// Search for the EFI 32-bit SDT tag.
@@ -239,7 +240,10 @@ impl BootInformation {
 
 impl BootInformationInner {
     fn has_valid_end_tag(&self) -> bool {
-        const END_TAG: Tag = Tag { typ: TagType::End, size: 8 };
+        const END_TAG: Tag = Tag {
+            typ: TagType::End,
+            size: 8,
+        };
 
         let self_ptr = self as *const _;
         let end_tag_addr = self_ptr as usize + (self.total_size - END_TAG.size) as usize;
@@ -257,7 +261,8 @@ impl fmt::Debug for BootInformation {
         const ELF_SECTIONS_LIMIT: usize = 17;
 
         let mut debug = f.debug_struct("Multiboot2 Boot Information");
-        debug.field("start_address", &(self.start_address() as *const u64))
+        debug
+            .field("start_address", &(self.start_address() as *const u64))
             .field("end_address", &(self.end_address() as *const u64))
             .field("total_size", &(self.total_size() as *const u64))
             .field(
@@ -278,15 +283,15 @@ impl fmt::Debug for BootInformation {
             // so far, I didn't found a nice way to connect the iterator with ".field()" because
             // the iterator isn't Debug
             .field("module_tags", &self.module_tags());
-            // usually this is REALLY big (thousands of tags) => skip it here
+        // usually this is REALLY big (thousands of tags) => skip it here
 
-        let elf_sections_tag_entries_count = self.elf_sections_tag().map(|x| x.sections().count()).unwrap_or(0);
+        let elf_sections_tag_entries_count = self
+            .elf_sections_tag()
+            .map(|x| x.sections().count())
+            .unwrap_or(0);
 
         if elf_sections_tag_entries_count > ELF_SECTIONS_LIMIT {
-            debug.field(
-                "elf_sections_tags (count)",
-                &elf_sections_tag_entries_count,
-            );
+            debug.field("elf_sections_tags (count)", &elf_sections_tag_entries_count);
         } else {
             debug.field(
                 "elf_sections_tags",
