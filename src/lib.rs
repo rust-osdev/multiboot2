@@ -91,7 +91,7 @@ pub unsafe fn load_with_offset(address: usize, offset: usize) -> BootInformation
     assert!(multiboot.has_valid_end_tag());
     BootInformation {
         inner: multiboot,
-        offset: offset,
+        offset,
     }
 }
 
@@ -137,7 +137,7 @@ impl BootInformation {
     }
 
     /// Search for the Memory map tag.
-    pub fn memory_map_tag<'a>(&'a self) -> Option<&'a MemoryMapTag> {
+    pub fn memory_map_tag(&self) -> Option<&MemoryMapTag> {
         self.get_tag(TagType::Mmap)
             .map(|tag| unsafe { &*(tag as *const Tag as *const MemoryMapTag) })
     }
@@ -148,49 +148,49 @@ impl BootInformation {
     }
 
     /// Search for the BootLoader name tag.
-    pub fn boot_loader_name_tag<'a>(&'a self) -> Option<&'a BootLoaderNameTag> {
+    pub fn boot_loader_name_tag(&self) -> Option<&BootLoaderNameTag> {
         self.get_tag(TagType::BootLoaderName)
             .map(|tag| unsafe { &*(tag as *const Tag as *const BootLoaderNameTag) })
     }
 
     /// Search for the Command line tag.
-    pub fn command_line_tag<'a>(&'a self) -> Option<&'a CommandLineTag> {
+    pub fn command_line_tag(&self) -> Option<&CommandLineTag> {
         self.get_tag(TagType::Cmdline)
             .map(|tag| unsafe { &*(tag as *const Tag as *const CommandLineTag) })
     }
 
     /// Search for the VBE framebuffer tag.
-    pub fn framebuffer_tag<'a>(&'a self) -> Option<FramebufferTag<'a>> {
+    pub fn framebuffer_tag(&self) -> Option<FramebufferTag> {
         self.get_tag(TagType::Framebuffer)
             .map(|tag| framebuffer::framebuffer_tag(tag))
     }
 
     /// Search for the EFI 32-bit SDT tag.
-    pub fn efi_sdt_32_tag<'a>(&self) -> Option<&'a EFISdt32> {
+    pub fn efi_sdt_32_tag(&self) -> Option<&EFISdt32> {
         self.get_tag(TagType::Efi32)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt32) })
     }
 
     /// Search for the EFI 64-bit SDT tag.
-    pub fn efi_sdt_64_tag<'a>(&self) -> Option<&'a EFISdt64> {
+    pub fn efi_sdt_64_tag(&self) -> Option<&EFISdt64> {
         self.get_tag(TagType::Efi64)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt64) })
     }
 
     /// Search for the (ACPI 1.0) RSDP tag.
-    pub fn rsdp_v1_tag<'a>(&self) -> Option<&'a RsdpV1Tag> {
+    pub fn rsdp_v1_tag(&self) -> Option<&RsdpV1Tag> {
         self.get_tag(TagType::AcpiV1)
             .map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV1Tag) })
     }
 
     /// Search for the (ACPI 2.0 or later) RSDP tag.
-    pub fn rsdp_v2_tag<'a>(&'a self) -> Option<&'a RsdpV2Tag> {
+    pub fn rsdp_v2_tag(&self) -> Option<&RsdpV2Tag> {
         self.get_tag(TagType::AcpiV2)
             .map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV2Tag) })
     }
 
     /// Search for the EFI Memory map tag.
-    pub fn efi_memory_map_tag<'a>(&'a self) -> Option<&'a EFIMemoryMapTag> {
+    pub fn efi_memory_map_tag(&self) -> Option<&EFIMemoryMapTag> {
         // If the EFIBootServicesNotExited is present, then we should not use
         // the memory map, as it could still be in use.
         match self.get_tag(TagType::EfiBs) {
@@ -202,19 +202,19 @@ impl BootInformation {
     }
 
     /// Search for the EFI 32-bit image handle pointer.
-    pub fn efi_32_ih<'a>(&'a self) -> Option<&'a EFIImageHandle32> {
+    pub fn efi_32_ih(&self) -> Option<&EFIImageHandle32> {
         self.get_tag(TagType::Efi32Ih)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFIImageHandle32) })
     }
 
     /// Search for the EFI 64-bit image handle pointer.
-    pub fn efi_64_ih<'a>(&'a self) -> Option<&'a EFIImageHandle64> {
+    pub fn efi_64_ih(&self) -> Option<&EFIImageHandle64> {
         self.get_tag(TagType::Efi64Ih)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFIImageHandle64) })
     }
 
     /// Search for the Image Load Base Physical Address.
-    pub fn load_base_addr<'a>(&'a self) -> Option<&'a ImageLoadPhysAddr> {
+    pub fn load_base_addr(&self) -> Option<&ImageLoadPhysAddr> {
         self.get_tag(TagType::LoadBaseAddr)
             .map(|tag| unsafe { &*(tag as *const Tag as *const ImageLoadPhysAddr) })
     }
@@ -229,7 +229,7 @@ impl BootInformation {
         unsafe { &*self.inner }
     }
 
-    fn get_tag<'a>(&'a self, typ: TagType) -> Option<&'a Tag> {
+    fn get_tag(&self, typ: TagType) -> Option<&Tag> {
         self.tags().find(|tag| tag.typ == typ)
     }
 
@@ -327,7 +327,7 @@ impl Reader {
 
     pub(crate) fn read_u8(&mut self) -> u8 {
         self.off += 1;
-        unsafe { core::ptr::read(self.ptr.offset((self.off - 1) as isize)) }
+        unsafe { core::ptr::read(self.ptr.add(self.off - 1)) }
     }
 
     pub(crate) fn read_u16(&mut self) -> u16 {
@@ -347,7 +347,7 @@ impl Reader {
     }
 
     pub(crate) fn current_address(&self) -> usize {
-        unsafe { self.ptr.offset(self.off as isize) as usize }
+        unsafe { self.ptr.add(self.off) as usize }
     }
 }
 

@@ -318,7 +318,7 @@ impl ElfSectionInner for ElfSectionInner64 {
     }
 
     fn addralign(&self) -> u64 {
-        self.addralign.into()
+        self.addralign
     }
 }
 

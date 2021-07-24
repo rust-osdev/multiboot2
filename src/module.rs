@@ -38,7 +38,7 @@ impl ModuleTag {
 }
 
 pub fn module_iter(iter: TagIter) -> ModuleIter {
-    ModuleIter { iter: iter }
+    ModuleIter { iter }
 }
 
 /// An iterator over all module tags.

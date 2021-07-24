@@ -87,7 +87,7 @@ impl RsdpV1Tag {
     /// The "RSD PTR " marker singature.
     ///
     /// This is originally a 8-byte C string (not null terminated!) that must contain "RSD PTR "
-    pub fn signature<'a>(&'a self) -> Option<&'a str> {
+    pub fn signature(&self) -> Option<&str> {
         str::from_utf8(&self.signature).ok()
     }
 
@@ -102,7 +102,7 @@ impl RsdpV1Tag {
     }
 
     /// An OEM-supplied string that identifies the OEM.
-    pub fn oem_id<'a>(&'a self) -> Option<&'a str> {
+    pub fn oem_id(&self) -> Option<&str> {
         str::from_utf8(&self.oem_id).ok()
     }
 
@@ -138,7 +138,7 @@ impl RsdpV2Tag {
     /// The "RSD PTR " marker singature.
     ///
     /// This is originally a 8-byte C string (not null terminated!) that must contain "RSD PTR ".
-    pub fn signature<'a>(&'a self) -> Option<&'a str> {
+    pub fn signature(&self) -> Option<&str> {
         str::from_utf8(&self.signature).ok()
     }
 
@@ -154,7 +154,7 @@ impl RsdpV2Tag {
     }
 
     /// An OEM-supplied string that identifies the OEM.
-    pub fn oem_id<'a>(&'a self) -> Option<&'a str> {
+    pub fn oem_id(&self) -> Option<&str> {
         str::from_utf8(&self.oem_id).ok()
     }
 

@@ -66,13 +66,7 @@ impl PartialEq<TagType> for TagType {
 impl PartialOrd<u32> for TagType {
     fn partial_cmp(&self, other: &u32) -> Option<Ordering> {
         let num = *self as u32;
-        Some(if num < *other {
-            Ordering::Less
-        } else if num == *other {
-            Ordering::Equal
-        } else {
-            Ordering::Greater
-        })
+        num.partial_cmp(other)
     }
 }
 
