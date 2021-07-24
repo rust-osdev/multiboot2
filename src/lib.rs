@@ -666,85 +666,84 @@ mod tests {
         assert!(bi.vbe_info_tag().is_some());
         let vbe = bi.vbe_info_tag().unwrap();
         use vbe_info::*;
-        unsafe {
-            assert_eq!(vbe.mode, 16762);
-            assert_eq!(vbe.interface_segment, 65535);
-            assert_eq!(vbe.interface_offset, 24576);
-            assert_eq!(vbe.interface_length, 79);
-            assert_eq!(vbe.control_info.signature, [86, 69, 83, 65]);
-            assert_eq!(vbe.control_info.version, 768);
-            assert_eq!(vbe.control_info.oem_string_ptr, 3221247964);
-            assert_eq!(
-                vbe.control_info.capabilities,
-                VBECapabilities::SWITCHABLE_DAC
-            );
-            assert_eq!(vbe.control_info.mode_list_ptr, 1610645538);
-            assert_eq!(vbe.control_info.total_memory, 256);
-            assert_eq!(vbe.control_info.oem_software_revision, 0);
-            assert_eq!(vbe.control_info.oem_vendor_name_ptr, 3221247984);
-            assert_eq!(vbe.control_info.oem_product_name_ptr, 3221248003);
-            assert_eq!(vbe.control_info.oem_product_revision_ptr, 3221248023);
-            assert!(vbe.mode_info.mode_attributes.contains(
-                VBEModeAttributes::SUPPORTED
-                    | VBEModeAttributes::COLOR
-                    | VBEModeAttributes::GRAPHICS
-                    | VBEModeAttributes::NOT_VGA_COMPATIBLE
-                    | VBEModeAttributes::LINEAR_FRAMEBUFFER
-            ));
-            assert!(vbe.mode_info.window_a_attributes.contains(
-                VBEWindowAttributes::RELOCATABLE
-                    | VBEWindowAttributes::READABLE
-                    | VBEWindowAttributes::WRITEABLE
-            ));
-            assert_eq!(vbe.mode_info.window_granularity, 64);
-            assert_eq!(vbe.mode_info.window_size, 64);
-            assert_eq!(vbe.mode_info.window_a_segment, 40960);
-            assert_eq!(vbe.mode_info.window_function_ptr, 3221247162);
-            assert_eq!(vbe.mode_info.pitch, 5120);
-            assert_eq!(vbe.mode_info.resolution, (1280, 800));
-            assert_eq!(vbe.mode_info.character_size, (8, 16));
-            assert_eq!(vbe.mode_info.number_of_planes, 1);
-            assert_eq!(vbe.mode_info.bpp, 32);
-            assert_eq!(vbe.mode_info.number_of_banks, 1);
-            assert_eq!(vbe.mode_info.memory_model, VBEMemoryModel::DirectColor);
-            assert_eq!(vbe.mode_info.bank_size, 0);
-            assert_eq!(vbe.mode_info.number_of_image_pages, 3);
-            assert_eq!(
-                vbe.mode_info.red_field,
-                VBEField {
-                    position: 16,
-                    size: 8
-                }
-            );
-            assert_eq!(
-                vbe.mode_info.green_field,
-                VBEField {
-                    position: 8,
-                    size: 8
-                }
-            );
-            assert_eq!(
-                vbe.mode_info.blue_field,
-                VBEField {
-                    position: 0,
-                    size: 8
-                }
-            );
-            assert_eq!(
-                vbe.mode_info.reserved_field,
-                VBEField {
-                    position: 24,
-                    size: 8
-                }
-            );
-            assert_eq!(
-                vbe.mode_info.direct_color_attributes,
-                VBEDirectColorAttributes::RESERVED_USABLE
-            );
-            assert_eq!(vbe.mode_info.framebuffer_base_ptr, 4244635648);
-            assert_eq!(vbe.mode_info.offscreen_memory_offset, 0);
-            assert_eq!(vbe.mode_info.offscreen_memory_size, 0);
-        }
+
+        assert_eq!({ vbe.mode }, 16762);
+        assert_eq!({ vbe.interface_segment }, 65535);
+        assert_eq!({ vbe.interface_offset }, 24576);
+        assert_eq!({ vbe.interface_length }, 79);
+        assert_eq!({ vbe.control_info.signature }, [86, 69, 83, 65]);
+        assert_eq!({ vbe.control_info.version }, 768);
+        assert_eq!({ vbe.control_info.oem_string_ptr }, 3221247964);
+        assert_eq!(
+            { vbe.control_info.capabilities },
+            VBECapabilities::SWITCHABLE_DAC
+        );
+        assert_eq!({ vbe.control_info.mode_list_ptr }, 1610645538);
+        assert_eq!({ vbe.control_info.total_memory }, 256);
+        assert_eq!({ vbe.control_info.oem_software_revision }, 0);
+        assert_eq!({ vbe.control_info.oem_vendor_name_ptr }, 3221247984);
+        assert_eq!({ vbe.control_info.oem_product_name_ptr }, 3221248003);
+        assert_eq!({ vbe.control_info.oem_product_revision_ptr }, 3221248023);
+        assert!({ vbe.mode_info.mode_attributes }.contains(
+            VBEModeAttributes::SUPPORTED
+                | VBEModeAttributes::COLOR
+                | VBEModeAttributes::GRAPHICS
+                | VBEModeAttributes::NOT_VGA_COMPATIBLE
+                | VBEModeAttributes::LINEAR_FRAMEBUFFER
+        ));
+        assert!(vbe.mode_info.window_a_attributes.contains(
+            VBEWindowAttributes::RELOCATABLE
+                | VBEWindowAttributes::READABLE
+                | VBEWindowAttributes::WRITEABLE
+        ));
+        assert_eq!({ vbe.mode_info.window_granularity }, 64);
+        assert_eq!({ vbe.mode_info.window_size }, 64);
+        assert_eq!({ vbe.mode_info.window_a_segment }, 40960);
+        assert_eq!({ vbe.mode_info.window_function_ptr }, 3221247162);
+        assert_eq!({ vbe.mode_info.pitch }, 5120);
+        assert_eq!({ vbe.mode_info.resolution }, (1280, 800));
+        assert_eq!(vbe.mode_info.character_size, (8, 16));
+        assert_eq!(vbe.mode_info.number_of_planes, 1);
+        assert_eq!(vbe.mode_info.bpp, 32);
+        assert_eq!(vbe.mode_info.number_of_banks, 1);
+        assert_eq!(vbe.mode_info.memory_model, VBEMemoryModel::DirectColor);
+        assert_eq!(vbe.mode_info.bank_size, 0);
+        assert_eq!(vbe.mode_info.number_of_image_pages, 3);
+        assert_eq!(
+            vbe.mode_info.red_field,
+            VBEField {
+                position: 16,
+                size: 8
+            }
+        );
+        assert_eq!(
+            vbe.mode_info.green_field,
+            VBEField {
+                position: 8,
+                size: 8
+            }
+        );
+        assert_eq!(
+            vbe.mode_info.blue_field,
+            VBEField {
+                position: 0,
+                size: 8
+            }
+        );
+        assert_eq!(
+            vbe.mode_info.reserved_field,
+            VBEField {
+                position: 24,
+                size: 8
+            }
+        );
+        assert_eq!(
+            vbe.mode_info.direct_color_attributes,
+            VBEDirectColorAttributes::RESERVED_USABLE
+        );
+        assert_eq!({ vbe.mode_info.framebuffer_base_ptr }, 4244635648);
+        assert_eq!({ vbe.mode_info.offscreen_memory_offset }, 0);
+        assert_eq!({ vbe.mode_info.offscreen_memory_size }, 0);
     }
 
     #[test]
