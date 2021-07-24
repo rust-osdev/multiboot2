@@ -16,8 +16,8 @@ pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
-use header::{Tag, TagIter, TagType};
 pub use header::MB2_MAGIC;
+use header::{Tag, TagIter, TagType};
 pub use memory_map::{
     EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType,
     MemoryMapTag,
@@ -91,7 +91,7 @@ pub unsafe fn load_with_offset(address: usize, offset: usize) -> BootInformation
     assert!(multiboot.has_valid_end_tag());
     BootInformation {
         inner: multiboot,
-        offset: offset,
+        offset,
     }
 }
 
@@ -137,7 +137,7 @@ impl BootInformation {
     }
 
     /// Search for the Memory map tag.
-    pub fn memory_map_tag<'a>(&'a self) -> Option<&'a MemoryMapTag> {
+    pub fn memory_map_tag(&self) -> Option<&MemoryMapTag> {
         self.get_tag(TagType::Mmap)
             .map(|tag| unsafe { &*(tag as *const Tag as *const MemoryMapTag) })
     }
@@ -148,48 +148,49 @@ impl BootInformation {
     }
 
     /// Search for the BootLoader name tag.
-    pub fn boot_loader_name_tag<'a>(&'a self) -> Option<&'a BootLoaderNameTag> {
+    pub fn boot_loader_name_tag(&self) -> Option<&BootLoaderNameTag> {
         self.get_tag(TagType::BootLoaderName)
             .map(|tag| unsafe { &*(tag as *const Tag as *const BootLoaderNameTag) })
     }
 
     /// Search for the Command line tag.
-    pub fn command_line_tag<'a>(&'a self) -> Option<&'a CommandLineTag> {
+    pub fn command_line_tag(&self) -> Option<&CommandLineTag> {
         self.get_tag(TagType::Cmdline)
             .map(|tag| unsafe { &*(tag as *const Tag as *const CommandLineTag) })
     }
 
     /// Search for the VBE framebuffer tag.
-    pub fn framebuffer_tag<'a>(&'a self) -> Option<FramebufferTag<'a>> {
-        self.get_tag(TagType::Framebuffer).map(|tag| framebuffer::framebuffer_tag(tag))
+    pub fn framebuffer_tag(&self) -> Option<FramebufferTag> {
+        self.get_tag(TagType::Framebuffer)
+            .map(|tag| framebuffer::framebuffer_tag(tag))
     }
 
     /// Search for the EFI 32-bit SDT tag.
-    pub fn efi_sdt_32_tag<'a>(&self) -> Option<&'a EFISdt32> {
+    pub fn efi_sdt_32_tag(&self) -> Option<&EFISdt32> {
         self.get_tag(TagType::Efi32)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt32) })
     }
 
     /// Search for the EFI 64-bit SDT tag.
-    pub fn efi_sdt_64_tag<'a>(&self) -> Option<&'a EFISdt64> {
+    pub fn efi_sdt_64_tag(&self) -> Option<&EFISdt64> {
         self.get_tag(TagType::Efi64)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt64) })
     }
 
     /// Search for the (ACPI 1.0) RSDP tag.
-    pub fn rsdp_v1_tag<'a>(&self) -> Option<&'a RsdpV1Tag> {
+    pub fn rsdp_v1_tag(&self) -> Option<&RsdpV1Tag> {
         self.get_tag(TagType::AcpiV1)
             .map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV1Tag) })
     }
 
     /// Search for the (ACPI 2.0 or later) RSDP tag.
-    pub fn rsdp_v2_tag<'a>(&'a self) -> Option<&'a RsdpV2Tag> {
+    pub fn rsdp_v2_tag(&self) -> Option<&RsdpV2Tag> {
         self.get_tag(TagType::AcpiV2)
             .map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV2Tag) })
     }
 
     /// Search for the EFI Memory map tag.
-    pub fn efi_memory_map_tag<'a>(&'a self) -> Option<&'a EFIMemoryMapTag> {
+    pub fn efi_memory_map_tag(&self) -> Option<&EFIMemoryMapTag> {
         // If the EFIBootServicesNotExited is present, then we should not use
         // the memory map, as it could still be in use.
         match self.get_tag(TagType::EfiBs) {
@@ -201,19 +202,19 @@ impl BootInformation {
     }
 
     /// Search for the EFI 32-bit image handle pointer.
-    pub fn efi_32_ih<'a>(&'a self) -> Option<&'a EFIImageHandle32> {
+    pub fn efi_32_ih(&self) -> Option<&EFIImageHandle32> {
         self.get_tag(TagType::Efi32Ih)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFIImageHandle32) })
     }
 
     /// Search for the EFI 64-bit image handle pointer.
-    pub fn efi_64_ih<'a>(&'a self) -> Option<&'a EFIImageHandle64> {
+    pub fn efi_64_ih(&self) -> Option<&EFIImageHandle64> {
         self.get_tag(TagType::Efi64Ih)
             .map(|tag| unsafe { &*(tag as *const Tag as *const EFIImageHandle64) })
     }
 
     /// Search for the Image Load Base Physical Address.
-    pub fn load_base_addr<'a>(&'a self) -> Option<&'a ImageLoadPhysAddr> {
+    pub fn load_base_addr(&self) -> Option<&ImageLoadPhysAddr> {
         self.get_tag(TagType::LoadBaseAddr)
             .map(|tag| unsafe { &*(tag as *const Tag as *const ImageLoadPhysAddr) })
     }
@@ -228,7 +229,7 @@ impl BootInformation {
         unsafe { &*self.inner }
     }
 
-    fn get_tag<'a>(&'a self, typ: TagType) -> Option<&'a Tag> {
+    fn get_tag(&self, typ: TagType) -> Option<&Tag> {
         self.tags().find(|tag| tag.typ == typ)
     }
 
@@ -239,7 +240,10 @@ impl BootInformation {
 
 impl BootInformationInner {
     fn has_valid_end_tag(&self) -> bool {
-        const END_TAG: Tag = Tag { typ: TagType::End, size: 8 };
+        const END_TAG: Tag = Tag {
+            typ: TagType::End,
+            size: 8,
+        };
 
         let self_ptr = self as *const _;
         let end_tag_addr = self_ptr as usize + (self.total_size - END_TAG.size) as usize;
@@ -257,7 +261,8 @@ impl fmt::Debug for BootInformation {
         const ELF_SECTIONS_LIMIT: usize = 17;
 
         let mut debug = f.debug_struct("Multiboot2 Boot Information");
-        debug.field("start_address", &(self.start_address() as *const u64))
+        debug
+            .field("start_address", &(self.start_address() as *const u64))
             .field("end_address", &(self.end_address() as *const u64))
             .field("total_size", &(self.total_size() as *const u64))
             .field(
@@ -278,15 +283,15 @@ impl fmt::Debug for BootInformation {
             // so far, I didn't found a nice way to connect the iterator with ".field()" because
             // the iterator isn't Debug
             .field("module_tags", &self.module_tags());
-            // usually this is REALLY big (thousands of tags) => skip it here
+        // usually this is REALLY big (thousands of tags) => skip it here
 
-        let elf_sections_tag_entries_count = self.elf_sections_tag().map(|x| x.sections().count()).unwrap_or(0);
+        let elf_sections_tag_entries_count = self
+            .elf_sections_tag()
+            .map(|x| x.sections().count())
+            .unwrap_or(0);
 
         if elf_sections_tag_entries_count > ELF_SECTIONS_LIMIT {
-            debug.field(
-                "elf_sections_tags (count)",
-                &elf_sections_tag_entries_count,
-            );
+            debug.field("elf_sections_tags (count)", &elf_sections_tag_entries_count);
         } else {
             debug.field(
                 "elf_sections_tags",
@@ -322,7 +327,7 @@ impl Reader {
 
     pub(crate) fn read_u8(&mut self) -> u8 {
         self.off += 1;
-        unsafe { core::ptr::read(self.ptr.offset((self.off - 1) as isize)) }
+        unsafe { core::ptr::read(self.ptr.add(self.off - 1)) }
     }
 
     pub(crate) fn read_u16(&mut self) -> u16 {
@@ -342,16 +347,13 @@ impl Reader {
     }
 
     pub(crate) fn current_address(&self) -> usize {
-        unsafe { self.ptr.offset(self.off as isize) as usize }
+        unsafe { self.ptr.add(self.off) as usize }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::FramebufferType;
-    use super::MemoryAreaType;
-    use super::{load, load_with_offset};
-    use super::{BootInformation, ElfSectionFlags, ElfSectionType};
+    use super::*;
 
     #[test]
     fn no_tags() {
@@ -664,85 +666,84 @@ mod tests {
         assert!(bi.vbe_info_tag().is_some());
         let vbe = bi.vbe_info_tag().unwrap();
         use vbe_info::*;
-        unsafe {
-            assert_eq!(vbe.mode, 16762);
-            assert_eq!(vbe.interface_segment, 65535);
-            assert_eq!(vbe.interface_offset, 24576);
-            assert_eq!(vbe.interface_length, 79);
-            assert_eq!(vbe.control_info.signature, [86, 69, 83, 65]);
-            assert_eq!(vbe.control_info.version, 768);
-            assert_eq!(vbe.control_info.oem_string_ptr, 3221247964);
-            assert_eq!(
-                vbe.control_info.capabilities,
-                VBECapabilities::SWITCHABLE_DAC
-            );
-            assert_eq!(vbe.control_info.mode_list_ptr, 1610645538);
-            assert_eq!(vbe.control_info.total_memory, 256);
-            assert_eq!(vbe.control_info.oem_software_revision, 0);
-            assert_eq!(vbe.control_info.oem_vendor_name_ptr, 3221247984);
-            assert_eq!(vbe.control_info.oem_product_name_ptr, 3221248003);
-            assert_eq!(vbe.control_info.oem_product_revision_ptr, 3221248023);
-            assert!(vbe.mode_info.mode_attributes.contains(
-                VBEModeAttributes::SUPPORTED
-                    | VBEModeAttributes::COLOR
-                    | VBEModeAttributes::GRAPHICS
-                    | VBEModeAttributes::NOT_VGA_COMPATIBLE
-                    | VBEModeAttributes::LINEAR_FRAMEBUFFER
-            ));
-            assert!(vbe.mode_info.window_a_attributes.contains(
-                VBEWindowAttributes::RELOCATABLE
-                    | VBEWindowAttributes::READABLE
-                    | VBEWindowAttributes::WRITEABLE
-            ));
-            assert_eq!(vbe.mode_info.window_granularity, 64);
-            assert_eq!(vbe.mode_info.window_size, 64);
-            assert_eq!(vbe.mode_info.window_a_segment, 40960);
-            assert_eq!(vbe.mode_info.window_function_ptr, 3221247162);
-            assert_eq!(vbe.mode_info.pitch, 5120);
-            assert_eq!(vbe.mode_info.resolution, (1280, 800));
-            assert_eq!(vbe.mode_info.character_size, (8, 16));
-            assert_eq!(vbe.mode_info.number_of_planes, 1);
-            assert_eq!(vbe.mode_info.bpp, 32);
-            assert_eq!(vbe.mode_info.number_of_banks, 1);
-            assert_eq!(vbe.mode_info.memory_model, VBEMemoryModel::DirectColor);
-            assert_eq!(vbe.mode_info.bank_size, 0);
-            assert_eq!(vbe.mode_info.number_of_image_pages, 3);
-            assert_eq!(
-                vbe.mode_info.red_field,
-                VBEField {
-                    position: 16,
-                    size: 8
-                }
-            );
-            assert_eq!(
-                vbe.mode_info.green_field,
-                VBEField {
-                    position: 8,
-                    size: 8
-                }
-            );
-            assert_eq!(
-                vbe.mode_info.blue_field,
-                VBEField {
-                    position: 0,
-                    size: 8
-                }
-            );
-            assert_eq!(
-                vbe.mode_info.reserved_field,
-                VBEField {
-                    position: 24,
-                    size: 8
-                }
-            );
-            assert_eq!(
-                vbe.mode_info.direct_color_attributes,
-                VBEDirectColorAttributes::RESERVED_USABLE
-            );
-            assert_eq!(vbe.mode_info.framebuffer_base_ptr, 4244635648);
-            assert_eq!(vbe.mode_info.offscreen_memory_offset, 0);
-            assert_eq!(vbe.mode_info.offscreen_memory_size, 0);
-        }
+
+        assert_eq!({ vbe.mode }, 16762);
+        assert_eq!({ vbe.interface_segment }, 65535);
+        assert_eq!({ vbe.interface_offset }, 24576);
+        assert_eq!({ vbe.interface_length }, 79);
+        assert_eq!({ vbe.control_info.signature }, [86, 69, 83, 65]);
+        assert_eq!({ vbe.control_info.version }, 768);
+        assert_eq!({ vbe.control_info.oem_string_ptr }, 3221247964);
+        assert_eq!(
+            { vbe.control_info.capabilities },
+            VBECapabilities::SWITCHABLE_DAC
+        );
+        assert_eq!({ vbe.control_info.mode_list_ptr }, 1610645538);
+        assert_eq!({ vbe.control_info.total_memory }, 256);
+        assert_eq!({ vbe.control_info.oem_software_revision }, 0);
+        assert_eq!({ vbe.control_info.oem_vendor_name_ptr }, 3221247984);
+        assert_eq!({ vbe.control_info.oem_product_name_ptr }, 3221248003);
+        assert_eq!({ vbe.control_info.oem_product_revision_ptr }, 3221248023);
+        assert!({ vbe.mode_info.mode_attributes }.contains(
+            VBEModeAttributes::SUPPORTED
+                | VBEModeAttributes::COLOR
+                | VBEModeAttributes::GRAPHICS
+                | VBEModeAttributes::NOT_VGA_COMPATIBLE
+                | VBEModeAttributes::LINEAR_FRAMEBUFFER
+        ));
+        assert!(vbe.mode_info.window_a_attributes.contains(
+            VBEWindowAttributes::RELOCATABLE
+                | VBEWindowAttributes::READABLE
+                | VBEWindowAttributes::WRITEABLE
+        ));
+        assert_eq!({ vbe.mode_info.window_granularity }, 64);
+        assert_eq!({ vbe.mode_info.window_size }, 64);
+        assert_eq!({ vbe.mode_info.window_a_segment }, 40960);
+        assert_eq!({ vbe.mode_info.window_function_ptr }, 3221247162);
+        assert_eq!({ vbe.mode_info.pitch }, 5120);
+        assert_eq!({ vbe.mode_info.resolution }, (1280, 800));
+        assert_eq!(vbe.mode_info.character_size, (8, 16));
+        assert_eq!(vbe.mode_info.number_of_planes, 1);
+        assert_eq!(vbe.mode_info.bpp, 32);
+        assert_eq!(vbe.mode_info.number_of_banks, 1);
+        assert_eq!(vbe.mode_info.memory_model, VBEMemoryModel::DirectColor);
+        assert_eq!(vbe.mode_info.bank_size, 0);
+        assert_eq!(vbe.mode_info.number_of_image_pages, 3);
+        assert_eq!(
+            vbe.mode_info.red_field,
+            VBEField {
+                position: 16,
+                size: 8
+            }
+        );
+        assert_eq!(
+            vbe.mode_info.green_field,
+            VBEField {
+                position: 8,
+                size: 8
+            }
+        );
+        assert_eq!(
+            vbe.mode_info.blue_field,
+            VBEField {
+                position: 0,
+                size: 8
+            }
+        );
+        assert_eq!(
+            vbe.mode_info.reserved_field,
+            VBEField {
+                position: 24,
+                size: 8
+            }
+        );
+        assert_eq!(
+            vbe.mode_info.direct_color_attributes,
+            VBEDirectColorAttributes::RESERVED_USABLE
+        );
+        assert_eq!({ vbe.mode_info.framebuffer_base_ptr }, 4244635648);
+        assert_eq!({ vbe.mode_info.offscreen_memory_offset }, 0);
+        assert_eq!({ vbe.mode_info.offscreen_memory_size }, 0);
     }
 
     #[test]

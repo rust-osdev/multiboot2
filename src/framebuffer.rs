@@ -1,6 +1,6 @@
+use crate::header::Tag;
+use crate::Reader;
 use core::slice;
-use header::Tag;
-use Reader;
 
 /// The VBE Framebuffer information Tag.
 #[derive(Debug, PartialEq)]
@@ -78,7 +78,7 @@ pub struct FramebufferColor {
     pub blue: u8,
 }
 
-pub fn framebuffer_tag<'a>(tag: &'a Tag) -> FramebufferTag<'a> {
+pub fn framebuffer_tag(tag: &Tag) -> FramebufferTag {
     let mut reader = Reader::new(tag as *const Tag);
     reader.skip(8);
     let address = reader.read_u64();

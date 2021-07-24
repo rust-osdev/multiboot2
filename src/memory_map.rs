@@ -112,7 +112,7 @@ impl<'a> Iterator for MemoryAreaIter<'a> {
             None
         } else {
             let area = unsafe { &*(self.current_area as *const MemoryArea) };
-            self.current_area = self.current_area + (self.entry_size as u64);
+            self.current_area += self.entry_size as u64;
             Some(area)
         }
     }
@@ -276,7 +276,7 @@ impl<'a> Iterator for EFIMemoryAreaIter<'a> {
             None
         } else {
             let area = unsafe { &*(self.current_area as *const EFIMemoryDesc) };
-            self.current_area = self.current_area + (self.entry_size as u64);
+            self.current_area += self.entry_size as u64;
             Some(area)
         }
     }

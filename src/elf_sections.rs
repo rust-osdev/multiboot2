@@ -1,5 +1,5 @@
-use header::Tag;
-use core::fmt::{Formatter, Debug};
+use crate::header::Tag;
+use core::fmt::{Debug, Formatter};
 
 /// This tag contains section header table from an ELF kernel.
 ///
@@ -114,7 +114,7 @@ impl Default for ElfSectionIter {
             remaining_sections: 0,
             entry_size: 0,
             string_section: core::ptr::null(),
-            offset: 0
+            offset: 0,
         }
     }
 }
@@ -318,7 +318,7 @@ impl ElfSectionInner for ElfSectionInner64 {
     }
 
     fn addralign(&self) -> u64 {
-        self.addralign.into()
+        self.addralign
     }
 }
 

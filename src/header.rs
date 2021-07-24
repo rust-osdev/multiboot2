@@ -1,6 +1,5 @@
-use core::marker::PhantomData;
 use core::fmt::{Debug, Formatter};
-use core::cmp::Ordering;
+use core::marker::PhantomData;
 
 /// Magic number that a multiboot2-compliant boot loader will store in `eax` register
 /// right before handoff to the payload (the kernel). This value can be used to check,
@@ -63,21 +62,6 @@ impl PartialEq<TagType> for TagType {
     }
 }
 
-impl PartialOrd<u32> for TagType {
-    fn partial_cmp(&self, other: &u32) -> Option<Ordering> {
-        let num = *self as u32;
-        Some(
-            if num < *other {
-                Ordering::Less
-            } else if num == *other {
-                Ordering::Equal
-            } else {
-                Ordering::Greater
-            }
-        )
-    }
-}
-
 /// All tags that could passed via the Multiboot2 information structure to a payload/program/kernel.
 /// Better not confuse this with the Multiboot2 header tags. They are something different.
 #[derive(Clone, Copy)]
@@ -119,7 +103,10 @@ impl<'a> Iterator for TagIter<'a> {
 
     fn next(&mut self) -> Option<&'a Tag> {
         match unsafe { &*self.current } {
-            &Tag { typ: TagType::End, size: 8 } => None, // end tag
+            &Tag {
+                typ: TagType::End,
+                size: 8,
+            } => None, // end tag
             tag => {
                 // go to next tag
                 let mut tag_addr = self.current as usize;
