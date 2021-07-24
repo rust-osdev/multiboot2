@@ -353,10 +353,7 @@ impl Reader {
 
 #[cfg(test)]
 mod tests {
-    use super::FramebufferType;
-    use super::MemoryAreaType;
-    use super::{load, load_with_offset};
-    use super::{BootInformation, ElfSectionFlags, ElfSectionType};
+    use super::*;
 
     #[test]
     fn no_tags() {
