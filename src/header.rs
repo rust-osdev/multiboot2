@@ -1,4 +1,3 @@
-use core::cmp::Ordering;
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 
@@ -60,13 +59,6 @@ impl PartialEq<TagType> for u32 {
 impl PartialEq<TagType> for TagType {
     fn eq(&self, other: &TagType) -> bool {
         *self as u32 == *other as u32
-    }
-}
-
-impl PartialOrd<u32> for TagType {
-    fn partial_cmp(&self, other: &u32) -> Option<Ordering> {
-        let num = *self as u32;
-        num.partial_cmp(other)
     }
 }
 
