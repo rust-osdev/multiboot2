@@ -46,7 +46,7 @@ mod vbe_info;
 
 /// Load the multiboot boot information struct from an address.
 ///
-/// This is the same as `load_with_offset` but the offset is ommitted and set
+/// This is the same as `load_with_offset` but the offset is omitted and set
 /// to zero.
 ///
 /// Examples
@@ -55,19 +55,12 @@ mod vbe_info;
 /// use multiboot::load;
 ///
 /// fn kmain(multiboot_info_ptr: u32) {
-///     let boot_info = load(ptr as usize);
+///     let boot_info = load(ptr as usize).unwrap();
 ///     println!("{:?}", boot_info);
 /// }
 /// ```
-pub unsafe fn load(address: usize) -> BootInformation {
-    assert_eq!(0, address & 0b111);
-    let multiboot = &*(address as *const BootInformationInner);
-    assert_eq!(0, multiboot.total_size & 0b111);
-    assert!(multiboot.has_valid_end_tag());
-    BootInformation {
-        inner: multiboot,
-        offset: 0,
-    }
+pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
+    load_with_offset(address, 0)
 }
 
 /// Load the multiboot boot information struct from an address at an offset.
@@ -78,21 +71,48 @@ pub unsafe fn load(address: usize) -> BootInformation {
 /// use multiboot::load;
 ///
 /// let ptr = 0xDEADBEEF as *const _;
-/// let boot_info = load_with_offset(ptr as usize, 0xCAFEBABE);
+/// let boot_info = load_with_offset(ptr as usize, 0xCAFEBABE).unwrap();
 /// println!("{:?}", boot_info);
 /// ```
-pub unsafe fn load_with_offset(address: usize, offset: usize) -> BootInformation {
-    if !cfg!(test) {
-        assert_eq!(0, address & 0b111);
-        assert_eq!(0, offset & 0b111);
+pub unsafe fn load_with_offset(address: usize, offset: usize) -> Result<BootInformation, MbiLoadError> {
+    let address = address + offset;
+    let null_ptr = address == 0;
+    let eight_byte_aligned = address & 0b111 == 0;
+    if null_ptr || !eight_byte_aligned {
+        return Err(MbiLoadError::IllegalAddress);
     }
-    let multiboot = &*((address + offset) as *const BootInformationInner);
-    assert_eq!(0, multiboot.total_size & 0b111);
-    assert!(multiboot.has_valid_end_tag());
-    BootInformation {
-        inner: multiboot,
-        offset,
+
+    let multiboot = &*(address as *const BootInformationInner);
+    // Check if total size is a multiple of 8.
+    // See MbiLoadError::IllegalTotalSize for comments
+    if multiboot.total_size & 0b111 != 0 {
+        return Err(MbiLoadError::IllegalTotalSize(multiboot.total_size));
     }
+    if !multiboot.has_valid_end_tag() {
+        return Err(MbiLoadError::NoEndTag);
+    }
+
+    Ok(
+        BootInformation {
+            inner: multiboot,
+            offset,
+        }
+    )
+}
+
+/// Error type that describes errors while loading/parsing a multiboot2 information structure
+/// from a given address.
+#[derive(Debug)]
+pub enum MbiLoadError {
+    /// The address is invalid. Make sure that the address is 8-byte aligned,
+    /// according to the spec.
+    IllegalAddress,
+    /// The total size of the multiboot2 information structure must be a multiple of 8.
+    /// (Not in spec, but it is implicitly the case, because the begin of MBI
+    /// and all tags are 8-byte aligned and the end tag is exactly 8 byte long).
+    IllegalTotalSize(u32),
+    /// End tag missing. Each multiboot2 header requires to have an end tag.
+    NoEndTag,
 }
 
 /// A Multiboot 2 Boot Information struct.
@@ -367,6 +387,7 @@ mod tests {
         ]);
         let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
@@ -390,6 +411,7 @@ mod tests {
         ]);
         let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
@@ -413,6 +435,7 @@ mod tests {
         ]);
         let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
@@ -439,6 +462,7 @@ mod tests {
         ]);
         let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
@@ -483,6 +507,7 @@ mod tests {
         ]);
         let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
@@ -538,6 +563,7 @@ mod tests {
         ]);
         let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
@@ -660,6 +686,7 @@ mod tests {
 
         let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
@@ -1015,15 +1042,19 @@ mod tests {
             bytes.0[796 + i] = (string_addr >> (i * 8)) as u8;
         }
         let addr = bytes.0.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
         test_grub2_boot_info(
-            unsafe { load(addr) },
+            bi,
             addr,
             string_addr,
             &bytes.0,
             &string_bytes.0,
         );
+        let bi = unsafe { load_with_offset(addr, 0) };
+        let bi = bi.unwrap();
         test_grub2_boot_info(
-            unsafe { load_with_offset(addr, 0) },
+            bi,
             addr,
             string_addr,
             &bytes.0,
@@ -1033,8 +1064,10 @@ mod tests {
         for i in 0..8 {
             bytes.0[796 + i] = ((string_addr - offset as u64) >> (i * 8)) as u8;
         }
+        let bi = unsafe { load_with_offset(addr - offset, offset) };
+        let bi = bi.unwrap();
         test_grub2_boot_info(
-            unsafe { load_with_offset(addr - offset, offset) },
+            bi,
             addr,
             string_addr - offset as u64,
             &bytes.0,
@@ -1221,6 +1254,7 @@ mod tests {
         }
         let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size() as usize);
@@ -1273,11 +1307,12 @@ mod tests {
             8, 0, 0, 0, // end tag size.
         ]);
         let addr = bytes.0.as_ptr() as usize;
-        let boot_info = unsafe { load(addr) };
-        assert_eq!(addr, boot_info.start_address());
-        assert_eq!(addr + bytes.0.len(), boot_info.end_address());
-        assert_eq!(bytes.0.len(), boot_info.total_size() as usize);
-        let efi_memory_map = boot_info.efi_memory_map_tag().unwrap();
+        let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
+        assert_eq!(addr, bi.start_address());
+        assert_eq!(addr + bytes.0.len(), bi.end_address());
+        assert_eq!(bytes.0.len(), bi.total_size() as usize);
+        let efi_memory_map = bi.efi_memory_map_tag().unwrap();
         let mut efi_mmap_iter = efi_memory_map.memory_areas();
         let desc = efi_mmap_iter.next().unwrap();
         assert_eq!(desc.physical_address(), 0x100000);
@@ -1308,8 +1343,9 @@ mod tests {
             0, 0, 0, 0, // end tag type.
             8, 0, 0, 0, // end tag size.
         ]);
-        let boot_info = unsafe { load(bytes2.0.as_ptr() as usize) };
-        let efi_mmap = boot_info.efi_memory_map_tag();
+        let bi = unsafe { load(bytes2.0.as_ptr() as usize) };
+        let bi = bi.unwrap();
+        let efi_mmap = bi.efi_memory_map_tag();
         assert!(efi_mmap.is_none());
     }
 
