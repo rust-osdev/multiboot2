@@ -16,7 +16,7 @@ pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
-pub use header::MB2_MAGIC;
+pub use header::MULTIBOOT2_BOOTLOADER_MAGIC;
 use header::{Tag, TagIter, TagType};
 pub use memory_map::{
     EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType,
