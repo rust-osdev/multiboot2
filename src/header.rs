@@ -8,7 +8,7 @@ use core::marker::PhantomData;
 /// Caution: You might need some assembly code (e.g. GAS or NASM) first, which
 /// moves `eax` to another register, like `edi`. Otherwise it probably happens,
 /// that the Rust compiler output changes `eax` before you can access it.
-pub const MB2_MAGIC: u32 = 0x36d76289;
+pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 
 /// Possible Types of a [`Tag`]. The names and values are taken from the example C code
 /// at the bottom of the Multiboot2 specification.
