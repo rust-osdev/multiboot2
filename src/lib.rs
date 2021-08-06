@@ -2,11 +2,25 @@
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
 
-//! An experimental Multiboot 2 crate for ELF-64/32 kernels.
+//! Library that helps you to parse the multiboot information structure (mbi) from
+//! Multiboot2-compliant bootloaders, like GRUB. It supports all tags from the specification
+//! including full support for the sections of ELF-64. This library is `no_std` and can be
+//! used in a Multiboot2-kernel.
 //!
-//! The GNU Multiboot specification aims provide to a standardised
+//! The GNU Multiboot(2) specification aims to provide a standardised
 //! method of sharing commonly used information about the host machine at
-//! boot time.
+//! boot time and give the payload, i.e. a kernel, a well defined machien
+//! state.
+//!
+//! ## Example
+//!
+//! ```ignore
+//! use multiboot::load;
+//! fn kmain(multiboot_info_ptr: u32) {
+//!     let boot_info = unsafe { load(ptr as usize).unwrap() };
+//!     println!("{:?}", boot_info);
+//! }
+//! ```
 
 use core::fmt;
 
@@ -55,7 +69,7 @@ mod vbe_info;
 /// use multiboot::load;
 ///
 /// fn kmain(multiboot_info_ptr: u32) {
-///     let boot_info = load(ptr as usize).unwrap();
+///     let boot_info = unsafe { load(ptr as usize).unwrap() };
 ///     println!("{:?}", boot_info);
 /// }
 /// ```
@@ -68,10 +82,10 @@ pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
 /// Examples
 ///
 /// ```ignore
-/// use multiboot::load;
+/// use multiboot::load_with_offset;
 ///
 /// let ptr = 0xDEADBEEF as *const _;
-/// let boot_info = load_with_offset(ptr as usize, 0xCAFEBABE).unwrap();
+/// let boot_info = unsafe { load_with_offset(ptr as usize, 0xCAFEBABE).unwrap() };
 /// println!("{:?}", boot_info);
 /// ```
 pub unsafe fn load_with_offset(address: usize, offset: usize) -> Result<BootInformation, MbiLoadError> {

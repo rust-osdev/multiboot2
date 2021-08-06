@@ -1,11 +1,34 @@
 [package]
 name = "multiboot2"
-version = "0.11.0"
-authors = ["Philipp Oppermann <dev@phil-opp.com>", "Calvin Lee <cyrus296@gmail.com>", "Isaac Woods"]
+description = """
+Library that helps you to parse the multiboot information structure (mbi) from
+Multiboot2-compliant bootloaders, like GRUB. It supports all tags from the specification
+including full support for the sections of ELF-64. This library is `no_std` and can be
+used in a Multiboot2-kernel.
+"""
+version = "0.12.0"
+authors = [
+    "Philipp Oppermann <dev@phil-opp.com>",
+    "Calvin Lee <cyrus296@gmail.com>",
+    "Isaac Woods",
+    "Philipp Schuster <phip1611@gmail.com>"
+]
 license = "MIT/Apache-2.0"
-description = "An experimental Multiboot 2 crate for ELF-64/32 kernels."
-repository = "https://github.com/rust-osdev/multiboot2-elf64"
 edition = "2018"
+categories = [
+    "parsing",
+]
+keywords = [
+    "Multiboot2",
+    "kernel",
+    "boot",
+]
+# without this, sometimes crates.io doesn't show the preview of the README
+# I expeciended this multiple times in the past
+readme = "README.md"
+homepage = "https://github.com/rust-osdev/multiboot2"
+repository = "https://github.com/rust-osdev/multiboot2"
+documentation = "https://docs.rs/multiboot2"
 
 [dependencies]
 bitflags = "1"
