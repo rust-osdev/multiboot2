@@ -1,10 +1,11 @@
-/// The tag that the bootloader passes will depend on the ACPI version the hardware supports.
-/// For ACPI Version 1.0, a `RsdpV1Tag` will be provided, which can be accessed from
-/// `BootInformation` using the `rsdp_v1_tag` function. For subsequent versions of ACPI, a
-/// `RsdpV2Tag` will be provided, which can be accessed with `rsdp_v2_tag`.
-///
-/// Even though the bootloader should give the address of the real RSDP/XSDT, the checksum and
-/// signature should be manually verified.
+//! The tag that the bootloader passes will depend on the ACPI version the hardware supports.
+//! For ACPI Version 1.0, a `RsdpV1Tag` will be provided, which can be accessed from
+//! `BootInformation` using the `rsdp_v1_tag` function. For subsequent versions of ACPI, a
+//! `RsdpV2Tag` will be provided, which can be accessed with `rsdp_v2_tag`.
+//!
+//! Even though the bootloader should give the address of the real RSDP/XSDT, the checksum and
+//! signature should be manually verified.
+
 use core::slice;
 use core::str;
 
