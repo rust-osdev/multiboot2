@@ -5,9 +5,9 @@
 //!
 //! Even though the bootloader should give the address of the real RSDP/XSDT, the checksum and
 //! signature should be manually verified.
-
 use core::slice;
 use core::str;
+use crate::TagType;
 
 const RSDPV1_LENGTH: usize = 20;
 
@@ -15,7 +15,7 @@ const RSDPV1_LENGTH: usize = 20;
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding before first_section
 pub struct EFISdt32 {
-    typ: u32,
+    typ: TagType,
     size: u32,
     pointer: u32,
 }
@@ -31,7 +31,7 @@ impl EFISdt32 {
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub struct EFISdt64 {
-    typ: u32,
+    typ: TagType,
     size: u32,
     pointer: u64,
 }
@@ -47,7 +47,7 @@ impl EFISdt64 {
 #[derive(Debug)]
 #[repr(C)]
 pub struct EFIImageHandle32 {
-    typ: u32,
+    typ: TagType,
     size: u32,
     pointer: u32,
 }
@@ -56,7 +56,7 @@ pub struct EFIImageHandle32 {
 #[derive(Debug)]
 #[repr(C)]
 pub struct EFIImageHandle64 {
-    typ: u32,
+    typ: TagType,
     size: u32,
     pointer: u64,
 }
@@ -66,7 +66,7 @@ pub struct EFIImageHandle64 {
 #[derive(Debug)]
 #[repr(C)]
 pub struct ImageLoadPhysAddr {
-    typ: u32,
+    typ: TagType,
     size: u32,
     load_base_addr: u32,
 }
@@ -75,7 +75,7 @@ pub struct ImageLoadPhysAddr {
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct RsdpV1Tag {
-    typ: u32,
+    typ: TagType,
     size: u32,
     signature: [u8; 8],
     checksum: u8,
@@ -122,7 +122,7 @@ impl RsdpV1Tag {
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct RsdpV2Tag {
-    typ: u32,
+    typ: TagType,
     size: u32,
     signature: [u8; 8],
     checksum: u8,

@@ -6,7 +6,7 @@ use core::fmt::{Debug, Formatter};
 #[derive(Clone, Copy)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding near name_byte.
 pub struct ModuleTag {
-    typ: u32,
+    typ: TagType,
     size: u32,
     mod_start: u32,
     mod_end: u32,
