@@ -39,8 +39,9 @@ pub use memory_map::{
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use rsdp::{
-    ImageLoadPhysAddr, RsdpV1Tag, RsdpV2Tag,
+    RsdpV1Tag, RsdpV2Tag,
 };
+pub use image_load_addr::ImageLoadPhysAddr;
 pub use efi::{EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
@@ -60,6 +61,7 @@ mod module;
 mod rsdp;
 mod vbe_info;
 mod efi;
+mod image_load_addr;
 
 /// Load the multiboot boot information struct from an address.
 ///
