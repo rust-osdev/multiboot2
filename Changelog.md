@@ -1,3 +1,7 @@
+# 0.12.1
+- `TagType`-enum introduced in `v0.11` is now actually public
+- internal code improvements
+
 # 0.12.0
 
 - **breaking:** `load()` and `load_with_offset` now returns a result
@@ -7,7 +11,7 @@
 
 # 0.11.0
 
-- lib now contains public `TagType`-enum that contains
+- lib now contains `TagType`-enum that contains
   all possible mbi tags that are specified (taken from spec)
 - much improved debug-formatting of `BootInformation`
 - internal code improvements / formatting

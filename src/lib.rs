@@ -30,8 +30,9 @@ pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
+pub use header::TagType;
 pub use header::MULTIBOOT2_BOOTLOADER_MAGIC;
-use header::{Tag, TagIter, TagType};
+use header::{Tag, TagIter};
 pub use memory_map::{
     EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType,
     MemoryMapTag,
@@ -88,7 +89,10 @@ pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
 /// let boot_info = unsafe { load_with_offset(ptr as usize, 0xCAFEBABE).unwrap() };
 /// println!("{:?}", boot_info);
 /// ```
-pub unsafe fn load_with_offset(address: usize, offset: usize) -> Result<BootInformation, MbiLoadError> {
+pub unsafe fn load_with_offset(
+    address: usize,
+    offset: usize,
+) -> Result<BootInformation, MbiLoadError> {
     let address = address + offset;
     let null_ptr = address == 0;
     let eight_byte_aligned = address & 0b111 == 0;
@@ -106,12 +110,10 @@ pub unsafe fn load_with_offset(address: usize, offset: usize) -> Result<BootInfo
         return Err(MbiLoadError::NoEndTag);
     }
 
-    Ok(
-        BootInformation {
-            inner: multiboot,
-            offset,
-        }
-    )
+    Ok(BootInformation {
+        inner: multiboot,
+        offset,
+    })
 }
 
 /// Error type that describes errors while loading/parsing a multiboot2 information structure
@@ -1058,22 +1060,10 @@ mod tests {
         let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
         let bi = bi.unwrap();
-        test_grub2_boot_info(
-            bi,
-            addr,
-            string_addr,
-            &bytes.0,
-            &string_bytes.0,
-        );
+        test_grub2_boot_info(bi, addr, string_addr, &bytes.0, &string_bytes.0);
         let bi = unsafe { load_with_offset(addr, 0) };
         let bi = bi.unwrap();
-        test_grub2_boot_info(
-            bi,
-            addr,
-            string_addr,
-            &bytes.0,
-            &string_bytes.0,
-        );
+        test_grub2_boot_info(bi, addr, string_addr, &bytes.0, &string_bytes.0);
         let offset = 8usize;
         for i in 0..8 {
             bytes.0[796 + i] = ((string_addr - offset as u64) >> (i * 8)) as u8;
