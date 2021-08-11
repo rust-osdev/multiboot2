@@ -1,3 +1,6 @@
+//! Module for RSDP/ACPI. RSDP (Root System Description Pointer) is a data structure used in the
+//! ACPI programming interface.
+//!
 //! The tag that the bootloader passes will depend on the ACPI version the hardware supports.
 //! For ACPI Version 1.0, a `RsdpV1Tag` will be provided, which can be accessed from
 //! `BootInformation` using the `rsdp_v1_tag` function. For subsequent versions of ACPI, a
@@ -5,77 +8,17 @@
 //!
 //! Even though the bootloader should give the address of the real RSDP/XSDT, the checksum and
 //! signature should be manually verified.
-
 use core::slice;
 use core::str;
+use crate::TagType;
 
 const RSDPV1_LENGTH: usize = 20;
-
-/// EFI system table in 32 bit mode
-#[derive(Clone, Copy, Debug)]
-#[repr(C, packed)] // only repr(C) would add unwanted padding before first_section
-pub struct EFISdt32 {
-    typ: u32,
-    size: u32,
-    pointer: u32,
-}
-
-impl EFISdt32 {
-    /// The Physical address of a i386 EFI system table.
-    pub fn sdt_address(&self) -> usize {
-        self.pointer as usize
-    }
-}
-
-/// EFI system table in 64 bit mode
-#[derive(Clone, Copy, Debug)]
-#[repr(C)]
-pub struct EFISdt64 {
-    typ: u32,
-    size: u32,
-    pointer: u64,
-}
-
-impl EFISdt64 {
-    /// The Physical address of a x86_64 EFI system table.
-    pub fn sdt_address(&self) -> usize {
-        self.pointer as usize
-    }
-}
-
-/// Contains pointer to boot loader image handle.
-#[derive(Debug)]
-#[repr(C)]
-pub struct EFIImageHandle32 {
-    typ: u32,
-    size: u32,
-    pointer: u32,
-}
-
-/// Contains pointer to boot loader image handle.
-#[derive(Debug)]
-#[repr(C)]
-pub struct EFIImageHandle64 {
-    typ: u32,
-    size: u32,
-    pointer: u64,
-}
-
-/// If the image has relocatable header tag, this tag contains the image's
-/// base physical address.
-#[derive(Debug)]
-#[repr(C)]
-pub struct ImageLoadPhysAddr {
-    typ: u32,
-    size: u32,
-    load_base_addr: u32,
-}
 
 /// This tag contains a copy of RSDP as defined per ACPI 1.0 specification.
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct RsdpV1Tag {
-    typ: u32,
+    typ: TagType,
     size: u32,
     signature: [u8; 8],
     checksum: u8,
@@ -122,7 +65,7 @@ impl RsdpV1Tag {
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct RsdpV2Tag {
-    typ: u32,
+    typ: TagType,
     size: u32,
     signature: [u8; 8],
     checksum: u8,

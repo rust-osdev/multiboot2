@@ -1,3 +1,5 @@
+use crate::TagType;
+
 /// This Tag contains the name of the bootloader that is booting the kernel.
 ///
 /// The name is a normal C-style UTF-8 zero-terminated string that can be
@@ -5,7 +7,7 @@
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding before first_section
 pub struct BootLoaderNameTag {
-    typ: u32,
+    typ: TagType,
     size: u32,
     string: u8,
 }

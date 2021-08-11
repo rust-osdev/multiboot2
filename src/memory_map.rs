@@ -1,4 +1,5 @@
 use core::marker::PhantomData;
+use crate::TagType;
 
 /// This Tag provides an initial host memory map.
 ///
@@ -13,7 +14,7 @@ use core::marker::PhantomData;
 #[derive(Debug)]
 #[repr(C)]
 pub struct MemoryMapTag {
-    typ: u32,
+    typ: TagType,
     size: u32,
     entry_size: u32,
     entry_version: u32,
@@ -23,7 +24,7 @@ pub struct MemoryMapTag {
 impl MemoryMapTag {
     /// Return an iterator over all AVAILABLE marked memory areas.
     pub fn memory_areas(&self) -> impl Iterator<Item = &MemoryArea> {
-        self.all_memory_areas().filter(|entry| entry.typ == 1)
+        self.all_memory_areas().filter(|entry| matches!(entry.typ, MemoryAreaType::Available))
     }
 
     /// Return an iterator over all marked memory areas.
@@ -45,7 +46,7 @@ impl MemoryMapTag {
 pub struct MemoryArea {
     base_addr: u64,
     length: u64,
-    typ: u32,
+    typ: MemoryAreaType,
     _reserved: u32,
 }
 
@@ -67,33 +68,32 @@ impl MemoryArea {
 
     /// The type of the memory region.
     pub fn typ(&self) -> MemoryAreaType {
-        match self.typ {
-            1 => MemoryAreaType::Available,
-            3 => MemoryAreaType::AcpiAvailable,
-            4 => MemoryAreaType::ReservedHibernate,
-            5 => MemoryAreaType::Defective,
-            _ => MemoryAreaType::Reserved,
-        }
+        self.typ
     }
 }
 
 /// An enum of possible reported region types.
-#[derive(Debug, PartialEq, Eq)]
+/// Inside the Multiboot2 spec this is kind of hidden
+/// inside the implementation of `struct multiboot_mmap_entry`.
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[repr(u32)]
 pub enum MemoryAreaType {
-    /// A reserved area that must not be used.
-    Reserved,
-
     /// Available memory free to be used by the OS.
-    Available,
+    Available = 1,
+
+    /// A reserved area that must not be used.
+    Reserved = 2,
 
     /// Usable memory holding ACPI information.
-    AcpiAvailable,
+    AcpiAvailable = 3,
 
     /// Reserved memory which needs to be preserved on hibernation.
-    ReservedHibernate,
+    /// Also called NVS in spec, which stands for "Non-Volatile Sleep/Storage",
+    /// which is part of ACPI specification.
+    ReservedHibernate = 4,
 
     /// Memory which is occupied by defective RAM modules.
-    Defective,
+    Defective = 5,
 }
 
 /// An iterator over all memory areas
@@ -122,7 +122,7 @@ impl<'a> Iterator for MemoryAreaIter<'a> {
 #[derive(Debug)]
 #[repr(C)]
 pub struct EFIMemoryMapTag {
-    typ: u32,
+    typ: TagType,
     size: u32,
     desc_size: u32,
     desc_version: u32,
