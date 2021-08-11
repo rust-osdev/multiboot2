@@ -6,7 +6,7 @@ Multiboot2-compliant bootloaders, like GRUB. It supports all tags from the speci
 including full support for the sections of ELF-64. This library is `no_std` and can be
 used in a Multiboot2-kernel.
 """
-version = "0.12.0"
+version = "0.12.1"
 authors = [
     "Philipp Oppermann <dev@phil-opp.com>",
     "Calvin Lee <cyrus296@gmail.com>",
@@ -16,6 +16,7 @@ authors = [
 license = "MIT/Apache-2.0"
 edition = "2018"
 categories = [
+    "no-std",
     "parsing",
 ]
 keywords = [
