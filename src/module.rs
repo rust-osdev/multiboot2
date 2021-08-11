@@ -37,13 +37,19 @@ impl ModuleTag {
     pub fn end_address(&self) -> u32 {
         self.mod_end
     }
+
+    /// The size of the module/the BLOB in memory.
+    pub fn module_size(&self) -> u32 {
+        self.mod_end - self.mod_start
+    }
 }
 
 impl Debug for ModuleTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("ModuleTag")
             .field("type", &self.typ)
-            .field("size", &self.size)
+            .field("size (tag)", &self.size)
+            .field("size (module)", &(self.module_size()))
             .field("mod_start", &(self.mod_start as *const usize))
             .field("mod_end", &(self.mod_end as *const usize))
             .field("cmdline", &self.cmdline())
