@@ -3,26 +3,28 @@ use core::fmt::{Debug, Formatter};
 
 /// This tag indicates to the kernel what boot module was loaded along with
 /// the kernel image, and where it can be found.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding near name_byte.
 pub struct ModuleTag {
     typ: u32,
     size: u32,
     mod_start: u32,
     mod_end: u32,
-    name_byte: u8,
+    /// Begin of the command line string.
+    cmdline_str: u8,
 }
 
 impl ModuleTag {
-    // The multiboot specification defines the module str
-    // as valid utf-8, therefore this function produces
-    // defined behavior
-    /// Get the name of the module.
-    pub fn name(&self) -> &str {
+    // The multiboot specification defines the module str as valid utf-8 (zero terminated string),
+    // therefore this function produces defined behavior
+    /// Get the cmdline of the module. If the GRUB configuration contains
+    /// `module2 /foobar/some_boot_module --test cmdline-option`, then this method
+    /// will return `--test cmdline-option`.
+    pub fn cmdline(&self) -> &str {
         use core::{mem, slice, str};
         let strlen = self.size as usize - mem::size_of::<ModuleTag>();
         unsafe {
-            str::from_utf8_unchecked(slice::from_raw_parts(&self.name_byte as *const u8, strlen))
+            str::from_utf8_unchecked(slice::from_raw_parts(&self.cmdline_str as *const u8, strlen))
         }
     }
 
@@ -34,6 +36,24 @@ impl ModuleTag {
     /// End address of the module
     pub fn end_address(&self) -> u32 {
         self.mod_end
+    }
+
+    /// The size of the module/the BLOB in memory.
+    pub fn module_size(&self) -> u32 {
+        self.mod_end - self.mod_start
+    }
+}
+
+impl Debug for ModuleTag {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("ModuleTag")
+            .field("type", &self.typ)
+            .field("size (tag)", &self.size)
+            .field("size (module)", &(self.module_size()))
+            .field("mod_start", &(self.mod_start as *const usize))
+            .field("mod_end", &(self.mod_end as *const usize))
+            .field("cmdline", &self.cmdline())
+            .finish()
     }
 }
 
