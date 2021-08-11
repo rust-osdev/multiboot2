@@ -1,22 +1,3 @@
-# multiboot2-header
-![Build](https://github.com/rust-osdev/multiboot2/actions/workflows/rust.yml/badge.svg)
-[![crates.io](https://img.shields.io/crates/v/multiboot2-header.svg)](https://crates.io/crates/multiboot2-header)
-[![docs](https://docs.rs/multiboot2-header/badge.svg)](https://docs.rs/multiboot2-header/)
-
-Rust library with type definitions and parsing functions for Multiboot2 headers.
-This library is `no_std` and can be used in bootloaders.
-
-What this library is good for:
-- writing a small binary which writes you a valid Multiboot2 header
-  into a file (such as `header.bin`)
-- understanding Multiboot2 headers better
-- analyze Multiboot2 headers at runtime
-
-What this library is not optimal for:
-- compiling a Multiboot2 header statically into an object file using only Rust code
-
-## Example
-```rust
 use multiboot2_header::builder::Multiboot2HeaderBuilder;
 use multiboot2_header::{ConsoleHeaderTag, HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTagBuilder, MbiTagType, Multiboot2Header, RelocatableHeaderTag, RelocatableHeaderTagPreference, load_mb2_header};
 
@@ -42,9 +23,3 @@ fn main() {
     let mb2_hdr = unsafe { load_mb2_header(mb2_hdr_bytes.as_ptr() as usize) };
     println!("{:#?}", mb2_hdr);
 }
-
-```
-
-## License & Contribution
-
-See main [README](https://github.com/rust-osdev/multiboot2/blob/main/README.md) file.
