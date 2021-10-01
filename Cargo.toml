@@ -1,5 +1,7 @@
 [workspace]
 members = [
-    "multiboot2", # MBI
+    # Multiboot2 Information Structure (MBI)
+    "multiboot2",
+    # Multiboot2 headers
     "multiboot2-header",
 ]
