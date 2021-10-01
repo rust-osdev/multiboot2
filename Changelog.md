@@ -1,7 +1,8 @@
 # TODO 0.12.2 / 0.13
 - internal improvements
-  - code formatting/style 
+  - code formatting/style
   - sensible style checks as optional CI job
+  - `.editorconfig` file
 
 # 0.12.1
 - `TagType`-enum introduced in `v0.11` is now actually public
