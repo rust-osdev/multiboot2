@@ -1,0 +1,29 @@
+[package]
+name = "multiboot2-header"
+description = """
+Library with type definitions and parsing functions for Multiboot2 headers.
+This library is `no_std` and can be used in bootloaders.
+"""
+version = "0.0.0"
+authors = [
+    "Philipp Schuster <phip1611@gmail.com>"
+]
+license = "MIT/Apache-2.0"
+edition = "2018"
+categories = [
+    "parsing",
+]
+keywords = [
+    "Multiboot2",
+    "kernel",
+    "boot",
+    "bootloader",
+]
+# without this, sometimes crates.io doesn't show the preview of the README
+# I expeciended this multiple times in the past
+readme = "README.md"
+homepage = "https://github.com/rust-osdev/multiboot2-header"
+repository = "https://github.com/rust-osdev/multiboot2"
+documentation = "https://docs.rs/multiboot2-header"
+
+[dependencies]
