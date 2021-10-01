@@ -8,4 +8,4 @@ This library is `no_std` and can be used in bootloaders.
 
 ## License & Contribution
 
-See main [README](../README.md) file.
+See main [README](https://github.com/rust-osdev/multiboot2/blob/main/README.md) file.

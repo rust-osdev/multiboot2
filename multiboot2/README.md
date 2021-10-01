@@ -32,4 +32,4 @@ All tags and the mbi itself are 8-byte aligned. The last tag must be the _end ta
 
 ## License & Contribution
 
-See main [README](../README.md) file.
+See main [README](https://github.com/rust-osdev/multiboot2/blob/main/README.md) file.
