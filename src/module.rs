@@ -24,7 +24,10 @@ impl ModuleTag {
         use core::{mem, slice, str};
         let strlen = self.size as usize - mem::size_of::<ModuleTag>();
         unsafe {
-            str::from_utf8_unchecked(slice::from_raw_parts(&self.cmdline_str as *const u8, strlen))
+            str::from_utf8_unchecked(slice::from_raw_parts(
+                &self.cmdline_str as *const u8,
+                strlen,
+            ))
         }
     }
 
@@ -47,9 +50,9 @@ impl ModuleTag {
 impl Debug for ModuleTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("ModuleTag")
-            .field("type", &self.typ)
-            .field("size (tag)", &self.size)
-            .field("size (module)", &(self.module_size()))
+            .field("type", &{ self.typ })
+            .field("size (tag)", &{ self.size })
+            .field("size (module)", &self.module_size())
             .field("mod_start", &(self.mod_start as *const usize))
             .field("mod_end", &(self.mod_end as *const usize))
             .field("cmdline", &self.cmdline())

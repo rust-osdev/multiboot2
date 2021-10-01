@@ -1,5 +1,5 @@
-use core::fmt;
 use crate::TagType;
+use core::fmt;
 
 /// This tag contains VBE metadata, VBE controller information returned by the
 /// VBE Function 00h and VBE mode information returned by the VBE Function 01h.
