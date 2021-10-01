@@ -11,11 +11,10 @@ use core::marker::PhantomData;
 pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 
 /// Possible types of a Tag in the Multiboot2 Information Structure (MBI), therefore the value
-/// of the the `typ` field in [`Tag`]. The names and values are taken from the example C code
+/// of the the `typ` property. The names and values are taken from the example C code
 /// at the bottom of the Multiboot2 specification.
 #[repr(u32)]
 #[derive(Copy, Clone, Debug)]
-#[allow(missing_docs)]
 pub enum TagType {
     /// Marks the end of the tags.
     End = 0,

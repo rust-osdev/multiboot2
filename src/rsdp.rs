@@ -8,9 +8,9 @@
 //!
 //! Even though the bootloader should give the address of the real RSDP/XSDT, the checksum and
 //! signature should be manually verified.
+use crate::TagType;
 use core::slice;
 use core::str;
-use crate::TagType;
 
 const RSDPV1_LENGTH: usize = 20;
 

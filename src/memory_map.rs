@@ -1,5 +1,5 @@
-use core::marker::PhantomData;
 use crate::TagType;
+use core::marker::PhantomData;
 
 /// This Tag provides an initial host memory map.
 ///
@@ -24,7 +24,8 @@ pub struct MemoryMapTag {
 impl MemoryMapTag {
     /// Return an iterator over all AVAILABLE marked memory areas.
     pub fn memory_areas(&self) -> impl Iterator<Item = &MemoryArea> {
-        self.all_memory_areas().filter(|entry| matches!(entry.typ, MemoryAreaType::Available))
+        self.all_memory_areas()
+            .filter(|entry| matches!(entry.typ, MemoryAreaType::Available))
     }
 
     /// Return an iterator over all marked memory areas.

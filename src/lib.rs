@@ -1,6 +1,14 @@
 #![no_std]
 #![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
+// --- BEGIN STYLE CHECKS ---
+// These checks are optional in CI for PRs, as discussed in
+// https://github.com/rust-osdev/multiboot2/pull/92
+#![deny(clippy::all)]
+#![deny(rustdoc::all)]
+// Forcing this would be a little bit ridiculous, because it would require code examples for
+// each getter and each trivial trait implementation (like Debug).
+#![allow(rustdoc::missing_doc_code_examples)]
+// --- END STYLE CHECKS ---
 
 //! Library that helps you to parse the multiboot information structure (mbi) from
 //! Multiboot2-compliant bootloaders, like GRUB. It supports all tags from the specification
@@ -9,15 +17,15 @@
 //!
 //! The GNU Multiboot(2) specification aims to provide a standardised
 //! method of sharing commonly used information about the host machine at
-//! boot time and give the payload, i.e. a kernel, a well defined machien
+//! boot time and give the payload, i.e. a kernel, a well defined machine
 //! state.
 //!
 //! ## Example
 //!
-//! ```ignore
-//! use multiboot::load;
+//! ```rust
+//! use multiboot2::load;
 //! fn kmain(multiboot_info_ptr: u32) {
-//!     let boot_info = unsafe { load(ptr as usize).unwrap() };
+//!     let boot_info = unsafe { load(multiboot_info_ptr as usize).unwrap() };
 //!     println!("{:?}", boot_info);
 //! }
 //! ```
@@ -26,6 +34,7 @@ use core::fmt;
 
 pub use boot_loader_name::BootLoaderNameTag;
 pub use command_line::CommandLineTag;
+pub use efi::{EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64};
 pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
@@ -33,16 +42,13 @@ pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, Frameb
 pub use header::TagType;
 pub use header::MULTIBOOT2_BOOTLOADER_MAGIC;
 use header::{Tag, TagIter};
+pub use image_load_addr::ImageLoadPhysAddr;
 pub use memory_map::{
     EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType,
     MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
-pub use rsdp::{
-    RsdpV1Tag, RsdpV2Tag,
-};
-pub use image_load_addr::ImageLoadPhysAddr;
-pub use efi::{EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64};
+pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
@@ -53,46 +59,56 @@ extern crate bitflags;
 
 mod boot_loader_name;
 mod command_line;
+mod efi;
 mod elf_sections;
 mod framebuffer;
 mod header;
+mod image_load_addr;
 mod memory_map;
 mod module;
 mod rsdp;
 mod vbe_info;
-mod efi;
-mod image_load_addr;
 
 /// Load the multiboot boot information struct from an address.
 ///
 /// This is the same as `load_with_offset` but the offset is omitted and set
 /// to zero.
 ///
-/// Examples
+/// ## Example
 ///
-/// ```ignore
-/// use multiboot::load;
+/// ```rust
+/// use multiboot2::load;
 ///
 /// fn kmain(multiboot_info_ptr: u32) {
-///     let boot_info = unsafe { load(ptr as usize).unwrap() };
+///     let boot_info = unsafe { load(multiboot_info_ptr as usize).unwrap() };
 ///     println!("{:?}", boot_info);
 /// }
 /// ```
+///
+/// ## Safety
+/// This function might terminate the program, if the address is invalid. This can be the case in
+/// environments with standard environment (segfault) but also in UEFI-applications,
+/// where the referenced memory is not (identity) mapped (UEFI does only identity mapping).
 pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
     load_with_offset(address, 0)
 }
 
 /// Load the multiboot boot information struct from an address at an offset.
 ///
-/// Examples
+/// ## Example
 ///
 /// ```ignore
-/// use multiboot::load_with_offset;
+/// use multiboot2::load_with_offset;
 ///
-/// let ptr = 0xDEADBEEF as *const _;
+/// let ptr = 0xDEADBEEF as *const u32;
 /// let boot_info = unsafe { load_with_offset(ptr as usize, 0xCAFEBABE).unwrap() };
 /// println!("{:?}", boot_info);
 /// ```
+///
+/// ## Safety
+/// This function might terminate the program, if the address is invalid. This can be the case in
+/// environments with standard environment (segfault) but also in UEFI-applications,
+/// where the referenced memory is not (identity) mapped (UEFI does only identity mapping).
 pub unsafe fn load_with_offset(
     address: usize,
     offset: usize,
