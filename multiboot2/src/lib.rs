@@ -1,4 +1,5 @@
-#![no_std]
+// this crate can use `std` in tests only
+#![cfg_attr(not(test), no_std)]
 #![deny(missing_debug_implementations)]
 // --- BEGIN STYLE CHECKS ---
 // These checks are optional in CI for PRs, as discussed in
@@ -29,6 +30,11 @@
 //!     println!("{:?}", boot_info);
 //! }
 //! ```
+
+// this crate can use std in tests only
+#[cfg_attr(test, macro_use)]
+#[cfg(test)]
+extern crate std;
 
 use core::fmt;
 

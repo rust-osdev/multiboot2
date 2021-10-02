@@ -1,7 +1,11 @@
 # CHANGELOG for crate `multiboot2`
 
-## TODO 0.12.2 / 0.13
+## 0.12.2
+- `TagType` now implements `Eq` and `Hash`
 - internal improvements
+  - `std` can be used in tests; the crate is still `no_std`
+    - this implies that `cargo test` doesn't work on "non-standard" targets
+    - CI (Ubuntu) still works.
   - code formatting/style
   - sensible style checks as optional CI job
   - `.editorconfig` file

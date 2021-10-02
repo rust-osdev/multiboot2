@@ -1,4 +1,5 @@
 use core::fmt::{Debug, Formatter};
+use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
 
 /// Magic number that a multiboot2-compliant boot loader will store in `eax` register
@@ -14,7 +15,7 @@ pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 /// of the the `typ` property. The names and values are taken from the example C code
 /// at the bottom of the Multiboot2 specification.
 #[repr(u32)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq)]
 pub enum TagType {
     /// Marks the end of the tags.
     End = 0,
@@ -115,6 +116,13 @@ impl PartialEq<TagType> for TagType {
     }
 }
 
+// impl required because this type is used in a hashmap in `multiboot2-header`
+impl Hash for TagType {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_u32(*self as u32);
+    }
+}
+
 /// All tags that could passed via the Multiboot2 information structure to a payload/program/kernel.
 /// Better not confuse this with the Multiboot2 header tags. They are something different.
 #[derive(Clone, Copy)]
@@ -169,5 +177,22 @@ impl<'a> Iterator for TagIter<'a> {
                 Some(tag)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hash() {
+        let mut hashset = std::collections::HashSet::new();
+        hashset.insert(TagType::Cmdline);
+        hashset.insert(TagType::ElfSections);
+        hashset.insert(TagType::BootLoaderName);
+        hashset.insert(TagType::LoadBaseAddr);
+        hashset.insert(TagType::LoadBaseAddr);
+        assert_eq!(hashset.len(), 4);
+        println!("{:#?}", hashset);
     }
 }
