@@ -389,7 +389,7 @@ impl Reader {
 
     pub(crate) fn read_u8(&mut self) -> u8 {
         self.off += 1;
-        unsafe { core::ptr::read(self.ptr.add(self.off - 1)) }
+        unsafe { *self.ptr.add(self.off - 1) }
     }
 
     pub(crate) fn read_u16(&mut self) -> u16 {

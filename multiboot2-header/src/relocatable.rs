@@ -53,25 +53,25 @@ impl RelocatableHeaderTag {
         }
     }
 
-    pub fn typ(&self) -> HeaderTagType {
+    pub const fn typ(&self) -> HeaderTagType {
         self.typ
     }
-    pub fn flags(&self) -> HeaderTagFlag {
+    pub const fn flags(&self) -> HeaderTagFlag {
         self.flags
     }
-    pub fn size(&self) -> u32 {
+    pub const fn size(&self) -> u32 {
         self.size
     }
-    pub fn min_addr(&self) -> u32 {
+    pub const fn min_addr(&self) -> u32 {
         self.min_addr
     }
-    pub fn max_addr(&self) -> u32 {
+    pub const fn max_addr(&self) -> u32 {
         self.max_addr
     }
-    pub fn align(&self) -> u32 {
+    pub const fn align(&self) -> u32 {
         self.align
     }
-    pub fn preference(&self) -> RelocatableHeaderTagPreference {
+    pub const fn preference(&self) -> RelocatableHeaderTagPreference {
         self.preference
     }
 }

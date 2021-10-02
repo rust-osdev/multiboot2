@@ -4,33 +4,34 @@
 //! # Example
 //! ```rust
 //! use multiboot2_header::builder::Multiboot2HeaderBuilder;
-//! use multiboot2_header::{ConsoleHeaderTag, HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTagBuilder, MbiTagType, Multiboot2Header, RelocatableHeaderTag, RelocatableHeaderTagPreference, load_mb2_header};
+//! use multiboot2_header::{HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTagBuilder, MbiTagType, RelocatableHeaderTag, RelocatableHeaderTagPreference, Multiboot2Header};
 //!
-//! /// Small example that creates a Multiboot2 header and parses it afterwards.
-//! fn main() {
-//!     // We create a Multiboot2 header during runtime here. A practical example is that your
-//!     // program gets the header from a file and parses it afterwards.
-//!     let mb2_hdr_bytes = Multiboot2HeaderBuilder::new(HeaderTagISA::I386)
-//!        .relocatable_tag(RelocatableHeaderTag::new(
-//!            HeaderTagFlag::Required,
-//!            0x1337,
-//!            0xdeadbeef,
-//!            4096,
-//!            RelocatableHeaderTagPreference::None,
-//!        ))
-//!        .information_request_tag(
-//!            InformationRequestHeaderTagBuilder::new(HeaderTagFlag::Required)
-//!                .add_irs(&[MbiTagType::Cmdline, MbiTagType::BootLoaderName]),
-//!        )
-//!        .build();
+//! // Small example that creates a Multiboot2 header and parses it afterwards.
 //!
-//!     // Cast bytes in vector to Multiboot2 information structure
-//!     let mb2_hdr = unsafe { load_mb2_header(mb2_hdr_bytes.as_ptr() as usize) };
-//!     println!("{:#?}", mb2_hdr);
-//! }
+//! // We create a Multiboot2 header during runtime here. A practical example is that your
+//! // program gets the header from a file and parses it afterwards.
+//! let mb2_hdr_bytes = Multiboot2HeaderBuilder::new(HeaderTagISA::I386)
+//!     .relocatable_tag(RelocatableHeaderTag::new(
+//!         HeaderTagFlag::Required,
+//!         0x1337,
+//!         0xdeadbeef,
+//!         4096,
+//!         RelocatableHeaderTagPreference::None,
+//!     ))
+//!     .information_request_tag(
+//!         InformationRequestHeaderTagBuilder::new(HeaderTagFlag::Required)
+//!             .add_irs(&[MbiTagType::Cmdline, MbiTagType::BootLoaderName]),
+//!     )
+//!     .build();
+//!
+//! // Cast bytes in vector to Multiboot2 information structure
+//! let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr_bytes.as_ptr() as usize) };
+//! println!("{:#?}", mb2_hdr);
+//!
 //! ```
 
 #![deny(rustdoc::all)]
+#![allow(rustdoc::missing_doc_code_examples)]
 #![deny(clippy::all)]
 #![deny(clippy::missing_const_for_fn)]
 #![deny(missing_debug_implementations)]
@@ -72,22 +73,9 @@ pub use self::uefi_bs::*;
 pub use multiboot2::TagType as MbiTagType;
 use std::mem::size_of;
 
-/// Value must be present in multiboot2 header.
-pub const MULTIBOOT2_HEADER_MAGIC: u32 = 0xe85250d6;
-
-/// Loads the data on the given address as Multiboot2 header.
-/// The address must be 8-byte aligned (see specification).
-pub unsafe fn load_mb2_header<'a>(addr: usize) -> Multiboot2Header<'a> {
-    assert_ne!(0, addr, "null pointer");
-    assert_eq!(addr % 8, 0, "must be 8-byte aligned, see multiboot spec");
-    let ptr = addr as *const Multiboot2HeaderInner;
-    let reference = &*ptr;
-    Multiboot2Header::new(reference)
-}
-
-/// Trait for all tags that creates a byte array from a tag.
-/// Useful in Builder-classes to construct a byte vector that
-/// represents the Multiboot2 header.
+/// Trait for all tags that creates a byte array from the tag.
+/// Useful in builders to construct a byte vector that
+/// represents the Multiboot2 header with all its tags.
 pub(crate) trait StructAsBytes: Sized {
     /// Returns the size in bytes of the struct, as known during compile
     /// time. This doesn't use read the "size" field of tags.
@@ -130,7 +118,7 @@ mod tests {
             c: 33,
         };
         let bytes = foo.struct_as_bytes();
-        let foo_from_bytes = unsafe { core::ptr::read(bytes.as_ptr() as *const Foobar) };
+        let foo_from_bytes = unsafe { (bytes.as_ptr() as *const Foobar).as_ref().unwrap() };
         assert_eq!(bytes.len(), size_of::<Foobar>());
         assert_eq!(foo.a, foo_from_bytes.a);
         assert_eq!(foo.b, foo_from_bytes.b);

@@ -32,29 +32,29 @@ impl<const N: usize> InformationRequestHeaderTag<N> {
         }
     }
 
-    pub fn typ(&self) -> HeaderTagType {
+    pub const fn typ(&self) -> HeaderTagType {
         self.typ
     }
-    pub fn flags(&self) -> HeaderTagFlag {
+    pub const fn flags(&self) -> HeaderTagFlag {
         self.flags
     }
-    pub fn size(&self) -> u32 {
+    pub const fn size(&self) -> u32 {
         self.size
     }
 
     /// Returns the requests as array. Only works if the number of requests
     /// is known at compile time. For safety and correctness during runtime,
-    /// you should use [`req_iter`].
-    pub fn requests(&self) -> [MbiTagType; N] {
-        // cheap to clone, otherwise difficult with lifetime
-        { self.requests }.clone()
+    /// you should use `req_iter()`.
+    pub const fn requests(&self) -> [MbiTagType; N] {
+        // cheap to copy, otherwise difficult with lifetime
+        self.requests
     }
 
     /// Returns the number of [`MbiTagType`]-requests derived
-    /// from the [`size`]-property. This method is useful
+    /// from the `size`-property. This method is useful
     /// because this struct uses a const generic, but during runtime
     /// we don't know the value in almost any case.
-    pub fn dynamic_requests_size(&self) -> u32 {
+    pub const fn dynamic_requests_size(&self) -> u32 {
         let base_struct_size = size_of::<InformationRequestHeaderTag<0>>();
         let size_diff = self.size - base_struct_size as u32;
         if size_diff > 0 {
@@ -70,7 +70,7 @@ impl<const N: usize> InformationRequestHeaderTag<N> {
         let count = self.dynamic_requests_size();
         let base_ptr = self as *const InformationRequestHeaderTag<N>;
         let base_ptr = base_ptr as *const u8;
-        let base_ptr = unsafe { base_ptr.offset(base_struct_size as isize) };
+        let base_ptr = unsafe { base_ptr.add(base_struct_size) };
         let base_ptr = base_ptr as *const MbiTagType;
         InformationRequestHeaderTagIter::new(count, base_ptr)
     }
@@ -107,7 +107,7 @@ impl InformationRequestHeaderTagBuilder {
     }
 
     /// Returns the expected length of the information request tag,
-    /// when the [`build`]-method gets called.
+    /// when the `build`-method gets called.
     pub fn expected_len(&self) -> usize {
         let basic_header_size = size_of::<InformationRequestHeaderTag<0>>();
         let req_tags_size = self.irs.len() * size_of::<MbiTagType>();
@@ -203,7 +203,7 @@ impl<'a> Iterator for InformationRequestHeaderTagIter<'a> {
 impl<'a> Debug for InformationRequestHeaderTagIter<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut debug = f.debug_list();
-        self.clone().for_each(|e| {
+        (*self).for_each(|e| {
             debug.entry(e);
         });
         debug.finish()
@@ -225,8 +225,11 @@ mod tests {
         // type(u16) + flags(u16) + size(u32) + 3 tags (u32)
         assert_eq!(builder.expected_len(), 2 + 2 + 4 + 3 * 4);
         let tag = builder.build();
-        let tag = tag.as_ptr() as *const InformationRequestHeaderTag<3>;
-        let tag = unsafe { core::ptr::read(tag) };
+        let tag = unsafe {
+            (tag.as_ptr() as *const InformationRequestHeaderTag<3>)
+                .as_ref()
+                .unwrap()
+        };
         assert_eq!(tag.flags, HeaderTagFlag::Required);
         // type(u16) + flags(u16) + size(u32) + 3 tags (u32)
         assert_eq!(tag.size, 2 + 2 + 4 + 3 * 4);

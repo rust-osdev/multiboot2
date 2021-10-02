@@ -15,10 +15,10 @@ What this library is good for:
 What this library is not optimal for:
 - compiling a Multiboot2 header statically into an object file using only Rust code
 
-## Example
+## Example 1: Builder + Parse
 ```rust
 use multiboot2_header::builder::Multiboot2HeaderBuilder;
-use multiboot2_header::{ConsoleHeaderTag, HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTagBuilder, MbiTagType, Multiboot2Header, RelocatableHeaderTag, RelocatableHeaderTagPreference, load_mb2_header};
+use multiboot2_header::{HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTagBuilder, MbiTagType, RelocatableHeaderTag, RelocatableHeaderTagPreference, Multiboot2Header};
 
 /// Small example that creates a Multiboot2 header and parses it afterwards.
 fn main() {
@@ -39,11 +39,21 @@ fn main() {
         .build();
 
     // Cast bytes in vector to Multiboot2 information structure
-    let mb2_hdr = unsafe { load_mb2_header(mb2_hdr_bytes.as_ptr() as usize) };
+    let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr_bytes.as_ptr() as usize) };
     println!("{:#?}", mb2_hdr);
 }
-
 ```
+
+## Example 2: Multiboot2 header as static data in Rust file
+You can use the builder, construct a Multiboot2 header, write it to a file and include it like this:
+```
+#[used]
+#[no_mangle]
+#[link_section = ".text.multiboot2_header"]
+static MULTIBOOT2_HDR: &[u8; 64] = include_bytes!("mb2_hdr_dump.bin");
+```
+You may need a special linker script to place this in a LOAD segment with a file offset with less than 32768 bytes.
+See specification.
 
 ## License & Contribution
 

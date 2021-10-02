@@ -1,6 +1,7 @@
 use crate::{HeaderTagFlag, HeaderTagType, StructAsBytes};
 use core::mem::size_of;
 
+/// Possible flags for [`ConsoleHeaderTag`].
 #[repr(u32)]
 #[derive(Copy, Clone, Debug)]
 pub enum ConsoleHeaderTagFlags {
@@ -31,16 +32,16 @@ impl ConsoleHeaderTag {
         }
     }
 
-    pub fn typ(&self) -> HeaderTagType {
+    pub const fn typ(&self) -> HeaderTagType {
         self.typ
     }
-    pub fn flags(&self) -> HeaderTagFlag {
+    pub const fn flags(&self) -> HeaderTagFlag {
         self.flags
     }
-    pub fn size(&self) -> u32 {
+    pub const fn size(&self) -> u32 {
         self.size
     }
-    pub fn console_flags(&self) -> ConsoleHeaderTagFlags {
+    pub const fn console_flags(&self) -> ConsoleHeaderTagFlags {
         self.console_flags
     }
 }

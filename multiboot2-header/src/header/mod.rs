@@ -1,10 +1,10 @@
+//! Module for the main struct, which marks the begin of a Multiboot2 header.
+//! See [`Multiboot2Header`].
+
 pub mod builder;
 
 pub use self::builder::*;
-use crate::{
-    AddressHeaderTag, InformationRequestHeaderTag, RelocatableHeaderTag, StructAsBytes,
-    MULTIBOOT2_HEADER_MAGIC,
-};
+use crate::{AddressHeaderTag, InformationRequestHeaderTag, RelocatableHeaderTag, StructAsBytes};
 use crate::{ConsoleHeaderTag, EntryHeaderTag};
 use crate::{EfiBootServiceHeaderTag, FramebufferHeaderTag};
 use crate::{EndHeaderTag, HeaderTagType};
@@ -13,85 +13,106 @@ use crate::{HeaderTag, HeaderTagISA};
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 
+/// Magic value for a [`Multiboot2Header`], as defined in spec.
+pub const MULTIBOOT2_HEADER_MAGIC: u32 = 0xe85250d6;
+
 /// Wrapper type around a pointer to the Multiboot2 header.
+/// The Multiboot2 header is the [`Multiboot2BasicHeader`] followed
+/// by all tags (see [`crate::tags::HeaderTagType`]).
 /// Use this if you get a pointer to the header and just want
 /// to parse it. If you want to construct the type by yourself,
-/// please look at [`Multiboot2HeaderInner`].
+/// please look at [`builder::Multiboot2HeaderBuilder`].
 #[repr(transparent)]
 pub struct Multiboot2Header<'a> {
-    inner: &'a Multiboot2HeaderInner,
+    inner: &'a Multiboot2BasicHeader,
 }
 
 impl<'a> Multiboot2Header<'a> {
-    /// Creates a new [`Multiboot2Header`]. Verifies the checksum.
-    pub fn new(inner: &'a Multiboot2HeaderInner) -> Self {
-        assert!(inner.verify_checksum(), "checksum invalid!");
-        Self { inner }
-    }
-
-    /*
-      Nope, this just results in really ugly code :/
-      I didn't find a nice way to solve this.
-
-    /// * `additional_tag_length`: additional tag length including end tag
-    pub fn new(arch: ISA,
-               additional_tag_length: u32) -> (Multiboot2HeaderInner, Self) {
-        let inner = Multiboot2HeaderInner::new(
-            arch,
-            (size_of::<Multiboot2HeaderInner>() + additional_tag_length as usize) as u32
+    /// Public constructor for this type with various validations. It panics if the address is invalid.
+    /// It panics rather than returning a result, because if this fails, it is
+    /// a fatal, unrecoverable error anyways and a bug in your code.
+    ///
+    /// # Panics
+    /// Panics if one of the following conditions is true:
+    /// - `addr` is a null-pointer
+    /// - `addr` isn't 8-byte aligned
+    /// - the magic value of the header is not present
+    /// - the checksum field is invalid
+    ///
+    /// # Safety
+    /// This function may produce undefined behaviour, if the provided `addr` is not a valid
+    /// Multiboot2 header pointer.
+    pub unsafe fn from_addr(addr: usize) -> Self {
+        assert_ne!(0, addr, "`addr` is null pointer");
+        assert_eq!(
+            addr % 8,
+            0,
+            "`addr` must be 8-byte aligned, see Multiboot2 spec"
         );
-        let inner_ref = &inner;
-        (inner, Self{inner: inner_ref,})
-    }*/
-
-    /// Returns the size a static multiboot2 header without tags has.
-    pub fn static_size() -> u32 {
-        size_of::<Multiboot2HeaderInner>() as u32
+        let ptr = addr as *const Multiboot2BasicHeader;
+        let reference = &*ptr;
+        assert_eq!(
+            reference.header_magic(),
+            MULTIBOOT2_HEADER_MAGIC,
+            "The Multiboot2 header must contain the MULTIBOOT2_HEADER_MAGIC={:x}",
+            MULTIBOOT2_HEADER_MAGIC
+        );
+        assert!(
+            reference.verify_checksum(),
+            "checksum invalid! Is {:x}, expected {:x}",
+            reference.checksum(),
+            Self::calc_checksum(reference.header_magic, reference.arch, reference.length)
+        );
+        Self { inner: reference }
     }
 
-    pub fn verify_checksum(&self) -> bool {
+    /// Wrapper around [`Multiboot2BasicHeader::verify_checksum`].
+    pub const fn verify_checksum(&self) -> bool {
         self.inner.verify_checksum()
     }
-
-    pub fn header_magic(&self) -> u32 {
+    /// Wrapper around [`Multiboot2BasicHeader::header_magic`].
+    pub const fn header_magic(&self) -> u32 {
         self.inner.header_magic()
     }
-    pub fn arch(&self) -> HeaderTagISA {
+    /// Wrapper around [`Multiboot2BasicHeader::arch`].
+    pub const fn arch(&self) -> HeaderTagISA {
         self.inner.arch()
     }
-    pub fn length(&self) -> u32 {
+    /// Wrapper around [`Multiboot2BasicHeader::length`].
+    pub const fn length(&self) -> u32 {
         self.inner.length()
     }
-    pub fn checksum(&self) -> u32 {
+    /// Wrapper around [`Multiboot2BasicHeader::checksum`].
+    pub const fn checksum(&self) -> u32 {
         self.inner.checksum()
     }
+    /// Wrapper around [`Multiboot2BasicHeader::tag_iter`].
     pub fn iter(&self) -> Multiboot2HeaderTagIter {
         self.inner.tag_iter()
     }
 
-    pub fn calc_checksum(magic: u32, arch: HeaderTagISA, length: u32) -> u32 {
-        (0x100000000 - magic as u64 - arch as u64 - length as u64) as u32
+    /// Wrapper around [`Multiboot2BasicHeader::calc_checksum`].
+    pub const fn calc_checksum(magic: u32, arch: HeaderTagISA, length: u32) -> u32 {
+        Multiboot2BasicHeader::calc_checksum(magic, arch, length)
     }
 }
 
 impl<'a> Debug for Multiboot2Header<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         // For debug fmt we only output the inner field
-        let reference = unsafe { &*(self.inner as *const Multiboot2HeaderInner) };
+        let reference = unsafe { &*(self.inner as *const Multiboot2BasicHeader) };
         Debug::fmt(reference, f)
     }
 }
 
-/// The actual multiboot2 header. The size is not known at
-/// compile time and can only be derived during runtime from
-/// the iteration of the tags until the end tag.
+/// **Use this only if you know what you do. You probably want to use
+/// [`Multiboot2Header`] instead.**
 ///
-/// Use this only if you know what you do. You probably want to use
-/// [`Multiboot2Header`]. If you want to construct a Multiboot2 header at
-/// runtime, see [`builder::Multiboot2HeaderBuilder`].
+/// The "basic" Multiboot2 header. This means only the properties, that are known during
+/// compile time. All other information are derived during runtime from the size property.
 #[derive(Copy, Clone)]
 #[repr(C, packed(8))]
-pub struct Multiboot2HeaderInner {
+pub struct Multiboot2BasicHeader {
     /// Must be the value of [`MULTIBOOT2_HEADER_MAGIC`].
     header_magic: u32,
     arch: HeaderTagISA,
@@ -101,12 +122,12 @@ pub struct Multiboot2HeaderInner {
     // at minimum the end tag
 }
 
-impl Multiboot2HeaderInner {
-    /// Constructs a new
-    pub const fn new(arch: HeaderTagISA, length: u32) -> Self {
+impl Multiboot2BasicHeader {
+    /// Constructor for the basic header.
+    pub(crate) const fn new(arch: HeaderTagISA, length: u32) -> Self {
         let magic = MULTIBOOT2_HEADER_MAGIC;
         let checksum = Self::calc_checksum(magic, arch, length);
-        Multiboot2HeaderInner {
+        Multiboot2BasicHeader {
             header_magic: magic,
             arch,
             length,
@@ -114,41 +135,44 @@ impl Multiboot2HeaderInner {
         }
     }
 
-    /// Verifies that a multiboot2 header is valid
-    pub(super) fn verify_checksum(&self) -> bool {
+    /// Verifies that a Multiboot2 header is valid.
+    pub const fn verify_checksum(&self) -> bool {
         let check = Self::calc_checksum(self.header_magic, self.arch, self.length);
         check == self.checksum
     }
 
-    const fn calc_checksum(magic: u32, arch: HeaderTagISA, length: u32) -> u32 {
+    /// Calculates the checksum as described in the spec.
+    pub const fn calc_checksum(magic: u32, arch: HeaderTagISA, length: u32) -> u32 {
         (0x100000000 - magic as u64 - arch as u64 - length as u64) as u32
     }
 
-    fn header_magic(&self) -> u32 {
+    /// Returns
+    pub const fn header_magic(&self) -> u32 {
         self.header_magic
     }
-    fn arch(&self) -> HeaderTagISA {
+    pub const fn arch(&self) -> HeaderTagISA {
         self.arch
     }
-    fn length(&self) -> u32 {
+    pub const fn length(&self) -> u32 {
         self.length
     }
-    fn checksum(&self) -> u32 {
+    pub const fn checksum(&self) -> u32 {
         self.checksum
     }
 
-    fn tag_iter(&self) -> Multiboot2HeaderTagIter {
-        let base_hdr_size = size_of::<Multiboot2HeaderInner>();
+    /// Returns a [`Multiboot2HeaderTagIter`].
+    pub fn tag_iter(&self) -> Multiboot2HeaderTagIter {
+        let base_hdr_size = size_of::<Multiboot2BasicHeader>();
         if base_hdr_size == self.length as usize {
             panic!("No end tag!");
         }
-        let tag_base_addr = self as *const Multiboot2HeaderInner;
+        let tag_base_addr = self as *const Multiboot2BasicHeader;
         // cast to u8 so that the offset in bytes works correctly
         let tag_base_addr = tag_base_addr as *const u8;
         // tag_base_addr should now point behind the "static" members
-        let tag_base_addr = unsafe { tag_base_addr.offset(base_hdr_size as isize) };
+        let tag_base_addr = unsafe { tag_base_addr.add(base_hdr_size) };
         // align pointer to 8 byte according to spec
-        let tag_base_addr = unsafe { tag_base_addr.offset(tag_base_addr.align_offset(8) as isize) };
+        let tag_base_addr = unsafe { tag_base_addr.add(tag_base_addr.align_offset(8)) };
         // cast back
         let tag_base_addr = tag_base_addr as *const HeaderTag;
         let tags_len = self.length as usize - base_hdr_size;
@@ -156,7 +180,7 @@ impl Multiboot2HeaderInner {
     }
 }
 
-impl Debug for Multiboot2HeaderInner {
+impl Debug for Multiboot2BasicHeader {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Multiboot2Header")
             .field("header_magic", &{ self.header_magic })
@@ -168,8 +192,10 @@ impl Debug for Multiboot2HeaderInner {
     }
 }
 
-impl StructAsBytes for Multiboot2HeaderInner {}
+impl StructAsBytes for Multiboot2BasicHeader {}
 
+/// Iterator over all tags of a Multiboot2 header. The number of items is derived
+/// by the size/length of the header.
 #[derive(Clone)]
 pub struct Multiboot2HeaderTagIter {
     /// 8-byte aligned base address
@@ -185,7 +211,7 @@ impl Multiboot2HeaderTagIter {
     fn new(base: *const HeaderTag, size: u32) -> Self {
         // transform to byte pointer => offset works properly
         let base = base as *const u8;
-        let base = unsafe { base.offset(base.align_offset(8) as isize) };
+        let base = unsafe { base.add(base.align_offset(8)) };
         let base = base as *const HeaderTag;
         Self { base, n: 0, size }
     }
@@ -198,7 +224,7 @@ impl Iterator for Multiboot2HeaderTagIter {
         if self.n < self.size {
             // transform to byte ptr => offset works correctly
             let ptr = self.base as *const u8;
-            let ptr = unsafe { ptr.offset(self.n as isize) };
+            let ptr = unsafe { ptr.add(self.n as usize) };
             let ptr = ptr as *const HeaderTag;
             assert_eq!(ptr as usize % 8, 0, "must be 8-byte aligned");
             let tag = unsafe { &*ptr };

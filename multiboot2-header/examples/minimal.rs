@@ -1,5 +1,8 @@
 use multiboot2_header::builder::Multiboot2HeaderBuilder;
-use multiboot2_header::{ConsoleHeaderTag, HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTagBuilder, MbiTagType, Multiboot2Header, RelocatableHeaderTag, RelocatableHeaderTagPreference, load_mb2_header};
+use multiboot2_header::{
+    HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTagBuilder, MbiTagType, Multiboot2Header,
+    RelocatableHeaderTag, RelocatableHeaderTagPreference,
+};
 
 /// Small example that creates a Multiboot2 header and parses it afterwards.
 fn main() {
@@ -20,6 +23,6 @@ fn main() {
         .build();
 
     // Cast bytes in vector to Multiboot2 information structure
-    let mb2_hdr = unsafe { load_mb2_header(mb2_hdr_bytes.as_ptr() as usize) };
+    let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr_bytes.as_ptr() as usize) };
     println!("{:#?}", mb2_hdr);
 }

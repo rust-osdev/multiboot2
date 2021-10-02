@@ -42,25 +42,25 @@ impl AddressHeaderTag {
         }
     }
 
-    pub fn typ(&self) -> HeaderTagType {
+    pub const fn typ(&self) -> HeaderTagType {
         self.typ
     }
-    pub fn flags(&self) -> HeaderTagFlag {
+    pub const fn flags(&self) -> HeaderTagFlag {
         self.flags
     }
-    pub fn size(&self) -> u32 {
+    pub const fn size(&self) -> u32 {
         self.size
     }
-    pub fn header_addr(&self) -> u32 {
+    pub const fn header_addr(&self) -> u32 {
         self.header_addr
     }
-    pub fn load_addr(&self) -> u32 {
+    pub const fn load_addr(&self) -> u32 {
         self.load_addr
     }
-    pub fn load_end_addr(&self) -> u32 {
+    pub const fn load_end_addr(&self) -> u32 {
         self.load_end_addr
     }
-    pub fn bss_end_addr(&self) -> u32 {
+    pub const fn bss_end_addr(&self) -> u32 {
         self.bss_end_addr
     }
 }

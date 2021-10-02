@@ -20,13 +20,13 @@ impl EfiBootServiceHeaderTag {
         }
     }
 
-    pub fn typ(&self) -> HeaderTagType {
+    pub const fn typ(&self) -> HeaderTagType {
         self.typ
     }
-    pub fn flags(&self) -> HeaderTagFlag {
+    pub const fn flags(&self) -> HeaderTagFlag {
         self.flags
     }
-    pub fn size(&self) -> u32 {
+    pub const fn size(&self) -> u32 {
         self.size
     }
 }

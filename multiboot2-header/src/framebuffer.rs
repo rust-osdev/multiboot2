@@ -28,22 +28,22 @@ impl FramebufferHeaderTag {
         }
     }
 
-    pub fn typ(&self) -> HeaderTagType {
+    pub const fn typ(&self) -> HeaderTagType {
         self.typ
     }
-    pub fn flags(&self) -> HeaderTagFlag {
+    pub const fn flags(&self) -> HeaderTagFlag {
         self.flags
     }
-    pub fn size(&self) -> u32 {
+    pub const fn size(&self) -> u32 {
         self.size
     }
-    pub fn width(&self) -> u32 {
+    pub const fn width(&self) -> u32 {
         self.width
     }
-    pub fn height(&self) -> u32 {
+    pub const fn height(&self) -> u32 {
         self.height
     }
-    pub fn depth(&self) -> u32 {
+    pub const fn depth(&self) -> u32 {
         self.depth
     }
 }
