@@ -47,7 +47,14 @@ pub enum HeaderTagType {
     Relocatable = 10,
 }
 
-/// Flags for multiboot2 header tags.
+impl HeaderTagType {
+    /// Returns the number of possible variants.
+    pub const fn count() -> u32 {
+        11
+    }
+}
+
+/// Flags for Multiboot2 header tags.
 #[repr(u16)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum HeaderTagFlag {

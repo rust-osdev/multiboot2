@@ -90,7 +90,6 @@ impl<'a> Multiboot2Header<'a> {
     pub fn iter(&self) -> Multiboot2HeaderTagIter {
         self.inner.tag_iter()
     }
-
     /// Wrapper around [`Multiboot2BasicHeader::calc_checksum`].
     pub const fn calc_checksum(magic: u32, arch: HeaderTagISA, length: u32) -> u32 {
         Multiboot2BasicHeader::calc_checksum(magic, arch, length)
@@ -161,6 +160,9 @@ impl Multiboot2BasicHeader {
     }
 
     /// Returns a [`Multiboot2HeaderTagIter`].
+    ///
+    /// # Panics
+    /// See doc of [`Multiboot2HeaderTagIter`].
     pub fn tag_iter(&self) -> Multiboot2HeaderTagIter {
         let base_hdr_size = size_of::<Multiboot2BasicHeader>();
         if base_hdr_size == self.length as usize {
@@ -196,6 +198,12 @@ impl StructAsBytes for Multiboot2BasicHeader {}
 
 /// Iterator over all tags of a Multiboot2 header. The number of items is derived
 /// by the size/length of the header.
+///
+/// # Panics
+/// Panics if the `length`-attribute doesn't match the number of found tags, there are
+/// more tags found than technically possible, or if there is more than one end tag.
+/// All of these errors come from bigger, underlying problems. Therefore, they are
+/// considered as "abort/panic" and not as recoverable errors.
 #[derive(Clone)]
 pub struct Multiboot2HeaderTagIter {
     /// 8-byte aligned base address
@@ -205,6 +213,14 @@ pub struct Multiboot2HeaderTagIter {
     n: u32,
     /// Size / final value of [`Self::n`].
     size: u32,
+    /// Counts the number of found tags. If more tags are found
+    /// than technically possible, for example because the length property
+    /// was invalid and there are hundreds of "End"-tags, we can use
+    /// this and enforce a hard iteration limit.
+    tag_count: u32,
+    /// Marks if the end-tag was found. Together with `tag_count`, this
+    /// further helps to improve safety when invalid length properties are given.
+    end_tag_found: bool,
 }
 
 impl Multiboot2HeaderTagIter {
@@ -213,7 +229,13 @@ impl Multiboot2HeaderTagIter {
         let base = base as *const u8;
         let base = unsafe { base.add(base.align_offset(8)) };
         let base = base as *const HeaderTag;
-        Self { base, n: 0, size }
+        Self {
+            base,
+            n: 0,
+            size,
+            tag_count: 0,
+            end_tag_found: false,
+        }
     }
 }
 
@@ -221,25 +243,40 @@ impl Iterator for Multiboot2HeaderTagIter {
     type Item = *const HeaderTag;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.n < self.size {
-            // transform to byte ptr => offset works correctly
-            let ptr = self.base as *const u8;
-            let ptr = unsafe { ptr.add(self.n as usize) };
-            let ptr = ptr as *const HeaderTag;
-            assert_eq!(ptr as usize % 8, 0, "must be 8-byte aligned");
-            let tag = unsafe { &*ptr };
-            assert!(
-                tag.size() <= 500,
-                "no real mb2 header should be bigger than 500bytes - probably wrong memory?! is: {}",
-                {tag.size()}
-            );
-            self.n += tag.size();
-            // 8-byte alignment of pointer address
-            self.n += self.n % 8;
-            Some(ptr)
-        } else {
-            None
+        // no more bytes left to check; length reached
+        if self.n >= self.size {
+            return None;
         }
+
+        // transform to byte ptr => offset works correctly
+        let ptr = self.base as *const u8;
+        let ptr = unsafe { ptr.add(self.n as usize) };
+        let ptr = ptr as *const HeaderTag;
+        assert_eq!(ptr as usize % 8, 0, "must be 8-byte aligned");
+        let tag = unsafe { &*ptr };
+        assert!(
+            tag.size() <= 500,
+            "no real mb2 header should be bigger than 500bytes - probably wrong memory?! is: {}",
+            { tag.size() }
+        );
+        assert!(
+            tag.size() >= 8,
+            "no real mb2 header tag is smaller than 8 bytes - probably wrong memory?! is: {}",
+            { tag.size() }
+        );
+        assert!(
+            !self.end_tag_found,
+            "There is more than one end tag! Maybe the `length` property is invalid?"
+        );
+        self.n += tag.size();
+        // 8-byte alignment of pointer address
+        self.n += self.n % 8;
+        self.tag_count += 1;
+        if tag.typ() == HeaderTagType::End {
+            self.end_tag_found = true;
+        }
+        assert!(self.tag_count < HeaderTagType::count(), "Invalid Multiboot2 header tags! There are more tags than technically possible! Maybe the `length` property is invalid?");
+        Some(ptr)
     }
 }
 
