@@ -6,8 +6,9 @@ Please check their individual README-files ([multiboot2](multiboot2/README.md),
 
 The `multiboot2` crate helps to parse the Multiboot2 information structure
 (MBI) and is relevant in kernels, that get booted by a bootloader such as
-GRUB, for example. `multiboot2-header` is relevant, if you want to write a bootloader that provides a MBI to a payload for
-example.
+GRUB, for example. `multiboot2-header` helps you to either build
+Multiboot2-headers yourself, or to parse Multiboot2 headers in custom bootloader
+or similar applications.
 
 ## License
 

@@ -6,6 +6,55 @@
 Rust library with type definitions and parsing functions for Multiboot2 headers.
 This library is `no_std` and can be used in bootloaders.
 
+What this library is good for:
+- writing a small binary which writes you a valid Multiboot2 header
+  into a file (such as `header.bin`)
+- understanding Multiboot2 headers better
+- analyze Multiboot2 headers at runtime
+
+What this library is not optimal for:
+- compiling a Multiboot2 header statically into an object file using only Rust code
+
+## Example 1: Builder + Parse
+```rust
+use multiboot2_header::builder::Multiboot2HeaderBuilder;
+use multiboot2_header::{HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTagBuilder, MbiTagType, RelocatableHeaderTag, RelocatableHeaderTagPreference, Multiboot2Header};
+
+/// Small example that creates a Multiboot2 header and parses it afterwards.
+fn main() {
+    // We create a Multiboot2 header during runtime here. A practical example is that your
+    // program gets the header from a file and parses it afterwards.
+    let mb2_hdr_bytes = Multiboot2HeaderBuilder::new(HeaderTagISA::I386)
+        .relocatable_tag(RelocatableHeaderTag::new(
+            HeaderTagFlag::Required,
+            0x1337,
+            0xdeadbeef,
+            4096,
+            RelocatableHeaderTagPreference::None,
+        ))
+        .information_request_tag(
+            InformationRequestHeaderTagBuilder::new(HeaderTagFlag::Required)
+                .add_irs(&[MbiTagType::Cmdline, MbiTagType::BootLoaderName]),
+        )
+        .build();
+
+    // Cast bytes in vector to Multiboot2 information structure
+    let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr_bytes.as_ptr() as usize) };
+    println!("{:#?}", mb2_hdr);
+}
+```
+
+## Example 2: Multiboot2 header as static data in Rust file
+You can use the builder, construct a Multiboot2 header, write it to a file and include it like this:
+```
+#[used]
+#[no_mangle]
+#[link_section = ".text.multiboot2_header"]
+static MULTIBOOT2_HDR: &[u8; 64] = include_bytes!("mb2_hdr_dump.bin");
+```
+You may need a special linker script to place this in a LOAD segment with a file offset with less than 32768 bytes.
+See specification.
+
 ## License & Contribution
 
 See main [README](https://github.com/rust-osdev/multiboot2/blob/main/README.md) file.
