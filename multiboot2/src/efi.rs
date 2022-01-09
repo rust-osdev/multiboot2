@@ -12,7 +12,7 @@ pub struct EFISdt32 {
 }
 
 impl EFISdt32 {
-    /// The Physical address of a i386 EFI system table.
+    /// The physical address of a i386 EFI system table.
     pub fn sdt_address(&self) -> usize {
         self.pointer as usize
     }
@@ -28,7 +28,7 @@ pub struct EFISdt64 {
 }
 
 impl EFISdt64 {
-    /// The Physical address of a x86_64 EFI system table.
+    /// The physical address of a x86_64 EFI system table.
     pub fn sdt_address(&self) -> usize {
         self.pointer as usize
     }
@@ -43,6 +43,13 @@ pub struct EFIImageHandle32 {
     pointer: u32,
 }
 
+impl EFIImageHandle32 {
+    /// The Physical address of a i386 EFI system table.
+    pub fn image_handle(&self) -> usize {
+        self.pointer as usize
+    }
+}
+
 /// Contains pointer to boot loader image handle.
 #[derive(Debug)]
 #[repr(C)]
@@ -50,4 +57,11 @@ pub struct EFIImageHandle64 {
     typ: TagType,
     size: u32,
     pointer: u64,
+}
+
+impl EFIImageHandle64 {
+    /// The Physical address of a i386 EFI system table.
+    pub fn sdt_address(&self) -> usize {
+        self.pointer as usize
+    }
 }
