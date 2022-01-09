@@ -224,7 +224,7 @@ impl BootInformation {
     /// Search for the VBE framebuffer tag.
     pub fn framebuffer_tag(&self) -> Option<FramebufferTag> {
         self.get_tag(TagType::Framebuffer)
-            .map(|tag| framebuffer::framebuffer_tag(tag))
+            .map(framebuffer::framebuffer_tag)
     }
 
     /// Search for the EFI 32-bit SDT tag.
