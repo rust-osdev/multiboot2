@@ -1,5 +1,9 @@
 # CHANGELOG for crate `multiboot2`
 
+## 0.13.0
+- added missing getters for tag `ImageLoadPhysAddr`
+- added missing getters for tags `EFIImageHandle32` and `EFIImageHandle64`
+
 ## 0.12.2
 - `TagType` now implements `Eq` and `Hash`
 - internal improvements
