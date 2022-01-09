@@ -9,3 +9,10 @@ pub struct ImageLoadPhysAddr {
     size: u32,
     load_base_addr: u32,
 }
+
+impl ImageLoadPhysAddr {
+    /// Returns the load base address.
+    pub fn load_base_addr(&self) -> u32 {
+        self.load_base_addr
+    }
+}
