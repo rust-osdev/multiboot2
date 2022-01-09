@@ -44,7 +44,7 @@ pub struct EFIImageHandle32 {
 }
 
 impl EFIImageHandle32 {
-    /// The Physical address of a i386 EFI system table.
+    /// Returns the physical address of the EFI image handle.
     pub fn image_handle(&self) -> usize {
         self.pointer as usize
     }
@@ -60,8 +60,8 @@ pub struct EFIImageHandle64 {
 }
 
 impl EFIImageHandle64 {
-    /// The Physical address of a i386 EFI system table.
-    pub fn sdt_address(&self) -> usize {
+    /// Returns the physical address of the EFI image handle.
+    pub fn image_handle(&self) -> usize {
         self.pointer as usize
     }
 }
