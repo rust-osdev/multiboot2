@@ -1,6 +1,9 @@
 # CHANGELOG for crate `multiboot2`
 
-## 0.13.0
+## 0.13.1
+- minor fix
+
+## 0.13.0 (**yanked**)
 - added missing getters for tag `ImageLoadPhysAddr`
 - added missing getters for tags `EFIImageHandle32` and `EFIImageHandle64`
 
