@@ -13,7 +13,12 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    strategy:
+        matrix:
+            rust:
+                - stable
+                - nightly
+                - 1.52.1 # MSVR
     steps:
     - uses: actions/checkout@v2
     - name: Build
@@ -26,6 +31,10 @@ jobs:
   style_checks:
 
     runs-on: ubuntu-latest
+    strategy:
+        matrix:
+            rust:
+                - stable
 
     steps:
     - uses: actions/checkout@v2
