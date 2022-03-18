@@ -26,6 +26,7 @@
 ## 0.12.0
 
 - **breaking:** `load()` and `load_with_offset` now returns a result
+- **breaking:** iterator functions (e.g. `ElfSectionsTag::sections()`) return `impl Iterator` instead of a concrete type
 - added public constant `MULTIBOOT2_BOOTLOADER_MAGIC`
 - Rust edition 2018 (instead of 2015)
 - internal code improvements
