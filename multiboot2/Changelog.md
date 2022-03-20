@@ -26,13 +26,13 @@
 ## 0.12.0
 
 - **breaking:** `load()` and `load_with_offset` now returns a result
-- **breaking:** iterator functions (e.g. `ElfSectionsTag::sections()`) return `impl Iterator` instead of a concrete type
 - added public constant `MULTIBOOT2_BOOTLOADER_MAGIC`
 - Rust edition 2018 (instead of 2015)
 - internal code improvements
 
 ## 0.11.0
 
+- **breaking:** iterator functions (e.g. `ElfSectionsTag::sections()`) return `impl Iterator` instead of a concrete type
 - lib now contains `TagType`-enum that contains
   all possible mbi tags that are specified (taken from spec)
 - much improved debug-formatting of `BootInformation`
