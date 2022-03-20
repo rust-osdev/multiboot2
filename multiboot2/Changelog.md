@@ -32,6 +32,7 @@
 
 ## 0.11.0
 
+- **breaking:** iterator functions (e.g. `ElfSectionsTag::sections()`) return `impl Iterator` instead of a concrete type
 - lib now contains `TagType`-enum that contains
   all possible mbi tags that are specified (taken from spec)
 - much improved debug-formatting of `BootInformation`
