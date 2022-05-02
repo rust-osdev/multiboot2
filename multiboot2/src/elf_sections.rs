@@ -1,4 +1,4 @@
-use crate::header::Tag;
+use crate::tag_type::Tag;
 use core::fmt::{Debug, Formatter};
 
 /// This tag contains section header table from an ELF kernel.

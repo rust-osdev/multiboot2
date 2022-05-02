@@ -1,4 +1,4 @@
-use crate::header::Tag;
+use crate::tag_type::Tag;
 use crate::Reader;
 use core::slice;
 
