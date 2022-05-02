@@ -1,7 +1,7 @@
 use crate::TagType;
 use core::marker::PhantomData;
 
-/// This Tag provides an initial host memory map.
+/// This tag provides an initial host memory map.
 ///
 /// The map provided is guaranteed to list all standard RAM that should be
 /// available for normal use. This type however includes the regions occupied

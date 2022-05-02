@@ -1,6 +1,6 @@
 use crate::TagType;
 
-/// This Tag contains the name of the bootloader that is booting the kernel.
+/// This tag contains the name of the bootloader that is booting the kernel.
 ///
 /// The name is a normal C-style UTF-8 zero-terminated string that can be
 /// obtained via the `name` method.
