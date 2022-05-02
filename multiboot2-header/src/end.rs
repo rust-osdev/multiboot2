@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, HeaderTagType, StructAsBytes};
+use crate::{HeaderTagFlag, HeaderTagType};
 use core::mem::size_of;
 
 /// Terminates a list of optional tags
@@ -33,4 +33,5 @@ impl EndHeaderTag {
     }
 }
 
-impl StructAsBytes for EndHeaderTag {}
+#[cfg(feature = "builder")]
+impl crate::StructAsBytes for EndHeaderTag {}

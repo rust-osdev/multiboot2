@@ -1,10 +1,15 @@
+use crate::HeaderTagType;
+#[cfg(feature = "builder")]
+use crate::StructAsBytes;
 use crate::{HeaderTagFlag, MbiTagType};
-use crate::{HeaderTagType, StructAsBytes};
+#[cfg(feature = "builder")]
+use alloc::collections::BTreeSet;
+#[cfg(feature = "builder")]
+use alloc::vec::Vec;
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use core::mem::size_of;
-use std::collections::HashSet;
 
 /// Specifies what specific tag types the bootloader should provide
 /// inside the mbi.
@@ -87,21 +92,24 @@ impl<const N: usize> Debug for InformationRequestHeaderTag<N> {
     }
 }
 
-impl<const N: usize> StructAsBytes for InformationRequestHeaderTag<N> {}
+#[cfg(feature = "builder")]
+impl<const N: usize> crate::StructAsBytes for InformationRequestHeaderTag<N> {}
 
 /// Helper to build the dynamically sized [`InformationRequestHeaderTag`]
 /// at runtime.
 #[derive(Debug)]
+#[cfg(feature = "builder")]
 pub struct InformationRequestHeaderTagBuilder {
     flag: HeaderTagFlag,
-    irs: HashSet<MbiTagType>,
+    irs: BTreeSet<MbiTagType>,
 }
 
+#[cfg(feature = "builder")]
 impl InformationRequestHeaderTagBuilder {
     /// New builder.
     pub fn new(flag: HeaderTagFlag) -> Self {
         Self {
-            irs: HashSet::new(),
+            irs: BTreeSet::new(),
             flag,
         }
     }

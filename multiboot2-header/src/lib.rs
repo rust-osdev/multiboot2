@@ -30,11 +30,19 @@
 //!
 //! ```
 
+#![no_std]
 #![deny(rustdoc::all)]
 #![allow(rustdoc::missing_doc_code_examples)]
 #![deny(clippy::all)]
 #![deny(clippy::missing_const_for_fn)]
 #![deny(missing_debug_implementations)]
+
+#[cfg(feature = "builder")]
+extern crate alloc;
+
+#[cfg_attr(test, macro_use)]
+#[cfg(test)]
+extern crate std;
 
 #[cfg_attr(test, macro_use)]
 #[cfg(test)]
@@ -68,14 +76,15 @@ pub use self::relocatable::*;
 pub use self::tags::*;
 pub use self::uefi_bs::*;
 
+use core::mem::size_of;
 /// Re-export of [`multiboot2::TagType`] from `multiboot2`-crate as `MbiTagType`, i.e. tags that
 /// describe the entries in the Multiboot2 Information Structure (MBI).
 pub use multiboot2::TagType as MbiTagType;
-use std::mem::size_of;
 
 /// Trait for all tags that creates a byte array from the tag.
 /// Useful in builders to construct a byte vector that
 /// represents the Multiboot2 header with all its tags.
+#[cfg(feature = "builder")]
 pub(crate) trait StructAsBytes: Sized {
     /// Returns the size in bytes of the struct, as known during compile
     /// time. This doesn't use read the "size" field of tags.
@@ -90,9 +99,9 @@ pub(crate) trait StructAsBytes: Sized {
 
     /// Returns the structure as a vector of its bytes.
     /// The length is determined by [`size`].
-    fn struct_as_bytes(&self) -> Vec<u8> {
+    fn struct_as_bytes(&self) -> alloc::vec::Vec<u8> {
         let ptr = self.as_ptr();
-        let mut vec = Vec::with_capacity(self.byte_size());
+        let mut vec = alloc::vec::Vec::with_capacity(self.byte_size());
         for i in 0..self.byte_size() {
             vec.push(unsafe { *ptr.add(i) })
         }

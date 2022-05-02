@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, HeaderTagType, StructAsBytes};
+use crate::{HeaderTagFlag, HeaderTagType};
 use core::mem::size_of;
 
 /// Specifies the preferred graphics mode. If this tag
@@ -48,4 +48,5 @@ impl FramebufferHeaderTag {
     }
 }
 
-impl StructAsBytes for FramebufferHeaderTag {}
+#[cfg(feature = "builder")]
+impl crate::StructAsBytes for FramebufferHeaderTag {}

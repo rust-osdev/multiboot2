@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, HeaderTagType, StructAsBytes};
+use crate::{HeaderTagFlag, HeaderTagType};
 use core::mem::size_of;
 
 /// Possible flags for [`ConsoleHeaderTag`].
@@ -46,7 +46,8 @@ impl ConsoleHeaderTag {
     }
 }
 
-impl StructAsBytes for ConsoleHeaderTag {}
+#[cfg(feature = "builder")]
+impl crate::StructAsBytes for ConsoleHeaderTag {}
 
 #[cfg(test)]
 mod tests {

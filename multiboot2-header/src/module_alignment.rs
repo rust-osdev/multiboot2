@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, HeaderTagType, StructAsBytes};
+use crate::{HeaderTagFlag, HeaderTagType};
 use core::mem::size_of;
 
 /// If this tag is present, provided boot modules must be page aligned.
@@ -30,4 +30,5 @@ impl ModuleAlignHeaderTag {
     }
 }
 
-impl StructAsBytes for ModuleAlignHeaderTag {}
+#[cfg(feature = "builder")]
+impl crate::StructAsBytes for ModuleAlignHeaderTag {}

@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, HeaderTagType, StructAsBytes};
+use crate::{HeaderTagFlag, HeaderTagType};
 use core::mem::size_of;
 
 /// This information does not need to be provided if the kernel image is in ELF
@@ -65,4 +65,5 @@ impl AddressHeaderTag {
     }
 }
 
-impl StructAsBytes for AddressHeaderTag {}
+#[cfg(feature = "builder")]
+impl crate::StructAsBytes for AddressHeaderTag {}
