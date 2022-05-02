@@ -90,6 +90,3 @@ impl Debug for RelocatableHeaderTag {
             .finish()
     }
 }
-
-#[cfg(feature = "builder")]
-impl crate::StructAsBytes for RelocatableHeaderTag {}

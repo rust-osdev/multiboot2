@@ -49,6 +49,3 @@ impl Debug for EntryHeaderTag {
             .finish()
     }
 }
-
-#[cfg(feature = "builder")]
-impl crate::StructAsBytes for EntryHeaderTag {}

@@ -32,6 +32,3 @@ impl EndHeaderTag {
         self.size
     }
 }
-
-#[cfg(feature = "builder")]
-impl crate::StructAsBytes for EndHeaderTag {}

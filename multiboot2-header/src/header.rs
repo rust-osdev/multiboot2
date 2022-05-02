@@ -1,15 +1,8 @@
-//! Module for the main struct, which marks the begin of a Multiboot2 header.
-//! See [`Multiboot2Header`].
-
-pub mod builder;
-
-pub use self::builder::*;
-use crate::{AddressHeaderTag, InformationRequestHeaderTag, RelocatableHeaderTag};
-use crate::{ConsoleHeaderTag, EntryHeaderTag};
-use crate::{EfiBootServiceHeaderTag, FramebufferHeaderTag};
-use crate::{EndHeaderTag, HeaderTagType};
-use crate::{EntryEfi32HeaderTag, EntryEfi64HeaderTag};
-use crate::{HeaderTag, HeaderTagISA};
+use crate::{
+    AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EndHeaderTag, EntryEfi32HeaderTag,
+    EntryEfi64HeaderTag, EntryHeaderTag, FramebufferHeaderTag, HeaderTag, HeaderTagISA,
+    HeaderTagType, InformationRequestHeaderTag, RelocatableHeaderTag,
+};
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 
@@ -21,7 +14,7 @@ pub const MULTIBOOT2_HEADER_MAGIC: u32 = 0xe85250d6;
 /// by all tags (see [`crate::tags::HeaderTagType`]).
 /// Use this if you get a pointer to the header and just want
 /// to parse it. If you want to construct the type by yourself,
-/// please look at [`builder::Multiboot2HeaderBuilder`].
+/// please look at [`crate::builder::Multiboot2HeaderBuilder`].
 #[repr(transparent)]
 pub struct Multiboot2Header<'a> {
     inner: &'a Multiboot2BasicHeader,
@@ -122,6 +115,7 @@ pub struct Multiboot2BasicHeader {
 }
 
 impl Multiboot2BasicHeader {
+    #[cfg(feature = "builder")]
     /// Constructor for the basic header.
     pub(crate) const fn new(arch: HeaderTagISA, length: u32) -> Self {
         let magic = MULTIBOOT2_HEADER_MAGIC;
@@ -193,9 +187,6 @@ impl Debug for Multiboot2BasicHeader {
             .finish()
     }
 }
-
-#[cfg(feature = "builder")]
-impl crate::StructAsBytes for Multiboot2BasicHeader {}
 
 /// Iterator over all tags of a Multiboot2 header. The number of items is derived
 /// by the size/length of the header.

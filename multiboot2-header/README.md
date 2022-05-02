@@ -29,8 +29,8 @@ multiboot2-header = "<latest>"
 
 ## Example 1: Builder + Parse
 ```rust
-use multiboot2_header::builder::Multiboot2HeaderBuilder;
-use multiboot2_header::{HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTagBuilder, MbiTagType, RelocatableHeaderTag, RelocatableHeaderTagPreference, Multiboot2Header};
+use multiboot2_header::builder::{InformationRequestHeaderTagBuilder, Multiboot2HeaderBuilder};
+use multiboot2_header::{HeaderTagFlag, HeaderTagISA, MbiTagType, RelocatableHeaderTag, RelocatableHeaderTagPreference, Multiboot2Header};
 
 /// Small example that creates a Multiboot2 header and parses it afterwards.
 fn main() {

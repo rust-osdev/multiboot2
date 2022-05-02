@@ -64,6 +64,3 @@ impl AddressHeaderTag {
         self.bss_end_addr
     }
 }
-
-#[cfg(feature = "builder")]
-impl crate::StructAsBytes for AddressHeaderTag {}

@@ -1,10 +1,12 @@
 //! Exports item [`Multiboot2HeaderBuilder`].
 
+use crate::builder::information_request::InformationRequestHeaderTagBuilder;
+use crate::builder::traits::StructAsBytes;
 use crate::HeaderTagISA;
 use crate::{
     AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EndHeaderTag, EntryEfi32HeaderTag,
-    EntryEfi64HeaderTag, EntryHeaderTag, FramebufferHeaderTag, InformationRequestHeaderTagBuilder,
-    ModuleAlignHeaderTag, Multiboot2BasicHeader, RelocatableHeaderTag, StructAsBytes,
+    EntryEfi64HeaderTag, EntryHeaderTag, FramebufferHeaderTag, ModuleAlignHeaderTag,
+    Multiboot2BasicHeader, RelocatableHeaderTag,
 };
 use alloc::vec::Vec;
 use core::mem::size_of;
@@ -226,9 +228,10 @@ impl Multiboot2HeaderBuilder {
 
 #[cfg(test)]
 mod tests {
+    use crate::builder::header::Multiboot2HeaderBuilder;
+    use crate::builder::information_request::InformationRequestHeaderTagBuilder;
     use crate::{
-        HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTagBuilder, MbiTagType,
-        Multiboot2Header, Multiboot2HeaderBuilder, RelocatableHeaderTag,
+        HeaderTagFlag, HeaderTagISA, MbiTagType, Multiboot2Header, RelocatableHeaderTag,
         RelocatableHeaderTagPreference,
     };
 
