@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, HeaderTagType, StructAsBytes};
+use crate::{HeaderTagFlag, HeaderTagType};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
@@ -50,4 +50,5 @@ impl Debug for EntryEfi32HeaderTag {
     }
 }
 
-impl StructAsBytes for EntryEfi32HeaderTag {}
+#[cfg(feature = "builder")]
+impl crate::StructAsBytes for EntryEfi32HeaderTag {}

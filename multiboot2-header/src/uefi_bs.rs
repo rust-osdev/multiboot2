@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, HeaderTagType, StructAsBytes};
+use crate::{HeaderTagFlag, HeaderTagType};
 use core::mem::size_of;
 
 /// This tag indicates that payload supports starting without terminating UEFI boot services.
@@ -31,4 +31,5 @@ impl EfiBootServiceHeaderTag {
     }
 }
 
-impl StructAsBytes for EfiBootServiceHeaderTag {}
+#[cfg(feature = "builder")]
+impl crate::StructAsBytes for EfiBootServiceHeaderTag {}

@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, HeaderTagType, StructAsBytes};
+use crate::{HeaderTagFlag, HeaderTagType};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
@@ -91,4 +91,5 @@ impl Debug for RelocatableHeaderTag {
     }
 }
 
-impl StructAsBytes for RelocatableHeaderTag {}
+#[cfg(feature = "builder")]
+impl crate::StructAsBytes for RelocatableHeaderTag {}

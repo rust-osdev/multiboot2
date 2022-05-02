@@ -4,7 +4,7 @@
 pub mod builder;
 
 pub use self::builder::*;
-use crate::{AddressHeaderTag, InformationRequestHeaderTag, RelocatableHeaderTag, StructAsBytes};
+use crate::{AddressHeaderTag, InformationRequestHeaderTag, RelocatableHeaderTag};
 use crate::{ConsoleHeaderTag, EntryHeaderTag};
 use crate::{EfiBootServiceHeaderTag, FramebufferHeaderTag};
 use crate::{EndHeaderTag, HeaderTagType};
@@ -194,7 +194,8 @@ impl Debug for Multiboot2BasicHeader {
     }
 }
 
-impl StructAsBytes for Multiboot2BasicHeader {}
+#[cfg(feature = "builder")]
+impl crate::StructAsBytes for Multiboot2BasicHeader {}
 
 /// Iterator over all tags of a Multiboot2 header. The number of items is derived
 /// by the size/length of the header.

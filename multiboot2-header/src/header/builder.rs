@@ -6,6 +6,7 @@ use crate::{
     EntryEfi64HeaderTag, EntryHeaderTag, FramebufferHeaderTag, InformationRequestHeaderTagBuilder,
     ModuleAlignHeaderTag, Multiboot2BasicHeader, RelocatableHeaderTag, StructAsBytes,
 };
+use alloc::vec::Vec;
 use core::mem::size_of;
 
 /// Builder to construct a valid Multiboot2 header dynamically at runtime.
