@@ -29,6 +29,9 @@
 //! println!("{:#?}", mb2_hdr);
 //!
 //! ```
+//!
+//! ## MSRV
+//! The MSRV is 1.52.1 stable.
 
 #![no_std]
 #![deny(rustdoc::all)]

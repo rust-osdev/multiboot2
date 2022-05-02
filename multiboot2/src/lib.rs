@@ -30,6 +30,9 @@
 //!     println!("{:?}", boot_info);
 //! }
 //! ```
+//!
+//! ## MSRV
+//! The MSRV is 1.52.1 stable.
 
 // this crate can use std in tests only
 #[cfg_attr(test, macro_use)]
