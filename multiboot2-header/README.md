@@ -67,6 +67,9 @@ static MULTIBOOT2_HDR: &[u8; 64] = include_bytes!("mb2_hdr_dump.bin");
 You may need a special linker script to place this in a LOAD segment with a file offset with less than 32768 bytes.
 See specification.
 
+## MSRV
+The MSRV is 1.52.1 stable.
+
 ## License & Contribution
 
 See main [README](https://github.com/rust-osdev/multiboot2/blob/main/README.md) file.

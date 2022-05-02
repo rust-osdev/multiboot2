@@ -30,6 +30,9 @@ other fields  | variable
 
 All tags and the mbi itself are 8-byte aligned. The last tag must be the _end tag_, which is a tag of type `0` and size `8`.
 
+## MSRV
+The MSRV is 1.52.1 stable.
+
 ## License & Contribution
 
 See main [README](https://github.com/rust-osdev/multiboot2/blob/main/README.md) file.

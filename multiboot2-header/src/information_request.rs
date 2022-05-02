@@ -160,7 +160,7 @@ impl InformationRequestHeaderTagBuilder {
 
         for tag in &self.irs {
             let bytes: [u8; 4] = (*tag as u32).to_ne_bytes();
-            data.extend(bytes);
+            data.extend(&bytes);
         }
 
         debug_assert_eq!(
