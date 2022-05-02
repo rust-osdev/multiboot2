@@ -1,7 +1,10 @@
 # CHANGELOG for crate `multiboot2-header`
 
 ## v0.2.0 (2022-05-03)
-- **breaking** renamed `EntryHeaderTag` to `EntryAddressHeaderTag`
+- **BREAKING** renamed `EntryHeaderTag` to `EntryAddressHeaderTag`
+- **BREAKING** some paths changed from `multiboot2_header::header` to `multiboot2_header::builder`
+   -> thus, import paths are much more logically now
+- internal code improvements
 
 ## v0.1.1 (2022-05-02)
 - fixed a bug that prevented the usage of the crate in `no_std` environments
@@ -12,4 +15,4 @@
 - initial release
 
 ## v0.0.0
-Empty release to save to name on crates.io
+Empty release to save the name on crates.io
