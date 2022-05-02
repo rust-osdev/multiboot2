@@ -4,7 +4,7 @@ description = """
 Library with type definitions and parsing functions for Multiboot2 headers.
 This library is `no_std` and can be used in bootloaders.
 """
-version = "0.1.0"
+version = "0.1.1"
 authors = [
     "Philipp Schuster <phip1611@gmail.com>"
 ]
@@ -27,6 +27,12 @@ homepage = "https://github.com/rust-osdev/multiboot2-header"
 repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2-header"
 
+[features]
+# by default, builder is included
+default = ["builder"]
+std = []
+builder = ["std"]
+
 [dependencies]
 # used for MBI tags
-multiboot2 = "0.12.2"
+multiboot2 = "0.13.2"

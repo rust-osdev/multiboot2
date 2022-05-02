@@ -15,6 +15,18 @@ What this library is good for:
 What this library is not optimal for:
 - compiling a Multiboot2 header statically into an object file using only Rust code
 
+## Features and Usage in `no_std`
+This library is always `no_std`. However, the `builder`-feature requires the `alloc`-crate
+to be available. You need the `builder` only if you want to construct new headers. For parsing,
+this is not relevant.
+
+```toml
+# without `builder`-feature (and without `alloc`-crate)
+multiboot2-header = { version = "<latest>", default-features = false }
+# else (requires `alloc`-crate)
+multiboot2-header = "<latest>"
+```
+
 ## Example 1: Builder + Parse
 ```rust
 use multiboot2_header::builder::Multiboot2HeaderBuilder;
