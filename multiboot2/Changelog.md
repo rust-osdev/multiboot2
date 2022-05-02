@@ -1,5 +1,9 @@
 # CHANGELOG for crate `multiboot2`
 
+## 0.13.2
+- `TagType` now implements `Ord` so that it can be used in `BTreeSet`
+- small internal improvements and restructuring of the code (no breaking changes to public API)
+
 ## 0.13.1
 - minor fix
 

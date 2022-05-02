@@ -1,4 +1,4 @@
-use crate::header::{Tag, TagIter, TagType};
+use crate::tag_type::{Tag, TagIter, TagType};
 use core::fmt::{Debug, Formatter};
 
 /// This tag indicates to the kernel what boot module was loaded along with

@@ -45,9 +45,6 @@ pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
-pub use header::TagType;
-pub use header::MULTIBOOT2_BOOTLOADER_MAGIC;
-use header::{Tag, TagIter};
 pub use image_load_addr::ImageLoadPhysAddr;
 pub use memory_map::{
     EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType,
@@ -55,6 +52,8 @@ pub use memory_map::{
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
+pub use tag_type::TagType;
+use tag_type::{Tag, TagIter};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
@@ -68,12 +67,21 @@ mod command_line;
 mod efi;
 mod elf_sections;
 mod framebuffer;
-mod header;
 mod image_load_addr;
 mod memory_map;
 mod module;
 mod rsdp;
+mod tag_type;
 mod vbe_info;
+
+/// Magic number that a multiboot2-compliant boot loader will store in `eax` register
+/// right before handoff to the payload (the kernel). This value can be used to check,
+/// that the kernel was indeed booted via multiboot2.
+///
+/// Caution: You might need some assembly code (e.g. GAS or NASM) first, which
+/// moves `eax` to another register, like `edi`. Otherwise it probably happens,
+/// that the Rust compiler output changes `eax` before you can access it.
+pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 
 /// Load the multiboot boot information struct from an address.
 ///

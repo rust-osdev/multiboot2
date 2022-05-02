@@ -1,21 +1,14 @@
-use core::fmt::{Debug, Formatter};
-use core::hash::{Hash, Hasher};
-use core::marker::PhantomData;
+//! Module for [`TagType`].
 
-/// Magic number that a multiboot2-compliant boot loader will store in `eax` register
-/// right before handoff to the payload (the kernel). This value can be used to check,
-/// that the kernel was indeed booted via multiboot2.
-///
-/// Caution: You might need some assembly code (e.g. GAS or NASM) first, which
-/// moves `eax` to another register, like `edi`. Otherwise it probably happens,
-/// that the Rust compiler output changes `eax` before you can access it.
-pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
+use core::fmt::{Debug, Formatter};
+use core::hash::Hash;
+use core::marker::PhantomData;
 
 /// Possible types of a Tag in the Multiboot2 Information Structure (MBI), therefore the value
 /// of the the `typ` property. The names and values are taken from the example C code
 /// at the bottom of the Multiboot2 specification.
 #[repr(u32)]
-#[derive(Copy, Clone, Debug, Eq)]
+#[derive(Copy, Clone, Debug, Eq, Ord, PartialOrd, PartialEq, Hash)]
 pub enum TagType {
     /// Marks the end of the tags.
     End = 0,
@@ -110,19 +103,6 @@ impl PartialEq<TagType> for u32 {
     }
 }
 
-impl PartialEq<TagType> for TagType {
-    fn eq(&self, other: &TagType) -> bool {
-        *self as u32 == *other as u32
-    }
-}
-
-// impl required because this type is used in a hashmap in `multiboot2-header`
-impl Hash for TagType {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        state.write_u32(*self as u32);
-    }
-}
-
 /// All tags that could passed via the Multiboot2 information structure to a payload/program/kernel.
 /// Better not confuse this with the Multiboot2 header tags. They are something different.
 #[derive(Clone, Copy)]
@@ -185,14 +165,36 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_hash() {
-        let mut hashset = std::collections::HashSet::new();
-        hashset.insert(TagType::Cmdline);
-        hashset.insert(TagType::ElfSections);
-        hashset.insert(TagType::BootLoaderName);
-        hashset.insert(TagType::LoadBaseAddr);
-        hashset.insert(TagType::LoadBaseAddr);
-        assert_eq!(hashset.len(), 4);
-        println!("{:#?}", hashset);
+    fn test_hashset() {
+        let mut set = std::collections::HashSet::new();
+        set.insert(TagType::Cmdline);
+        set.insert(TagType::ElfSections);
+        set.insert(TagType::BootLoaderName);
+        set.insert(TagType::LoadBaseAddr);
+        set.insert(TagType::LoadBaseAddr);
+        assert_eq!(set.len(), 4);
+        println!("{:#?}", set);
+    }
+
+    #[test]
+    fn test_btreeset() {
+        let mut set = std::collections::BTreeSet::new();
+        set.insert(TagType::Cmdline);
+        set.insert(TagType::ElfSections);
+        set.insert(TagType::BootLoaderName);
+        set.insert(TagType::LoadBaseAddr);
+        set.insert(TagType::LoadBaseAddr);
+        assert_eq!(set.len(), 4);
+        for (current, next) in set.iter().zip(set.iter().skip(1)) {
+            assert!(current < next);
+        }
+        println!("{:#?}", set);
+    }
+
+    /// Tests for equality when one type is u32 and the other the enum representation.
+    #[test]
+    fn test_partial_eq_u32() {
+        assert_eq!(21, TagType::LoadBaseAddr);
+        assert_eq!(TagType::LoadBaseAddr, 21);
     }
 }

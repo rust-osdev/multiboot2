@@ -1,6 +1,6 @@
 use crate::TagType;
 
-/// This Tag contains the command line string.
+/// This tag contains the command line string.
 ///
 /// The string is a normal C-style UTF-8 zero-terminated string that can be
 /// obtained via the `command_line` method.
