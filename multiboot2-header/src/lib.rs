@@ -47,10 +47,6 @@ extern crate alloc;
 #[cfg(test)]
 extern crate std;
 
-#[cfg_attr(test, macro_use)]
-#[cfg(test)]
-pub(crate) mod test_utils;
-
 mod address;
 mod console;
 mod end;
