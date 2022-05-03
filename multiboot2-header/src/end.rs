@@ -1,10 +1,9 @@
 use crate::{HeaderTagFlag, HeaderTagType};
 use core::mem::size_of;
 
-/// Terminates a list of optional tags
-/// in a Multiboot2 header.
+/// Terminates a list of optional tags in a Multiboot2 header.
 #[derive(Copy, Clone, Debug)]
-#[repr(C, packed(8))]
+#[repr(C)]
 pub struct EndHeaderTag {
     // u16 value
     typ: HeaderTagType,
@@ -30,5 +29,15 @@ impl EndHeaderTag {
     }
     pub const fn size(&self) -> u32 {
         self.size
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::EndHeaderTag;
+
+    #[test]
+    fn test_assert_size() {
+        assert_eq!(core::mem::size_of::<EndHeaderTag>(), 2 + 2 + 4);
     }
 }

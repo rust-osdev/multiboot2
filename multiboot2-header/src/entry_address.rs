@@ -4,20 +4,19 @@ use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 
 /// Specifies the physical address to which the boot loader should jump in
-/// order to start running the operating system.
-/// Not needed for ELF files.
+/// order to start running the operating system. Not needed for ELF files.
 #[derive(Copy, Clone)]
-#[repr(C, packed(8))]
-pub struct EntryHeaderTag {
+#[repr(C)]
+pub struct EntryAddressHeaderTag {
     typ: HeaderTagType,
     flags: HeaderTagFlag,
     size: u32,
     entry_addr: u32,
 }
 
-impl EntryHeaderTag {
+impl EntryAddressHeaderTag {
     pub const fn new(flags: HeaderTagFlag, entry_addr: u32) -> Self {
-        EntryHeaderTag {
+        EntryAddressHeaderTag {
             typ: HeaderTagType::EntryAddress,
             flags,
             size: size_of::<Self>() as u32,
@@ -39,13 +38,23 @@ impl EntryHeaderTag {
     }
 }
 
-impl Debug for EntryHeaderTag {
+impl Debug for EntryAddressHeaderTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("EntryHeaderTag")
+        f.debug_struct("EntryAddressHeaderTag")
             .field("type", &{ self.typ })
             .field("flags", &{ self.flags })
             .field("size", &{ self.size })
             .field("entry_addr", &(self.entry_addr as *const u32))
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::EntryAddressHeaderTag;
+
+    #[test]
+    fn test_assert_size() {
+        assert_eq!(core::mem::size_of::<EntryAddressHeaderTag>(), 2 + 2 + 4 + 4);
     }
 }

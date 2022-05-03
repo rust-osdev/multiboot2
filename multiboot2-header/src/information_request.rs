@@ -8,7 +8,7 @@ use core::mem::size_of;
 /// Specifies what specific tag types the bootloader should provide
 /// inside the mbi.
 #[derive(Copy, Clone)]
-#[repr(C, packed(8))]
+#[repr(C)]
 pub struct InformationRequestHeaderTag<const N: usize> {
     typ: HeaderTagType,
     flags: HeaderTagFlag,
@@ -128,5 +128,26 @@ impl<'a> Debug for InformationRequestHeaderTagIter<'a> {
             debug.entry(e);
         });
         debug.finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::InformationRequestHeaderTag;
+
+    #[test]
+    fn test_assert_size() {
+        assert_eq!(
+            core::mem::size_of::<InformationRequestHeaderTag<0>>(),
+            2 + 2 + 4 + 0 * 4
+        );
+        assert_eq!(
+            core::mem::size_of::<InformationRequestHeaderTag<1>>(),
+            2 + 2 + 4 + 1 * 4
+        );
+        assert_eq!(
+            core::mem::size_of::<InformationRequestHeaderTag<2>>(),
+            2 + 2 + 4 + 2 * 4
+        );
     }
 }

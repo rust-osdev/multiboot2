@@ -6,7 +6,7 @@ use core::mem::size_of;
 /// other format. Required for legacy boot (BIOS).
 /// Determines load addresses.
 #[derive(Copy, Clone, Debug)]
-#[repr(C, packed(8))]
+#[repr(C)]
 pub struct AddressHeaderTag {
     typ: HeaderTagType,
     flags: HeaderTagFlag,
@@ -62,5 +62,18 @@ impl AddressHeaderTag {
     }
     pub const fn bss_end_addr(&self) -> u32 {
         self.bss_end_addr
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::AddressHeaderTag;
+
+    #[test]
+    fn test_assert_size() {
+        assert_eq!(
+            core::mem::size_of::<AddressHeaderTag>(),
+            2 + 2 + 4 + 4 + 4 + 4 + 4
+        );
     }
 }

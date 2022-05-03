@@ -1,7 +1,7 @@
 use crate::{
-    AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EndHeaderTag, EntryEfi32HeaderTag,
-    EntryEfi64HeaderTag, EntryHeaderTag, FramebufferHeaderTag, HeaderTag, HeaderTagISA,
-    HeaderTagType, InformationRequestHeaderTag, RelocatableHeaderTag,
+    AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EndHeaderTag,
+    EntryAddressHeaderTag, EntryEfi32HeaderTag, EntryEfi64HeaderTag, FramebufferHeaderTag,
+    HeaderTag, HeaderTagISA, HeaderTagType, InformationRequestHeaderTag, RelocatableHeaderTag,
 };
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
@@ -103,7 +103,7 @@ impl<'a> Debug for Multiboot2Header<'a> {
 /// The "basic" Multiboot2 header. This means only the properties, that are known during
 /// compile time. All other information are derived during runtime from the size property.
 #[derive(Copy, Clone)]
-#[repr(C, packed(8))]
+#[repr(C)]
 pub struct Multiboot2BasicHeader {
     /// Must be the value of [`MULTIBOOT2_HEADER_MAGIC`].
     header_magic: u32,
@@ -290,7 +290,7 @@ impl Debug for Multiboot2HeaderTagIter {
                 let entry = &*(entry);
                 debug.entry(entry);
             } else if typ == HeaderTagType::EntryAddress {
-                let entry = t as *const EntryHeaderTag;
+                let entry = t as *const EntryAddressHeaderTag;
                 let entry = &*(entry);
                 debug.entry(entry);
             } else if typ == HeaderTagType::ConsoleFlags {
@@ -322,5 +322,15 @@ impl Debug for Multiboot2HeaderTagIter {
             }
         });
         debug.finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::Multiboot2BasicHeader;
+
+    #[test]
+    fn test_assert_size() {
+        assert_eq!(core::mem::size_of::<Multiboot2BasicHeader>(), 4 + 4 + 4 + 4);
     }
 }

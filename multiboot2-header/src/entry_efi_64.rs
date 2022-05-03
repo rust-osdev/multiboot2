@@ -6,8 +6,11 @@ use core::mem::size_of;
 /// This tag is taken into account only on EFI amd64 platforms when Multiboot2 image header
 /// contains EFI boot services tag. Then entry point specified in ELF header and the entry address
 /// tag of Multiboot2 header are ignored.
+///
+/// Technically, this is equivalent to the [`crate::EntryAddressHeaderTag`] but with a different
+/// [`crate::HeaderTagType`].
 #[derive(Copy, Clone)]
-#[repr(C, packed(8))]
+#[repr(C)]
 pub struct EntryEfi64HeaderTag {
     typ: HeaderTagType,
     flags: HeaderTagFlag,
@@ -47,5 +50,15 @@ impl Debug for EntryEfi64HeaderTag {
             .field("size", &{ self.size })
             .field("entry_addr", &(self.entry_addr as *const u32))
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::EntryEfi64HeaderTag;
+
+    #[test]
+    fn test_assert_size() {
+        assert_eq!(core::mem::size_of::<EntryEfi64HeaderTag>(), 2 + 2 + 4 + 4);
     }
 }

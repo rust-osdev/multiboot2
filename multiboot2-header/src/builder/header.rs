@@ -4,9 +4,9 @@ use crate::builder::information_request::InformationRequestHeaderTagBuilder;
 use crate::builder::traits::StructAsBytes;
 use crate::HeaderTagISA;
 use crate::{
-    AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EndHeaderTag, EntryEfi32HeaderTag,
-    EntryEfi64HeaderTag, EntryHeaderTag, FramebufferHeaderTag, ModuleAlignHeaderTag,
-    Multiboot2BasicHeader, RelocatableHeaderTag,
+    AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EndHeaderTag,
+    EntryAddressHeaderTag, EntryEfi32HeaderTag, EntryEfi64HeaderTag, FramebufferHeaderTag,
+    ModuleAlignHeaderTag, Multiboot2BasicHeader, RelocatableHeaderTag,
 };
 use alloc::vec::Vec;
 use core::mem::size_of;
@@ -22,7 +22,7 @@ pub struct Multiboot2HeaderBuilder {
     // second
     address_tag: Option<AddressHeaderTag>,
     // third
-    entry_tag: Option<EntryHeaderTag>,
+    entry_tag: Option<EntryAddressHeaderTag>,
     // fourth
     console_tag: Option<ConsoleHeaderTag>,
     // fifth
@@ -86,7 +86,7 @@ impl Multiboot2HeaderBuilder {
             len += Self::size_or_up_aligned(size_of::<AddressHeaderTag>())
         }
         if self.entry_tag.is_some() {
-            len += Self::size_or_up_aligned(size_of::<EntryHeaderTag>())
+            len += Self::size_or_up_aligned(size_of::<EntryAddressHeaderTag>())
         }
         if self.console_tag.is_some() {
             len += Self::size_or_up_aligned(size_of::<ConsoleHeaderTag>())
@@ -192,7 +192,7 @@ impl Multiboot2HeaderBuilder {
         self.address_tag = Some(address_tag);
         self
     }
-    pub const fn entry_tag(mut self, entry_tag: EntryHeaderTag) -> Self {
+    pub const fn entry_tag(mut self, entry_tag: EntryAddressHeaderTag) -> Self {
         self.entry_tag = Some(entry_tag);
         self
     }
