@@ -20,7 +20,7 @@ pub enum RelocatableHeaderTagPreference {
 
 /// This tag indicates that the image is relocatable.
 #[derive(Copy, Clone)]
-#[repr(C, packed(8))]
+#[repr(C)]
 pub struct RelocatableHeaderTag {
     typ: HeaderTagType,
     flags: HeaderTagFlag,
@@ -88,5 +88,18 @@ impl Debug for RelocatableHeaderTag {
             .field("align", &{ self.align })
             .field("preference", &{ self.preference })
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::RelocatableHeaderTag;
+
+    #[test]
+    fn test_assert_size() {
+        assert_eq!(
+            core::mem::size_of::<RelocatableHeaderTag>(),
+            2 + 2 + 4 + 4 + 4 + 4 + 4
+        );
     }
 }

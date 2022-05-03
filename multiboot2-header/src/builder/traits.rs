@@ -1,9 +1,9 @@
 //! Module for the helper trait [`StructAsBytes`].
 
 use crate::{
-    AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EndHeaderTag, EntryEfi32HeaderTag,
-    EntryEfi64HeaderTag, EntryHeaderTag, FramebufferHeaderTag, InformationRequestHeaderTag,
-    ModuleAlignHeaderTag, Multiboot2BasicHeader, RelocatableHeaderTag,
+    AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EndHeaderTag,
+    EntryAddressHeaderTag, EntryEfi32HeaderTag, EntryEfi64HeaderTag, FramebufferHeaderTag,
+    InformationRequestHeaderTag, ModuleAlignHeaderTag, Multiboot2BasicHeader, RelocatableHeaderTag,
 };
 use core::mem::size_of;
 
@@ -39,7 +39,7 @@ impl StructAsBytes for ConsoleHeaderTag {}
 impl StructAsBytes for EndHeaderTag {}
 impl StructAsBytes for EntryEfi32HeaderTag {}
 impl StructAsBytes for EntryEfi64HeaderTag {}
-impl StructAsBytes for EntryHeaderTag {}
+impl StructAsBytes for EntryAddressHeaderTag {}
 impl StructAsBytes for FramebufferHeaderTag {}
 impl StructAsBytes for InformationRequestHeaderTag<0> {}
 impl StructAsBytes for ModuleAlignHeaderTag {}

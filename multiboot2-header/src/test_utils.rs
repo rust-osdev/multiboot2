@@ -24,7 +24,7 @@ macro_rules! get_field_ptr {
     };
 }
 
-#[repr(C, packed(8))]
+#[repr(C)]
 struct DummyHeaderTag {
     typ: HeaderTagType,
     flags: HeaderTagFlag,

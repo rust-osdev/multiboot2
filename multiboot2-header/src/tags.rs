@@ -2,15 +2,13 @@
 //! code at the end of the official Multiboot2 spec. These tags follow in memory right after
 //! [`crate::Multiboot2BasicHeader`].
 
-use core::fmt::Debug;
-
 /// ISA/ARCH in Multiboot2 header.
 #[repr(u32)]
 #[derive(Copy, Clone, Debug)]
 pub enum HeaderTagISA {
     /// Spec: "means 32-bit (protected) mode of i386".
     /// Caution: This is confusing. If you use the EFI64-tag
-    /// on an UEFI system, you get into `64-bit long mode`.
+    /// on an UEFI system, the machine will boot into `64-bit long mode`.
     /// Therefore this tag should be understood as "arch=x86|x86_64".
     I386 = 0,
     /// 32-bit MIPS
@@ -29,7 +27,7 @@ pub enum HeaderTagType {
     InformationRequest = 1,
     /// Type for [`crate::AddressHeaderTag`].
     Address = 2,
-    /// Type for [`crate::EntryHeaderTag`].
+    /// Type for [`crate::EntryAddressHeaderTag`].
     EntryAddress = 3,
     /// Type for [`crate::ConsoleHeaderTag`].
     ConsoleFlags = 4,
@@ -63,9 +61,10 @@ pub enum HeaderTagFlag {
 }
 
 /// Common properties for all header tags. Other tags may have additional fields
-/// that depend on the `typ` and the `size` field.
+/// that depend on the `typ` and the `size` field. All tags share the same beginning of the
+/// struct.
 #[derive(Copy, Clone, Debug)]
-#[repr(C, packed(8))]
+#[repr(C)]
 pub struct HeaderTag {
     // u16 value
     typ: HeaderTagType,
@@ -84,5 +83,15 @@ impl HeaderTag {
     }
     pub const fn size(&self) -> u32 {
         self.size
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::HeaderTag;
+
+    #[test]
+    fn test_assert_size() {
+        assert_eq!(core::mem::size_of::<HeaderTag>(), 2 + 2 + 4);
     }
 }

@@ -6,7 +6,7 @@ use core::mem::size_of;
 /// has framebuffer support. Note: This is only a
 /// recommended mode. Only relevant on legacy BIOS.
 #[derive(Copy, Clone, Debug)]
-#[repr(C, packed(8))]
+#[repr(C)]
 pub struct FramebufferHeaderTag {
     typ: HeaderTagType,
     flags: HeaderTagFlag,
@@ -45,5 +45,18 @@ impl FramebufferHeaderTag {
     }
     pub const fn depth(&self) -> u32 {
         self.depth
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::FramebufferHeaderTag;
+
+    #[test]
+    fn test_assert_size() {
+        assert_eq!(
+            core::mem::size_of::<FramebufferHeaderTag>(),
+            2 + 2 + 4 + 4 + 4 + 4
+        );
     }
 }
