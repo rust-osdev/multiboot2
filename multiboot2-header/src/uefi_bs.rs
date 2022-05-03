@@ -30,6 +30,3 @@ impl EfiBootServiceHeaderTag {
         self.size
     }
 }
-
-#[cfg(feature = "builder")]
-impl crate::StructAsBytes for EfiBootServiceHeaderTag {}

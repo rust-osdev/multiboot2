@@ -47,6 +47,3 @@ impl FramebufferHeaderTag {
         self.depth
     }
 }
-
-#[cfg(feature = "builder")]
-impl crate::StructAsBytes for FramebufferHeaderTag {}

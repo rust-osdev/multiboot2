@@ -49,6 +49,3 @@ impl Debug for EntryEfi64HeaderTag {
             .finish()
     }
 }
-
-#[cfg(feature = "builder")]
-impl crate::StructAsBytes for EntryEfi64HeaderTag {}

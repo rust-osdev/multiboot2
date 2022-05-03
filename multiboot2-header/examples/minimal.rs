@@ -1,7 +1,7 @@
-use multiboot2_header::builder::Multiboot2HeaderBuilder;
+use multiboot2_header::builder::{InformationRequestHeaderTagBuilder, Multiboot2HeaderBuilder};
 use multiboot2_header::{
-    HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTagBuilder, MbiTagType, Multiboot2Header,
-    RelocatableHeaderTag, RelocatableHeaderTagPreference,
+    HeaderTagFlag, HeaderTagISA, MbiTagType, Multiboot2Header, RelocatableHeaderTag,
+    RelocatableHeaderTagPreference,
 };
 
 /// Small example that creates a Multiboot2 header and parses it afterwards.

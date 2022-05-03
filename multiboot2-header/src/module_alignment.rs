@@ -29,6 +29,3 @@ impl ModuleAlignHeaderTag {
         self.size
     }
 }
-
-#[cfg(feature = "builder")]
-impl crate::StructAsBytes for ModuleAlignHeaderTag {}

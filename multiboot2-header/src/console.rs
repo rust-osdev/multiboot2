@@ -46,9 +46,6 @@ impl ConsoleHeaderTag {
     }
 }
 
-#[cfg(feature = "builder")]
-impl crate::StructAsBytes for ConsoleHeaderTag {}
-
 #[cfg(test)]
 mod tests {
     use crate::{ConsoleHeaderTag, ConsoleHeaderTagFlags, HeaderTagFlag, HeaderTagType};
