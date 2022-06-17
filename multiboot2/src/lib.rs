@@ -88,8 +88,8 @@ pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 
 /// Load the multiboot boot information struct from an address.
 ///
-/// This is the same as `load_with_offset` but the offset is omitted and set to
-/// zero.
+/// This is the same as `load_with_offset` but the offset is omitted and set
+/// to zero.
 ///
 /// ## Example
 ///
