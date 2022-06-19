@@ -1,4 +1,5 @@
 use crate::TagType;
+use core::str::Utf8Error;
 
 /// This tag contains the name of the bootloader that is booting the kernel.
 ///
@@ -9,11 +10,14 @@ use crate::TagType;
 pub struct BootLoaderNameTag {
     typ: TagType,
     size: u32,
+    /// Null-terminated UTF-8 string
     string: u8,
 }
 
 impl BootLoaderNameTag {
     /// Read the name of the bootloader that is booting the kernel.
+    /// This is an null-terminated UTF-8 string. If this returns `Err` then perhaps the memory
+    /// is invalid or the bootloader doesn't follow the spec.
     ///
     /// # Examples
     ///
@@ -23,11 +27,10 @@ impl BootLoaderNameTag {
     ///     assert_eq!("GRUB 2.02~beta3-5", name);
     /// }
     /// ```
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> Result<&str, Utf8Error> {
         use core::{mem, slice, str};
-        unsafe {
-            let strlen = self.size as usize - mem::size_of::<BootLoaderNameTag>();
-            str::from_utf8_unchecked(slice::from_raw_parts((&self.string) as *const u8, strlen))
-        }
+        let strlen = self.size as usize - mem::size_of::<BootLoaderNameTag>();
+        let bytes = unsafe { slice::from_raw_parts((&self.string) as *const u8, strlen) };
+        str::from_utf8(bytes)
     }
 }

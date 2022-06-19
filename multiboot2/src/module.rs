@@ -1,5 +1,6 @@
 use crate::tag_type::{Tag, TagIter, TagType};
 use core::fmt::{Debug, Formatter};
+use core::str::Utf8Error;
 
 /// This tag indicates to the kernel what boot module was loaded along with
 /// the kernel image, and where it can be found.
@@ -10,25 +11,23 @@ pub struct ModuleTag {
     size: u32,
     mod_start: u32,
     mod_end: u32,
-    /// Begin of the command line string.
+    /// Null-terminated UTF-8 string
     cmdline_str: u8,
 }
 
 impl ModuleTag {
-    // The multiboot specification defines the module str as valid utf-8 (zero terminated string),
-    // therefore this function produces defined behavior
-    /// Get the cmdline of the module. If the GRUB configuration contains
-    /// `module2 /foobar/some_boot_module --test cmdline-option`, then this method
+    /// Returns the cmdline of the module.
+    /// This is an null-terminated UTF-8 string. If this returns `Err` then perhaps the memory
+    /// is invalid or the bootloader doesn't follow the spec.
+    ///
+    /// For example: If the GRUB configuration contains
+    /// `module2 /foobar/some_boot_module --test cmdline-option` then this method
     /// will return `--test cmdline-option`.
-    pub fn cmdline(&self) -> &str {
+    pub fn cmdline(&self) -> Result<&str, Utf8Error> {
         use core::{mem, slice, str};
         let strlen = self.size as usize - mem::size_of::<ModuleTag>();
-        unsafe {
-            str::from_utf8_unchecked(slice::from_raw_parts(
-                &self.cmdline_str as *const u8,
-                strlen,
-            ))
-        }
+        let bytes = unsafe { slice::from_raw_parts((&self.cmdline_str) as *const u8, strlen) };
+        str::from_utf8(bytes)
     }
 
     /// Start address of the module.
