@@ -103,9 +103,12 @@ pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 /// ```
 ///
 /// ## Safety
-/// This function might terminate the program, if the address is invalid. This can be the case in
-/// environments with standard environment (segfault) but also in UEFI-applications,
-/// where the referenced memory is not (identity) mapped (UEFI does only identity mapping).
+/// * `address` must be valid for reading. Otherwise this function might
+///   terminate the program. This can be the case in environments with standard
+///   environment (segfault) but also in UEFI-applications, where the referenced
+///   memory is not (identity) mapped (UEFI does only identity mapping).
+/// * The memory at `address` must not be modified after calling `load` or the
+///   program may observe unsychronized mutation.
 pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
     load_with_offset(address, 0)
 }
@@ -123,9 +126,12 @@ pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
 /// ```
 ///
 /// ## Safety
-/// This function might terminate the program, if the address is invalid. This can be the case in
-/// environments with standard environment (segfault) but also in UEFI-applications,
-/// where the referenced memory is not (identity) mapped (UEFI does only identity mapping).
+/// * `address` must be valid for reading. Otherwise this function might
+///   terminate the program. This can be the case in environments with standard
+///   environment (segfault) but also in UEFI-applications, where the referenced
+///   memory is not (identity) mapped (UEFI does only identity mapping).
+/// * The memory at `address` must not be modified after calling `load` or the
+///   program may observe unsychronized mutation.
 pub unsafe fn load_with_offset(
     address: usize,
     offset: usize,
@@ -325,6 +331,10 @@ impl BootInformationInner {
         end_tag.typ == END_TAG.typ && end_tag.size == END_TAG.size
     }
 }
+
+// SAFETY: BootInformation contains a const ptr to memory that is never mutated.
+// Sending this pointer to other threads is sound.
+unsafe impl Send for BootInformation {}
 
 impl fmt::Debug for BootInformation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
