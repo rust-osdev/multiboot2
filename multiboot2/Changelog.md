@@ -1,6 +1,20 @@
 # CHANGELOG for crate `multiboot2`
 
-## 0.13.3 (2022-05-03)
+## 0.14.0 (2022-05-xx)
+- **BREAKING CHANGES** \
+  This version includes a few small breaking changes that brings more safety when parsing strings from the
+  multiboot information structure.
+  - `BootLoaderNameTag::name` now returns a Result instead of just the value
+  - `CommandLineTag::command_line` now returns a Result instead of just the value
+  - `ModuleTag::cmdline` now returns a Result instead of just the value
+  - `RsdpV1Tag::signature` now returns a Result instead of an Option
+  - `RsdpV1Tag::oem_id` now returns a Result instead of an Option
+  - `RsdpV2Tag::signature` now returns a Result instead of an Option
+  - `RsdpV2Tag::oem_id` now returns a Result instead of an Option
+- internal code improvements
+
+
+## 0.13.3 (2022-06-03)
 - impl `Send` for `BootInformation`
 
 ## 0.13.2 (2022-05-02)
