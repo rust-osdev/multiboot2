@@ -1,5 +1,8 @@
 # CHANGELOG for crate `multiboot2`
 
+## 0.13.3 (2022-05-03)
+- impl `Send` for `BootInformation`
+
 ## 0.13.2 (2022-05-02)
 - `TagType` now implements `Ord` so that it can be used in `BTreeSet`
 - small internal improvements and restructuring of the code (no breaking changes to public API)
