@@ -3,7 +3,7 @@ use crate::Reader;
 use core::slice;
 
 /// The VBE Framebuffer information Tag.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct FramebufferTag<'a> {
     /// Contains framebuffer physical address.
     ///
@@ -29,7 +29,7 @@ pub struct FramebufferTag<'a> {
 }
 
 /// The type of framebuffer.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum FramebufferType<'a> {
     /// Indexed color.
     Indexed {
@@ -55,7 +55,7 @@ pub enum FramebufferType<'a> {
 }
 
 /// An RGB color type field.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct FramebufferField {
     /// Color field position.
     pub position: u8,
@@ -65,7 +65,7 @@ pub struct FramebufferField {
 }
 
 /// A framebuffer color descriptor in the palette.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding at the end
 pub struct FramebufferColor {
     /// The Red component of the color.

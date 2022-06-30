@@ -352,14 +352,14 @@ impl fmt::Debug for BootInformation {
                 "boot_loader_name_tag",
                 &self
                     .boot_loader_name_tag()
-                    .map(|x| x.name())
+                    .and_then(|x| x.name().ok())
                     .unwrap_or("<unknown>"),
             )
             .field(
                 "command_line",
                 &self
                     .command_line_tag()
-                    .map(|x| x.command_line())
+                    .and_then(|x| x.command_line().ok())
                     .unwrap_or(""),
             )
             .field("memory_areas", &self.memory_map_tag())
@@ -532,7 +532,13 @@ mod tests {
         assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
-        assert_eq!("name", bi.boot_loader_name_tag().unwrap().name());
+        assert_eq!(
+            "name",
+            bi.boot_loader_name_tag()
+                .expect("tag must be present")
+                .name()
+                .expect("must be valid utf8")
+        );
         assert!(bi.command_line_tag().is_none());
     }
 
@@ -1231,9 +1237,18 @@ mod tests {
         assert!(bi.module_tags().next().is_none());
         assert_eq!(
             "GRUB 2.02~beta3-5",
-            bi.boot_loader_name_tag().unwrap().name()
+            bi.boot_loader_name_tag()
+                .expect("tag must be present")
+                .name()
+                .expect("must be valid utf-8")
         );
-        assert_eq!("", bi.command_line_tag().unwrap().command_line());
+        assert_eq!(
+            "",
+            bi.command_line_tag()
+                .expect("tag must present")
+                .command_line()
+                .expect("must be valid utf-8")
+        );
 
         // Test the Framebuffer tag
         let fbi = bi.framebuffer_tag().unwrap();

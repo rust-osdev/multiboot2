@@ -234,7 +234,7 @@ impl fmt::Debug for VBEModeInfo {
 /// A VBE colour field.
 ///
 /// Descirbes the size and position of some colour capability.
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[repr(C, packed)]
 pub struct VBEField {
     /// The size, in bits, of the color components of a direct color pixel.
@@ -327,7 +327,7 @@ bitflags! {
 }
 
 /// The MemoryModel field specifies the general type of memory organization used in modes.
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[repr(u8)]
 #[allow(missing_docs)]
 pub enum VBEMemoryModel {

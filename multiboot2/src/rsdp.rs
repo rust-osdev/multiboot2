@@ -11,6 +11,7 @@
 use crate::TagType;
 use core::slice;
 use core::str;
+use core::str::Utf8Error;
 
 const RSDPV1_LENGTH: usize = 20;
 
@@ -31,8 +32,8 @@ impl RsdpV1Tag {
     /// The "RSD PTR " marker singature.
     ///
     /// This is originally a 8-byte C string (not null terminated!) that must contain "RSD PTR "
-    pub fn signature(&self) -> Option<&str> {
-        str::from_utf8(&self.signature).ok()
+    pub fn signature(&self) -> Result<&str, Utf8Error> {
+        str::from_utf8(&self.signature)
     }
 
     /// Validation of the RSDPv1 checksum
@@ -46,8 +47,8 @@ impl RsdpV1Tag {
     }
 
     /// An OEM-supplied string that identifies the OEM.
-    pub fn oem_id(&self) -> Option<&str> {
-        str::from_utf8(&self.oem_id).ok()
+    pub fn oem_id(&self) -> Result<&str, Utf8Error> {
+        str::from_utf8(&self.oem_id)
     }
 
     /// The revision of the ACPI.
@@ -79,11 +80,11 @@ pub struct RsdpV2Tag {
 }
 
 impl RsdpV2Tag {
-    /// The "RSD PTR " marker singature.
+    /// The "RSD PTR " marker signature.
     ///
     /// This is originally a 8-byte C string (not null terminated!) that must contain "RSD PTR ".
-    pub fn signature(&self) -> Option<&str> {
-        str::from_utf8(&self.signature).ok()
+    pub fn signature(&self) -> Result<&str, Utf8Error> {
+        str::from_utf8(&self.signature)
     }
 
     /// Validation of the RSDPv2 extended checksum
@@ -98,8 +99,8 @@ impl RsdpV2Tag {
     }
 
     /// An OEM-supplied string that identifies the OEM.
-    pub fn oem_id(&self) -> Option<&str> {
-        str::from_utf8(&self.oem_id).ok()
+    pub fn oem_id(&self) -> Result<&str, Utf8Error> {
+        str::from_utf8(&self.oem_id)
     }
 
     /// The revision of the ACPI.
