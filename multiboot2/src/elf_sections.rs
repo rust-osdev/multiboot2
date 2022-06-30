@@ -190,6 +190,8 @@ impl ElfSection {
         use core::{slice, str};
 
         let name_ptr = unsafe { self.string_table().offset(self.get().name_index() as isize) };
+
+        // strlen without null byte
         let strlen = {
             let mut len = 0;
             while unsafe { *name_ptr.offset(len) } != 0 {

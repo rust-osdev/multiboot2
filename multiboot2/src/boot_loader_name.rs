@@ -29,8 +29,47 @@ impl BootLoaderNameTag {
     /// ```
     pub fn name(&self) -> Result<&str, Utf8Error> {
         use core::{mem, slice, str};
+        // strlen without null byte
         let strlen = self.size as usize - mem::size_of::<BootLoaderNameTag>();
         let bytes = unsafe { slice::from_raw_parts((&self.string) as *const u8, strlen) };
         str::from_utf8(bytes)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::TagType;
+
+    const MSG: &str = "hello";
+
+    /// Returns the tag structure in bytes in native endian format.
+    fn get_bytes() -> std::vec::Vec<u8> {
+        // size is: 4 bytes for tag + 4 bytes for size + length of null-terminated string
+        let size = (4 + 4 + MSG.as_bytes().len() + 1) as u32;
+        [
+            &((TagType::BootLoaderName as u32).to_ne_bytes()),
+            &size.to_ne_bytes(),
+            MSG.as_bytes(),
+            // Null Byte
+            &[0],
+        ]
+        .iter()
+        .flat_map(|bytes| bytes.iter())
+        .copied()
+        .collect()
+    }
+
+    /// Tests to parse a string with a terminating null byte from the tag (as the spec defines).
+    #[test]
+    fn test_parse_str() {
+        let tag = get_bytes();
+        let tag = unsafe {
+            tag.as_ptr()
+                .cast::<super::BootLoaderNameTag>()
+                .as_ref()
+                .unwrap()
+        };
+        assert_eq!({ tag.typ }, TagType::BootLoaderName);
+        assert_eq!(tag.name().expect("must be valid UTF-8"), MSG);
     }
 }
