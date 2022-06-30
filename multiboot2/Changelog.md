@@ -1,6 +1,6 @@
 # CHANGELOG for crate `multiboot2`
 
-## 0.14.0 (2022-05-xx)
+## 0.14.0 (2022-06-30)
 - **BREAKING CHANGES** \
   This version includes a few small breaking changes that brings more safety when parsing strings from the
   multiboot information structure.
@@ -12,7 +12,6 @@
   - `RsdpV2Tag::signature` now returns a Result instead of an Option
   - `RsdpV2Tag::oem_id` now returns a Result instead of an Option
 - internal code improvements
-
 
 ## 0.13.3 (2022-06-03)
 - impl `Send` for `BootInformation`
