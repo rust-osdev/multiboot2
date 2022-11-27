@@ -483,6 +483,7 @@ impl Reader {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::{mem, slice};
 
     #[test]
     fn no_tags() {
@@ -1491,5 +1492,71 @@ mod tests {
     fn mbi_load_error_implements_error() {
         fn consumer<E: core::error::Error>(_e: E) {}
         consumer(MbiLoadError::IllegalAddress)
+    }
+
+    fn custom_tag() {
+        const CUSTOM_TAG_ID: u32 = 0x1337;
+
+        #[repr(C, align(8))]
+        struct Bytes([u8; 32]);
+        let bytes: Bytes = Bytes([
+            32,
+            0,
+            0,
+            0, // total_size
+            0,
+            0,
+            0,
+            0, // reserved
+            // my custom tag
+            CUSTOM_TAG_ID.to_ne_bytes()[0],
+            CUSTOM_TAG_ID.to_ne_bytes()[1],
+            CUSTOM_TAG_ID.to_ne_bytes()[2],
+            CUSTOM_TAG_ID.to_ne_bytes()[3],
+            13,
+            0,
+            0,
+            0, // tag size
+            110,
+            97,
+            109,
+            101, // ASCII string 'name'
+            0,
+            0,
+            0,
+            0, // null byte + padding
+            0,
+            0,
+            0,
+            0, // end tag type
+            8,
+            0,
+            0,
+            0, // end tag size
+        ]);
+        let addr = bytes.0.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
+        assert_eq!(addr, bi.start_address());
+        assert_eq!(addr + bytes.0.len(), bi.end_address());
+        assert_eq!(bytes.0.len(), bi.total_size());
+
+        #[repr(C, align(8))]
+        struct CustomTag {
+            tag: TagTypeId,
+            size: u32,
+            name: u8,
+        }
+
+        let tag = bi
+            .get_tag(CUSTOM_TAG_ID.into())
+            .unwrap()
+            .cast_tag::<CustomTag>();
+
+        // strlen without null byte
+        let strlen = tag.size as usize - mem::size_of::<CommandLineTag>();
+        let bytes = unsafe { slice::from_raw_parts((&tag.name) as *const u8, strlen) };
+        let name = core::str::from_utf8(bytes).unwrap();
+        assert_eq!(name, "name");
     }
 }
