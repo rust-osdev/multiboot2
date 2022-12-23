@@ -322,6 +322,8 @@ impl BootInformation {
     /// Public getter to find any Multiboot tag by its type, including
     /// specified and custom ones.
     ///
+    /// The parameter can be of type `u32`, [`TagType`], or [`TagTypeId`].
+    ///
     /// # Specified or Custom Tags
     /// The Multiboot2 specification specifies a list of tags, see [`TagType`].
     /// However, it doesn't forbid to use custom tags. Because of this, there
@@ -331,10 +333,13 @@ impl BootInformation {
     ///
     /// ## Use Custom Tags
     /// The following example shows how you may use this interface to parse custom tags from
-    /// the MBI.
+    /// the MBI. Custom tags must be `Sized`. Hence, they are not allowed to contain a field such
+    /// as `name: [u8]`.
     ///
-    /// ```ignore
+    /// ```rust
+    /// use std::ffi::{c_char, CStr};
     /// use multiboot2::TagTypeId;
+    ///
     /// #[repr(C, align(8))]
     ///     struct CustomTag {
     ///     // new type from the lib: has repr(u32)
@@ -345,8 +350,7 @@ impl BootInformation {
     /// }
     ///
     /// let tag = bi
-    ///     // this function is now public!
-    ///     .get_tag(0x1337.into())
+    ///     .get_tag(0x1337)
     ///     .unwrap()
     ///     // type definition from end user; must be `Sized`!
     ///     .cast_tag::<CustomTag>();
@@ -354,7 +358,8 @@ impl BootInformation {
     /// let str = unsafe { CStr::from_ptr(name).to_str().unwrap() };
     /// assert_eq!(str, "name");
     /// ```
-    pub fn get_tag(&self, typ: TagType) -> Option<&Tag> {
+    pub fn get_tag(&self, typ: impl Into<TagTypeId>) -> Option<&Tag> {
+        let typ = typ.into();
         self.tags().find(|tag| tag.typ == typ)
     }
 
@@ -1548,15 +1553,63 @@ mod tests {
             name: u8,
         }
 
-        let tag = bi
-            .get_tag(CUSTOM_TAG_ID.into())
-            .unwrap()
-            .cast_tag::<CustomTag>();
+        let tag = bi.get_tag(CUSTOM_TAG_ID).unwrap().cast_tag::<CustomTag>();
 
         // strlen without null byte
         let strlen = tag.size as usize - mem::size_of::<CommandLineTag>();
         let bytes = unsafe { slice::from_raw_parts((&tag.name) as *const u8, strlen) };
         let name = core::str::from_utf8(bytes).unwrap();
         assert_eq!(name, "name");
+    }
+
+    /// Tests that `get_tag` can consume multiple types that implement `Into<TagTypeId>`
+    #[test]
+    fn get_tag_into_variants() {
+        #[repr(C, align(8))]
+        struct Bytes([u8; 32]);
+        let bytes: Bytes = Bytes([
+            32,
+            0,
+            0,
+            0, // total_size
+            0,
+            0,
+            0,
+            0, // reserved
+            TagType::Cmdline.val().to_ne_bytes()[0],
+            TagType::Cmdline.val().to_ne_bytes()[1],
+            TagType::Cmdline.val().to_ne_bytes()[2],
+            TagType::Cmdline.val().to_ne_bytes()[3],
+            13,
+            0,
+            0,
+            0, // tag size
+            110,
+            97,
+            109,
+            101, // ASCII string 'name'
+            0,
+            0,
+            0,
+            0, // null byte + padding
+            0,
+            0,
+            0,
+            0, // end tag type
+            8,
+            0,
+            0,
+            0, // end tag size
+        ]);
+
+        let addr = bytes.0.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
+
+        let _tag = bi.get_tag(TagType::Cmdline).unwrap();
+
+        let _tag = bi.get_tag(1).unwrap();
+
+        let _tag = bi.get_tag(TagTypeId::new(1)).unwrap();
     }
 }

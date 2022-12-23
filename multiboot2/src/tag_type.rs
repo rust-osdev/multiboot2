@@ -35,7 +35,7 @@ pub enum TagType {
     /// Tag `1`: Additional command line string.
     /// For example `''` or `'--my-custom-option foo --provided by_grub`, if
     /// your GRUB config contains `multiboot2 /boot/multiboot2-binary.elf --my-custom-option foo --provided by_grub`
-    Cmdline, /* 1 */
+    Cmdline,
     /// Tag `2`: Name of the bootloader, e.g. 'GRUB 2.04-1ubuntu44.2'
     BootLoaderName,
     /// Tag `3`: Additional Multiboot modules, which are BLOBs provided in
