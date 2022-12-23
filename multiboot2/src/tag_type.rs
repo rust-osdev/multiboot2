@@ -291,7 +291,7 @@ mod partial_eq_impls {
 pub struct Tag {
     pub typ: TagTypeId, // u32
     pub size: u32,
-    // tag specific fields
+    // additional, tag specific fields
 }
 
 impl Tag {

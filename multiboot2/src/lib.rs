@@ -55,8 +55,8 @@ pub use memory_map::{
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
-pub use tag_type::{Tag, TagType, TagTypeId};
 use tag_type::TagIter;
+pub use tag_type::{Tag, TagType, TagTypeId};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
@@ -319,7 +319,42 @@ impl BootInformation {
         unsafe { &*self.inner }
     }
 
-    fn get_tag(&self, typ: TagType) -> Option<&Tag> {
+    /// Public getter to find any Multiboot tag by its type, including
+    /// specified and custom ones.
+    ///
+    /// # Specified or Custom Tags
+    /// The Multiboot2 specification specifies a list of tags, see [`TagType`].
+    /// However, it doesn't forbid to use custom tags. Because of this, there
+    /// exists the [`TagType`] abstraction. It is recommended to use this
+    /// getter only for custom tags. For specified tags, use getters, such as
+    /// [`Self::efi_64_ih`].
+    ///
+    /// ## Use Custom Tags
+    /// The following example shows how you may use this interface to parse custom tags from
+    /// the MBI.
+    ///
+    /// ```ignore
+    /// use multiboot2::TagTypeId;
+    /// #[repr(C, align(8))]
+    ///     struct CustomTag {
+    ///     // new type from the lib: has repr(u32)
+    ///     tag: TagTypeId,
+    ///     size: u32,
+    ///     // begin of inline string
+    ///     name: u8,
+    /// }
+    ///
+    /// let tag = bi
+    ///     // this function is now public!
+    ///     .get_tag(0x1337.into())
+    ///     .unwrap()
+    ///     // type definition from end user; must be `Sized`!
+    ///     .cast_tag::<CustomTag>();
+    /// let name = &tag.name as *const u8 as *const c_char;
+    /// let str = unsafe { CStr::from_ptr(name).to_str().unwrap() };
+    /// assert_eq!(str, "name");
+    /// ```
+    pub fn get_tag(&self, typ: TagType) -> Option<&Tag> {
         self.tags().find(|tag| tag.typ == typ)
     }
 

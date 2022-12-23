@@ -76,7 +76,7 @@ impl<'a> Iterator for ModuleIter<'a> {
 
     fn next(&mut self) -> Option<&'a ModuleTag> {
         self.iter
-            .find(|x| x.typ == TagType::Module)
+            .find(|tag| tag.typ == TagType::Module)
             .map(|tag| unsafe { &*(tag as *const Tag as *const ModuleTag) })
     }
 }
