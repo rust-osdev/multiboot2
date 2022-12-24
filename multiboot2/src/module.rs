@@ -1,4 +1,5 @@
 use crate::tag_type::{Tag, TagIter, TagType};
+use crate::TagTypeId;
 use core::fmt::{Debug, Formatter};
 use core::str::Utf8Error;
 
@@ -7,7 +8,7 @@ use core::str::Utf8Error;
 #[derive(Clone, Copy)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding near name_byte.
 pub struct ModuleTag {
-    typ: TagType,
+    typ: TagTypeId,
     size: u32,
     mod_start: u32,
     mod_end: u32,
@@ -102,7 +103,7 @@ mod tests {
         //          4 bytes mod_start + 4 bytes mod_end
         let size = (4 + 4 + 4 + 4 + MSG.as_bytes().len() + 1) as u32;
         [
-            &((TagType::Module as u32).to_ne_bytes()),
+            &((TagType::Module.val()).to_ne_bytes()),
             &size.to_ne_bytes(),
             &0_u32.to_ne_bytes(),
             &0_u32.to_ne_bytes(),

@@ -55,8 +55,8 @@ pub use memory_map::{
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
-pub use tag_type::TagType;
-use tag_type::{Tag, TagIter};
+pub use tag_type::{Tag, TagType, TagTypeId};
+use tag_type::TagIter;
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
@@ -330,16 +330,16 @@ impl BootInformation {
 
 impl BootInformationInner {
     fn has_valid_end_tag(&self) -> bool {
-        const END_TAG: Tag = Tag {
-            typ: TagType::End,
+        let end_tag_prototype: Tag = Tag {
+            typ: TagType::End.into(),
             size: 8,
         };
 
         let self_ptr = self as *const _;
-        let end_tag_addr = self_ptr as usize + (self.total_size - END_TAG.size) as usize;
+        let end_tag_addr = self_ptr as usize + (self.total_size - end_tag_prototype.size) as usize;
         let end_tag = unsafe { &*(end_tag_addr as *const Tag) };
 
-        end_tag.typ == END_TAG.typ && end_tag.size == END_TAG.size
+        end_tag.typ == end_tag_prototype.typ && end_tag.size == end_tag_prototype.size
     }
 }
 

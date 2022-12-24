@@ -1,4 +1,4 @@
-use crate::TagType;
+use crate::TagTypeId;
 use core::fmt;
 
 /// This tag contains VBE metadata, VBE controller information returned by the
@@ -6,7 +6,7 @@ use core::fmt;
 #[derive(Debug, Copy, Clone)]
 #[repr(C, packed)]
 pub struct VBEInfoTag {
-    typ: TagType,
+    typ: TagTypeId,
     length: u32,
 
     /// Indicates current video mode in the format specified in VBE 3.0.

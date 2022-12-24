@@ -1,6 +1,6 @@
 //! Module for [CommandLineTag].
 
-use crate::TagType;
+use crate::TagTypeId;
 use core::mem;
 use core::slice;
 use core::str;
@@ -12,7 +12,7 @@ use core::str;
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding before first_section
 pub struct CommandLineTag {
-    typ: TagType,
+    typ: TagTypeId,
     size: u32,
     /// Null-terminated UTF-8 string
     string: u8,
@@ -51,7 +51,7 @@ mod tests {
         // size is: 4 bytes for tag + 4 bytes for size + length of null-terminated string
         let size = (4 + 4 + MSG.as_bytes().len() + 1) as u32;
         [
-            &((TagType::Cmdline as u32).to_ne_bytes()),
+            &((TagType::Cmdline.val()).to_ne_bytes()),
             &size.to_ne_bytes(),
             MSG.as_bytes(),
             // Null Byte
