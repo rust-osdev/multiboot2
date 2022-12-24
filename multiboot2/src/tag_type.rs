@@ -114,6 +114,13 @@ pub struct Tag {
     // tag specific fields
 }
 
+impl Tag {
+    /// Casts the base tag to the specific tag type.
+    pub fn cast_tag<'a, T>(&self) -> &'a T {
+        unsafe { &*(self as *const Tag as *const T) }
+    }
+}
+
 impl Debug for Tag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Tag")
