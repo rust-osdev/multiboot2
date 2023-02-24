@@ -1416,12 +1416,22 @@ mod tests {
     }
 
     #[test]
+    /// Compile time test for `MemoryMapTag`.
+    fn e820_memory_map_tag_size() {
+        use super::MemoryMapTag;
+        unsafe {
+            // `MemoryMapTag` is 16 bytes without the 1st entry
+            core::mem::transmute::<[u8; 16], MemoryMapTag>([0u8; 16]);
+        }
+    }
+
+    #[test]
     /// Compile time test for `EFIMemoryMapTag`.
     fn efi_memory_map_tag_size() {
         use super::EFIMemoryMapTag;
         unsafe {
-            // `EFIMemoryMapTag` is 16 bytes + `EFIMemoryDesc` is 40 bytes.
-            core::mem::transmute::<[u8; 56], EFIMemoryMapTag>([0u8; 56]);
+            // `EFIMemoryMapTag` is 16 bytes without the 1st entry
+            core::mem::transmute::<[u8; 16], EFIMemoryMapTag>([0u8; 16]);
         }
     }
 }
