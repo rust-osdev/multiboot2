@@ -3,6 +3,7 @@ use crate::{
     EntryAddressHeaderTag, EntryEfi32HeaderTag, EntryEfi64HeaderTag, FramebufferHeaderTag,
     HeaderTag, HeaderTagISA, HeaderTagType, InformationRequestHeaderTag, RelocatableHeaderTag,
 };
+use core::convert::TryInto;
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 
@@ -57,6 +58,28 @@ impl<'a> Multiboot2Header<'a> {
             Self::calc_checksum(reference.header_magic, reference.arch, reference.length)
         );
         Self { inner: reference }
+    }
+
+    /// Find the header in a given slice.
+    pub fn find_header(buffer: &[u8]) -> Option<(&[u8], u32)> {
+        // the magic is 32 bit aligned and inside the first 8192 bytes
+        assert!(buffer.len() >= 8192);
+        let mut chunks = buffer[0..8192].chunks_exact(4);
+        let magic_index = match chunks.position(|vals| {
+            u32::from_le_bytes(vals.try_into().unwrap()) // yes, there's 4 bytes here
+            == MULTIBOOT2_HEADER_MAGIC
+        }) {
+            Some(idx) => idx * 4,
+            None => return None,
+        };
+        chunks.next(); // arch
+        let header_length: usize = u32::from_le_bytes(chunks.next().unwrap().try_into().unwrap())
+            .try_into()
+            .unwrap();
+        Some((
+            &buffer[magic_index..magic_index + header_length],
+            magic_index as u32,
+        ))
     }
 
     /// Wrapper around [`Multiboot2BasicHeader::verify_checksum`].
