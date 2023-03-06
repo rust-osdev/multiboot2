@@ -47,8 +47,7 @@ impl<'a> Multiboot2Header<'a> {
         assert_eq!(
             reference.header_magic(),
             MULTIBOOT2_HEADER_MAGIC,
-            "The Multiboot2 header must contain the MULTIBOOT2_HEADER_MAGIC={:x}",
-            MULTIBOOT2_HEADER_MAGIC
+            "The Multiboot2 header must contain the MULTIBOOT2_HEADER_MAGIC={MULTIBOOT2_HEADER_MAGIC:x}"
         );
         assert!(
             reference.verify_checksum(),
