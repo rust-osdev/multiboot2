@@ -32,6 +32,9 @@
 //! ## MSRV
 //! The MSRV is 1.56.1 stable.
 
+#[cfg(feature = "builder")]
+extern crate alloc;
+
 // this crate can use std in tests only
 #[cfg_attr(test, macro_use)]
 #[cfg(test)]
@@ -80,6 +83,9 @@ mod rsdp;
 mod smbios;
 mod tag_type;
 mod vbe_info;
+
+#[cfg(feature = "builder")]
+pub mod builder;
 
 /// Magic number that a multiboot2-compliant boot loader will store in `eax` register
 /// right before handoff to the payload (the kernel). This value can be used to check,

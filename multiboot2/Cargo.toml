@@ -32,7 +32,10 @@ repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2"
 
 [features]
-default = []
+# by default, builder is included
+default = ["builder"]
+std = []
+builder = ["std"]
 # Nightly-only features that will eventually be stabilized.
 unstable = []
 
