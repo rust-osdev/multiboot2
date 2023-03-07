@@ -1,5 +1,6 @@
 //! Exports item [`Multiboot2InformationBuilder`].
-use crate::{builder::traits::StructAsBytes, CommandLineTag, ModuleTag};
+use crate::builder::traits::StructAsBytes;
+use crate::{CommandLineTag, ElfSectionsTag, ModuleTag};
 
 use alloc::boxed::Box;
 use alloc::vec::Vec;
@@ -10,6 +11,7 @@ use alloc::vec::Vec;
 #[derive(Debug)]
 pub struct Multiboot2InformationBuilder {
     command_line_tag: Option<Box<CommandLineTag>>,
+    elf_sections_tag: Option<Box<ElfSectionsTag>>,
     module_tags: Vec<Box<ModuleTag>>,
 }
 
@@ -17,12 +19,17 @@ impl Multiboot2InformationBuilder {
     pub const fn new() -> Self {
         Self {
             command_line_tag: None,
+            elf_sections_tag: None,
             module_tags: Vec::new(),
         }
     }
 
     pub fn command_line_tag(&mut self, command_line_tag: Box<CommandLineTag>) {
         self.command_line_tag = Some(command_line_tag);
+    }
+
+    pub fn elf_sections_tag(&mut self, elf_sections_tag: Box<ElfSectionsTag>) {
+        self.elf_sections_tag = Some(elf_sections_tag);
     }
 
     pub fn add_module_tag(&mut self, module_tag: Box<ModuleTag>) {
