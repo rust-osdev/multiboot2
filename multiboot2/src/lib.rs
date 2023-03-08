@@ -52,8 +52,8 @@ pub use elf_sections::{
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
 pub use image_load_addr::ImageLoadPhysAddr;
 pub use memory_map::{
-    EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType,
-    MemoryMapTag,
+    BasicMemoryInfoTag, EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea,
+    MemoryAreaIter, MemoryAreaType, MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
@@ -216,6 +216,11 @@ impl BootInformation {
     /// Get the total size of the boot info struct.
     pub fn total_size(&self) -> usize {
         self.get().total_size as usize
+    }
+
+    /// Search for the basic memory info tag.
+    pub fn basic_memory_info_tag(&self) -> Option<&BasicMemoryInfoTag> {
+        self.get_tag::<BasicMemoryInfoTag, _>(TagType::BasicMeminfo)
     }
 
     /// Search for the ELF Sections tag.
