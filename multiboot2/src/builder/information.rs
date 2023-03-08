@@ -2,7 +2,7 @@
 use crate::builder::traits::StructAsBytes;
 use crate::{
     BasicMemoryInfoTag, BootLoaderNameTag, CommandLineTag, ElfSectionsTag, FramebufferTag,
-    ModuleTag,
+    MemoryMapTag, ModuleTag,
 };
 
 use alloc::boxed::Box;
@@ -18,6 +18,7 @@ pub struct Multiboot2InformationBuilder {
     command_line_tag: Option<Box<CommandLineTag>>,
     elf_sections_tag: Option<Box<ElfSectionsTag>>,
     framebuffer_tag: Option<Box<FramebufferTag>>,
+    memory_map_tag: Option<Box<MemoryMapTag>>,
     module_tags: Vec<Box<ModuleTag>>,
 }
 
@@ -29,6 +30,7 @@ impl Multiboot2InformationBuilder {
             command_line_tag: None,
             elf_sections_tag: None,
             framebuffer_tag: None,
+            memory_map_tag: None,
             module_tags: Vec::new(),
         }
     }
@@ -51,6 +53,10 @@ impl Multiboot2InformationBuilder {
 
     pub fn framebuffer_tag(&mut self, framebuffer_tag: Box<FramebufferTag>) {
         self.framebuffer_tag = Some(framebuffer_tag);
+    }
+
+    pub fn memory_map_tag(&mut self, memory_map_tag: Box<MemoryMapTag>) {
+        self.memory_map_tag = Some(memory_map_tag);
     }
 
     pub fn add_module_tag(&mut self, module_tag: Box<ModuleTag>) {

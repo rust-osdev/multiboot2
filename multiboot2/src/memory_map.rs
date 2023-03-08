@@ -1,7 +1,13 @@
-use crate::tag_type::{TagType, TagTypeId};
+use crate::{Tag, TagTrait, TagType, TagTypeId};
+
 use core::convert::TryInto;
 use core::marker::PhantomData;
 use core::mem;
+
+#[cfg(feature = "builder")]
+use {crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box};
+
+const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
 
 /// This tag provides an initial host memory map.
 ///
@@ -13,17 +19,28 @@ use core::mem;
 /// This tag may not be provided by some boot loaders on EFI platforms if EFI
 /// boot services are enabled and available for the loaded image (The EFI boot
 /// services tag may exist in the Multiboot2 boot information structure).
-#[derive(Debug)]
+#[derive(Debug, ptr_meta::Pointee)]
 #[repr(C)]
 pub struct MemoryMapTag {
     typ: TagTypeId,
     size: u32,
     entry_size: u32,
     entry_version: u32,
-    first_area: [MemoryArea; 0],
+    areas: [MemoryArea],
 }
 
 impl MemoryMapTag {
+    #[cfg(feature = "builder")]
+    pub fn new(areas: &[MemoryArea]) -> Box<Self> {
+        let entry_size: u32 = mem::size_of::<MemoryArea>().try_into().unwrap();
+        let entry_version: u32 = 0;
+        let mut bytes = [entry_size.to_le_bytes(), entry_version.to_le_bytes()].concat();
+        for area in areas {
+            bytes.extend(area.struct_as_bytes());
+        }
+        boxed_dst_tag(TagType::Mmap, bytes.as_slice())
+    }
+
     /// Return an iterator over all memory areas that have the type
     /// [`MemoryAreaType::Available`].
     pub fn available_memory_areas(&self) -> impl Iterator<Item = &MemoryArea> {
@@ -34,21 +51,26 @@ impl MemoryMapTag {
     /// Return an iterator over all memory areas.
     pub fn memory_areas(&self) -> MemoryAreaIter {
         let self_ptr = self as *const MemoryMapTag;
-        let start_area = self.first_area.as_ptr();
-
+        let start_area = (&self.areas[0]) as *const MemoryArea;
         MemoryAreaIter {
             current_area: start_area as u64,
             // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
-            last_area: (self_ptr as u64
-                + (self.size as u64 - core::mem::size_of::<MemoryMapTag>() as u64)),
+            last_area: (self_ptr as *const () as u64 + (self.size - self.entry_size) as u64),
             entry_size: self.entry_size,
             phantom: PhantomData,
         }
     }
 }
 
+impl TagTrait for MemoryMapTag {
+    fn dst_size(base_tag: &Tag) -> usize {
+        assert!(base_tag.size as usize >= METADATA_SIZE);
+        base_tag.size as usize - METADATA_SIZE
+    }
+}
+
 /// A memory area entry descriptor.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(C)]
 pub struct MemoryArea {
     base_addr: u64,
@@ -58,6 +80,16 @@ pub struct MemoryArea {
 }
 
 impl MemoryArea {
+    /// Create a new MemoryArea.
+    pub fn new(base_addr: u64, length: u64, typ: MemoryAreaType) -> Self {
+        Self {
+            base_addr,
+            length,
+            typ,
+            _reserved: 0,
+        }
+    }
+
     /// The start address of the memory region.
     pub fn start_address(&self) -> u64 {
         self.base_addr
@@ -78,6 +110,8 @@ impl MemoryArea {
         self.typ
     }
 }
+
+impl StructAsBytes for MemoryArea {}
 
 /// An enum of possible reported region types.
 /// Inside the Multiboot2 spec this is kind of hidden
