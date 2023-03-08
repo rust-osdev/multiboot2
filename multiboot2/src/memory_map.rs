@@ -1,5 +1,7 @@
-use crate::TagTypeId;
+use crate::tag_type::{TagType, TagTypeId};
+use core::convert::TryInto;
 use core::marker::PhantomData;
+use core::mem;
 
 /// This tag provides an initial host memory map.
 ///
@@ -149,6 +151,15 @@ pub struct BasicMemoryInfoTag {
 }
 
 impl BasicMemoryInfoTag {
+    pub fn new(memory_lower: u32, memory_upper: u32) -> Self {
+        Self {
+            typ: TagType::BasicMeminfo.into(),
+            size: mem::size_of::<BasicMemoryInfoTag>().try_into().unwrap(),
+            memory_lower,
+            memory_upper,
+        }
+    }
+
     pub fn memory_lower(&self) -> u32 {
         self.memory_lower
     }
