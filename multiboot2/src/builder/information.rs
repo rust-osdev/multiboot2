@@ -1,12 +1,13 @@
 //! Exports item [`Multiboot2InformationBuilder`].
 use crate::builder::traits::StructAsBytes;
 use crate::{
-    BasicMemoryInfoTag, BootLoaderNameTag, CommandLineTag, ElfSectionsTag, FramebufferTag,
-    MemoryMapTag, ModuleTag,
+    BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag, ElfSectionsTag,
+    EndTag, FramebufferTag, MemoryMapTag, ModuleTag,
 };
 
 use alloc::boxed::Box;
 use alloc::vec::Vec;
+use core::mem::size_of;
 
 /// Builder to construct a valid Multiboot2 information dynamically at runtime.
 /// The tags will appear in the order of their corresponding enumeration,
@@ -35,6 +36,105 @@ impl Multiboot2InformationBuilder {
         }
     }
 
+    /// Returns the size, if the value is a multiple of 8 or returns
+    /// the next number that is a multiple of 8. With this, one can
+    /// easily calculate the size of a Multiboot2 header, where
+    /// all the tags are 8-byte aligned.
+    const fn size_or_up_aligned(size: usize) -> usize {
+        let remainder = size % 8;
+        if remainder == 0 {
+            size
+        } else {
+            size + 8 - remainder
+        }
+    }
+
+    /// Returns the expected length of the Multiboot2 header,
+    /// when the `build()`-method gets called.
+    pub fn expected_len(&self) -> usize {
+        let base_len = size_of::<BootInformationInner>();
+        // size_or_up_aligned not required, because length is 16 and the
+        // begin is 8 byte aligned => first tag automatically 8 byte aligned
+        let mut len = Self::size_or_up_aligned(base_len);
+        if let Some(tag) = &self.basic_memory_info_tag {
+            // we use size_or_up_aligned, because each tag will start at an 8 byte aligned address
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        if let Some(tag) = &self.boot_loader_name_tag {
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        if let Some(tag) = &self.command_line_tag {
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        if let Some(tag) = &self.elf_sections_tag {
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        if let Some(tag) = &self.framebuffer_tag {
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        if let Some(tag) = &self.memory_map_tag {
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        for tag in &self.module_tags {
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        // only here size_or_up_aligned is not important, because it is the last tag
+        len += size_of::<EndTag>();
+        len
+    }
+
+    /// Adds the bytes of a tag to the final Multiboot2 information byte vector.
+    /// Align should be true for all tags except the end tag.
+    fn build_add_bytes(dest: &mut Vec<u8>, source: &[u8], is_end_tag: bool) {
+        dest.extend(source);
+        if !is_end_tag {
+            let size = source.len();
+            let size_to_8_align = Self::size_or_up_aligned(size);
+            let size_to_8_align_diff = size_to_8_align - size;
+            // fill zeroes so that next data block is 8-byte aligned
+            dest.extend([0].repeat(size_to_8_align_diff));
+        }
+    }
+
+    /// Constructs the bytes for a valid Multiboot2 information with the given properties.
+    /// The bytes can be casted to a Multiboot2 structure.
+    pub fn build(self) -> Vec<u8> {
+        let mut data = Vec::new();
+
+        Self::build_add_bytes(
+            &mut data,
+            // important that we write the correct expected length into the header!
+            &BootInformationInner::new(self.expected_len() as u32).struct_as_bytes(),
+            false,
+        );
+
+        if let Some(tag) = self.basic_memory_info_tag.as_ref() {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.boot_loader_name_tag.as_ref() {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.command_line_tag.as_ref() {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.elf_sections_tag.as_ref() {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.framebuffer_tag.as_ref() {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.memory_map_tag.as_ref() {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
+        for tag in self.module_tags {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
+
+        Self::build_add_bytes(&mut data, &EndTag::default().struct_as_bytes(), true);
+
+        data
+    }
+
     pub fn basic_memory_info_tag(&mut self, basic_memory_info_tag: BasicMemoryInfoTag) {
         self.basic_memory_info_tag = Some(basic_memory_info_tag)
     }
@@ -61,5 +161,43 @@ impl Multiboot2InformationBuilder {
 
     pub fn add_module_tag(&mut self, module_tag: Box<ModuleTag>) {
         self.module_tags.push(module_tag);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::builder::information::Multiboot2InformationBuilder;
+    use crate::{load, BasicMemoryInfoTag, CommandLineTag, ModuleTag};
+
+    #[test]
+    fn test_size_or_up_aligned() {
+        assert_eq!(0, Multiboot2InformationBuilder::size_or_up_aligned(0));
+        assert_eq!(8, Multiboot2InformationBuilder::size_or_up_aligned(1));
+        assert_eq!(8, Multiboot2InformationBuilder::size_or_up_aligned(8));
+        assert_eq!(16, Multiboot2InformationBuilder::size_or_up_aligned(9));
+    }
+
+    #[test]
+    fn test_size_builder() {
+        let mut builder = Multiboot2InformationBuilder::new();
+        // Multiboot2 basic information + end tag
+        let expected_len = 8 + 8;
+        assert_eq!(builder.expected_len(), expected_len);
+
+        // the most simple tag
+        builder.basic_memory_info_tag(BasicMemoryInfoTag::new(640, 7 * 1024));
+        // a tag that has a dynamic size
+        builder.command_line_tag(CommandLineTag::new("test"));
+        // many modules
+        builder.add_module_tag(ModuleTag::new(0, 1234, "module1"));
+        builder.add_module_tag(ModuleTag::new(5678, 6789, "module2"));
+
+        println!("builder: {:#?}", builder);
+        println!("expected_len: {} bytes", builder.expected_len());
+
+        let mb2i_data = builder.build();
+        let mb2i_addr = mb2i_data.as_ptr() as usize;
+        let mb2i = unsafe { load(mb2i_addr) };
+        println!("{:#?}", mb2i);
     }
 }

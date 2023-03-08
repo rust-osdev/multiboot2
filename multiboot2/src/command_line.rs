@@ -1,12 +1,17 @@
 //! Module for [CommandLineTag].
 
 use crate::{Tag, TagTrait, TagType, TagTypeId};
+
+use core::convert::TryInto;
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str;
 
 #[cfg(feature = "builder")]
-use {crate::builder::boxed_dst_tag, alloc::boxed::Box, alloc::vec::Vec};
+use {
+    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box,
+    alloc::vec::Vec,
+};
 
 pub(crate) const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
 
@@ -71,6 +76,13 @@ impl TagTrait for CommandLineTag {
     }
 }
 
+#[cfg(feature = "builder")]
+impl StructAsBytes for CommandLineTag {
+    fn byte_size(&self) -> usize {
+        self.size.try_into().unwrap()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{CommandLineTag, Tag, TagType};
@@ -102,5 +114,16 @@ mod tests {
         let tag = tag.cast_tag::<CommandLineTag>();
         assert_eq!({ tag.typ }, TagType::Cmdline);
         assert_eq!(tag.command_line().expect("must be valid UTF-8"), MSG);
+    }
+
+    /// Test to generate a tag from a given string.
+    #[test]
+    #[cfg(feature = "builder")]
+    fn test_build_str() {
+        use crate::builder::traits::StructAsBytes;
+
+        let tag = CommandLineTag::new(MSG);
+        let bytes = tag.struct_as_bytes();
+        assert_eq!(bytes, get_bytes());
     }
 }

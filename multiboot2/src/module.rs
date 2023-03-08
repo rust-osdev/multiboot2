@@ -5,7 +5,10 @@ use core::mem::size_of;
 use core::str::Utf8Error;
 
 #[cfg(feature = "builder")]
-use {crate::builder::boxed_dst_tag, alloc::boxed::Box, alloc::vec::Vec};
+use {
+    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box,
+    alloc::vec::Vec,
+};
 
 const METADATA_SIZE: usize = size_of::<TagTypeId>() + 3 * size_of::<u32>();
 
@@ -67,6 +70,13 @@ impl TagTrait for ModuleTag {
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= METADATA_SIZE);
         base_tag.size as usize - METADATA_SIZE
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for ModuleTag {
+    fn byte_size(&self) -> usize {
+        self.size.try_into().unwrap()
     }
 }
 

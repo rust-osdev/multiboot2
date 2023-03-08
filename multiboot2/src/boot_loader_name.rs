@@ -4,7 +4,10 @@ use core::mem::size_of;
 use core::str::Utf8Error;
 
 #[cfg(feature = "builder")]
-use {crate::builder::boxed_dst_tag, alloc::boxed::Box, alloc::vec::Vec};
+use {
+    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box,
+    alloc::vec::Vec,
+};
 
 const METADATA_SIZE: usize = size_of::<TagTypeId>() + size_of::<u32>();
 
@@ -63,6 +66,13 @@ impl TagTrait for BootLoaderNameTag {
     }
 }
 
+#[cfg(feature = "builder")]
+impl StructAsBytes for BootLoaderNameTag {
+    fn byte_size(&self) -> usize {
+        self.size.try_into().unwrap()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{BootLoaderNameTag, Tag, TagType};
@@ -94,5 +104,16 @@ mod tests {
         let tag = tag.cast_tag::<BootLoaderNameTag>();
         assert_eq!({ tag.typ }, TagType::BootLoaderName);
         assert_eq!(tag.name().expect("must be valid UTF-8"), MSG);
+    }
+
+    /// Test to generate a tag from a given string.
+    #[test]
+    #[cfg(feature = "builder")]
+    fn test_build_str() {
+        use crate::builder::traits::StructAsBytes;
+
+        let tag = BootLoaderNameTag::new(MSG);
+        let bytes = tag.struct_as_bytes();
+        assert_eq!(bytes, get_bytes());
     }
 }

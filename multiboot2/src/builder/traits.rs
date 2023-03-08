@@ -1,16 +1,13 @@
 //! Module for the helper trait [`StructAsBytes`].
 
-use core::mem::size_of;
-
 /// Trait for all tags that helps to create a byte array from the tag.
 /// Useful in builders to construct a byte vector that
 /// represents the Multiboot2 information with all its tags.
-pub(crate) trait StructAsBytes: Sized {
-    /// Returns the size in bytes of the struct, as known during compile
-    /// time. This doesn't use read the "size" field of tags.
-    fn byte_size(&self) -> usize {
-        size_of::<Self>()
-    }
+pub(crate) trait StructAsBytes {
+    /// Returns the size in bytes of the struct.
+    /// This can be either the "size" field of tags or the compile-time size
+    /// (if known).
+    fn byte_size(&self) -> usize;
 
     /// Returns a byte pointer to the begin of the struct.
     fn as_ptr(&self) -> *const u8 {
