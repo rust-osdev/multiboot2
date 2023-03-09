@@ -39,6 +39,7 @@ pub enum FramebufferType<'a> {
 
     /// Direct RGB color.
     #[allow(missing_docs)]
+    #[allow(clippy::upper_case_acronyms)]
     RGB {
         red: FramebufferField,
         green: FramebufferField,

@@ -1,5 +1,9 @@
 # CHANGELOG for crate `multiboot2`
 
+## 0.14.1 (2023-03-09)
+- fixed the calculation of the last area of the memory map tag ([#119](https://github.com/rust-osdev/multiboot2/pull/119))
+  (Previously, iterating the EFI Memory map resulted in a superfluous entry as it ran over the next tag)
+
 ## 0.14.0 (2022-06-30)
 - **BREAKING CHANGES** \
   This version includes a few small breaking changes that brings more safety when parsing strings from the

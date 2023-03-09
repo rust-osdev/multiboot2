@@ -18,7 +18,7 @@ pub struct MemoryMapTag {
     size: u32,
     entry_size: u32,
     entry_version: u32,
-    first_area: MemoryArea,
+    first_area: [MemoryArea; 0],
 }
 
 impl MemoryMapTag {
@@ -31,10 +31,13 @@ impl MemoryMapTag {
     /// Return an iterator over all marked memory areas.
     pub fn all_memory_areas(&self) -> impl Iterator<Item = &MemoryArea> {
         let self_ptr = self as *const MemoryMapTag;
-        let start_area = (&self.first_area) as *const MemoryArea;
+        let start_area = self.first_area.as_ptr();
+
         MemoryAreaIter {
             current_area: start_area as u64,
-            last_area: (self_ptr as u64 + (self.size - self.entry_size) as u64),
+            // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
+            last_area: (self_ptr as u64
+                + (self.size as u64 - core::mem::size_of::<MemoryMapTag>() as u64)),
             entry_size: self.entry_size,
             phantom: PhantomData,
         }
@@ -127,7 +130,7 @@ pub struct EFIMemoryMapTag {
     size: u32,
     desc_size: u32,
     desc_version: u32,
-    first_desc: EFIMemoryDesc,
+    first_desc: [EFIMemoryDesc; 0],
 }
 
 impl EFIMemoryMapTag {
@@ -137,10 +140,12 @@ impl EFIMemoryMapTag {
     /// available memory areas for tables and such.
     pub fn memory_areas(&self) -> EFIMemoryAreaIter {
         let self_ptr = self as *const EFIMemoryMapTag;
-        let start_area = (&self.first_desc) as *const EFIMemoryDesc;
+        let start_area = self.first_desc.as_ptr();
         EFIMemoryAreaIter {
             current_area: start_area as u64,
-            last_area: (self_ptr as u64 + self.size as u64),
+            // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
+            last_area: (self_ptr as u64
+                + (self.size as u64 - core::mem::size_of::<EFIMemoryMapTag>() as u64)),
             entry_size: self.desc_size,
             phantom: PhantomData,
         }
