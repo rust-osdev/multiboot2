@@ -1,5 +1,8 @@
 # CHANGELOG for crate `multiboot2`
 
+## Unreleased
+- MSRV is 1.56.1
+
 ## 0.14.2 (2023-03-17)
 - documentation fixes
 - `MbiLoadError` now implements `Display`

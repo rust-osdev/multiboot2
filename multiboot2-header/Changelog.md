@@ -1,5 +1,8 @@
 # CHANGELOG for crate `multiboot2-header`
 
+## Unreleased
+- MSRV is 1.56.1
+
 ## v0.2.0 (2022-05-03)
 - **BREAKING** renamed `EntryHeaderTag` to `EntryAddressHeaderTag`
 - **BREAKING** some paths changed from `multiboot2_header::header` to `multiboot2_header::builder`

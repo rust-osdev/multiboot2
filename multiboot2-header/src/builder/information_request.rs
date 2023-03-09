@@ -21,7 +21,7 @@ pub struct InformationRequestHeaderTagBuilder {
 #[cfg(feature = "builder")]
 impl InformationRequestHeaderTagBuilder {
     /// New builder.
-    #[allow(clippy::missing_const_for_fn)] // TODO remove once MSRV is higher than 1.52.1
+    #[allow(clippy::missing_const_for_fn)] // TODO remove once MSRV is higher than 1.65.0
     pub fn new(flag: HeaderTagFlag) -> Self {
         Self {
             irs: BTreeSet::new(),
@@ -31,7 +31,7 @@ impl InformationRequestHeaderTagBuilder {
 
     /// Returns the expected length of the information request tag,
     /// when the `build`-method gets called.
-    #[allow(clippy::missing_const_for_fn)] // TODO remove once MSRV is higher than 1.52.1
+    #[allow(clippy::missing_const_for_fn)] // TODO remove once MSRV is higher than 1.65.0
     pub fn expected_len(&self) -> usize {
         let basic_header_size = size_of::<InformationRequestHeaderTag<0>>();
         let req_tags_size = self.irs.len() * size_of::<MbiTagType>();
