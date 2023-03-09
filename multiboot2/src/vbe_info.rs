@@ -330,6 +330,7 @@ bitflags! {
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[repr(u8)]
 #[allow(missing_docs)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum VBEMemoryModel {
     Text = 0x00,
     CGAGraphics = 0x01,

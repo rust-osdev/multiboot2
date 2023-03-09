@@ -65,7 +65,7 @@ jobs:
     strategy:
       matrix:
         rust:
-          - stable
+          - 1.52.1 # MSVR
     steps:
       - uses: actions/checkout@v2
       # Important preparation step: override the latest default Rust version in GitHub CI
