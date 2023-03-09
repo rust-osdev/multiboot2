@@ -29,7 +29,7 @@ pub struct RsdpV1Tag {
 }
 
 impl RsdpV1Tag {
-    /// The "RSD PTR " marker singature.
+    /// The "RSD PTR " marker signature.
     ///
     /// This is originally a 8-byte C string (not null terminated!) that must contain "RSD PTR "
     pub fn signature(&self) -> Result<&str, Utf8Error> {
