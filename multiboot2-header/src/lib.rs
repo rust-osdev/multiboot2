@@ -31,7 +31,7 @@
 //! ```
 //!
 //! ## MSRV
-//! The MSRV is 1.52.1 stable.
+//! The MSRV is 1.60.0 stable.
 
 #![no_std]
 #![deny(rustdoc::all)]

@@ -32,7 +32,7 @@
 //! ```
 //!
 //! ## MSRV
-//! The MSRV is 1.52.1 stable.
+//! The MSRV is 1.60.0 stable.
 
 // this crate can use std in tests only
 #[cfg_attr(test, macro_use)]

@@ -68,7 +68,7 @@ You may need a special linker script to place this in a LOAD segment with a file
 See specification.
 
 ## MSRV
-The MSRV is 1.52.1 stable.
+The MSRV is 1.60.0 stable.
 
 ## License & Contribution
 
