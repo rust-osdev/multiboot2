@@ -233,7 +233,7 @@ impl fmt::Debug for VBEModeInfo {
 
 /// A VBE colour field.
 ///
-/// Descirbes the size and position of some colour capability.
+/// Describes the size and position of some colour capability.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[repr(C, packed)]
 pub struct VBEField {

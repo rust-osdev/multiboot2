@@ -108,7 +108,7 @@ pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 ///   environment (segfault) but also in UEFI-applications, where the referenced
 ///   memory is not (identity) mapped (UEFI does only identity mapping).
 /// * The memory at `address` must not be modified after calling `load` or the
-///   program may observe unsychronized mutation.
+///   program may observe unsynchronized mutation.
 pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
     load_with_offset(address, 0)
 }
@@ -131,7 +131,7 @@ pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
 ///   environment (segfault) but also in UEFI-applications, where the referenced
 ///   memory is not (identity) mapped (UEFI does only identity mapping).
 /// * The memory at `address` must not be modified after calling `load` or the
-///   program may observe unsychronized mutation.
+///   program may observe unsynchronized mutation.
 pub unsafe fn load_with_offset(
     address: usize,
     offset: usize,
