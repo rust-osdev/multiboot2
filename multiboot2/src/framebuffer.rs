@@ -1,5 +1,6 @@
 use crate::{Reader, Tag, TagTrait, TagType, TagTypeId};
 
+use core::fmt::Debug;
 use core::mem::size_of;
 use core::slice;
 use derive_more::Display;
@@ -17,7 +18,7 @@ const METADATA_SIZE: usize = size_of::<TagTypeId>()
     + 2 * size_of::<u8>();
 
 /// The VBE Framebuffer information Tag.
-#[derive(Debug, PartialEq, Eq, ptr_meta::Pointee)]
+#[derive(Eq, ptr_meta::Pointee)]
 #[repr(C, packed)]
 pub struct FramebufferTag {
     typ: TagTypeId,
@@ -153,6 +154,35 @@ impl TagTrait for FramebufferTag {
 impl StructAsBytes for FramebufferTag {
     fn byte_size(&self) -> usize {
         self.size.try_into().unwrap()
+    }
+}
+
+impl Debug for FramebufferTag {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("FramebufferTag")
+            .field("typ", &{ self.typ })
+            .field("size", &{ self.size })
+            .field("buffer_type", &self.buffer_type())
+            .field("address", &{ self.address })
+            .field("pitch", &{ self.pitch })
+            .field("width", &{ self.width })
+            .field("height", &{ self.height })
+            .field("bpp", &self.bpp)
+            .finish()
+    }
+}
+
+impl PartialEq for FramebufferTag {
+    fn eq(&self, other: &Self) -> bool {
+        ({ self.typ } == { other.typ }
+            && { self.size } == { other.size }
+            && { self.address } == { other.address }
+            && { self.pitch } == { other.pitch }
+            && { self.width } == { other.width }
+            && { self.height } == { other.height }
+            && { self.bpp } == { other.bpp }
+            && { self.type_no } == { other.type_no }
+            && self.buffer == other.buffer)
     }
 }
 
