@@ -1,7 +1,7 @@
 # CHANGELOG for crate `multiboot2-header`
 
 ## Unreleased
-- MSRV is 1.60.0
+- MSRV is 1.56.1
 
 ## v0.2.0 (2022-05-03)
 - **BREAKING** renamed `EntryHeaderTag` to `EntryAddressHeaderTag`

@@ -1,7 +1,7 @@
 # CHANGELOG for crate `multiboot2`
 
 ## Unreleased
-- MSRV is 1.60.0
+- MSRV is 1.56.1
 
 ## 0.14.1 (2023-03-09)
 - fixed the calculation of the last area of the memory map tag ([#119](https://github.com/rust-osdev/multiboot2/pull/119))
