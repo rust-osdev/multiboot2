@@ -56,4 +56,17 @@ pub trait TagTrait: Pointee {
         let ptr = ptr_meta::from_raw_parts(ptr.cast(), Self::dst_size(tag));
         &*ptr
     }
+
+    /// Creates a reference to a (dynamically sized) tag type in a safe way.
+    /// DST tags need to implement a proper [`Self::dst_size`] implementation.
+    ///
+    /// # Safety
+    /// Callers must be sure that the "size" field of the provided [`Tag`] is
+    /// sane and the underlying memory valid. The implementation of this trait
+    /// **must have** a correct [`Self::dst_size`] implementation.
+    unsafe fn from_base_tag_mut<'a>(tag: &mut Tag) -> &'a mut Self {
+        let ptr = core::ptr::addr_of_mut!(*tag);
+        let ptr = ptr_meta::from_raw_parts_mut(ptr.cast(), Self::dst_size(tag));
+        &mut *ptr
+    }
 }
