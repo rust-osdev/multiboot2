@@ -6,8 +6,7 @@
 // https://github.com/rust-osdev/multiboot2/pull/92
 #![deny(clippy::all)]
 #![deny(rustdoc::all)]
-// Forcing this would be a little bit ridiculous, because it would require code examples for
-// each getter and each trivial trait implementation (like Debug).
+#![allow(rustdoc::private_doc_tests)]
 #![allow(rustdoc::missing_doc_code_examples)]
 // --- END STYLE CHECKS ---
 
@@ -88,7 +87,7 @@ pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 
 /// Load the multiboot boot information struct from an address.
 ///
-/// This is the same as `load_with_offset` but the offset is omitted and set
+/// This is the same as [`load_with_offset`] but the offset is omitted and set
 /// to zero.
 ///
 /// ## Example
@@ -117,7 +116,7 @@ pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
 ///
 /// ## Example
 ///
-/// ```ignore
+/// ```rust,no_run
 /// use multiboot2::load_with_offset;
 ///
 /// let ptr = 0xDEADBEEF as *const u32;
@@ -197,8 +196,9 @@ impl BootInformation {
     ///
     /// This is the same as doing:
     ///
-    /// ```ignore
-    /// let end_addr = boot_info.start_address() + boot_info.size();
+    /// ```rust,no_run
+    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
+    /// let end_addr = boot_info.start_address() + boot_info.total_size();
     /// ```
     pub fn end_address(&self) -> usize {
         self.start_address() + self.total_size()

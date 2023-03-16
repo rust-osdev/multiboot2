@@ -21,10 +21,10 @@ impl BootLoaderNameTag {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```rust,no_run
+    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
     /// if let Some(tag) = boot_info.boot_loader_name_tag() {
-    ///     let name = tag.name();
-    ///     assert_eq!("GRUB 2.02~beta3-5", name);
+    ///     assert_eq!(Ok("GRUB 2.02~beta3-5"), tag.name());
     /// }
     /// ```
     pub fn name(&self) -> Result<&str, Utf8Error> {

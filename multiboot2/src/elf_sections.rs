@@ -33,7 +33,8 @@ impl ElfSectionsTag {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```rust,no_run
+    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
     /// if let Some(elf_tag) = boot_info.elf_sections_tag() {
     ///     let mut total = 0;
     ///     for section in elf_tag.sections() {
