@@ -4,6 +4,9 @@ members = [
     "multiboot2",
     "multiboot2-header",
 ]
+exclude = [
+    "integration-test"
+]
 
 [workspace.dependencies]
 bitflags = "2"

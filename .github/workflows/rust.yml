@@ -127,3 +127,15 @@ jobs:
       do-style-check: true
       do-test: false
       features: builder,unstable
+
+  integrationtest:
+    name: multiboot2 integrationtest
+    needs:
+      - build_nightly
+      - build_nostd_nightly
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v20
+      - run: integration-test/run.sh
