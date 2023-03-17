@@ -1,13 +1,12 @@
-// this crate can use `std` in tests only
-#![cfg_attr(not(test), no_std)]
+#![no_std]
+#![cfg_attr(feature = "unstable", feature(error_in_core))]
 #![deny(missing_debug_implementations)]
 // --- BEGIN STYLE CHECKS ---
 // These checks are optional in CI for PRs, as discussed in
 // https://github.com/rust-osdev/multiboot2/pull/92
 #![deny(clippy::all)]
 #![deny(rustdoc::all)]
-// Forcing this would be a little bit ridiculous, because it would require code examples for
-// each getter and each trivial trait implementation (like Debug).
+#![allow(rustdoc::private_doc_tests)]
 #![allow(rustdoc::missing_doc_code_examples)]
 // --- END STYLE CHECKS ---
 
@@ -40,6 +39,7 @@
 extern crate std;
 
 use core::fmt;
+use derive_more::Display;
 
 pub use boot_loader_name::BootLoaderNameTag;
 pub use command_line::CommandLineTag;
@@ -88,7 +88,7 @@ pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 
 /// Load the multiboot boot information struct from an address.
 ///
-/// This is the same as `load_with_offset` but the offset is omitted and set
+/// This is the same as [`load_with_offset`] but the offset is omitted and set
 /// to zero.
 ///
 /// ## Example
@@ -108,7 +108,7 @@ pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 ///   environment (segfault) but also in UEFI-applications, where the referenced
 ///   memory is not (identity) mapped (UEFI does only identity mapping).
 /// * The memory at `address` must not be modified after calling `load` or the
-///   program may observe unsychronized mutation.
+///   program may observe unsynchronized mutation.
 pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
     load_with_offset(address, 0)
 }
@@ -117,7 +117,7 @@ pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
 ///
 /// ## Example
 ///
-/// ```ignore
+/// ```rust,no_run
 /// use multiboot2::load_with_offset;
 ///
 /// let ptr = 0xDEADBEEF as *const u32;
@@ -131,7 +131,7 @@ pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
 ///   environment (segfault) but also in UEFI-applications, where the referenced
 ///   memory is not (identity) mapped (UEFI does only identity mapping).
 /// * The memory at `address` must not be modified after calling `load` or the
-///   program may observe unsychronized mutation.
+///   program may observe unsynchronized mutation.
 pub unsafe fn load_with_offset(
     address: usize,
     offset: usize,
@@ -161,18 +161,24 @@ pub unsafe fn load_with_offset(
 
 /// Error type that describes errors while loading/parsing a multiboot2 information structure
 /// from a given address.
-#[derive(Debug)]
+#[derive(Debug, Display)]
 pub enum MbiLoadError {
     /// The address is invalid. Make sure that the address is 8-byte aligned,
     /// according to the spec.
+    #[display(fmt = "The address is invalid")]
     IllegalAddress,
     /// The total size of the multiboot2 information structure must be a multiple of 8.
     /// (Not in spec, but it is implicitly the case, because the begin of MBI
     /// and all tags are 8-byte aligned and the end tag is exactly 8 byte long).
+    #[display(fmt = "The size of the MBI is unexpected")]
     IllegalTotalSize(u32),
     /// End tag missing. Each multiboot2 header requires to have an end tag.
+    #[display(fmt = "There is no end tag")]
     NoEndTag,
 }
+
+#[cfg(feature = "unstable")]
+impl core::error::Error for MbiLoadError {}
 
 /// A Multiboot 2 Boot Information struct.
 pub struct BootInformation {
@@ -197,8 +203,9 @@ impl BootInformation {
     ///
     /// This is the same as doing:
     ///
-    /// ```ignore
-    /// let end_addr = boot_info.start_address() + boot_info.size();
+    /// ```rust,no_run
+    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
+    /// let end_addr = boot_info.start_address() + boot_info.total_size();
     /// ```
     pub fn end_address(&self) -> usize {
         self.start_address() + self.total_size()
@@ -1433,5 +1440,13 @@ mod tests {
             // `EFIMemoryMapTag` is 16 bytes without the 1st entry
             core::mem::transmute::<[u8; 16], EFIMemoryMapTag>([0u8; 16]);
         }
+    }
+
+    #[test]
+    #[cfg(feature = "unstable")]
+    /// This test succeeds if it compiles.
+    fn mbi_load_error_implements_error() {
+        fn consumer<E: core::error::Error>(_e: E) {}
+        consumer(MbiLoadError::IllegalAddress)
     }
 }

@@ -25,10 +25,11 @@ impl CommandLineTag {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```rust,no_run
+    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
     /// if let Some(tag) = boot_info.command_line_tag() {
     ///     let command_line = tag.command_line();
-    ///     assert_eq!("/bootarg", command_line);
+    ///     assert_eq!(Ok("/bootarg"), command_line);
     /// }
     /// ```
     pub fn command_line(&self) -> Result<&str, str::Utf8Error> {

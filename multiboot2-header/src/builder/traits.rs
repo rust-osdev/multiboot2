@@ -23,7 +23,7 @@ pub(crate) trait StructAsBytes: Sized {
     }
 
     /// Returns the structure as a vector of its bytes.
-    /// The length is determined by [`size`].
+    /// The length is determined by [`Self::byte_size`].
     fn struct_as_bytes(&self) -> alloc::vec::Vec<u8> {
         let ptr = self.as_ptr();
         let mut vec = alloc::vec::Vec::with_capacity(self.byte_size());

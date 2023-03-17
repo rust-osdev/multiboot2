@@ -10,6 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # Regular build (with std) + test execution
   build:
     runs-on: ubuntu-latest
     strategy:
@@ -19,7 +20,7 @@ jobs:
           - nightly
           - 1.52.1 # MSVR
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       # Important preparation step: override the latest default Rust version in GitHub CI
       # with the current value of the iteration in the "strategy.matrix.rust"-array.
       - uses: actions-rs/toolchain@v1
@@ -30,10 +31,11 @@ jobs:
       # helps to identify if the right cargo version is actually used
       - run: cargo version
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --all-targets --verbose
       - name: Run tests
         run: cargo test --verbose
 
+  # no-std build without tests
   build_no_std:
     runs-on: ubuntu-latest
     strategy:
@@ -43,7 +45,7 @@ jobs:
           - nightly
           - 1.52.1 # MSVR
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       # Important preparation step: override the latest default Rust version in GitHub CI
       # with the current value of the iteration in the "strategy.matrix.rust"-array.
       - uses: actions-rs/toolchain@v1
@@ -58,6 +60,26 @@ jobs:
       - name: Build (no_std)
         run: cargo build --target thumbv7em-none-eabihf
 
+  # Tests that the unstable feature, which requires nightly, builds.
+  build_unstable:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - nightly
+    steps:
+      - uses: actions/checkout@v3
+      # Important preparation step: override the latest default Rust version in GitHub CI
+      # with the current value of the iteration in the "strategy.matrix.rust"-array.
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: default
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - name: Build (unstable)
+        run: cargo build --all-targets --features unstable
+      - name: Test (unstable)
+        run: cargo test --all-targets --features unstable
 
   # As discussed, these tasks are optional for PRs.
   style_checks:
@@ -67,7 +89,7 @@ jobs:
         rust:
           - 1.52.1 # MSVR
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       # Important preparation step: override the latest default Rust version in GitHub CI
       # with the current value of the iteration in the "strategy.matrix.rust"-array.
       - uses: actions-rs/toolchain@v1
@@ -80,6 +102,6 @@ jobs:
       - name: Rustfmt
         run: cargo fmt -- --check
       - name: Clippy
-        run: cargo clippy
+        run: cargo clippy --all-targets
       - name: Rustdoc
-        run: cargo doc
+        run: cargo doc --document-private-items
