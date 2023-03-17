@@ -38,6 +38,7 @@ jobs:
 
   build_nostd_multiboot2_msrv:
     name: build no_std (msrv)
+    needs: build_multiboot2_msrv
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: 1.56.1
@@ -46,6 +47,7 @@ jobs:
 
   build_nostd_multiboot2_stable:
     name: build no_std (stable)
+    needs: build_multiboot2_stable
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: stable
@@ -54,6 +56,7 @@ jobs:
 
   build_nostd_multiboot2_nightly:
     name: build no_std (nightly)
+    needs: build_multiboot2_nightly
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: nightly
@@ -62,6 +65,7 @@ jobs:
 
   style_multiboot2_msrv:
     name: style (msrv)
+    needs: build_multiboot2_msrv
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: 1.56.1
@@ -70,6 +74,7 @@ jobs:
 
   style_multiboot2_stable:
     name: style (stable)
+    needs: build_multiboot2_stable
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: stable
