@@ -1,5 +1,5 @@
-// this crate can use `std` in tests only
-#![cfg_attr(not(test), no_std)]
+#![no_std]
+#![cfg_attr(feature = "unstable", feature(error_in_core))]
 #![deny(missing_debug_implementations)]
 // --- BEGIN STYLE CHECKS ---
 // These checks are optional in CI for PRs, as discussed in
@@ -39,6 +39,7 @@
 extern crate std;
 
 use core::fmt;
+use derive_more::Display;
 
 pub use boot_loader_name::BootLoaderNameTag;
 pub use command_line::CommandLineTag;
@@ -160,18 +161,24 @@ pub unsafe fn load_with_offset(
 
 /// Error type that describes errors while loading/parsing a multiboot2 information structure
 /// from a given address.
-#[derive(Debug)]
+#[derive(Debug, Display)]
 pub enum MbiLoadError {
     /// The address is invalid. Make sure that the address is 8-byte aligned,
     /// according to the spec.
+    #[display(fmt = "The address is invalid")]
     IllegalAddress,
     /// The total size of the multiboot2 information structure must be a multiple of 8.
     /// (Not in spec, but it is implicitly the case, because the begin of MBI
     /// and all tags are 8-byte aligned and the end tag is exactly 8 byte long).
+    #[display(fmt = "The size of the MBI is unexpected")]
     IllegalTotalSize(u32),
     /// End tag missing. Each multiboot2 header requires to have an end tag.
+    #[display(fmt = "There is no end tag")]
     NoEndTag,
 }
+
+#[cfg(feature = "unstable")]
+impl core::error::Error for MbiLoadError {}
 
 /// A Multiboot 2 Boot Information struct.
 pub struct BootInformation {
@@ -1433,5 +1440,13 @@ mod tests {
             // `EFIMemoryMapTag` is 16 bytes without the 1st entry
             core::mem::transmute::<[u8; 16], EFIMemoryMapTag>([0u8; 16]);
         }
+    }
+
+    #[test]
+    #[cfg(feature = "unstable")]
+    /// This test succeeds if it compiles.
+    fn mbi_load_error_implements_error() {
+        fn consumer<E: core::error::Error>(_e: E) {}
+        consumer(MbiLoadError::IllegalAddress)
     }
 }

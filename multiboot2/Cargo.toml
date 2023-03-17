@@ -31,5 +31,11 @@ homepage = "https://github.com/rust-osdev/multiboot2"
 repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2"
 
+[features]
+default = []
+# Nightly-only features that will eventually be stabilized.
+unstable = []
+
 [dependencies]
 bitflags = "1"
+derive_more = { version = "0.99.17", default-features = false, features = ["display"] }

@@ -2,6 +2,10 @@
 
 ## 0.14.2
 - documentation fixes
+- `MbiLoadError` now implements `Display`
+- Added the `unstable` feature, which enables nightly-only functionality.
+  With this feature, `MbiLoadError` now implements `core::error::Error` and can
+  be used with `anyhow::Result` for example.
 
 ## 0.14.1 (2023-03-09)
 - fixed the calculation of the last area of the memory map tag ([#119](https://github.com/rust-osdev/multiboot2/pull/119))
