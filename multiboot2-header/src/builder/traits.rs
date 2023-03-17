@@ -60,6 +60,7 @@ mod tests {
             c: u128,
         }
         impl StructAsBytes for Foobar {}
+        #[allow(clippy::blacklisted_name)]
         let foo = Foobar {
             a: 11,
             b: 22,

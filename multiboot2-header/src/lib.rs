@@ -35,7 +35,6 @@
 
 #![no_std]
 #![deny(rustdoc::all)]
-#![allow(rustdoc::missing_doc_code_examples)]
 #![deny(clippy::all)]
 #![deny(clippy::missing_const_for_fn)]
 #![deny(missing_debug_implementations)]

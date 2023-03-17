@@ -136,6 +136,8 @@ mod tests {
     use crate::InformationRequestHeaderTag;
 
     #[test]
+    #[allow(clippy::erasing_op)]
+    #[allow(clippy::identity_op)]
     fn test_assert_size() {
         assert_eq!(
             core::mem::size_of::<InformationRequestHeaderTag<0>>(),
