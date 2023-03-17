@@ -1,4 +1,5 @@
 use crate::tag_type::Tag;
+use crate::TagType;
 use core::fmt::{Debug, Formatter};
 
 /// This tag contains section header table from an ELF kernel.
@@ -11,7 +12,7 @@ pub struct ElfSectionsTag {
 }
 
 pub unsafe fn elf_sections_tag(tag: &Tag, offset: usize) -> ElfSectionsTag {
-    assert_eq!(9, tag.typ);
+    assert_eq!(TagType::ElfSections.val(), tag.typ);
     let es = ElfSectionsTag {
         inner: (tag as *const Tag).offset(1) as *const ElfSectionsTagInner,
         offset,

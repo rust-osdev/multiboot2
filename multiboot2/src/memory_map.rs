@@ -1,4 +1,4 @@
-use crate::TagType;
+use crate::TagTypeId;
 use core::marker::PhantomData;
 
 /// This tag provides an initial host memory map.
@@ -14,7 +14,7 @@ use core::marker::PhantomData;
 #[derive(Debug)]
 #[repr(C)]
 pub struct MemoryMapTag {
-    typ: TagType,
+    typ: TagTypeId,
     size: u32,
     entry_size: u32,
     entry_version: u32,
@@ -126,7 +126,7 @@ impl<'a> Iterator for MemoryAreaIter<'a> {
 #[derive(Debug)]
 #[repr(C)]
 pub struct EFIMemoryMapTag {
-    typ: TagType,
+    typ: TagTypeId,
     size: u32,
     desc_size: u32,
     desc_version: u32,

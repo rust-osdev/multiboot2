@@ -1,12 +1,12 @@
 //! All MBI tags related to (U)EFI.
 
-use crate::TagType;
+use crate::TagTypeId;
 
 /// EFI system table in 32 bit mode
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding before first_section
 pub struct EFISdt32 {
-    typ: TagType,
+    typ: TagTypeId,
     size: u32,
     pointer: u32,
 }
@@ -22,7 +22,7 @@ impl EFISdt32 {
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub struct EFISdt64 {
-    typ: TagType,
+    typ: TagTypeId,
     size: u32,
     pointer: u64,
 }
@@ -38,7 +38,7 @@ impl EFISdt64 {
 #[derive(Debug)]
 #[repr(C)]
 pub struct EFIImageHandle32 {
-    typ: TagType,
+    typ: TagTypeId,
     size: u32,
     pointer: u32,
 }
@@ -54,7 +54,7 @@ impl EFIImageHandle32 {
 #[derive(Debug)]
 #[repr(C)]
 pub struct EFIImageHandle64 {
-    typ: TagType,
+    typ: TagTypeId,
     size: u32,
     pointer: u64,
 }

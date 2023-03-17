@@ -8,7 +8,7 @@
 //!
 //! Even though the bootloader should give the address of the real RSDP/XSDT, the checksum and
 //! signature should be manually verified.
-use crate::TagType;
+use crate::TagTypeId;
 use core::slice;
 use core::str;
 use core::str::Utf8Error;
@@ -19,7 +19,7 @@ const RSDPV1_LENGTH: usize = 20;
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct RsdpV1Tag {
-    typ: TagType,
+    typ: TagTypeId,
     size: u32,
     signature: [u8; 8],
     checksum: u8,
@@ -66,7 +66,7 @@ impl RsdpV1Tag {
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
 pub struct RsdpV2Tag {
-    typ: TagType,
+    typ: TagTypeId,
     size: u32,
     signature: [u8; 8],
     checksum: u8,
