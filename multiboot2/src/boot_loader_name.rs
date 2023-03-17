@@ -1,4 +1,4 @@
-use crate::TagType;
+use crate::TagTypeId;
 use core::str::Utf8Error;
 
 /// This tag contains the name of the bootloader that is booting the kernel.
@@ -8,7 +8,7 @@ use core::str::Utf8Error;
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding before first_section
 pub struct BootLoaderNameTag {
-    typ: TagType,
+    typ: TagTypeId,
     size: u32,
     /// Null-terminated UTF-8 string
     string: u8,
@@ -47,7 +47,7 @@ mod tests {
         // size is: 4 bytes for tag + 4 bytes for size + length of null-terminated string
         let size = (4 + 4 + MSG.as_bytes().len() + 1) as u32;
         [
-            &((TagType::BootLoaderName as u32).to_ne_bytes()),
+            &((TagType::BootLoaderName.val()).to_ne_bytes()),
             &size.to_ne_bytes(),
             MSG.as_bytes(),
             // Null Byte

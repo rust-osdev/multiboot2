@@ -1,11 +1,11 @@
-use crate::TagType;
+use crate::TagTypeId;
 
 /// If the image has relocatable header tag, this tag contains the image's
 /// base physical address.
 #[derive(Debug)]
 #[repr(C)]
 pub struct ImageLoadPhysAddr {
-    typ: TagType,
+    typ: TagTypeId,
     size: u32,
     load_base_addr: u32,
 }

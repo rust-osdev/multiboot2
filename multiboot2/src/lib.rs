@@ -30,7 +30,7 @@
 //! ```
 //!
 //! ## MSRV
-//! The MSRV is 1.52.1 stable.
+//! The MSRV is 1.56.1 stable.
 
 // this crate can use std in tests only
 #[cfg_attr(test, macro_use)]
@@ -40,6 +40,7 @@ extern crate std;
 use core::fmt;
 use derive_more::Display;
 
+use crate::framebuffer::UnknownFramebufferType;
 pub use boot_loader_name::BootLoaderNameTag;
 pub use command_line::CommandLineTag;
 pub use efi::{EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64};
@@ -54,8 +55,8 @@ pub use memory_map::{
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
-pub use tag_type::TagType;
-use tag_type::{Tag, TagIter};
+use tag_type::TagIter;
+pub use tag_type::{Tag, TagType, TagTypeId};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
@@ -217,14 +218,13 @@ impl BootInformation {
 
     /// Search for the ELF Sections tag.
     pub fn elf_sections_tag(&self) -> Option<ElfSectionsTag> {
-        self.get_tag(TagType::ElfSections)
+        self.get_tag::<Tag, _>(TagType::ElfSections)
             .map(|tag| unsafe { elf_sections::elf_sections_tag(tag, self.offset) })
     }
 
     /// Search for the Memory map tag.
     pub fn memory_map_tag(&self) -> Option<&MemoryMapTag> {
-        self.get_tag(TagType::Mmap)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const MemoryMapTag) })
+        self.get_tag::<MemoryMapTag, _>(TagType::Mmap)
     }
 
     /// Get an iterator of all module tags.
@@ -234,88 +234,124 @@ impl BootInformation {
 
     /// Search for the BootLoader name tag.
     pub fn boot_loader_name_tag(&self) -> Option<&BootLoaderNameTag> {
-        self.get_tag(TagType::BootLoaderName)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const BootLoaderNameTag) })
+        self.get_tag::<BootLoaderNameTag, _>(TagType::BootLoaderName)
     }
 
     /// Search for the Command line tag.
     pub fn command_line_tag(&self) -> Option<&CommandLineTag> {
-        self.get_tag(TagType::Cmdline)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const CommandLineTag) })
+        self.get_tag::<CommandLineTag, _>(TagType::Cmdline)
     }
 
-    /// Search for the VBE framebuffer tag.
-    pub fn framebuffer_tag(&self) -> Option<FramebufferTag> {
-        self.get_tag(TagType::Framebuffer)
+    /// Search for the VBE framebuffer tag. The result is `Some(Err(e))`, if the
+    /// framebuffer type is unknown, while the framebuffer tag is present.
+    pub fn framebuffer_tag(&self) -> Option<Result<FramebufferTag, UnknownFramebufferType>> {
+        self.get_tag::<Tag, _>(TagType::Framebuffer)
             .map(framebuffer::framebuffer_tag)
     }
 
     /// Search for the EFI 32-bit SDT tag.
     pub fn efi_sdt_32_tag(&self) -> Option<&EFISdt32> {
-        self.get_tag(TagType::Efi32)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt32) })
+        self.get_tag::<EFISdt32, _>(TagType::Efi32)
     }
 
     /// Search for the EFI 64-bit SDT tag.
     pub fn efi_sdt_64_tag(&self) -> Option<&EFISdt64> {
-        self.get_tag(TagType::Efi64)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const EFISdt64) })
+        self.get_tag::<EFISdt64, _>(TagType::Efi64)
     }
 
     /// Search for the (ACPI 1.0) RSDP tag.
     pub fn rsdp_v1_tag(&self) -> Option<&RsdpV1Tag> {
-        self.get_tag(TagType::AcpiV1)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV1Tag) })
+        self.get_tag::<RsdpV1Tag, _>(TagType::AcpiV1)
     }
 
     /// Search for the (ACPI 2.0 or later) RSDP tag.
     pub fn rsdp_v2_tag(&self) -> Option<&RsdpV2Tag> {
-        self.get_tag(TagType::AcpiV2)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV2Tag) })
+        self.get_tag::<RsdpV2Tag, _>(TagType::AcpiV2)
     }
 
-    /// Search for the EFI Memory map tag.
+    /// Search for the EFI Memory map tag, if the boot services were exited.
+    /// Otherwise, if the [`TagType::EfiBs`] tag is present, this returns `None`
+    /// as it is strictly recommended to get the memory map from the `uefi`
+    /// services.
     pub fn efi_memory_map_tag(&self) -> Option<&EFIMemoryMapTag> {
         // If the EFIBootServicesNotExited is present, then we should not use
         // the memory map, as it could still be in use.
-        match self.get_tag(TagType::EfiBs) {
+        match self.get_tag::<Tag, _>(TagType::EfiBs) {
             Some(_tag) => None,
-            None => self
-                .get_tag(TagType::EfiMmap)
-                .map(|tag| unsafe { &*(tag as *const Tag as *const EFIMemoryMapTag) }),
+            None => self.get_tag::<EFIMemoryMapTag, _>(TagType::EfiMmap),
         }
     }
 
     /// Search for the EFI 32-bit image handle pointer.
     pub fn efi_32_ih(&self) -> Option<&EFIImageHandle32> {
-        self.get_tag(TagType::Efi32Ih)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const EFIImageHandle32) })
+        self.get_tag::<EFIImageHandle32, _>(TagType::Efi32Ih)
     }
 
     /// Search for the EFI 64-bit image handle pointer.
     pub fn efi_64_ih(&self) -> Option<&EFIImageHandle64> {
-        self.get_tag(TagType::Efi64Ih)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const EFIImageHandle64) })
+        self.get_tag::<EFIImageHandle64, _>(TagType::Efi64Ih)
     }
 
     /// Search for the Image Load Base Physical Address.
     pub fn load_base_addr(&self) -> Option<&ImageLoadPhysAddr> {
-        self.get_tag(TagType::LoadBaseAddr)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const ImageLoadPhysAddr) })
+        self.get_tag::<ImageLoadPhysAddr, _>(TagType::LoadBaseAddr)
     }
 
     /// Search for the VBE information tag.
-    pub fn vbe_info_tag(&self) -> Option<&'static VBEInfoTag> {
-        self.get_tag(TagType::Vbe)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const VBEInfoTag) })
+    pub fn vbe_info_tag(&self) -> Option<&VBEInfoTag> {
+        self.get_tag::<VBEInfoTag, _>(TagType::Vbe)
     }
 
     fn get(&self) -> &BootInformationInner {
         unsafe { &*self.inner }
     }
 
-    fn get_tag(&self, typ: TagType) -> Option<&Tag> {
-        self.tags().find(|tag| tag.typ == typ)
+    /// Public getter to find any Multiboot tag by its type, including
+    /// specified and custom ones.
+    ///
+    /// The parameter can be of type `u32`, [`TagType`], or [`TagTypeId`].
+    ///
+    /// # Specified or Custom Tags
+    /// The Multiboot2 specification specifies a list of tags, see [`TagType`].
+    /// However, it doesn't forbid to use custom tags. Because of this, there
+    /// exists the [`TagType`] abstraction. It is recommended to use this
+    /// getter only for custom tags. For specified tags, use getters, such as
+    /// [`Self::efi_64_ih`].
+    ///
+    /// ## Use Custom Tags
+    /// The following example shows how you may use this interface to parse custom tags from
+    /// the MBI. Custom tags must be `Sized`. Hence, they are not allowed to contain a field such
+    /// as `name: [u8]`.
+    ///
+    /// **Belows example needs Rust 1.64 or newer because of std::ffi imports!**
+    /// ```ignore
+    /// use std::ffi::{c_char, CStr};
+    /// use multiboot2::TagTypeId;
+    ///
+    /// #[repr(C, align(8))]
+    ///     struct CustomTag {
+    ///     // new type from the lib: has repr(u32)
+    ///     tag: TagTypeId,
+    ///     size: u32,
+    ///     // begin of inline string
+    ///     name: u8,
+    /// }
+    ///
+    /// let mbi = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
+    ///
+    /// let tag = mbi
+    ///     // type definition from end user; must be `Sized`!
+    ///     .get_tag::<CustomTag, _>(0x1337)
+    ///     .unwrap();
+    /// let name = &tag.name as *const u8 as *const c_char;
+    /// let str = unsafe { CStr::from_ptr(name).to_str().unwrap() };
+    /// assert_eq!(str, "name");
+    /// ```
+    pub fn get_tag<Tag, TagType: Into<TagTypeId>>(&self, typ: TagType) -> Option<&Tag> {
+        let typ = typ.into();
+        self.tags()
+            .find(|tag| tag.typ == typ)
+            .map(|tag| tag.cast_tag::<Tag>())
     }
 
     fn tags(&self) -> TagIter {
@@ -325,16 +361,16 @@ impl BootInformation {
 
 impl BootInformationInner {
     fn has_valid_end_tag(&self) -> bool {
-        const END_TAG: Tag = Tag {
-            typ: TagType::End,
+        let end_tag_prototype: Tag = Tag {
+            typ: TagType::End.into(),
             size: 8,
         };
 
         let self_ptr = self as *const _;
-        let end_tag_addr = self_ptr as usize + (self.total_size - END_TAG.size) as usize;
+        let end_tag_addr = self_ptr as usize + (self.total_size - end_tag_prototype.size) as usize;
         let end_tag = unsafe { &*(end_tag_addr as *const Tag) };
 
-        end_tag.typ == END_TAG.typ && end_tag.size == END_TAG.size
+        end_tag.typ == end_tag_prototype.typ && end_tag.size == end_tag_prototype.size
     }
 }
 
@@ -443,6 +479,7 @@ impl Reader {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::{mem, slice};
 
     #[test]
     fn no_tags() {
@@ -588,7 +625,7 @@ mod tests {
         use framebuffer::{FramebufferField, FramebufferTag, FramebufferType};
         assert_eq!(
             bi.framebuffer_tag(),
-            Some(FramebufferTag {
+            Some(Ok(FramebufferTag {
                 address: 4244635648,
                 pitch: 5120,
                 width: 1280,
@@ -608,7 +645,7 @@ mod tests {
                         size: 8
                     }
                 }
-            })
+            }))
         )
     }
 
@@ -643,7 +680,10 @@ mod tests {
         assert_eq!(bytes.0.len(), bi.total_size());
         use framebuffer::{FramebufferColor, FramebufferType};
         assert!(bi.framebuffer_tag().is_some());
-        let fbi = bi.framebuffer_tag().unwrap();
+        let fbi = bi
+            .framebuffer_tag()
+            .expect("Framebuffer info should be available")
+            .expect("Framebuffer info type should be valid");
         assert_eq!(fbi.address, 4244635648);
         assert_eq!(fbi.pitch, 5120);
         assert_eq!(fbi.width, 1280);
@@ -1255,7 +1295,10 @@ mod tests {
         );
 
         // Test the Framebuffer tag
-        let fbi = bi.framebuffer_tag().unwrap();
+        let fbi = bi
+            .framebuffer_tag()
+            .expect("Framebuffer info should be available")
+            .expect("Framebuffer info type should be valid");
         assert_eq!(fbi.address, 753664);
         assert_eq!(fbi.pitch, 160);
         assert_eq!(fbi.width, 80);
@@ -1445,5 +1488,120 @@ mod tests {
     fn mbi_load_error_implements_error() {
         fn consumer<E: core::error::Error>(_e: E) {}
         consumer(MbiLoadError::IllegalAddress)
+    }
+
+    #[test]
+    fn custom_tag() {
+        const CUSTOM_TAG_ID: u32 = 0x1337;
+
+        #[repr(C, align(8))]
+        struct Bytes([u8; 32]);
+        let bytes: Bytes = Bytes([
+            32,
+            0,
+            0,
+            0, // total_size
+            0,
+            0,
+            0,
+            0, // reserved
+            // my custom tag
+            CUSTOM_TAG_ID.to_ne_bytes()[0],
+            CUSTOM_TAG_ID.to_ne_bytes()[1],
+            CUSTOM_TAG_ID.to_ne_bytes()[2],
+            CUSTOM_TAG_ID.to_ne_bytes()[3],
+            13,
+            0,
+            0,
+            0, // tag size
+            110,
+            97,
+            109,
+            101, // ASCII string 'name'
+            0,
+            0,
+            0,
+            0, // null byte + padding
+            0,
+            0,
+            0,
+            0, // end tag type
+            8,
+            0,
+            0,
+            0, // end tag size
+        ]);
+        let addr = bytes.0.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
+        assert_eq!(addr, bi.start_address());
+        assert_eq!(addr + bytes.0.len(), bi.end_address());
+        assert_eq!(bytes.0.len(), bi.total_size());
+
+        #[repr(C, align(8))]
+        struct CustomTag {
+            tag: TagTypeId,
+            size: u32,
+            name: u8,
+        }
+
+        let tag = bi.get_tag::<CustomTag, _>(CUSTOM_TAG_ID).unwrap();
+
+        // strlen without null byte
+        let strlen = tag.size as usize - mem::size_of::<CommandLineTag>();
+        let bytes = unsafe { slice::from_raw_parts((&tag.name) as *const u8, strlen) };
+        let name = core::str::from_utf8(bytes).unwrap();
+        assert_eq!(name, "name");
+    }
+
+    /// Tests that `get_tag` can consume multiple types that implement `Into<TagTypeId>`
+    #[test]
+    fn get_tag_into_variants() {
+        #[repr(C, align(8))]
+        struct Bytes([u8; 32]);
+        let bytes: Bytes = Bytes([
+            32,
+            0,
+            0,
+            0, // total_size
+            0,
+            0,
+            0,
+            0, // reserved
+            TagType::Cmdline.val().to_ne_bytes()[0],
+            TagType::Cmdline.val().to_ne_bytes()[1],
+            TagType::Cmdline.val().to_ne_bytes()[2],
+            TagType::Cmdline.val().to_ne_bytes()[3],
+            13,
+            0,
+            0,
+            0, // tag size
+            110,
+            97,
+            109,
+            101, // ASCII string 'name'
+            0,
+            0,
+            0,
+            0, // null byte + padding
+            0,
+            0,
+            0,
+            0, // end tag type
+            8,
+            0,
+            0,
+            0, // end tag size
+        ]);
+
+        let addr = bytes.0.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
+
+        let _tag = bi.get_tag::<CommandLineTag, _>(TagType::Cmdline).unwrap();
+
+        let _tag = bi.get_tag::<CommandLineTag, _>(1).unwrap();
+
+        let _tag = bi.get_tag::<CommandLineTag, _>(TagTypeId::new(1)).unwrap();
     }
 }

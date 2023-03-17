@@ -1,6 +1,7 @@
 use crate::tag_type::Tag;
 use crate::Reader;
 use core::slice;
+use derive_more::Display;
 
 /// The VBE Framebuffer information Tag.
 #[derive(Debug, PartialEq, Eq)]
@@ -26,6 +27,17 @@ pub struct FramebufferTag<'a> {
 
     /// The type of framebuffer, one of: `Indexed`, `RGB` or `Text`.
     pub buffer_type: FramebufferType<'a>,
+}
+
+/// Helper struct for [`FramebufferType`].
+#[derive(Debug, PartialEq, Eq)]
+#[repr(u8)]
+#[allow(clippy::upper_case_acronyms)]
+pub enum FramebufferTypeId {
+    Indexed = 0,
+    RGB = 1,
+    Text = 2,
+    // spec says: there may be more variants in the future
 }
 
 /// The type of framebuffer.
@@ -79,7 +91,16 @@ pub struct FramebufferColor {
     pub blue: u8,
 }
 
-pub fn framebuffer_tag(tag: &Tag) -> FramebufferTag {
+/// Error when an unknown [`FramebufferTypeId`] is found.
+#[derive(Debug, Copy, Clone, Display, PartialEq, Eq)]
+#[display(fmt = "Unknown framebuffer type _0")]
+pub struct UnknownFramebufferType(u8);
+
+#[cfg(feature = "unstable")]
+impl core::error::Error for UnknownFramebufferType {}
+
+/// Transforms a [`Tag`] into a [`FramebufferTag`].
+pub fn framebuffer_tag(tag: &Tag) -> Result<FramebufferTag, UnknownFramebufferType> {
     let mut reader = Reader::new(tag as *const Tag);
     reader.skip(8);
     let address = reader.read_u64();
@@ -88,20 +109,27 @@ pub fn framebuffer_tag(tag: &Tag) -> FramebufferTag {
     let height = reader.read_u32();
     let bpp = reader.read_u8();
     let type_no = reader.read_u8();
-    reader.skip(2); // In the multiboot spec, it has this listed as a u8 _NOT_ a u16.
-                    // Reading the GRUB2 source code reveals it is in fact a u16.
-    let buffer_type = match type_no {
-        0 => {
+    // In the multiboot spec, it has this listed as a u8 _NOT_ a u16.
+    // Reading the GRUB2 source code reveals it is in fact a u16.
+    reader.skip(2);
+    let buffer_type_id = match type_no {
+        0 => Ok(FramebufferTypeId::Indexed),
+        1 => Ok(FramebufferTypeId::RGB),
+        2 => Ok(FramebufferTypeId::Text),
+        id => Err(UnknownFramebufferType(id)),
+    }?;
+    let buffer_type = match buffer_type_id {
+        FramebufferTypeId::Indexed => {
             let num_colors = reader.read_u32();
             let palette = unsafe {
                 slice::from_raw_parts(
                     reader.current_address() as *const FramebufferColor,
                     num_colors as usize,
                 )
-            } as &'static [FramebufferColor];
+            } as &[FramebufferColor];
             FramebufferType::Indexed { palette }
         }
-        1 => {
+        FramebufferTypeId::RGB => {
             let red_pos = reader.read_u8(); // These refer to the bit positions of the LSB of each field
             let red_mask = reader.read_u8(); // And then the length of the field from LSB to MSB
             let green_pos = reader.read_u8();
@@ -123,16 +151,15 @@ pub fn framebuffer_tag(tag: &Tag) -> FramebufferTag {
                 },
             }
         }
-        2 => FramebufferType::Text,
-        _ => panic!("Unknown framebuffer type: {}", type_no),
+        FramebufferTypeId::Text => FramebufferType::Text,
     };
 
-    FramebufferTag {
+    Ok(FramebufferTag {
         address,
         pitch,
         width,
         height,
         bpp,
         buffer_type,
-    }
+    })
 }

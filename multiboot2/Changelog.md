@@ -1,5 +1,25 @@
 # CHANGELOG for crate `multiboot2`
 
+## 0.15.0 (2023-03-XX)
+- MSRV is 1.56.1
+- **BREAKING** fixed lifetime issues: `VBEInfoTag` is no longer `&static`
+- **BREAKING:** `TagType` is now split into `TagTypeId` and `TagType`
+  - `TagTypeId` is a binary-compatible form of a Multiboot2 tag id
+  - `TagType` is a higher-level abstraction for either specified or custom tags
+      but not ABI compatible.
+- fixed another internal lifetime issue
+- `BootInformation::framebuffer_tag()` now returns
+  `Option<Result<FramebufferTag, UnknownFramebufferType>>` instead of
+  `Option<FramebufferTag>` which prevents a possible panic. If the `--unstable`
+  feature is used, `UnknownFramebufferType` implements `core::error::Error`.
+- Fixed misleading documentation of the `BootInformation::efi_memory_map_tag`
+- `BootInformation` now publicly exports the `get_tag` function allowing you to
+  work with custom tags. An example is given in the function documentation.
+  (check docs.rs). There is also a small unit test that you can use to learn
+  from.
+- There exists a seamless integration between `u32`, `TagType`, and `TagTypeId`
+  via `From` and `PartialEq`-implementations.
+
 ## 0.14.2 (2023-03-17)
 - documentation fixes
 - `MbiLoadError` now implements `Display`
