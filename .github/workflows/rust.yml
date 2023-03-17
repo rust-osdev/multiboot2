@@ -80,3 +80,12 @@ jobs:
       rust-version: stable
       do-style-check: true
       do-test: false
+
+  style_nightly:
+    name: style (nightly)
+    needs: build_nightly
+    uses: ./.github/workflows/_build-rust.yml
+    with:
+      rust-version: nightly
+      do-style-check: true
+      do-test: false
