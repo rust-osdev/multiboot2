@@ -52,7 +52,8 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.rust-version }}
+          # We do not have a Cargo.lock here, so I hash Cargo.toml
+          key: ${{ runner.os }}-rust-${{ inputs.rust-version }}-cargo-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-${{ inputs.rust-version }}
       - run: cargo version
       - name: Code Formatting
