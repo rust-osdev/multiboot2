@@ -29,7 +29,7 @@ on:
         description: Whether tests should be executed.
 
 jobs:
-  build:
+  check_rust:
     runs-on: ubuntu-latest
     steps:
       - name: Check out
