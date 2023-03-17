@@ -15,66 +15,66 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build_multiboot2_msrv:
+  build_msrv:
     name: build (msrv)
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: 1.56.1
       do-style-check: false
 
-  build_multiboot2_stable:
+  build_stable:
     name: build (stable)
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: stable
       do-style-check: false
 
-  build_multiboot2_nightly:
+  build_nightly:
     name: build (nightly)
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: nightly
       do-style-check: false
 
-  build_nostd_multiboot2_msrv:
+  build_nostd_msrv:
     name: build no_std (msrv)
-    needs: build_multiboot2_msrv
+    needs: build_msrv
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: 1.56.1
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
 
-  build_nostd_multiboot2_stable:
+  build_nostd_stable:
     name: build no_std (stable)
-    needs: build_multiboot2_stable
+    needs: build_stable
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: stable
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
 
-  build_nostd_multiboot2_nightly:
+  build_nostd_nightly:
     name: build no_std (nightly)
-    needs: build_multiboot2_nightly
+    needs: build_nightly
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: nightly
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
 
-  style_multiboot2_msrv:
+  style_msrv:
     name: style (msrv)
-    needs: build_multiboot2_msrv
+    needs: build_msrv
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: 1.56.1
       do-style-check: true
       do-test: false
 
-  style_multiboot2_stable:
+  style_stable:
     name: style (stable)
-    needs: build_multiboot2_stable
+    needs: build_stable
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: stable
