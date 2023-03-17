@@ -56,13 +56,13 @@ jobs:
           key: ${{ runner.os }}-rust-${{ inputs.rust-version }}-cargo-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-${{ inputs.rust-version }}
       - run: cargo version
-      - name: Code Formatting
-        if: ${{ inputs.do-style-check }}
-        run: cargo fmt --all -- --check
       - name: Build (library)
         run: cargo build --target ${{ inputs.rust-target }}
       - name: Build (all targets)
         run: cargo build --all-targets
+      - name: Code Formatting
+        if: ${{ inputs.do-style-check }}
+        run: cargo fmt --all -- --check
       - name: Code Style and Doc Style
         if: ${{ inputs.do-style-check }}
         run: |
