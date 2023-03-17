@@ -40,7 +40,20 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v3
-      - name: Install Rust
+      - name: Set up rustup cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.rustup/downloads
+            ~/.rustup/toolchains
+          # key: ${{ runner.os }}-rustup-${{ inputs.rust-version }}-${{ inputs.rust-target }}-${{ hashFiles('**/rustup-toolchain.toml') }}
+          key: ${{ runner.os }}-rustup-${{ inputs.rust-version }}-${{ inputs.rust-target }}
+      # The effect of this is must smaller than the cache for Cargo. However, it
+      # still saves a few seconds. Note that many CI runs within a week may
+      # quickly bring you close to the 10GB limit:
+      # https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#managing-caches
+      - name: Install Rust Toolchain via Rustup
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -48,7 +61,7 @@ jobs:
           override: true
           components: clippy, rustfmt
           target: ${{ inputs.rust-target }}
-      - name: Set up cargo cache
+      - name: Set up Cargo cache
         uses: actions/cache@v3
         continue-on-error: false
         with:
@@ -60,7 +73,6 @@ jobs:
             target/
           # We do not have a Cargo.lock here, so I hash Cargo.toml
           key: ${{ runner.os }}-rust-${{ inputs.rust-version }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-${{ inputs.rust-version }}
       - run: cargo version
       - name: Build (library)
         run: cargo build --target ${{ inputs.rust-target }} --features ${{ inputs.features }}
