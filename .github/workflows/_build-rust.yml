@@ -17,16 +17,22 @@ on:
         required: false
         default: x86_64-unknown-linux-gnu
         description: Rust target for the build step. Clippy and tests are still executed with the default target.
+      features:
+        type: string
+        required: false
+        # Make sure we always an empty string to "--features <FEATURES>"
+        default: '""'
+        description: Comma-separated String with additional Rust features relevant for a certain job.
       do-style-check:
         type: boolean
         required: false
         default: true
-        description: Whether style checks should be done.
+        description: Perform code and doc style checks.
       do-test:
         type: boolean
         required: false
         default: true
-        description: Whether tests should be executed.
+        description: Execute tests.
 
 jobs:
   check_rust:
@@ -57,20 +63,20 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-${{ inputs.rust-version }}
       - run: cargo version
       - name: Build (library)
-        run: cargo build --target ${{ inputs.rust-target }}
+        run: cargo build --target ${{ inputs.rust-target }} --features ${{ inputs.features }}
       - name: Build (all targets)
-        run: cargo build --all-targets
+        run: cargo build --all-targets --features ${{ inputs.features }}
       - name: Code Formatting
         if: ${{ inputs.do-style-check }}
         run: cargo fmt --all -- --check
       - name: Code Style and Doc Style
         if: ${{ inputs.do-style-check }}
         run: |
-          cargo doc --document-private-items
-          cargo clippy --all-targets
+          cargo doc --document-private-items --features ${{ inputs.features }}
+          cargo clippy --all-targets --features ${{ inputs.features }}
       - name: Unit Test
         if: ${{ inputs.do-test }}
         run: |
           curl -LsSf https://get.nexte.st/latest/linux | tar zxf -
           chmod u+x cargo-nextest
-          ./cargo-nextest nextest run
+          ./cargo-nextest nextest run --features ${{ inputs.features }}
