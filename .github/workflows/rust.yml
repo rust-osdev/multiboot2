@@ -102,6 +102,6 @@ jobs:
       - name: Rustfmt
         run: cargo fmt -- --check
       - name: Clippy
-        run: cargo clippy
+        run: cargo clippy --all-targets
       - name: Rustdoc
-        run: cargo doc
+        run: cargo doc --document-private-items
