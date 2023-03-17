@@ -1,6 +1,6 @@
 # CHANGELOG for crate `multiboot2`
 
-## 0.14.2
+## 0.14.2 (2023-03-17)
 - documentation fixes
 - `MbiLoadError` now implements `Display`
 - Added the `unstable` feature, which enables nightly-only functionality.
