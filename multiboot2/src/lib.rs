@@ -40,6 +40,7 @@ extern crate std;
 use core::fmt;
 use derive_more::Display;
 
+use crate::framebuffer::UnknownFramebufferType;
 pub use boot_loader_name::BootLoaderNameTag;
 pub use command_line::CommandLineTag;
 pub use efi::{EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64};
@@ -244,8 +245,9 @@ impl BootInformation {
             .map(|tag| unsafe { &*(tag as *const Tag as *const CommandLineTag) })
     }
 
-    /// Search for the VBE framebuffer tag.
-    pub fn framebuffer_tag(&self) -> Option<FramebufferTag> {
+    /// Search for the VBE framebuffer tag. The result is `Some(Err(e))`, if the
+    /// framebuffer type is unknown, while the framebuffer tag is present.
+    pub fn framebuffer_tag(&self) -> Option<Result<FramebufferTag, UnknownFramebufferType>> {
         self.get_tag(TagType::Framebuffer)
             .map(framebuffer::framebuffer_tag)
     }
@@ -305,7 +307,7 @@ impl BootInformation {
     }
 
     /// Search for the VBE information tag.
-    pub fn vbe_info_tag(&self) -> Option<&'static VBEInfoTag> {
+    pub fn vbe_info_tag(&self) -> Option<&VBEInfoTag> {
         self.get_tag(TagType::Vbe)
             .map(|tag| unsafe { &*(tag as *const Tag as *const VBEInfoTag) })
     }
@@ -588,7 +590,7 @@ mod tests {
         use framebuffer::{FramebufferField, FramebufferTag, FramebufferType};
         assert_eq!(
             bi.framebuffer_tag(),
-            Some(FramebufferTag {
+            Some(Ok(FramebufferTag {
                 address: 4244635648,
                 pitch: 5120,
                 width: 1280,
@@ -608,7 +610,7 @@ mod tests {
                         size: 8
                     }
                 }
-            })
+            }))
         )
     }
 
@@ -643,7 +645,10 @@ mod tests {
         assert_eq!(bytes.0.len(), bi.total_size());
         use framebuffer::{FramebufferColor, FramebufferType};
         assert!(bi.framebuffer_tag().is_some());
-        let fbi = bi.framebuffer_tag().unwrap();
+        let fbi = bi
+            .framebuffer_tag()
+            .expect("Framebuffer info should be available")
+            .expect("Framebuffer info type should be valid");
         assert_eq!(fbi.address, 4244635648);
         assert_eq!(fbi.pitch, 5120);
         assert_eq!(fbi.width, 1280);
@@ -1255,7 +1260,10 @@ mod tests {
         );
 
         // Test the Framebuffer tag
-        let fbi = bi.framebuffer_tag().unwrap();
+        let fbi = bi
+            .framebuffer_tag()
+            .expect("Framebuffer info should be available")
+            .expect("Framebuffer info type should be valid");
         assert_eq!(fbi.address, 753664);
         assert_eq!(fbi.pitch, 160);
         assert_eq!(fbi.width, 80);
