@@ -16,28 +16,28 @@ env:
 
 jobs:
   build_multiboot2_msrv:
-    name: "build (msrv)"
+    name: build (msrv)
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: 1.56.1
       do-style-check: false
 
   build_multiboot2_stable:
-    name: "build (stable)"
+    name: build (stable)
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: stable
       do-style-check: false
 
   build_multiboot2_nightly:
-    name: "build (nightly)"
+    name: build (nightly)
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: nightly
       do-style-check: false
 
   build_nostd_multiboot2_msrv:
-    name: "build no_std (msrv)"
+    name: build no_std (msrv)
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: 1.56.1
@@ -45,7 +45,7 @@ jobs:
       rust-target: thumbv7em-none-eabihf
 
   build_nostd_multiboot2_stable:
-    name: "build no_std  (stable)"
+    name: build no_std (stable)
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: stable
@@ -53,7 +53,7 @@ jobs:
       rust-target: thumbv7em-none-eabihf
 
   build_nostd_multiboot2_nightly:
-    name: "build no_std  (nightly)"
+    name: build no_std (nightly)
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: nightly
@@ -61,7 +61,7 @@ jobs:
       rust-target: thumbv7em-none-eabihf
 
   style_multiboot2_msrv:
-    name: "style (msrv)"
+    name: style (msrv)
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: 1.56.1
@@ -69,7 +69,7 @@ jobs:
       do-test: false
 
   style_multiboot2_stable:
-    name: "style (stable)"
+    name: style (stable)
     uses: ./.github/workflows/_build-rust.yml
     with:
       rust-version: stable
