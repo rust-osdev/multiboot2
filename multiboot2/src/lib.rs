@@ -276,7 +276,10 @@ impl BootInformation {
             .map(|tag| unsafe { &*(tag as *const Tag as *const RsdpV2Tag) })
     }
 
-    /// Search for the EFI Memory map tag.
+    /// Search for the EFI Memory map tag, if the boot services were exited.
+    /// Otherwise, if the [`TagType::EfiBs`] tag is present, this returns `None`
+    /// as it is strictly recommended to get the memory map from the `uefi`
+    /// services.
     pub fn efi_memory_map_tag(&self) -> Option<&EFIMemoryMapTag> {
         // If the EFIBootServicesNotExited is present, then we should not use
         // the memory map, as it could still be in use.

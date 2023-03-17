@@ -8,6 +8,8 @@
   `Option<Result<FramebufferTag, UnknownFramebufferType>>` instead of
   `Option<FramebufferTag>` which prevents a possible panic. If the `--unstable`
   feature is used, `UnknownFramebufferType` implements `core::error::Error`.
+- Fixed misleading documentation of the `BootInformation::efi_memory_map_tag`
+  tag.
 
 ## 0.14.2 (2023-03-17)
 - documentation fixes
