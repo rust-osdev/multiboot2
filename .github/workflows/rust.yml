@@ -1,107 +1,77 @@
-name: Build
+# CI for the whole Cargo workspace. Although having two relatively independent
+# crates in this workspace (as they do not get released together, as for example
+# tokio with its sub crates), a PR for a certain CI may report errors in the
+# other workspace members. I think this is unfortunate. I've experimented with
+# CI runs per workspace member but the complexity in the end was not worth it.
+# Instead, it is the right thing that the CI always covers the whole repository
+# and that it is as stable as possible.
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+name: "Cargo workspace"
+
+# Run on every push (tag, branch) and pull_request
+on: [pull_request, push, workflow_dispatch]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # Regular build (with std) + test execution
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust:
-          - stable
-          - nightly
-          - 1.52.1 # MSVR
-    steps:
-      - uses: actions/checkout@v3
-      # Important preparation step: override the latest default Rust version in GitHub CI
-      # with the current value of the iteration in the "strategy.matrix.rust"-array.
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: default
-          toolchain: ${{ matrix.rust }}
-          override: true
-      # helps to identify if the right cargo version is actually used
-      - run: cargo version
-      - name: Build
-        run: cargo build --all-targets --verbose
-      - name: Run tests
-        run: cargo test --verbose
+  build_multiboot2_msrv:
+    name: "build (msrv)"
+    uses: ./.github/workflows/_build-rust.yml
+    with:
+      rust-version: 1.56.1
+      do-style-check: false
 
-  # no-std build without tests
-  build_no_std:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust:
-          - stable
-          - nightly
-          - 1.52.1 # MSVR
-    steps:
-      - uses: actions/checkout@v3
-      # Important preparation step: override the latest default Rust version in GitHub CI
-      # with the current value of the iteration in the "strategy.matrix.rust"-array.
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: default
-          toolchain: ${{ matrix.rust }}
-          override: true
-      # helps to identify if the right cargo version is actually used
-      - run: cargo version
-      - name: "Rustup: install some no_std target"
-        run: rustup target add thumbv7em-none-eabihf
-      - name: Build (no_std)
-        run: cargo build --target thumbv7em-none-eabihf
+  build_multiboot2_stable:
+    name: "build (stable)"
+    uses: ./.github/workflows/_build-rust.yml
+    with:
+      rust-version: stable
+      do-style-check: false
 
-  # Tests that the unstable feature, which requires nightly, builds.
-  build_unstable:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust:
-          - nightly
-    steps:
-      - uses: actions/checkout@v3
-      # Important preparation step: override the latest default Rust version in GitHub CI
-      # with the current value of the iteration in the "strategy.matrix.rust"-array.
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: default
-          toolchain: ${{ matrix.rust }}
-          override: true
-      - name: Build (unstable)
-        run: cargo build --all-targets --features unstable
-      - name: Test (unstable)
-        run: cargo test --all-targets --features unstable
+  build_multiboot2_nightly:
+    name: "build (nightly)"
+    uses: ./.github/workflows/_build-rust.yml
+    with:
+      rust-version: nightly
+      do-style-check: false
 
-  # As discussed, these tasks are optional for PRs.
-  style_checks:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust:
-          - 1.52.1 # MSVR
-    steps:
-      - uses: actions/checkout@v3
-      # Important preparation step: override the latest default Rust version in GitHub CI
-      # with the current value of the iteration in the "strategy.matrix.rust"-array.
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: default
-          toolchain: ${{ matrix.rust }}
-          override: true
-      # helps to identify if the right cargo version is actually used
-      - run: cargo version
-      - name: Rustfmt
-        run: cargo fmt -- --check
-      - name: Clippy
-        run: cargo clippy --all-targets
-      - name: Rustdoc
-        run: cargo doc --document-private-items
+  build_nostd_multiboot2_msrv:
+    name: "build no_std (msrv)"
+    uses: ./.github/workflows/_build-rust.yml
+    with:
+      rust-version: 1.56.1
+      do-style-check: false
+      rust-target: thumbv7em-none-eabihf
+
+  build_nostd_multiboot2_stable:
+    name: "build no_std  (stable)"
+    uses: ./.github/workflows/_build-rust.yml
+    with:
+      rust-version: stable
+      do-style-check: false
+      rust-target: thumbv7em-none-eabihf
+
+  build_nostd_multiboot2_nightly:
+    name: "build no_std  (nightly)"
+    uses: ./.github/workflows/_build-rust.yml
+    with:
+      rust-version: nightly
+      do-style-check: false
+      rust-target: thumbv7em-none-eabihf
+
+  style_multiboot2_msrv:
+    name: "style (msrv)"
+    uses: ./.github/workflows/_build-rust.yml
+    with:
+      rust-version: 1.56.1
+      do-style-check: true
+      do-test: false
+
+  style_multiboot2_stable:
+    name: "style (stable)"
+    uses: ./.github/workflows/_build-rust.yml
+    with:
+      rust-version: stable
+      do-style-check: true
+      do-test: false

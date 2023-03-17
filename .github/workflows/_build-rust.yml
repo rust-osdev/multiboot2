@@ -1,0 +1,75 @@
+# Reusable GitHub CI workflow:
+# More info: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_iduses
+
+# Common Rust CI setup that checkout the repo, installs the common toolchain
+# and set's up the cargo cache. It builds, tests, and lints the code.
+
+on:
+  workflow_call:
+    inputs:
+      rust-version:
+        type: string
+        required: false
+        default: stable
+        description: Rust version
+      rust-target:
+        type: string
+        required: false
+        default: x86_64-unknown-linux-gnu
+        description: Rust target for the build step. Clippy and tests are still executed with the default target.
+      do-style-check:
+        type: boolean
+        required: false
+        default: true
+        description: Whether style checks should be done.
+      do-test:
+        type: boolean
+        required: false
+        default: true
+        description: Whether tests should be executed.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ inputs.rust-version }}
+          override: true
+          components: clippy, rustfmt
+          target: ${{ inputs.rust-target }}
+      - name: Set up cargo cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - run: cargo version
+      - name: Code Formatting
+        if: ${{ inputs.do-style-check }}
+        run: cargo fmt --all -- --check
+      - name: Build (library)
+        run: cargo build --target ${{ inputs.rust-target }}
+      - name: Build (all targets)
+        run: cargo build --all-targets
+      - name: Code Style and Doc Style
+        if: ${{ inputs.do-style-check }}
+        run: |
+          cargo doc --document-private-items
+          cargo clippy --all-targets
+      - name: Unit Test
+        if: ${{ inputs.do-test }}
+        run: |
+          curl -LsSf https://get.nexte.st/latest/linux | tar zxf -
+          chmod u+x cargo-nextest
+          ./cargo-nextest nextest run

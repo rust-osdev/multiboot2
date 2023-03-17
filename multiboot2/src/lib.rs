@@ -7,7 +7,6 @@
 #![deny(clippy::all)]
 #![deny(rustdoc::all)]
 #![allow(rustdoc::private_doc_tests)]
-#![allow(rustdoc::missing_doc_code_examples)]
 // --- END STYLE CHECKS ---
 
 //! Library that helps you to parse the multiboot information structure (mbi) from
@@ -550,9 +549,8 @@ mod tests {
     }
 
     #[test]
-    /// Compile time test for `BootLoaderNameTag`.
+    /// Compile time test for [`BootLoaderNameTag`].
     fn name_tag_size() {
-        use BootLoaderNameTag;
         unsafe {
             core::mem::transmute::<[u8; 9], BootLoaderNameTag>([0u8; 9]);
         }
@@ -850,9 +848,8 @@ mod tests {
     }
 
     #[test]
-    /// Compile time test for `VBEInfoTag`.
+    /// Compile time test for [`VBEInfoTag`].
     fn vbe_info_tag_size() {
-        use VBEInfoTag;
         unsafe {
             // 16 for the start + 512 from `VBEControlInfo` + 256 from `VBEModeInfo`.
             core::mem::transmute::<[u8; 784], VBEInfoTag>([0u8; 784]);
@@ -1330,7 +1327,7 @@ mod tests {
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
-        assert_eq!(bytes.0.len(), bi.total_size() as usize);
+        assert_eq!(bytes.0.len(), bi.total_size());
         let es = bi.elf_sections_tag().unwrap();
         let mut s = es.sections();
         let s1 = s.next().unwrap();
@@ -1384,7 +1381,7 @@ mod tests {
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
-        assert_eq!(bytes.0.len(), bi.total_size() as usize);
+        assert_eq!(bytes.0.len(), bi.total_size());
         let efi_memory_map = bi.efi_memory_map_tag().unwrap();
         let mut efi_mmap_iter = efi_memory_map.memory_areas();
         let desc = efi_mmap_iter.next().unwrap();
