@@ -38,5 +38,5 @@ unstable = []
 
 [dependencies]
 bitflags = "1"
-derive_more = { version = "0.99.17", default-features = false, features = ["display"] }
-log = { version = "0.4.17", default-features = false }
+derive_more = { version = "0.99", default-features = false, features = ["display"] }
+log = { version = "0.4", default-features = false }
