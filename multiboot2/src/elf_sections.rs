@@ -1,6 +1,7 @@
 use crate::tag_type::Tag;
 use crate::TagType;
 use core::fmt::{Debug, Formatter};
+use core::str::Utf8Error;
 
 /// This tag contains section header table from an ELF kernel.
 ///
@@ -178,7 +179,13 @@ impl ElfSection {
             11 => ElfSectionType::DynamicLoaderSymbolTable,
             0x6000_0000..=0x6FFF_FFFF => ElfSectionType::EnvironmentSpecific,
             0x7000_0000..=0x7FFF_FFFF => ElfSectionType::ProcessorSpecific,
-            _ => panic!(),
+            e => {
+                log::warn!(
+                    "Unknown section type {:x}. Treating as ElfSectionType::Unused",
+                    e
+                );
+                ElfSectionType::Unused
+            }
         }
     }
 
@@ -188,7 +195,7 @@ impl ElfSection {
     }
 
     /// Read the name of the section.
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> Result<&str, Utf8Error> {
         use core::{slice, str};
 
         let name_ptr = unsafe { self.string_table().offset(self.get().name_index() as isize) };
@@ -202,7 +209,7 @@ impl ElfSection {
             len as usize
         };
 
-        str::from_utf8(unsafe { slice::from_raw_parts(name_ptr, strlen) }).unwrap()
+        str::from_utf8(unsafe { slice::from_raw_parts(name_ptr, strlen) })
     }
 
     /// Get the physical start address of the section.
@@ -246,7 +253,7 @@ impl ElfSection {
         match self.entry_size {
             40 => unsafe { &*(self.inner as *const ElfSectionInner32) },
             64 => unsafe { &*(self.inner as *const ElfSectionInner64) },
-            _ => panic!(),
+            s => panic!("Unexpected entry size: {}", s),
         }
     }
 
@@ -254,7 +261,7 @@ impl ElfSection {
         let addr = match self.entry_size {
             40 => (*(self.string_section as *const ElfSectionInner32)).addr as usize,
             64 => (*(self.string_section as *const ElfSectionInner64)).addr as usize,
-            _ => panic!(),
+            s => panic!("Unexpected entry size: {}", s),
         };
         (addr + self.offset) as *const _
     }
