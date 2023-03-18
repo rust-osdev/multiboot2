@@ -1,5 +1,16 @@
 # CHANGELOG for crate `multiboot2`
 
+## 0.15.1 (2023-03-18)
+- **BREAKING** `MemoryMapTag::all_memory_areas` was renamed to `memory_areas`
+  and now returns `MemoryAreaIter` instead of
+  `impl Iterator<Item = &MemoryArea>`. Experience showed that its better to
+  return the specific iterator whenever possible.
+- **BREAKING** `MemoryMapTag::memory_areas` was renamed to
+  `available_memory_areas`
+  (_Sorry for the breaking changes in a minor release, but I just stumbled upon
+  this und since the last breaking release was just yesterday, users have to
+  deal with changes anyway._)
+
 ## 0.15.0 (2023-03-17)
 - **BREAKING** MSRV is 1.56.1
 - **BREAKING** fixed lifetime issues: `VBEInfoTag` is no longer `&static`

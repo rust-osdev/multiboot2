@@ -1257,7 +1257,7 @@ mod tests {
         assert_eq!(ElfSectionFlags::empty(), s8.flags());
         assert_eq!(ElfSectionType::StringTable, s8.section_type());
         assert!(s.next().is_none());
-        let mut mm = bi.memory_map_tag().unwrap().memory_areas();
+        let mut mm = bi.memory_map_tag().unwrap().available_memory_areas();
         let mm1 = mm.next().unwrap();
         assert_eq!(0x00000000, mm1.start_address());
         assert_eq!(0x009_FC00, mm1.end_address());
