@@ -1188,15 +1188,15 @@ mod tests {
         assert_eq!(bytes.len(), bi.total_size());
         let es = bi.elf_sections_tag().unwrap();
         let mut s = es.sections();
-        let s1 = s.next().unwrap();
-        assert_eq!(".rodata", s1.name());
+        let s1 = s.next().expect("Should have one more section");
+        assert_eq!(".rodata", s1.name().expect("Should be valid utf-8"));
         assert_eq!(0xFFFF_8000_0010_0000, s1.start_address());
         assert_eq!(0xFFFF_8000_0010_3000, s1.end_address());
         assert_eq!(0x0000_0000_0000_3000, s1.size());
         assert_eq!(ElfSectionFlags::ALLOCATED, s1.flags());
         assert_eq!(ElfSectionType::ProgramSection, s1.section_type());
-        let s2 = s.next().unwrap();
-        assert_eq!(".text", s2.name());
+        let s2 = s.next().expect("Should have one more section");
+        assert_eq!(".text", s2.name().expect("Should be valid utf-8"));
         assert_eq!(0xFFFF_8000_0010_3000, s2.start_address());
         assert_eq!(0xFFFF_8000_0010_C000, s2.end_address());
         assert_eq!(0x0000_0000_0000_9000, s2.size());
@@ -1205,8 +1205,8 @@ mod tests {
             s2.flags()
         );
         assert_eq!(ElfSectionType::ProgramSection, s2.section_type());
-        let s3 = s.next().unwrap();
-        assert_eq!(".data", s3.name());
+        let s3 = s.next().expect("Should have one more section");
+        assert_eq!(".data", s3.name().expect("Should be valid utf-8"));
         assert_eq!(0xFFFF_8000_0010_C000, s3.start_address());
         assert_eq!(0xFFFF_8000_0010_E000, s3.end_address());
         assert_eq!(0x0000_0000_0000_2000, s3.size());
@@ -1215,8 +1215,8 @@ mod tests {
             s3.flags()
         );
         assert_eq!(ElfSectionType::ProgramSection, s3.section_type());
-        let s4 = s.next().unwrap();
-        assert_eq!(".bss", s4.name());
+        let s4 = s.next().expect("Should have one more section");
+        assert_eq!(".bss", s4.name().expect("Should be valid utf-8"));
         assert_eq!(0xFFFF_8000_0010_E000, s4.start_address());
         assert_eq!(0xFFFF_8000_0011_3000, s4.end_address());
         assert_eq!(0x0000_0000_0000_5000, s4.size());
@@ -1225,8 +1225,8 @@ mod tests {
             s4.flags()
         );
         assert_eq!(ElfSectionType::Uninitialized, s4.section_type());
-        let s5 = s.next().unwrap();
-        assert_eq!(".data.rel.ro", s5.name());
+        let s5 = s.next().expect("Should have one more section");
+        assert_eq!(".data.rel.ro", s5.name().expect("Should be valid utf-8"));
         assert_eq!(0xFFFF_8000_0011_3000, s5.start_address());
         assert_eq!(0xFFFF_8000_0011_3000, s5.end_address());
         assert_eq!(0x0000_0000_0000_0000, s5.size());
@@ -1235,22 +1235,22 @@ mod tests {
             s5.flags()
         );
         assert_eq!(ElfSectionType::ProgramSection, s5.section_type());
-        let s6 = s.next().unwrap();
-        assert_eq!(".symtab", s6.name());
+        let s6 = s.next().expect("Should have one more section");
+        assert_eq!(".symtab", s6.name().expect("Should be valid utf-8"));
         assert_eq!(0x0000_0000_0011_3000, s6.start_address());
         assert_eq!(0x0000_0000_0011_5BE0, s6.end_address());
         assert_eq!(0x0000_0000_0000_2BE0, s6.size());
         assert_eq!(ElfSectionFlags::empty(), s6.flags());
         assert_eq!(ElfSectionType::LinkerSymbolTable, s6.section_type());
-        let s7 = s.next().unwrap();
-        assert_eq!(".strtab", s7.name());
+        let s7 = s.next().expect("Should have one more section");
+        assert_eq!(".strtab", s7.name().expect("Should be valid utf-8"));
         assert_eq!(0x0000_0000_0011_5BE0, s7.start_address());
         assert_eq!(0x0000_0000_0011_9371, s7.end_address());
         assert_eq!(0x0000_0000_0000_3791, s7.size());
         assert_eq!(ElfSectionFlags::empty(), s7.flags());
         assert_eq!(ElfSectionType::StringTable, s7.section_type());
-        let s8 = s.next().unwrap();
-        assert_eq!(".shstrtab", s8.name());
+        let s8 = s.next().expect("Should have one more section");
+        assert_eq!(".shstrtab", s8.name().expect("Should be valid utf-8"));
         assert_eq!(string_addr, s8.start_address());
         assert_eq!(string_addr + string_bytes.len() as u64, s8.end_address());
         assert_eq!(string_bytes.len() as u64, s8.size());
@@ -1373,8 +1373,8 @@ mod tests {
         assert_eq!(bytes.0.len(), bi.total_size());
         let es = bi.elf_sections_tag().unwrap();
         let mut s = es.sections();
-        let s1 = s.next().unwrap();
-        assert_eq!(".shstrtab", s1.name());
+        let s1 = s.next().expect("Should have one more section");
+        assert_eq!(".shstrtab", s1.name().expect("Should be valid utf-8"));
         assert_eq!(string_addr, s1.start_address());
         assert_eq!(string_addr + string_bytes.0.len() as u64, s1.end_address());
         assert_eq!(string_bytes.0.len() as u64, s1.size());
