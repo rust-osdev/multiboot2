@@ -1,7 +1,8 @@
 use crate::{
     AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EndHeaderTag,
     EntryAddressHeaderTag, EntryEfi32HeaderTag, EntryEfi64HeaderTag, FramebufferHeaderTag,
-    HeaderTag, HeaderTagISA, HeaderTagType, InformationRequestHeaderTag, RelocatableHeaderTag,
+    HeaderTag, HeaderTagISA, HeaderTagType, InformationRequestHeaderTag, ModuleAlignHeaderTag,
+    RelocatableHeaderTag,
 };
 use core::convert::TryInto;
 use core::fmt::{Debug, Formatter};
@@ -109,6 +110,66 @@ impl<'a> Multiboot2Header<'a> {
     /// Wrapper around [`Multiboot2BasicHeader::calc_checksum`].
     pub const fn calc_checksum(magic: u32, arch: HeaderTagISA, length: u32) -> u32 {
         Multiboot2BasicHeader::calc_checksum(magic, arch, length)
+    }
+
+    /// Search for the address header tag.
+    pub fn address_tag(&self) -> Option<&AddressHeaderTag> {
+        self.get_tag(HeaderTagType::Address)
+            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const AddressHeaderTag) })
+    }
+
+    /// Search for the entry address header tag.
+    pub fn entry_address_tag(&self) -> Option<&EntryAddressHeaderTag> {
+        self.get_tag(HeaderTagType::EntryAddress)
+            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const EntryAddressHeaderTag) })
+    }
+
+    /// Search for the EFI32 entry address header tag.
+    pub fn entry_address_efi32_tag(&self) -> Option<&EntryEfi32HeaderTag> {
+        self.get_tag(HeaderTagType::EntryAddressEFI32)
+            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const EntryEfi32HeaderTag) })
+    }
+
+    /// Search for the EFI64 entry address header tag.
+    pub fn entry_address_efi64_tag(&self) -> Option<&EntryEfi64HeaderTag> {
+        self.get_tag(HeaderTagType::EntryAddressEFI64)
+            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const EntryEfi64HeaderTag) })
+    }
+
+    /// Search for the console flags header tag.
+    pub fn console_flags_tag(&self) -> Option<&ConsoleHeaderTag> {
+        self.get_tag(HeaderTagType::ConsoleFlags)
+            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const ConsoleHeaderTag) })
+    }
+
+    /// Search for the framebuffer header tag.
+    pub fn framebuffer_tag(&self) -> Option<&FramebufferHeaderTag> {
+        self.get_tag(HeaderTagType::Framebuffer)
+            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const FramebufferHeaderTag) })
+    }
+
+    /// Search for the module align header tag.
+    pub fn module_align_tag(&self) -> Option<&ModuleAlignHeaderTag> {
+        self.get_tag(HeaderTagType::ModuleAlign)
+            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const ModuleAlignHeaderTag) })
+    }
+
+    /// Search for the EFI Boot Services header tag.
+    pub fn efi_boot_services_tag(&self) -> Option<&EfiBootServiceHeaderTag> {
+        self.get_tag(HeaderTagType::EfiBS)
+            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const EfiBootServiceHeaderTag) })
+    }
+
+    /// Search for the EFI32 entry address header tag.
+    pub fn relocatable_tag(&self) -> Option<&RelocatableHeaderTag> {
+        self.get_tag(HeaderTagType::Relocatable)
+            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const RelocatableHeaderTag) })
+    }
+
+    fn get_tag(&self, typ: HeaderTagType) -> Option<&HeaderTag> {
+        self.iter()
+            .map(|tag| unsafe { tag.as_ref() }.unwrap())
+            .find(|tag| tag.typ() == typ)
     }
 }
 
