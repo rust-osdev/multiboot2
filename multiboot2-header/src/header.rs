@@ -397,6 +397,10 @@ impl Debug for Multiboot2HeaderTagIter {
                 let entry = t as *const EntryEfi64HeaderTag;
                 let entry = &*(entry);
                 debug.entry(entry);
+            } else if typ == HeaderTagType::ModuleAlign {
+                let entry = t as *const ModuleAlignHeaderTag;
+                let entry = &*(entry);
+                debug.entry(entry);
             } else if typ == HeaderTagType::Relocatable {
                 let entry = t as *const RelocatableHeaderTag;
                 let entry = &*(entry);
