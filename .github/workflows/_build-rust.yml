@@ -58,9 +58,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          # We do not have a Cargo.lock here, so I hash Cargo.toml
-          key: ${{ runner.os }}-rust-${{ inputs.rust-version }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-${{ inputs.rust-version }}
+          # Hash over Cargo.toml and Cargo.lock, as this might be copied to
+          # projects that do not have a Cargo.lock in their repository tree!
+          key: ${{ runner.os }}-rust-${{ inputs.rust-version }}-cargo-${{ hashFiles('**/Cargo.toml', '**/Cargo.lock') }}
       - run: cargo version
       - name: Build (library)
         run: cargo build --target ${{ inputs.rust-target }} --features ${{ inputs.features }}
