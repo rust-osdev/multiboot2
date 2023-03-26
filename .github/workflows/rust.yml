@@ -57,6 +57,20 @@ jobs:
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
 
+  # We perform one single run also in Windows. This should be sufficient to
+  # check that devs can also use this on Windows.
+  build_nostd_stable_windows:
+    name: build no_std (stable) [Windows]
+    uses: ./.github/workflows/_build-rust.yml
+    with:
+      runs-on: windows-latest
+      # Quirk for the Windows powershell and its handling of empty arguments.
+      features: >
+        '""'
+      rust-version: stable
+      do-style-check: false
+      rust-target: thumbv7em-none-eabihf
+
   build_nostd_nightly:
     name: build no_std (nightly)
     needs: build_nightly
