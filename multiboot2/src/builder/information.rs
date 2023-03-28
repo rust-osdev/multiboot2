@@ -2,7 +2,8 @@
 use crate::builder::traits::StructAsBytes;
 use crate::{
     BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag, EFISdt32,
-    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, MemoryMapTag, ModuleTag, SmbiosTag,
+    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, MemoryMapTag, ModuleTag, RsdpV1Tag,
+    RsdpV2Tag, SmbiosTag,
 };
 
 use alloc::boxed::Box;
@@ -23,6 +24,8 @@ pub struct Multiboot2InformationBuilder {
     module_tags: Vec<Box<ModuleTag>>,
     efisdt32: Option<EFISdt32>,
     efisdt64: Option<EFISdt64>,
+    rsdp_v1_tag: Option<RsdpV1Tag>,
+    rsdp_v2_tag: Option<RsdpV2Tag>,
     smbios_tags: Vec<Box<SmbiosTag>>,
 }
 
@@ -38,6 +41,8 @@ impl Multiboot2InformationBuilder {
             framebuffer_tag: None,
             memory_map_tag: None,
             module_tags: Vec::new(),
+            rsdp_v1_tag: None,
+            rsdp_v2_tag: None,
             smbios_tags: Vec::new(),
         }
     }
@@ -88,6 +93,12 @@ impl Multiboot2InformationBuilder {
             len += Self::size_or_up_aligned(tag.byte_size())
         }
         for tag in &self.module_tags {
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        if let Some(tag) = &self.rsdp_v1_tag {
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        if let Some(tag) = &self.rsdp_v2_tag {
             len += Self::size_or_up_aligned(tag.byte_size())
         }
         for tag in &self.smbios_tags {
@@ -150,6 +161,12 @@ impl Multiboot2InformationBuilder {
         for tag in self.module_tags {
             Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
         }
+        if let Some(tag) = self.rsdp_v1_tag.as_ref() {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.rsdp_v2_tag.as_ref() {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
         for tag in self.smbios_tags {
             Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
         }
@@ -193,6 +210,14 @@ impl Multiboot2InformationBuilder {
 
     pub fn add_module_tag(&mut self, module_tag: Box<ModuleTag>) {
         self.module_tags.push(module_tag);
+    }
+
+    pub fn rsdp_v1_tag(&mut self, rsdp_v1_tag: RsdpV1Tag) {
+        self.rsdp_v1_tag = Some(rsdp_v1_tag);
+    }
+
+    pub fn rsdp_v2_tag(&mut self, rsdp_v2_tag: RsdpV2Tag) {
+        self.rsdp_v2_tag = Some(rsdp_v2_tag);
     }
 
     pub fn add_smbios_tag(&mut self, smbios_tag: Box<SmbiosTag>) {
