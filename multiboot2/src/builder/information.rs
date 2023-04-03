@@ -1,8 +1,8 @@
 //! Exports item [`Multiboot2InformationBuilder`].
 use crate::builder::traits::StructAsBytes;
 use crate::{
-    BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag, EFISdt32,
-    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, MemoryMapTag, ModuleTag, RsdpV1Tag,
+    BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag, EFIMemoryMapTag,
+    EFISdt32, EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, MemoryMapTag, ModuleTag, RsdpV1Tag,
     RsdpV2Tag, SmbiosTag,
 };
 
@@ -18,6 +18,7 @@ pub struct Multiboot2InformationBuilder {
     basic_memory_info_tag: Option<BasicMemoryInfoTag>,
     boot_loader_name_tag: Option<Box<BootLoaderNameTag>>,
     command_line_tag: Option<Box<CommandLineTag>>,
+    efi_memory_map_tag: Option<Box<EFIMemoryMapTag>>,
     elf_sections_tag: Option<Box<ElfSectionsTag>>,
     framebuffer_tag: Option<Box<FramebufferTag>>,
     memory_map_tag: Option<Box<MemoryMapTag>>,
@@ -37,6 +38,7 @@ impl Multiboot2InformationBuilder {
             command_line_tag: None,
             efisdt32: None,
             efisdt64: None,
+            efi_memory_map_tag: None,
             elf_sections_tag: None,
             framebuffer_tag: None,
             memory_map_tag: None,
@@ -81,6 +83,9 @@ impl Multiboot2InformationBuilder {
             len += Self::size_or_up_aligned(tag.byte_size())
         }
         if let Some(tag) = &self.efisdt64 {
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        if let Some(tag) = &self.efi_memory_map_tag {
             len += Self::size_or_up_aligned(tag.byte_size())
         }
         if let Some(tag) = &self.elf_sections_tag {
@@ -149,6 +154,9 @@ impl Multiboot2InformationBuilder {
         if let Some(tag) = self.efisdt64.as_ref() {
             Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
         }
+        if let Some(tag) = self.efi_memory_map_tag.as_ref() {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
         if let Some(tag) = self.elf_sections_tag.as_ref() {
             Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
         }
@@ -194,6 +202,10 @@ impl Multiboot2InformationBuilder {
 
     pub fn efisdt64(&mut self, efisdt64: EFISdt64) {
         self.efisdt64 = Some(efisdt64);
+    }
+
+    pub fn efi_memory_map_tag(&mut self, efi_memory_map_tag: Box<EFIMemoryMapTag>) {
+        self.efi_memory_map_tag = Some(efi_memory_map_tag);
     }
 
     pub fn elf_sections_tag(&mut self, elf_sections_tag: Box<ElfSectionsTag>) {

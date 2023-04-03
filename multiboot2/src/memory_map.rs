@@ -233,38 +233,71 @@ impl Debug for BasicMemoryInfoTag {
     }
 }
 
+const EFI_METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
+
 /// EFI memory map as per EFI specification.
-#[derive(Debug)]
+#[derive(Debug, ptr_meta::Pointee)]
 #[repr(C)]
 pub struct EFIMemoryMapTag {
     typ: TagTypeId,
     size: u32,
     desc_size: u32,
     desc_version: u32,
-    first_desc: [EFIMemoryDesc; 0],
+    descs: [EFIMemoryDesc],
 }
 
 impl EFIMemoryMapTag {
+    #[cfg(feature = "builder")]
+    /// Create a new EFI memory map tag with the given memory descriptors.
+    /// Version and size can't be set because you're passing a slice of
+    /// EFIMemoryDescs, not the ones you might have gotten from the firmware.
+    pub fn new(descs: &[EFIMemoryDesc]) -> Box<Self> {
+        // update this when updating EFIMemoryDesc
+        const MEMORY_DESCRIPTOR_VERSION: u32 = 1;
+        let mut bytes = [
+            (mem::size_of::<EFIMemoryDesc>() as u32).to_le_bytes(),
+            MEMORY_DESCRIPTOR_VERSION.to_le_bytes(),
+        ]
+        .concat();
+        for desc in descs {
+            bytes.extend(desc.struct_as_bytes());
+        }
+        boxed_dst_tag(TagType::EfiMmap, bytes.as_slice())
+    }
+
     /// Return an iterator over ALL marked memory areas.
     ///
     /// This differs from `MemoryMapTag` as for UEFI, the OS needs some non-
     /// available memory areas for tables and such.
     pub fn memory_areas(&self) -> EFIMemoryAreaIter {
         let self_ptr = self as *const EFIMemoryMapTag;
-        let start_area = self.first_desc.as_ptr();
+        let start_area = (&self.descs[0]) as *const EFIMemoryDesc;
         EFIMemoryAreaIter {
             current_area: start_area as u64,
             // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
-            last_area: (self_ptr as u64
-                + (self.size as u64 - core::mem::size_of::<EFIMemoryMapTag>() as u64)),
+            last_area: (self_ptr as *const () as u64 + self.size as u64),
             entry_size: self.desc_size,
             phantom: PhantomData,
         }
     }
 }
 
+impl TagTrait for EFIMemoryMapTag {
+    fn dst_size(base_tag: &Tag) -> usize {
+        assert!(base_tag.size as usize >= EFI_METADATA_SIZE);
+        base_tag.size as usize - EFI_METADATA_SIZE
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for EFIMemoryMapTag {
+    fn byte_size(&self) -> usize {
+        self.size.try_into().unwrap()
+    }
+}
+
 /// EFI Boot Memory Map Descriptor
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(C)]
 pub struct EFIMemoryDesc {
     typ: u32,
@@ -273,6 +306,13 @@ pub struct EFIMemoryDesc {
     virt_addr: u64,
     num_pages: u64,
     attr: u64,
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for EFIMemoryDesc {
+    fn byte_size(&self) -> usize {
+        mem::size_of::<Self>()
+    }
 }
 
 /// An enum of possible reported region types.
@@ -329,6 +369,29 @@ pub enum EFIMemoryAreaType {
     EfiUnknown,
 }
 
+impl From<EFIMemoryAreaType> for u32 {
+    fn from(area: EFIMemoryAreaType) -> Self {
+        match area {
+            EFIMemoryAreaType::EfiReservedMemoryType => 0,
+            EFIMemoryAreaType::EfiLoaderCode => 1,
+            EFIMemoryAreaType::EfiLoaderData => 2,
+            EFIMemoryAreaType::EfiBootServicesCode => 3,
+            EFIMemoryAreaType::EfiBootServicesData => 4,
+            EFIMemoryAreaType::EfiRuntimeServicesCode => 5,
+            EFIMemoryAreaType::EfiRuntimeServicesData => 6,
+            EFIMemoryAreaType::EfiConventionalMemory => 7,
+            EFIMemoryAreaType::EfiUnusableMemory => 8,
+            EFIMemoryAreaType::EfiACPIReclaimMemory => 9,
+            EFIMemoryAreaType::EfiACPIMemoryNVS => 10,
+            EFIMemoryAreaType::EfiMemoryMappedIO => 11,
+            EFIMemoryAreaType::EfiMemoryMappedIOPortSpace => 12,
+            EFIMemoryAreaType::EfiPalCode => 13,
+            EFIMemoryAreaType::EfiPersistentMemory => 14,
+            EFIMemoryAreaType::EfiUnknown => panic!("unknown type"),
+        }
+    }
+}
+
 impl EFIMemoryDesc {
     /// The physical address of the memory region.
     pub fn physical_address(&self) -> u64 {
@@ -365,6 +428,19 @@ impl EFIMemoryDesc {
             13 => EFIMemoryAreaType::EfiPalCode,
             14 => EFIMemoryAreaType::EfiPersistentMemory,
             _ => EFIMemoryAreaType::EfiUnknown,
+        }
+    }
+}
+
+impl Default for EFIMemoryDesc {
+    fn default() -> Self {
+        Self {
+            typ: EFIMemoryAreaType::EfiReservedMemoryType.into(),
+            _padding: 0,
+            phys_addr: 0,
+            virt_addr: 0,
+            num_pages: 0,
+            attr: 0,
         }
     }
 }

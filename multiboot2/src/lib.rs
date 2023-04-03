@@ -1545,16 +1545,6 @@ mod tests {
     }
 
     #[test]
-    /// Compile time test for `EFIMemoryMapTag`.
-    fn efi_memory_map_tag_size() {
-        use super::EFIMemoryMapTag;
-        unsafe {
-            // `EFIMemoryMapTag` is 16 bytes without the 1st entry
-            core::mem::transmute::<[u8; 16], EFIMemoryMapTag>([0u8; 16]);
-        }
-    }
-
-    #[test]
     #[cfg(feature = "unstable")]
     /// This test succeeds if it compiles.
     fn mbi_load_error_implements_error() {
