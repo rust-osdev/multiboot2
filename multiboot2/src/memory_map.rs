@@ -330,6 +330,22 @@ impl EFIMemoryMapTag {
             phantom: PhantomData,
         }
     }
+
+    /// Return an iterator over ALL marked memory areas, mutably.
+    ///
+    /// This differs from `MemoryMapTag` as for UEFI, the OS needs some non-
+    /// available memory areas for tables and such.
+    pub fn memory_areas_mut(&mut self) -> EFIMemoryAreaIterMut {
+        let self_ptr = self as *mut EFIMemoryMapTag;
+        let start_area = (&mut self.descs[0]) as *mut EFIMemoryDesc;
+        EFIMemoryAreaIterMut {
+            current_area: start_area as u64,
+            // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
+            last_area: (self_ptr as *mut () as u64 + self.size as u64),
+            entry_size: self.desc_size,
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl TagTrait for EFIMemoryMapTag {
@@ -359,6 +375,28 @@ impl<'a> Iterator for EFIMemoryAreaIter<'a> {
             None
         } else {
             let area = unsafe { &*(self.current_area as *const EFIMemoryDesc) };
+            self.current_area += self.entry_size as u64;
+            Some(area)
+        }
+    }
+}
+
+/// An iterator over ALL EFI memory areas, mutably.
+#[derive(Clone, Debug)]
+pub struct EFIMemoryAreaIterMut<'a> {
+    current_area: u64,
+    last_area: u64,
+    entry_size: u32,
+    phantom: PhantomData<&'a mut EFIMemoryDesc>,
+}
+
+impl<'a> Iterator for EFIMemoryAreaIterMut<'a> {
+    type Item = &'a mut EFIMemoryDesc;
+    fn next(&mut self) -> Option<&'a mut EFIMemoryDesc> {
+        if self.current_area > self.last_area {
+            None
+        } else {
+            let area = unsafe { &mut *(self.current_area as *mut EFIMemoryDesc) };
             self.current_area += self.entry_size as u64;
             Some(area)
         }

@@ -527,6 +527,11 @@ impl<T: AsRef<BootInformationInner> + AsMut<BootInformationInner>> BootInformati
         self.get_tag_mut::<BasicMemoryInfoTag, _>(TagType::BasicMeminfo)
     }
 
+    /// Search for the EFI Memory map tag, return a mutable reference.
+    pub fn efi_memory_map_tag_mut(&mut self) -> Option<&mut EFIMemoryMapTag> {
+        self.get_tag_mut::<EFIMemoryMapTag, _>(TagType::EfiMmap)
+    }
+
     fn get_tag_mut<TagT: TagTrait + ?Sized, TagType: Into<TagTypeId>>(
         &mut self,
         typ: TagType,
