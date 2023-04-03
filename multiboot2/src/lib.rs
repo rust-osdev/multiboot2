@@ -57,8 +57,8 @@ pub use elf_sections::{
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
 pub use image_load_addr::ImageLoadPhysAddr;
 pub use memory_map::{
-    BasicMemoryInfoTag, EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea,
-    MemoryAreaIter, MemoryAreaType, MemoryMapTag,
+    BasicMemoryInfoTag, EFIBootServicesNotExited, EFIMemoryAreaType, EFIMemoryDesc,
+    EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType, MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};

@@ -449,8 +449,32 @@ impl Default for EFIMemoryDesc {
 #[derive(Debug)]
 #[repr(C)]
 pub struct EFIBootServicesNotExited {
-    typ: u32,
+    typ: TagTypeId,
     size: u32,
+}
+
+impl EFIBootServicesNotExited {
+    #[cfg(feature = "builder")]
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+#[cfg(feature = "builder")]
+impl Default for EFIBootServicesNotExited {
+    fn default() -> Self {
+        Self {
+            typ: TagType::EfiBs.into(),
+            size: mem::size_of::<Self>().try_into().unwrap(),
+        }
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for EFIBootServicesNotExited {
+    fn byte_size(&self) -> usize {
+        mem::size_of::<Self>()
+    }
 }
 
 /// An iterator over ALL EFI memory areas.
