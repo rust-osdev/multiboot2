@@ -2,8 +2,9 @@
 use crate::builder::traits::StructAsBytes;
 use crate::{
     BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag,
-    EFIBootServicesNotExited, EFIMemoryMapTag, EFISdt32, EFISdt64, ElfSectionsTag, EndTag,
-    FramebufferTag, MemoryMapTag, ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag,
+    EFIBootServicesNotExited, EFIImageHandle32, EFIImageHandle64, EFIMemoryMapTag, EFISdt32,
+    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, MemoryMapTag, ModuleTag, RsdpV1Tag,
+    RsdpV2Tag, SmbiosTag,
 };
 
 use alloc::boxed::Box;
@@ -19,6 +20,8 @@ pub struct Multiboot2InformationBuilder {
     boot_loader_name_tag: Option<Box<BootLoaderNameTag>>,
     command_line_tag: Option<Box<CommandLineTag>>,
     efi_boot_services_not_exited: Option<EFIBootServicesNotExited>,
+    efi_image_handle32: Option<EFIImageHandle32>,
+    efi_image_handle64: Option<EFIImageHandle64>,
     efi_memory_map_tag: Option<Box<EFIMemoryMapTag>>,
     elf_sections_tag: Option<Box<ElfSectionsTag>>,
     framebuffer_tag: Option<Box<FramebufferTag>>,
@@ -40,6 +43,8 @@ impl Multiboot2InformationBuilder {
             efisdt32: None,
             efisdt64: None,
             efi_boot_services_not_exited: None,
+            efi_image_handle32: None,
+            efi_image_handle64: None,
             efi_memory_map_tag: None,
             elf_sections_tag: None,
             framebuffer_tag: None,
@@ -88,6 +93,12 @@ impl Multiboot2InformationBuilder {
             len += Self::size_or_up_aligned(tag.byte_size())
         }
         if let Some(tag) = &self.efi_boot_services_not_exited {
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        if let Some(tag) = &self.efi_image_handle32 {
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        if let Some(tag) = &self.efi_image_handle64 {
             len += Self::size_or_up_aligned(tag.byte_size())
         }
         if let Some(tag) = &self.efi_memory_map_tag {
@@ -162,6 +173,12 @@ impl Multiboot2InformationBuilder {
         if let Some(tag) = self.efi_boot_services_not_exited.as_ref() {
             Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
         }
+        if let Some(tag) = self.efi_image_handle32.as_ref() {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.efi_image_handle64.as_ref() {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
         if let Some(tag) = self.efi_memory_map_tag.as_ref() {
             Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
         }
@@ -214,6 +231,14 @@ impl Multiboot2InformationBuilder {
 
     pub fn efi_boot_services_not_exited(&mut self) {
         self.efi_boot_services_not_exited = Some(EFIBootServicesNotExited::new());
+    }
+
+    pub fn efi_image_handle32(&mut self, efi_image_handle32: EFIImageHandle32) {
+        self.efi_image_handle32 = Some(efi_image_handle32);
+    }
+
+    pub fn efi_image_handle64(&mut self, efi_image_handle64: EFIImageHandle64) {
+        self.efi_image_handle64 = Some(efi_image_handle64);
     }
 
     pub fn efi_memory_map_tag(&mut self, efi_memory_map_tag: Box<EFIMemoryMapTag>) {

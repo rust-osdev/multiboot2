@@ -82,9 +82,25 @@ pub struct EFIImageHandle32 {
 }
 
 impl EFIImageHandle32 {
+    #[cfg(feature = "builder")]
+    pub fn new(pointer: u32) -> Self {
+        Self {
+            typ: TagType::Efi32Ih.into(),
+            size: size_of::<Self>().try_into().unwrap(),
+            pointer,
+        }
+    }
+
     /// Returns the physical address of the EFI image handle.
     pub fn image_handle(&self) -> usize {
         self.pointer as usize
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for EFIImageHandle32 {
+    fn byte_size(&self) -> usize {
+        size_of::<Self>()
     }
 }
 
@@ -98,15 +114,31 @@ pub struct EFIImageHandle64 {
 }
 
 impl EFIImageHandle64 {
+    #[cfg(feature = "builder")]
+    pub fn new(pointer: u64) -> Self {
+        Self {
+            typ: TagType::Efi64Ih.into(),
+            size: size_of::<Self>().try_into().unwrap(),
+            pointer,
+        }
+    }
+
     /// Returns the physical address of the EFI image handle.
     pub fn image_handle(&self) -> usize {
         self.pointer as usize
     }
 }
 
+#[cfg(feature = "builder")]
+impl StructAsBytes for EFIImageHandle64 {
+    fn byte_size(&self) -> usize {
+        size_of::<Self>()
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{EFISdt32, EFISdt64};
+    use super::{EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64};
 
     const ADDR: usize = 0xABCDEF;
 
@@ -120,5 +152,17 @@ mod tests {
     fn test_build_eftsdt64() {
         let tag = EFISdt64::new(ADDR.try_into().unwrap());
         assert_eq!(tag.sdt_address(), ADDR);
+    }
+
+    #[test]
+    fn test_build_eftih32() {
+        let tag = EFIImageHandle32::new(ADDR.try_into().unwrap());
+        assert_eq!(tag.image_handle(), ADDR);
+    }
+
+    #[test]
+    fn test_build_eftih64() {
+        let tag = EFIImageHandle32::new(ADDR.try_into().unwrap());
+        assert_eq!(tag.image_handle(), ADDR);
     }
 }
