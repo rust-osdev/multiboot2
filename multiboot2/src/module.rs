@@ -159,4 +159,15 @@ mod tests {
         assert_eq!({ tag.typ }, TagType::Module);
         assert_eq!(tag.cmdline().expect("must be valid UTF-8"), MSG);
     }
+
+    /// Test to generate a tag from a given string.
+    #[test]
+    #[cfg(feature = "builder")]
+    fn test_build_str() {
+        use crate::builder::traits::StructAsBytes;
+
+        let tag = ModuleTag::new(0, 0, MSG);
+        let bytes = tag.struct_as_bytes();
+        assert_eq!(bytes, get_bytes());
+    }
 }

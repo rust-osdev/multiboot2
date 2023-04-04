@@ -3,8 +3,8 @@ use crate::builder::traits::StructAsBytes;
 use crate::{
     BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag,
     EFIBootServicesNotExited, EFIImageHandle32, EFIImageHandle64, EFIMemoryMapTag, EFISdt32,
-    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, MemoryMapTag, ModuleTag, RsdpV1Tag,
-    RsdpV2Tag, SmbiosTag,
+    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddr, MemoryMapTag, ModuleTag,
+    RsdpV1Tag, RsdpV2Tag, SmbiosTag,
 };
 
 use alloc::boxed::Box;
@@ -25,6 +25,7 @@ pub struct Multiboot2InformationBuilder {
     efi_memory_map_tag: Option<Box<EFIMemoryMapTag>>,
     elf_sections_tag: Option<Box<ElfSectionsTag>>,
     framebuffer_tag: Option<Box<FramebufferTag>>,
+    image_load_addr: Option<ImageLoadPhysAddr>,
     memory_map_tag: Option<Box<MemoryMapTag>>,
     module_tags: Vec<Box<ModuleTag>>,
     efisdt32: Option<EFISdt32>,
@@ -48,6 +49,7 @@ impl Multiboot2InformationBuilder {
             efi_memory_map_tag: None,
             elf_sections_tag: None,
             framebuffer_tag: None,
+            image_load_addr: None,
             memory_map_tag: None,
             module_tags: Vec::new(),
             rsdp_v1_tag: None,
@@ -108,6 +110,9 @@ impl Multiboot2InformationBuilder {
             len += Self::size_or_up_aligned(tag.byte_size())
         }
         if let Some(tag) = &self.framebuffer_tag {
+            len += Self::size_or_up_aligned(tag.byte_size())
+        }
+        if let Some(tag) = &self.image_load_addr {
             len += Self::size_or_up_aligned(tag.byte_size())
         }
         if let Some(tag) = &self.memory_map_tag {
@@ -188,6 +193,9 @@ impl Multiboot2InformationBuilder {
         if let Some(tag) = self.framebuffer_tag.as_ref() {
             Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
         }
+        if let Some(tag) = self.image_load_addr.as_ref() {
+            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        }
         if let Some(tag) = self.memory_map_tag.as_ref() {
             Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
         }
@@ -251,6 +259,10 @@ impl Multiboot2InformationBuilder {
 
     pub fn framebuffer_tag(&mut self, framebuffer_tag: Box<FramebufferTag>) {
         self.framebuffer_tag = Some(framebuffer_tag);
+    }
+
+    pub fn image_load_addr(&mut self, image_load_addr: ImageLoadPhysAddr) {
+        self.image_load_addr = Some(image_load_addr);
     }
 
     pub fn memory_map_tag(&mut self, memory_map_tag: Box<MemoryMapTag>) {
