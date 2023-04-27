@@ -40,3 +40,4 @@ unstable = []
 bitflags = "1"
 derive_more = { version = "0.99", default-features = false, features = ["display"] }
 log = { version = "0.4", default-features = false }
+ptr_meta = { version = "0.2.0", default-features = false }
