@@ -62,25 +62,51 @@ impl<'a> Multiboot2Header<'a> {
     }
 
     /// Find the header in a given slice.
-    pub fn find_header(buffer: &[u8]) -> Option<(&[u8], u32)> {
+    ///
+    /// If it succeeds, it returns a tuple consisting of the subslice containing
+    /// just the header and the index of the header in the given slice.
+    /// If it fails (either because the header is not properply 64-bit aligned
+    /// or because it is truncated), it returns a [`BufError`].
+    /// If there is no header, it returns `None`.
+    pub fn find_header(buffer: &[u8]) -> Result<Option<(&[u8], u32)>, BufError> {
         // the magic is 32 bit aligned and inside the first 8192 bytes
         assert!(buffer.len() >= 8192);
-        let mut chunks = buffer[0..8192].chunks_exact(4);
-        let magic_index = match chunks.position(|vals| {
+        let mut windows = buffer[0..8192].windows(4);
+        let magic_index = match windows.position(|vals| {
             u32::from_le_bytes(vals.try_into().unwrap()) // yes, there's 4 bytes here
             == MULTIBOOT2_HEADER_MAGIC
         }) {
-            Some(idx) => idx * 4,
-            None => return None,
+            Some(idx) => {
+                if idx % 8 == 0 {
+                    idx
+                } else {
+                    return Err(BufError::Unaligned);
+                }
+            }
+            None => return Ok(None),
         };
-        chunks.next(); // arch
-        let header_length: usize = u32::from_le_bytes(chunks.next().unwrap().try_into().unwrap())
-            .try_into()
-            .unwrap();
-        Some((
+        // skip over rest of magic
+        windows.next();
+        windows.next();
+        windows.next();
+        // arch
+        windows.next();
+        windows.next();
+        windows.next();
+        windows.next();
+        let header_length: usize = u32::from_le_bytes(
+            windows
+                .next()
+                .ok_or(BufError::TooSmall)?
+                .try_into()
+                .unwrap(), // 4 bytes are a u32
+        )
+        .try_into()
+        .unwrap();
+        Ok(Some((
             &buffer[magic_index..magic_index + header_length],
             magic_index as u32,
-        ))
+        )))
     }
 
     /// Wrapper around [`Multiboot2BasicHeader::verify_checksum`].
@@ -179,6 +205,16 @@ impl<'a> Debug for Multiboot2Header<'a> {
         let reference = unsafe { &*(self.inner as *const Multiboot2BasicHeader) };
         Debug::fmt(reference, f)
     }
+}
+
+/// Errors that can occur when parsing a header from a slice.
+/// See [`Multiboot2Header::find_header`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BufError {
+    /// The header in the given slice is truncated.
+    TooSmall,
+    /// The header in the given slice is not properly 64-bit aligned.
+    Unaligned,
 }
 
 /// **Use this only if you know what you do. You probably want to use
