@@ -23,12 +23,10 @@ pub struct Multiboot2Header<'a> {
 }
 
 impl<'a> Multiboot2Header<'a> {
-    /// Public constructor for this type with various validations. It panics if the address is invalid.
-    /// It panics rather than returning a result, because if this fails, it is
-    /// a fatal, unrecoverable error anyways and a bug in your code.
+    /// Public constructor for this type with various validations.
     ///
-    /// # Panics
-    /// Panics if one of the following conditions is true:
+    /// If the header is invalid, it returns a [`LoadError`].
+    /// This may be because:
     /// - `addr` is a null-pointer
     /// - `addr` isn't 8-byte aligned
     /// - the magic value of the header is not present
@@ -37,28 +35,21 @@ impl<'a> Multiboot2Header<'a> {
     /// # Safety
     /// This function may produce undefined behaviour, if the provided `addr` is not a valid
     /// Multiboot2 header pointer.
-    pub unsafe fn from_addr(addr: usize) -> Self {
-        assert_ne!(0, addr, "`addr` is null pointer");
-        assert_eq!(
-            addr % 8,
-            0,
-            "`addr` must be 8-byte aligned, see Multiboot2 spec"
-        );
+    // This function can be `const` on newer Rust versions.
+    #[allow(clippy::missing_const_for_fn)]
+    pub unsafe fn from_addr(addr: usize) -> Result<Self, LoadError> {
+        if addr == 0 || addr % 8 != 0 {
+            return Err(LoadError::InvalidAddress);
+        }
         let ptr = addr as *const Multiboot2BasicHeader;
         let reference = &*ptr;
-        assert_eq!(
-            reference.header_magic(),
-            MULTIBOOT2_HEADER_MAGIC,
-            "The Multiboot2 header must contain the MULTIBOOT2_HEADER_MAGIC={:x}",
-            MULTIBOOT2_HEADER_MAGIC
-        );
-        assert!(
-            reference.verify_checksum(),
-            "checksum invalid! Is {:x}, expected {:x}",
-            reference.checksum(),
-            Self::calc_checksum(reference.header_magic, reference.arch, reference.length)
-        );
-        Self { inner: reference }
+        if reference.header_magic() != MULTIBOOT2_HEADER_MAGIC {
+            return Err(LoadError::MagicNotFound);
+        }
+        if !reference.verify_checksum() {
+            return Err(LoadError::ChecksumMismatch);
+        }
+        Ok(Self { inner: reference })
     }
 
     /// Find the header in a given slice.
@@ -66,9 +57,9 @@ impl<'a> Multiboot2Header<'a> {
     /// If it succeeds, it returns a tuple consisting of the subslice containing
     /// just the header and the index of the header in the given slice.
     /// If it fails (either because the header is not properply 64-bit aligned
-    /// or because it is truncated), it returns a [`BufError`].
+    /// or because it is truncated), it returns a [`LoadError`].
     /// If there is no header, it returns `None`.
-    pub fn find_header(buffer: &[u8]) -> Result<Option<(&[u8], u32)>, BufError> {
+    pub fn find_header(buffer: &[u8]) -> Result<Option<(&[u8], u32)>, LoadError> {
         // the magic is 32 bit aligned and inside the first 8192 bytes
         assert!(buffer.len() >= 8192);
         let mut windows = buffer[0..8192].windows(4);
@@ -80,7 +71,7 @@ impl<'a> Multiboot2Header<'a> {
                 if idx % 8 == 0 {
                     idx
                 } else {
-                    return Err(BufError::Unaligned);
+                    return Err(LoadError::InvalidAddress);
                 }
             }
             None => return Ok(None),
@@ -97,7 +88,7 @@ impl<'a> Multiboot2Header<'a> {
         let header_length: usize = u32::from_le_bytes(
             windows
                 .next()
-                .ok_or(BufError::TooSmall)?
+                .ok_or(LoadError::TooSmall)?
                 .try_into()
                 .unwrap(), // 4 bytes are a u32
         )
@@ -210,11 +201,15 @@ impl<'a> Debug for Multiboot2Header<'a> {
 /// Errors that can occur when parsing a header from a slice.
 /// See [`Multiboot2Header::find_header`].
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BufError {
-    /// The header in the given slice is truncated.
+pub enum LoadError {
+    /// The checksum does not match the data.
+    ChecksumMismatch,
+    /// The header is not properly 64-bit aligned (or a null pointer).
+    InvalidAddress,
+    /// The header does not contain the correct magic number.
+    MagicNotFound,
+    /// The header is truncated.
     TooSmall,
-    /// The header in the given slice is not properly 64-bit aligned.
-    Unaligned,
 }
 
 /// **Use this only if you know what you do. You probably want to use
