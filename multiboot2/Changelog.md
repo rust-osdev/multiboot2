@@ -1,5 +1,12 @@
 # CHANGELOG for crate `multiboot2`
 
+## unreleased
+- Add `TagTrait` trait which enables to use DSTs as multiboot2 tags. This is
+  mostly relevant for the command line tag, the modules tag, and the bootloader
+  name tag. However, this might also be relevant for users of custom multiboot2
+  tags that use DSTs as types. See the example provided in the doc of the
+  `get_tag` method.
+
 ## 0.15.1 (2023-03-18)
 - **BREAKING** `MemoryMapTag::all_memory_areas()` was renamed to `memory_areas`
   and now returns `MemoryAreaIter` instead of

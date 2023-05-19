@@ -39,6 +39,8 @@ extern crate std;
 
 use core::fmt;
 use derive_more::Display;
+// Must be public so that custom tags can be DSTs.
+pub use ptr_meta::Pointee;
 
 use crate::framebuffer::UnknownFramebufferType;
 pub use boot_loader_name::BootLoaderNameTag;
@@ -319,39 +321,55 @@ impl BootInformation {
     /// [`Self::efi_64_ih`].
     ///
     /// ## Use Custom Tags
-    /// The following example shows how you may use this interface to parse custom tags from
-    /// the MBI. Custom tags must be `Sized`. Hence, they are not allowed to contain a field such
-    /// as `name: [u8]`.
+    /// The following example shows how you may use this interface to parse
+    /// custom tags from the MBI. If they are dynamically sized (DST), a few more
+    /// special handling is required. This is reflected by code-comments.
     ///
-    /// **Belows example needs Rust 1.64 or newer because of std::ffi imports!**
-    /// ```ignore
-    /// use std::ffi::{c_char, CStr};
-    /// use multiboot2::TagTypeId;
+    /// ```no_run
+    /// use std::str::Utf8Error;
+    /// use multiboot2::{Tag, TagTrait, TagTypeId};
     ///
     /// #[repr(C, align(8))]
-    ///     struct CustomTag {
+    /// #[derive(multiboot2::Pointee)] // Only needed for DSTs.
+    /// struct CustomTag {
     ///     // new type from the lib: has repr(u32)
     ///     tag: TagTypeId,
     ///     size: u32,
     ///     // begin of inline string
-    ///     name: u8,
+    ///     name: [u8],
+    /// }
+    ///
+    /// // This implementation is only necessary for tags that are DSTs.
+    /// impl TagTrait for CustomTag {
+    ///     fn dst_size(base_tag: &Tag) -> usize {
+    ///         // The size of the sized portion of the custom tag.
+    ///         let tag_base_size = 8; // id + size is 8 byte in size
+    ///         assert!(base_tag.size >= 8);
+    ///         base_tag.size as usize - tag_base_size
+    ///     }
+    /// }
+    ///
+    /// impl CustomTag {
+    ///     fn name(&self) -> Result<&str, Utf8Error> {
+    ///         Tag::get_dst_str_slice(&self.name)
+    ///     }
     /// }
     ///
     /// let mbi = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
     ///
     /// let tag = mbi
-    ///     // type definition from end user; must be `Sized`!
     ///     .get_tag::<CustomTag, _>(0x1337)
     ///     .unwrap();
-    /// let name = &tag.name as *const u8 as *const c_char;
-    /// let str = unsafe { CStr::from_ptr(name).to_str().unwrap() };
-    /// assert_eq!(str, "name");
+    /// assert_eq!(tag.name(), Ok("name"));
     /// ```
-    pub fn get_tag<Tag, TagType: Into<TagTypeId>>(&self, typ: TagType) -> Option<&Tag> {
+    pub fn get_tag<TagT: TagTrait + ?Sized, TagType: Into<TagTypeId>>(
+        &self,
+        typ: TagType,
+    ) -> Option<&TagT> {
         let typ = typ.into();
         self.tags()
             .find(|tag| tag.typ == typ)
-            .map(|tag| tag.cast_tag::<Tag>())
+            .map(|tag| tag.cast_tag::<TagT>())
     }
 
     fn tags(&self) -> TagIter {
@@ -476,10 +494,60 @@ impl Reader {
     }
 }
 
+/// A trait to abstract over all sized and unsized tags (DSTs). For sized tags,
+/// this trait does not much. For DSTs, a `TagTrait::dst_size` implementation
+/// must me provided, which returns the right size hint for the dynamically
+/// sized portion of the struct.
+///
+/// The [`TagTrait::from_base_tag`] method has a default implementation for all
+/// tags that are `Sized`.
+///
+/// # Trivia
+/// This crate uses the [`Pointee`]-abstraction of the [`ptr_meta`] crate to
+/// create fat pointers.
+pub trait TagTrait: Pointee {
+    /// Returns
+    fn dst_size(base_tag: &Tag) -> Self::Metadata;
+
+    /// Creates a reference to a (dynamically sized) tag type in a safe way.
+    /// DST tags need to implement a proper [`Self::dst_size`] implementation.
+    ///
+    /// # Safety
+    /// Callers must be sure that the "size" field of the provided [`Tag`] is
+    /// sane and the underlying memory valid. The implementation of this trait
+    /// **must have** a correct [`Self::dst_size`] implementation.
+    unsafe fn from_base_tag<'a>(tag: &Tag) -> &'a Self {
+        let ptr = tag as *const _ as *const ();
+        let ptr = ptr_meta::from_raw_parts(ptr, Self::dst_size(tag));
+        &*ptr
+    }
+}
+
+// All sized tags automatically have a Pointee implementation where
+// Pointee::Metadata is (). Hence, the TagTrait is implemented automatically for
+// all tags that are sized.
+impl<T: Pointee<Metadata = ()>> TagTrait for T {
+    #[allow(clippy::unused_unit)]
+    fn dst_size(_: &Tag) -> Self::Metadata {
+        ()
+    }
+}
+
+/* TODO doesn't work, missing support in Rust (so far):
+ https://github.com/rust-lang/rust/issues/20400
+    fn dst_size(base_tag: &Tag) -> usize {
+        // The size of the sized portion of the module tag.
+        let tag_base_size = 16;
+        assert!(base_tag.size >= 8);
+        base_tag.size as usize - tag_base_size
+    }
+}
+*/
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{mem, slice};
+    use core::str::Utf8Error;
 
     #[test]
     fn no_tags() {
@@ -583,14 +651,6 @@ mod tests {
                 .expect("must be valid utf8")
         );
         assert!(bi.command_line_tag().is_none());
-    }
-
-    #[test]
-    /// Compile time test for [`BootLoaderNameTag`].
-    fn name_tag_size() {
-        unsafe {
-            core::mem::transmute::<[u8; 9], BootLoaderNameTag>([0u8; 9]);
-        }
     }
 
     #[test]
@@ -1490,46 +1550,54 @@ mod tests {
         consumer(MbiLoadError::IllegalAddress)
     }
 
+    /// Example for a custom tag.
     #[test]
-    fn custom_tag() {
+    fn get_custom_tag_from_mbi() {
         const CUSTOM_TAG_ID: u32 = 0x1337;
 
         #[repr(C, align(8))]
-        struct Bytes([u8; 32]);
-        let bytes: Bytes = Bytes([
+        struct CustomTag {
+            tag: TagTypeId,
+            size: u32,
+            foo: u32,
+        }
+
+        #[repr(C, align(8))]
+        struct AlignedBytes([u8; 32]);
+        // Raw bytes of a MBI that only contains the custom tag.
+        let bytes: AlignedBytes = AlignedBytes([
             32,
             0,
             0,
-            0, // total_size
+            0, // end: total size
             0,
             0,
             0,
-            0, // reserved
-            // my custom tag
+            0, // end: padding; end of multiboot2 boot information begin
             CUSTOM_TAG_ID.to_ne_bytes()[0],
             CUSTOM_TAG_ID.to_ne_bytes()[1],
             CUSTOM_TAG_ID.to_ne_bytes()[2],
-            CUSTOM_TAG_ID.to_ne_bytes()[3],
-            13,
+            CUSTOM_TAG_ID.to_ne_bytes()[3], // end: my custom tag id
+            12,
             0,
             0,
-            0, // tag size
-            110,
-            97,
-            109,
-            101, // ASCII string 'name'
+            0, // end: tag size
+            42,
             0,
             0,
             0,
-            0, // null byte + padding
             0,
             0,
             0,
-            0, // end tag type
+            0, // 8 byte padding
+            0,
+            0,
+            0,
+            0, // end: end tag type
             8,
             0,
             0,
-            0, // end tag size
+            0, // end: end tag size
         ]);
         let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
@@ -1538,20 +1606,84 @@ mod tests {
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
 
+        let tag = bi.get_tag::<CustomTag, _>(CUSTOM_TAG_ID).unwrap();
+        assert_eq!(tag.foo, 42);
+    }
+
+    /// Example for a custom DST tag.
+    #[test]
+    fn get_custom_dst_tag_from_mbi() {
+        const CUSTOM_TAG_ID: u32 = 0x1337;
+
         #[repr(C, align(8))]
+        #[derive(crate::Pointee)]
         struct CustomTag {
             tag: TagTypeId,
             size: u32,
-            name: u8,
+            name: [u8],
         }
 
-        let tag = bi.get_tag::<CustomTag, _>(CUSTOM_TAG_ID).unwrap();
+        impl CustomTag {
+            fn name(&self) -> Result<&str, Utf8Error> {
+                Tag::get_dst_str_slice(&self.name)
+            }
+        }
 
-        // strlen without null byte
-        let strlen = tag.size as usize - mem::size_of::<CommandLineTag>();
-        let bytes = unsafe { slice::from_raw_parts((&tag.name) as *const u8, strlen) };
-        let name = core::str::from_utf8(bytes).unwrap();
-        assert_eq!(name, "name");
+        impl TagTrait for CustomTag {
+            fn dst_size(base_tag: &Tag) -> usize {
+                // The size of the sized portion of the command line tag.
+                let tag_base_size = 8;
+                assert!(base_tag.size >= 8);
+                base_tag.size as usize - tag_base_size
+            }
+        }
+
+        #[repr(C, align(8))]
+        struct AlignedBytes([u8; 32]);
+        // Raw bytes of a MBI that only contains the custom tag.
+        let bytes: AlignedBytes = AlignedBytes([
+            32,
+            0,
+            0,
+            0, // end: total size
+            0,
+            0,
+            0,
+            0, // end: padding; end of multiboot2 boot information begin
+            CUSTOM_TAG_ID.to_ne_bytes()[0],
+            CUSTOM_TAG_ID.to_ne_bytes()[1],
+            CUSTOM_TAG_ID.to_ne_bytes()[2],
+            CUSTOM_TAG_ID.to_ne_bytes()[3], // end: my custom tag id
+            14,
+            0,
+            0,
+            0, // end: tag size
+            b'h',
+            b'e',
+            b'l',
+            b'l',
+            b'o',
+            b'\0',
+            0,
+            0, // 2 byte padding
+            0,
+            0,
+            0,
+            0, // end: end tag type
+            8,
+            0,
+            0,
+            0, // end: end tag size
+        ]);
+        let addr = bytes.0.as_ptr() as usize;
+        let bi = unsafe { load(addr) };
+        let bi = bi.unwrap();
+        assert_eq!(addr, bi.start_address());
+        assert_eq!(addr + bytes.0.len(), bi.end_address());
+        assert_eq!(bytes.0.len(), bi.total_size());
+
+        let tag = bi.get_tag::<CustomTag, _>(CUSTOM_TAG_ID).unwrap();
+        assert_eq!(tag.name(), Ok("hello"));
     }
 
     /// Tests that `get_tag` can consume multiple types that implement `Into<TagTypeId>`

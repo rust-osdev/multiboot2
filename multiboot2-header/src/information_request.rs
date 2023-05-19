@@ -98,6 +98,7 @@ pub struct InformationRequestHeaderTagIter<'a> {
 
 impl<'a> InformationRequestHeaderTagIter<'a> {
     fn new(count: u32, base_ptr: *const MbiTagType) -> Self {
+        #[allow(clippy::default_constructed_unit_structs)]
         Self {
             i: 0,
             count,

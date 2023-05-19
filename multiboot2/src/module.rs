@@ -1,35 +1,32 @@
 use crate::tag_type::{Tag, TagIter, TagType};
+use crate::TagTrait;
 use crate::TagTypeId;
 use core::fmt::{Debug, Formatter};
 use core::str::Utf8Error;
 
 /// This tag indicates to the kernel what boot module was loaded along with
 /// the kernel image, and where it can be found.
-#[derive(Clone, Copy)]
 #[repr(C, packed)] // only repr(C) would add unwanted padding near name_byte.
+#[derive(ptr_meta::Pointee)]
 pub struct ModuleTag {
     typ: TagTypeId,
     size: u32,
     mod_start: u32,
     mod_end: u32,
     /// Null-terminated UTF-8 string
-    cmdline_str: u8,
+    cmdline: [u8],
 }
 
 impl ModuleTag {
-    /// Returns the cmdline of the module.
-    /// This is an null-terminated UTF-8 string. If this returns `Err` then perhaps the memory
-    /// is invalid or the bootloader doesn't follow the spec.
+    /// Reads the command line of the boot module as Rust string slice without
+    /// the null-byte.
     ///
-    /// For example: If the GRUB configuration contains
-    /// `module2 /foobar/some_boot_module --test cmdline-option` then this method
-    /// will return `--test cmdline-option`.
+    /// For example, this returns `"--test cmdline-option"`.if the GRUB config
+    /// contains  `"module2 /some_boot_module --test cmdline-option"`.
+    ///
+    /// If the function returns `Err` then perhaps the memory is invalid.
     pub fn cmdline(&self) -> Result<&str, Utf8Error> {
-        use core::{mem, slice, str};
-        // strlen without null byte
-        let strlen = self.size as usize - mem::size_of::<ModuleTag>();
-        let bytes = unsafe { slice::from_raw_parts((&self.cmdline_str) as *const u8, strlen) };
-        str::from_utf8(bytes)
+        Tag::get_dst_str_slice(&self.cmdline)
     }
 
     /// Start address of the module.
@@ -48,12 +45,22 @@ impl ModuleTag {
     }
 }
 
+impl TagTrait for ModuleTag {
+    fn dst_size(base_tag: &Tag) -> usize {
+        // The size of the sized portion of the module tag.
+        let tag_base_size = 16;
+        assert!(base_tag.size >= 8);
+        base_tag.size as usize - tag_base_size
+    }
+}
+
 impl Debug for ModuleTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("ModuleTag")
             .field("type", &{ self.typ })
             .field("size (tag)", &{ self.size })
             .field("size (module)", &self.module_size())
+            // Trick to print as hex.
             .field("mod_start", &(self.mod_start as *const usize))
             .field("mod_end", &(self.mod_end as *const usize))
             .field("cmdline", &self.cmdline())
@@ -77,7 +84,7 @@ impl<'a> Iterator for ModuleIter<'a> {
     fn next(&mut self) -> Option<&'a ModuleTag> {
         self.iter
             .find(|tag| tag.typ == TagType::Module)
-            .map(|tag| unsafe { &*(tag as *const Tag as *const ModuleTag) })
+            .map(|tag| tag.cast_tag())
     }
 }
 
@@ -93,7 +100,7 @@ impl<'a> Debug for ModuleIter<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::TagType;
+    use crate::{ModuleTag, Tag, TagType};
 
     const MSG: &str = "hello";
 
@@ -121,7 +128,8 @@ mod tests {
     #[test]
     fn test_parse_str() {
         let tag = get_bytes();
-        let tag = unsafe { tag.as_ptr().cast::<super::ModuleTag>().as_ref().unwrap() };
+        let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };
+        let tag = tag.cast_tag::<ModuleTag>();
         assert_eq!({ tag.typ }, TagType::Module);
         assert_eq!(tag.cmdline().expect("must be valid UTF-8"), MSG);
     }
