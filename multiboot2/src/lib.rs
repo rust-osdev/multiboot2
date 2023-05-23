@@ -59,7 +59,7 @@ pub use module::{ModuleIter, ModuleTag};
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
 pub use smbios::SmbiosTag;
 use tag_type::TagIter;
-pub use tag_type::{Tag, TagType, TagTypeId};
+pub use tag_type::{EndTag, Tag, TagType, TagTypeId};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
@@ -391,10 +391,7 @@ impl BootInformation {
 
 impl BootInformationInner {
     fn has_valid_end_tag(&self) -> bool {
-        let end_tag_prototype: Tag = Tag {
-            typ: TagType::End.into(),
-            size: 8,
-        };
+        let end_tag_prototype = EndTag::default();
 
         let self_ptr = self as *const _;
         let end_tag_addr = self_ptr as usize + (self.total_size - end_tag_prototype.size) as usize;

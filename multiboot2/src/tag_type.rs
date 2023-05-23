@@ -1,6 +1,7 @@
 //! Module for the basic Multiboot2 tag and corresponding tag types.
 //!
 //! The relevant exports of this module are:
+//! - [`EndTag`]
 //! - [`TagTypeId`]
 //! - [`TagType`]
 //! - [`Tag`]
@@ -350,6 +351,23 @@ impl Debug for Tag {
     }
 }
 
+/// The end tag ends the information struct.
+#[repr(C)]
+#[derive(Debug)]
+pub struct EndTag {
+    pub typ: TagTypeId,
+    pub size: u32,
+}
+
+impl Default for EndTag {
+    fn default() -> Self {
+        Self {
+            typ: TagType::End.into(),
+            size: 8,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct TagIter<'a> {
     pub current: *const Tag,
@@ -477,5 +495,13 @@ mod tests {
             Tag::get_dst_str_slice(&[0xff, 0xff]),
             Err(Utf8Error { .. })
         ));
+    }
+
+    #[test]
+    /// Compile time test for [`EndTag`].
+    fn test_end_tag_size() {
+        unsafe {
+            core::mem::transmute::<[u8; 8], EndTag>([0u8; 8]);
+        }
     }
 }
