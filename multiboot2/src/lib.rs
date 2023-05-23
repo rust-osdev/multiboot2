@@ -52,11 +52,12 @@ pub use elf_sections::{
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
 pub use image_load_addr::ImageLoadPhysAddr;
 pub use memory_map::{
-    EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType,
-    MemoryMapTag,
+    BasicMemoryInfoTag, EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea,
+    MemoryAreaIter, MemoryAreaType, MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
+pub use smbios::SmbiosTag;
 use tag_type::TagIter;
 pub use tag_type::{Tag, TagType, TagTypeId};
 pub use vbe_info::{
@@ -76,6 +77,7 @@ mod image_load_addr;
 mod memory_map;
 mod module;
 mod rsdp;
+mod smbios;
 mod tag_type;
 mod vbe_info;
 
@@ -218,6 +220,11 @@ impl BootInformation {
         self.get().total_size as usize
     }
 
+    /// Search for the basic memory info tag.
+    pub fn basic_memory_info_tag(&self) -> Option<&BasicMemoryInfoTag> {
+        self.get_tag::<BasicMemoryInfoTag, _>(TagType::BasicMeminfo)
+    }
+
     /// Search for the ELF Sections tag.
     pub fn elf_sections_tag(&self) -> Option<ElfSectionsTag> {
         self.get_tag::<Tag, _>(TagType::ElfSections)
@@ -302,6 +309,11 @@ impl BootInformation {
     /// Search for the VBE information tag.
     pub fn vbe_info_tag(&self) -> Option<&VBEInfoTag> {
         self.get_tag::<VBEInfoTag, _>(TagType::Vbe)
+    }
+
+    /// Search for the SMBIOS tag.
+    pub fn smbios_tag(&self) -> Option<&SmbiosTag> {
+        self.get_tag::<SmbiosTag, _>(TagType::Smbios)
     }
 
     fn get(&self) -> &BootInformationInner {
