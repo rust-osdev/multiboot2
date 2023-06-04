@@ -300,26 +300,54 @@ mod tests {
     }
 
     #[test]
-    fn test_size_builder() {
+    fn test_builder() {
         let mut builder = Multiboot2InformationBuilder::new();
         // Multiboot2 basic information + end tag
-        let expected_len = 8 + 8;
+        let mut expected_len = 8 + 8;
         assert_eq!(builder.expected_len(), expected_len);
 
         // the most simple tag
         builder.basic_memory_info_tag(BasicMemoryInfoTag::new(640, 7 * 1024));
+        expected_len += 16;
+        assert_eq!(builder.expected_len(), expected_len);
         // a tag that has a dynamic size
         builder.command_line_tag(CommandLineTag::new("test"));
+        expected_len += 8 + 5 + 3; // padding
+        assert_eq!(builder.expected_len(), expected_len);
         // many modules
         builder.add_module_tag(ModuleTag::new(0, 1234, "module1"));
+        expected_len += 16 + 8;
+        assert_eq!(builder.expected_len(), expected_len);
         builder.add_module_tag(ModuleTag::new(5678, 6789, "module2"));
+        expected_len += 16 + 8;
+        assert_eq!(builder.expected_len(), expected_len);
 
         println!("builder: {:#?}", builder);
         println!("expected_len: {} bytes", builder.expected_len());
+        assert_eq!(builder.expected_len(), expected_len);
 
         let mb2i_data = builder.build();
         let mb2i_addr = mb2i_data.as_ptr() as usize;
-        let mb2i = unsafe { load(mb2i_addr) };
+        let mb2i = unsafe { load(mb2i_addr) }.expect("the generated information to be readable");
         println!("{:#?}", mb2i);
+        assert_eq!(mb2i.basic_memory_info_tag().unwrap().memory_lower(), 640);
+        assert_eq!(
+            mb2i.basic_memory_info_tag().unwrap().memory_upper(),
+            7 * 1024
+        );
+        assert_eq!(
+            mb2i.command_line_tag().unwrap().command_line().unwrap(),
+            "test"
+        );
+        let mut modules = mb2i.module_tags();
+        let module_1 = modules.next().unwrap();
+        assert_eq!(module_1.start_address(), 0);
+        assert_eq!(module_1.end_address(), 1234);
+        assert_eq!(module_1.cmdline().unwrap(), "module1");
+        let module_2 = modules.next().unwrap();
+        assert_eq!(module_2.start_address(), 5678);
+        assert_eq!(module_2.end_address(), 6789);
+        assert_eq!(module_2.cmdline().unwrap(), "module2");
+        assert!(modules.next().is_none());
     }
 }
