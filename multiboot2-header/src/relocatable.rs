@@ -8,7 +8,7 @@ use core::mem::size_of;
 /// but not lower than min addr and ‘2’ means load image at highest possible
 /// address but not higher than max addr.
 #[repr(u32)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum RelocatableHeaderTagPreference {
     /// Let boot loader decide.
     None = 0,

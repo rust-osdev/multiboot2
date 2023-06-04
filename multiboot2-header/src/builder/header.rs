@@ -244,7 +244,7 @@ mod tests {
     }
 
     #[test]
-    fn test_size_builder() {
+    fn test_builder() {
         let builder = Multiboot2HeaderBuilder::new(HeaderTagISA::I386);
         // Multiboot2 basic header + end tag
         let mut expected_len = 16 + 8;
@@ -274,14 +274,28 @@ mod tests {
             4096,
             RelocatableHeaderTagPreference::None,
         ));
+        expected_len += 0x18;
+        assert_eq!(builder.expected_len(), expected_len);
 
         println!("builder: {:#?}", builder);
         println!("expected_len: {} bytes", builder.expected_len());
 
         let mb2_hdr_data = builder.build();
         let mb2_hdr = mb2_hdr_data.as_ptr() as usize;
-        let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr) };
+        let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr) }
+            .expect("the generated header to be loadable");
         println!("{:#?}", mb2_hdr);
+        assert_eq!(
+            mb2_hdr.relocatable_tag().unwrap().flags(),
+            HeaderTagFlag::Required
+        );
+        assert_eq!(mb2_hdr.relocatable_tag().unwrap().min_addr(), 0x1337);
+        assert_eq!(mb2_hdr.relocatable_tag().unwrap().max_addr(), 0xdeadbeef);
+        assert_eq!(mb2_hdr.relocatable_tag().unwrap().align(), 4096);
+        assert_eq!(
+            mb2_hdr.relocatable_tag().unwrap().preference(),
+            RelocatableHeaderTagPreference::None
+        );
 
         /* you can write the binary to a file and a tool such as crate "bootinfo"
            will be able to fully parse the MB2 header
