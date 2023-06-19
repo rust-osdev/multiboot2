@@ -23,6 +23,7 @@ keywords = [
     "Multiboot2",
     "kernel",
     "boot",
+    "bootloader",
 ]
 # without this, sometimes crates.io doesn't show the preview of the README
 # I expeciended this multiple times in the past
@@ -30,17 +31,18 @@ readme = "README.md"
 homepage = "https://github.com/rust-osdev/multiboot2"
 repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2"
+rust-version = "1.60"
 
 [features]
-# by default, builder is included
 default = ["builder"]
-std = []
-builder = ["std"]
-# Nightly-only features that will eventually be stabilized.
+alloc = []
+builder = ["alloc"]
+# Nightly-only features, which will eventually be stabilized.
 unstable = []
 
 [dependencies]
-bitflags = "1"
+bitflags = "2"
 derive_more = { version = "0.99", default-features = false, features = ["display"] }
 log = { version = "0.4", default-features = false }
+uefi-raw = { version = "0.2.0", default-features = false }
 ptr_meta = { version = "0.2.0", default-features = false }

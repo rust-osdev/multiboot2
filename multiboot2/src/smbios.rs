@@ -1,10 +1,10 @@
-use crate::{Tag, TagTrait, TagType, TagTypeId};
-
-use core::convert::TryInto;
+use crate::{Tag, TagTrait, TagTypeId};
 use core::fmt::Debug;
-
 #[cfg(feature = "builder")]
-use {crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box};
+use {
+    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, crate::TagType,
+    alloc::boxed::Box, core::convert::TryInto,
+};
 
 const METADATA_SIZE: usize = core::mem::size_of::<TagTypeId>()
     + core::mem::size_of::<u32>()

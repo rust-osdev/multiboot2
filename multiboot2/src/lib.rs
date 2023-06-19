@@ -96,7 +96,7 @@ pub mod builder;
 /// Caution: You might need some assembly code (e.g. GAS or NASM) first, which
 /// moves `eax` to another register, like `edi`. Otherwise it probably happens,
 /// that the Rust compiler output changes `eax` before you can access it.
-pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
+pub const MAGIC: u32 = 0x36d76289;
 
 /// Load the multiboot boot information struct from an address.
 ///
@@ -206,6 +206,7 @@ struct BootInformationInner {
 }
 
 impl BootInformationInner {
+    #[cfg(feature = "builder")]
     fn new(total_size: u32) -> Self {
         Self {
             total_size,
@@ -525,14 +526,6 @@ impl Reader {
 
     pub(crate) fn read_u32(&mut self) -> u32 {
         self.read_u16() as u32 | (self.read_u16() as u32) << 16
-    }
-
-    pub(crate) fn read_u64(&mut self) -> u64 {
-        self.read_u32() as u64 | (self.read_u32() as u64) << 32
-    }
-
-    pub(crate) fn skip(&mut self, n: usize) {
-        self.off += n;
     }
 
     pub(crate) fn current_address(&self) -> usize {
@@ -1482,7 +1475,6 @@ mod tests {
 
     #[test]
     fn efi_memory_map() {
-        use memory_map::EFIMemoryAreaType;
         #[repr(C, align(8))]
         struct Bytes([u8; 72]);
         // test that the EFI memory map is detected.
@@ -1515,9 +1507,9 @@ mod tests {
         let efi_memory_map = bi.efi_memory_map_tag().unwrap();
         let mut efi_mmap_iter = efi_memory_map.memory_areas();
         let desc = efi_mmap_iter.next().unwrap();
-        assert_eq!(desc.physical_address(), 0x100000);
-        assert_eq!(desc.size(), 16384);
-        assert_eq!(desc.typ(), EFIMemoryAreaType::EfiConventionalMemory);
+        assert_eq!(desc.phys_start, 0x100000);
+        assert_eq!(desc.page_count, 4);
+        assert_eq!(desc.ty, EFIMemoryAreaType::CONVENTIONAL);
         // test that the EFI memory map is not detected if the boot services
         // are not exited.
         struct Bytes2([u8; 80]);

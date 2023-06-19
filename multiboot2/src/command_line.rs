@@ -1,16 +1,15 @@
 //! Module for [CommandLineTag].
 
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::{Tag, TagTrait, TagTypeId};
 
-use core::convert::TryInto;
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str;
 
 #[cfg(feature = "builder")]
 use {
-    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box,
-    alloc::vec::Vec,
+    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, crate::TagType,
+    alloc::boxed::Box, alloc::vec::Vec, core::convert::TryInto,
 };
 
 pub(crate) const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();

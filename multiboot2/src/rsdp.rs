@@ -8,15 +8,17 @@
 //!
 //! Even though the bootloader should give the address of the real RSDP/XSDT, the checksum and
 //! signature should be manually verified.
-#[cfg(feature = "builder")]
-use crate::builder::traits::StructAsBytes;
-use crate::tag_type::{TagType, TagTypeId};
+//!
 
-use core::convert::TryInto;
-use core::mem::size_of;
+use crate::tag_type::TagTypeId;
 use core::slice;
 use core::str;
 use core::str::Utf8Error;
+#[cfg(feature = "builder")]
+use {
+    crate::builder::traits::StructAsBytes, crate::TagType, core::convert::TryInto,
+    core::mem::size_of,
+};
 
 const RSDPV1_LENGTH: usize = 20;
 
@@ -105,7 +107,8 @@ pub struct RsdpV2Tag {
     revision: u8,
     rsdt_address: u32,
     length: u32,
-    xsdt_address: u64, // This is the PHYSICAL address of the XSDT
+    xsdt_address: u64,
+    // This is the PHYSICAL address of the XSDT
     ext_checksum: u8,
     _reserved: [u8; 3],
 }

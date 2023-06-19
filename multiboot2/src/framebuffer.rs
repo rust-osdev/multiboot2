@@ -1,4 +1,4 @@
-use crate::{Reader, Tag, TagTrait, TagType, TagTypeId};
+use crate::{Reader, Tag, TagTrait, TagTypeId};
 
 use core::fmt::Debug;
 use core::mem::size_of;
@@ -7,8 +7,8 @@ use derive_more::Display;
 
 #[cfg(feature = "builder")]
 use {
-    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box,
-    alloc::vec::Vec,
+    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, crate::TagType,
+    alloc::boxed::Box, alloc::vec::Vec,
 };
 
 const METADATA_SIZE: usize = size_of::<TagTypeId>()
@@ -104,8 +104,9 @@ impl FramebufferTag {
     /// The type of framebuffer, one of: `Indexed`, `RGB` or `Text`.
     pub fn buffer_type(&self) -> Result<FramebufferType, UnknownFramebufferType> {
         let mut reader = Reader::new(self.buffer.as_ptr());
-        match self.type_no {
-            0 => {
+        let typ = FramebufferTypeId::try_from(self.type_no)?;
+        match typ {
+            FramebufferTypeId::Indexed => {
                 let num_colors = reader.read_u32();
                 let palette = unsafe {
                     slice::from_raw_parts(
@@ -115,7 +116,7 @@ impl FramebufferTag {
                 } as &'static [FramebufferColor];
                 Ok(FramebufferType::Indexed { palette })
             }
-            1 => {
+            FramebufferTypeId::RGB => {
                 let red_pos = reader.read_u8(); // These refer to the bit positions of the LSB of each field
                 let red_mask = reader.read_u8(); // And then the length of the field from LSB to MSB
                 let green_pos = reader.read_u8();
@@ -137,8 +138,7 @@ impl FramebufferTag {
                     },
                 })
             }
-            2 => Ok(FramebufferType::Text),
-            no => Err(UnknownFramebufferType(no)),
+            FramebufferTypeId::Text => Ok(FramebufferType::Text),
         }
     }
 }
@@ -187,14 +187,27 @@ impl PartialEq for FramebufferTag {
 }
 
 /// Helper struct for [`FramebufferType`].
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(u8)]
 #[allow(clippy::upper_case_acronyms)]
-pub enum FramebufferTypeId {
+enum FramebufferTypeId {
     Indexed = 0,
     RGB = 1,
     Text = 2,
     // spec says: there may be more variants in the future
+}
+
+impl TryFrom<u8> for FramebufferTypeId {
+    type Error = UnknownFramebufferType;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::Indexed),
+            1 => Ok(Self::RGB),
+            2 => Ok(Self::Text),
+            val => Err(UnknownFramebufferType(val)),
+        }
+    }
 }
 
 /// The type of framebuffer.
@@ -224,8 +237,8 @@ pub enum FramebufferType<'a> {
     Text,
 }
 
+#[cfg(feature = "builder")]
 impl<'a> FramebufferType<'a> {
-    #[cfg(feature = "builder")]
     fn to_bytes(&self) -> Vec<u8> {
         let mut v = Vec::new();
         match self {

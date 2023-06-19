@@ -5,7 +5,7 @@ use crate::{
     RelocatableHeaderTag,
 };
 use core::convert::TryInto;
-use core::fmt::{Debug, Formatter};
+use core::fmt::{Debug, Display, Formatter};
 use core::mem::size_of;
 
 /// Magic value for a [`Multiboot2Header`], as defined in spec.
@@ -211,6 +211,15 @@ pub enum LoadError {
     /// The header is truncated.
     TooSmall,
 }
+
+impl Display for LoadError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[cfg(feature = "unstable")]
+impl core::error::Error for LoadError {}
 
 /// **Use this only if you know what you do. You probably want to use
 /// [`Multiboot2Header`] instead.**

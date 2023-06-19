@@ -136,7 +136,7 @@ impl StructAsBytes for EFIImageHandle64 {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "builder"))]
 mod tests {
     use super::{EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64};
 

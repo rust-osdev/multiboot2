@@ -1,5 +1,7 @@
 //! Module for the helper trait [`StructAsBytes`].
 
+use alloc::vec::Vec;
+
 /// Trait for all tags that helps to create a byte array from the tag.
 /// Useful in builders to construct a byte vector that
 /// represents the Multiboot2 information with all its tags.
@@ -16,12 +18,9 @@ pub(crate) trait StructAsBytes {
 
     /// Returns the structure as a vector of its bytes.
     /// The length is determined by [`Self::byte_size`].
-    fn struct_as_bytes(&self) -> alloc::vec::Vec<u8> {
+    fn struct_as_bytes(&self) -> Vec<u8> {
         let ptr = self.as_ptr();
-        let mut vec = alloc::vec::Vec::with_capacity(self.byte_size());
-        for i in 0..self.byte_size() {
-            vec.push(unsafe { *ptr.add(i) })
-        }
-        vec
+        let bytes = unsafe { core::slice::from_raw_parts(ptr, self.byte_size()) };
+        Vec::from(bytes)
     }
 }

@@ -247,6 +247,8 @@ pub struct VBEField {
 
 bitflags! {
     /// The Capabilities field indicates the support of specific features in the graphics environment.
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+    #[repr(transparent)]
     pub struct VBECapabilities: u32 {
         /// Can the DAC be switched between 6 and 8 bit modes.
         const SWITCHABLE_DAC = 0x1;
@@ -263,6 +265,8 @@ bitflags! {
 
 bitflags! {
     /// A Mode attributes bitfield.
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+    #[repr(transparent)]
     pub struct VBEModeAttributes: u16 {
         /// Mode supported by hardware configuration.
         const SUPPORTED = 0x1;
@@ -294,6 +298,8 @@ bitflags! {
 bitflags! {
     /// The WindowAttributes describe the characteristics of the CPU windowing
     /// scheme such as whether the windows exist and are read/writeable, as follows:
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+    #[repr(transparent)]
     pub struct VBEWindowAttributes: u8 {
         /// Relocatable window(s) supported?
         const RELOCATABLE = 0x1;
@@ -317,6 +323,8 @@ bitflags! {
     /// (it is assumed all color ramp data is 8 bits per primary).
     /// Bit D1 specifies whether the bits in the Rsvd field of the direct color
     /// pixel can be used by the application or are reserved, and thus unusable.
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+    #[repr(transparent)]
     pub struct VBEDirectColorAttributes: u8 {
         /// Color ramp is fixed when cleared and programmable when set.
         const PROGRAMMABLE = 0x1;

@@ -34,6 +34,7 @@
 //! The MSRV is 1.56.1 stable.
 
 #![no_std]
+#![cfg_attr(feature = "unstable", feature(error_in_core))]
 #![deny(rustdoc::all)]
 #![deny(clippy::all)]
 #![deny(clippy::missing_const_for_fn)]
@@ -77,6 +78,5 @@ pub use self::relocatable::*;
 pub use self::tags::*;
 pub use self::uefi_bs::*;
 
-/// Re-export of [`multiboot2::TagType`] from `multiboot2`-crate as `MbiTagType`, i.e. tags that
-/// describe the entries in the Multiboot2 Information Structure (MBI).
+/// Re-export of [`multiboot2::TagType`] from `multiboot2`-crate.
 pub use multiboot2::TagType as MbiTagType;

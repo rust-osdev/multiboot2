@@ -1,7 +1,10 @@
 # CHANGELOG for crate `multiboot2-header`
 
 ## Unreleased
-- MSRV is 1.56.1
+- MSRV is 1.68.0
+- renamed the `std` feature to `alloc`
+- added the optional `unstable` feature (requires nightly)
+  - implement `core::error::Error` for `LoadError`
 
 ## v0.2.0 (2022-05-03)
 - **BREAKING** renamed `EntryHeaderTag` to `EntryAddressHeaderTag`

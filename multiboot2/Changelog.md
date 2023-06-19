@@ -6,6 +6,14 @@
   name tag. However, this might also be relevant for users of custom multiboot2
   tags that use DSTs as types. See the example provided in the doc of the
   `get_tag` method.
+- renamed `MULTIBOOT2_BOOTLOADER_MAGIC` to `MAGIC`
+- added a `builder` feature and a `builder` module with a `Multiboot2InformationBuilder`
+  struct
+- `EFIMemoryDesc` was removed and is now an alias of
+  `uefi_raw::table::boot::MemoryDescriptor`
+- `EFIMemoryAreaType` was removed and is now an alias of
+  `uefi_raw::table::boot::MemoryType`
+- MSRV is 1.68.0
 
 ## 0.15.1 (2023-03-18)
 - **BREAKING** `MemoryMapTag::all_memory_areas()` was renamed to `memory_areas`

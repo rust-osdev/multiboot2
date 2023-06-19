@@ -15,10 +15,11 @@ What this library is good for:
 What this library is not optimal for:
 - compiling a Multiboot2 header statically into an object file using only Rust code
 
-## Features and Usage in `no_std`
-This library is always `no_std`. However, the `builder`-feature requires the `alloc`-crate
-to be available. You need the `builder` only if you want to construct new headers. For parsing,
-this is not relevant.
+## Features and `no_std` Compatibility
+This library is always `no_std`. However, the default `builder`-feature requires
+the `alloc`-crate to be available. You need the `builder` only if you want to
+construct new headers at run time. For parsing, this is not relevant, and you
+can deactivate the default feature.
 
 ```toml
 # without `builder`-feature (and without `alloc`-crate)
