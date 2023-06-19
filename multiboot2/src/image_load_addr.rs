@@ -1,9 +1,9 @@
-use core::convert::TryInto;
-use core::mem::size_of;
-
+use crate::tag_type::TagTypeId;
 #[cfg(feature = "builder")]
-use crate::builder::traits::StructAsBytes;
-use crate::tag_type::{TagType, TagTypeId};
+use {
+    crate::builder::traits::StructAsBytes, crate::TagType, core::convert::TryInto,
+    core::mem::size_of,
+};
 
 /// If the image has relocatable header tag, this tag contains the image's
 /// base physical address.

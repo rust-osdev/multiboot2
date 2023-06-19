@@ -1,11 +1,14 @@
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::{Tag, TagTrait, TagTypeId};
 
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 use core::str::Utf8Error;
 
 #[cfg(feature = "builder")]
-use {crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box};
+use {
+    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, crate::TagType,
+    alloc::boxed::Box,
+};
 
 const METADATA_SIZE: usize = size_of::<TagTypeId>() + 4 * size_of::<u32>();
 

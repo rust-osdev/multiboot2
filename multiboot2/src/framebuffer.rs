@@ -1,4 +1,4 @@
-use crate::{Reader, Tag, TagTrait, TagType, TagTypeId};
+use crate::{Reader, Tag, TagTrait, TagTypeId};
 
 use core::fmt::Debug;
 use core::mem::size_of;
@@ -7,8 +7,8 @@ use derive_more::Display;
 
 #[cfg(feature = "builder")]
 use {
-    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box,
-    alloc::vec::Vec,
+    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, crate::TagType,
+    alloc::boxed::Box, alloc::vec::Vec,
 };
 
 const METADATA_SIZE: usize = size_of::<TagTypeId>()
@@ -205,7 +205,7 @@ impl TryFrom<u8> for FramebufferTypeId {
             0 => Ok(Self::Indexed),
             1 => Ok(Self::RGB),
             2 => Ok(Self::Text),
-            val => Err(UnknownFramebufferType(val))
+            val => Err(UnknownFramebufferType(val)),
         }
     }
 }
