@@ -1,21 +1,13 @@
 # CHANGELOG for crate `multiboot2`
 
 ## 0.16.0 (xxxx-xx-xx)
-- Add `TagTrait` trait which enables to use DSTs as multiboot2 tags. This is
-  mostly relevant for the command line tag, the modules tag, and the bootloader
-  name tag. However, this might also be relevant for users of custom multiboot2
-  tags that use DSTs as types. See the example provided in the doc of the
-  `get_tag` method.
-- renamed `MULTIBOOT2_BOOTLOADER_MAGIC` to `MAGIC`
-- added a `builder` feature and a `builder` module with a
-  `builder::InformationBuilder` struct
-- `EFIMemoryDesc` was removed and is now an alias of
+- **BREAKING** renamed `MULTIBOOT2_BOOTLOADER_MAGIC` to `MAGIC`
+- **BREAKING** `EFIMemoryDesc` was removed and is now an alias of
   `uefi_raw::table::boot::MemoryDescriptor`
-- `EFIMemoryAreaType` was removed and is now an alias of
+- **BREAKING**  `EFIMemoryAreaType` was removed and is now an alias of
   `uefi_raw::table::boot::MemoryType`
-- MSRV is 1.68.0
+- **BREAKING** MSRV is 1.68.0
 - **BREAKING** Removed `MemoryAreaIter` and `MemoryMapTag::available_memory_areas`
-- Added `MemoryMapTag::entry_size` and `MemoryMapTag::entry_version`
 - **BREAKING** Renamed `BootInformation::load_base_addr` to `BootInformation::load_base_addr_tag`
 - **BREAKING** Renamed `BootInformation::efi_32_ih` to `BootInformation::efi_32_ih_tag`
 - **BREAKING** Renamed `BootInformation::efi_32_ih` to `BootInformation::efi_32_ih_tag`
@@ -25,8 +17,17 @@
 - **BREAKING** Renamed `EFISdt32` to `EFISdt32Tag`
 - **BREAKING** Renamed `EFISdt64` to `EFISdt64Tag`
 - **BREAKING** Renamed `EFIBootServicesNotExited` to `EFIBootServicesNotExitedTag`
+- **\[Might be\] BREAKING** Added `TagTrait` trait which enables to use DSTs as multiboot2 tags. This is
+  mostly relevant for the command line tag, the modules tag, and the bootloader
+  name tag. However, this might also be relevant for users of custom multiboot2
+  tags that use DSTs as types. See the example provided in the doc of the
+  `get_tag` method.
+- added a `builder` feature and a `builder` module with a
+  `builder::InformationBuilder` struct
+- added `BootInformation::efi_bs_not_exited_tag`
 - deprecated `load` and `load_with_offset`
 - added `BootInformation::load` as new default constructor
+- added `MemoryMapTag::entry_size` and `MemoryMapTag::entry_version`
 
 ## 0.15.1 (2023-03-18)
 - **BREAKING** `MemoryMapTag::all_memory_areas()` was renamed to `memory_areas`
