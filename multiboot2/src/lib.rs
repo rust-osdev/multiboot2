@@ -528,14 +528,6 @@ impl Reader {
         self.read_u16() as u32 | (self.read_u16() as u32) << 16
     }
 
-    pub(crate) fn read_u64(&mut self) -> u64 {
-        self.read_u32() as u64 | (self.read_u32() as u64) << 32
-    }
-
-    pub(crate) fn skip(&mut self, n: usize) {
-        self.off += n;
-    }
-
     pub(crate) fn current_address(&self) -> usize {
         unsafe { self.ptr.add(self.off) as usize }
     }
