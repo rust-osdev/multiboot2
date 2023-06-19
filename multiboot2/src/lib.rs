@@ -249,13 +249,26 @@ impl BootInformation {
         self.get_tag::<BasicMemoryInfoTag, _>(TagType::BasicMeminfo)
     }
 
-    /// Search for the ELF Sections tag.
-    pub fn elf_sections_tag(&self) -> Option<&ElfSectionsTag> {
+    /// Search for the ELF Sections.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
+    /// if let Some(sections) = boot_info.elf_sections() {
+    ///     let mut total = 0;
+    ///     for section in sections {
+    ///         println!("Section: {:?}", section);
+    ///         total += 1;
+    ///     }
+    /// }
+    /// ```
+    pub fn elf_sections(&self) -> Option<ElfSectionIter> {
         let tag = self.get_tag::<ElfSectionsTag, _>(TagType::ElfSections);
-        if let Some(t) = tag {
+        tag.map(|t| {
             assert!((t.entry_size * t.shndx) <= t.size);
-        }
-        tag
+            t.sections(self.offset)
+        })
     }
 
     /// Search for the Memory map tag.
@@ -467,20 +480,14 @@ impl fmt::Debug for BootInformation {
             .field("module_tags", &self.module_tags());
         // usually this is REALLY big (thousands of tags) => skip it here
 
-        let elf_sections_tag_entries_count = self
-            .elf_sections_tag()
-            .map(|x| x.sections(self.offset).count())
-            .unwrap_or(0);
+        let elf_sections_tag_entries_count = self.elf_sections().map(|x| x.count()).unwrap_or(0);
 
         if elf_sections_tag_entries_count > ELF_SECTIONS_LIMIT {
             debug.field("elf_sections_tags (count)", &elf_sections_tag_entries_count);
         } else {
             debug.field(
                 "elf_sections_tags",
-                &self
-                    .elf_sections_tag()
-                    .map(|x| x.sections(self.offset))
-                    .unwrap_or_default(),
+                &self.elf_sections().unwrap_or_default(),
             );
         }
 
@@ -604,7 +611,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        assert!(bi.elf_sections_tag().is_none());
+        assert!(bi.elf_sections().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
         assert!(bi.boot_loader_name_tag().is_none());
@@ -628,7 +635,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        assert!(bi.elf_sections_tag().is_none());
+        assert!(bi.elf_sections().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
         assert!(bi.boot_loader_name_tag().is_none());
@@ -652,7 +659,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        assert!(bi.elf_sections_tag().is_none());
+        assert!(bi.elf_sections().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
         assert!(bi.boot_loader_name_tag().is_none());
@@ -679,7 +686,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        assert!(bi.elf_sections_tag().is_none());
+        assert!(bi.elf_sections().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
         assert_eq!(
@@ -1278,16 +1285,15 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.len(), bi.end_address());
         assert_eq!(bytes.len(), bi.total_size());
-        let es = bi.elf_sections_tag().unwrap();
-        let mut s = es.sections(bi.offset);
-        let s1 = s.next().expect("Should have one more section");
+        let mut es = bi.elf_sections().unwrap();
+        let s1 = es.next().expect("Should have one more section");
         assert_eq!(".rodata", s1.name().expect("Should be valid utf-8"));
         assert_eq!(0xFFFF_8000_0010_0000, s1.start_address());
         assert_eq!(0xFFFF_8000_0010_3000, s1.end_address());
         assert_eq!(0x0000_0000_0000_3000, s1.size());
         assert_eq!(ElfSectionFlags::ALLOCATED, s1.flags());
         assert_eq!(ElfSectionType::ProgramSection, s1.section_type());
-        let s2 = s.next().expect("Should have one more section");
+        let s2 = es.next().expect("Should have one more section");
         assert_eq!(".text", s2.name().expect("Should be valid utf-8"));
         assert_eq!(0xFFFF_8000_0010_3000, s2.start_address());
         assert_eq!(0xFFFF_8000_0010_C000, s2.end_address());
@@ -1297,7 +1303,7 @@ mod tests {
             s2.flags()
         );
         assert_eq!(ElfSectionType::ProgramSection, s2.section_type());
-        let s3 = s.next().expect("Should have one more section");
+        let s3 = es.next().expect("Should have one more section");
         assert_eq!(".data", s3.name().expect("Should be valid utf-8"));
         assert_eq!(0xFFFF_8000_0010_C000, s3.start_address());
         assert_eq!(0xFFFF_8000_0010_E000, s3.end_address());
@@ -1307,7 +1313,7 @@ mod tests {
             s3.flags()
         );
         assert_eq!(ElfSectionType::ProgramSection, s3.section_type());
-        let s4 = s.next().expect("Should have one more section");
+        let s4 = es.next().expect("Should have one more section");
         assert_eq!(".bss", s4.name().expect("Should be valid utf-8"));
         assert_eq!(0xFFFF_8000_0010_E000, s4.start_address());
         assert_eq!(0xFFFF_8000_0011_3000, s4.end_address());
@@ -1317,7 +1323,7 @@ mod tests {
             s4.flags()
         );
         assert_eq!(ElfSectionType::Uninitialized, s4.section_type());
-        let s5 = s.next().expect("Should have one more section");
+        let s5 = es.next().expect("Should have one more section");
         assert_eq!(".data.rel.ro", s5.name().expect("Should be valid utf-8"));
         assert_eq!(0xFFFF_8000_0011_3000, s5.start_address());
         assert_eq!(0xFFFF_8000_0011_3000, s5.end_address());
@@ -1327,28 +1333,28 @@ mod tests {
             s5.flags()
         );
         assert_eq!(ElfSectionType::ProgramSection, s5.section_type());
-        let s6 = s.next().expect("Should have one more section");
+        let s6 = es.next().expect("Should have one more section");
         assert_eq!(".symtab", s6.name().expect("Should be valid utf-8"));
         assert_eq!(0x0000_0000_0011_3000, s6.start_address());
         assert_eq!(0x0000_0000_0011_5BE0, s6.end_address());
         assert_eq!(0x0000_0000_0000_2BE0, s6.size());
         assert_eq!(ElfSectionFlags::empty(), s6.flags());
         assert_eq!(ElfSectionType::LinkerSymbolTable, s6.section_type());
-        let s7 = s.next().expect("Should have one more section");
+        let s7 = es.next().expect("Should have one more section");
         assert_eq!(".strtab", s7.name().expect("Should be valid utf-8"));
         assert_eq!(0x0000_0000_0011_5BE0, s7.start_address());
         assert_eq!(0x0000_0000_0011_9371, s7.end_address());
         assert_eq!(0x0000_0000_0000_3791, s7.size());
         assert_eq!(ElfSectionFlags::empty(), s7.flags());
         assert_eq!(ElfSectionType::StringTable, s7.section_type());
-        let s8 = s.next().expect("Should have one more section");
+        let s8 = es.next().expect("Should have one more section");
         assert_eq!(".shstrtab", s8.name().expect("Should be valid utf-8"));
         assert_eq!(string_addr, s8.start_address());
         assert_eq!(string_addr + string_bytes.len() as u64, s8.end_address());
         assert_eq!(string_bytes.len() as u64, s8.size());
         assert_eq!(ElfSectionFlags::empty(), s8.flags());
         assert_eq!(ElfSectionType::StringTable, s8.section_type());
-        assert!(s.next().is_none());
+        assert!(es.next().is_none());
         let mut mm = bi.memory_map_tag().unwrap().available_memory_areas();
         let mm1 = mm.next().unwrap();
         assert_eq!(0x00000000, mm1.start_address());
@@ -1463,16 +1469,15 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        let es = bi.elf_sections_tag().unwrap();
-        let mut s = es.sections(bi.offset);
-        let s1 = s.next().expect("Should have one more section");
+        let mut es = bi.elf_sections().unwrap();
+        let s1 = es.next().expect("Should have one more section");
         assert_eq!(".shstrtab", s1.name().expect("Should be valid utf-8"));
         assert_eq!(string_addr, s1.start_address());
         assert_eq!(string_addr + string_bytes.0.len() as u64, s1.end_address());
         assert_eq!(string_bytes.0.len() as u64, s1.size());
         assert_eq!(ElfSectionFlags::empty(), s1.flags());
         assert_eq!(ElfSectionType::StringTable, s1.section_type());
-        assert!(s.next().is_none());
+        assert!(es.next().is_none());
     }
 
     #[test]

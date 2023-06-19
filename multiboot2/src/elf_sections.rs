@@ -38,20 +38,7 @@ impl ElfSectionsTag {
     }
 
     /// Get an iterator of loaded ELF sections.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
-    /// if let Some(elf_tag) = boot_info.elf_sections_tag() {
-    ///     let mut total = 0;
-    ///     for section in elf_tag.sections(0) {
-    ///         println!("Section: {:?}", section);
-    ///         total += 1;
-    ///     }
-    /// }
-    /// ```
-    pub fn sections(&self, offset: usize) -> ElfSectionIter {
+    pub(crate) fn sections(&self, offset: usize) -> ElfSectionIter {
         let string_section_offset = (self.shndx * self.entry_size) as isize;
         let string_section_ptr =
             unsafe { self.first_section().offset(string_section_offset) as *const _ };
