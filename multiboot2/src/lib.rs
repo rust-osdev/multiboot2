@@ -96,7 +96,7 @@ pub mod builder;
 /// Caution: You might need some assembly code (e.g. GAS or NASM) first, which
 /// moves `eax` to another register, like `edi`. Otherwise it probably happens,
 /// that the Rust compiler output changes `eax` before you can access it.
-pub const MULTIBOOT2_BOOTLOADER_MAGIC: u32 = 0x36d76289;
+pub const MAGIC: u32 = 0x36d76289;
 
 /// Load the multiboot boot information struct from an address.
 ///
