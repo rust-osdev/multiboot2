@@ -206,6 +206,7 @@ struct BootInformationInner {
 }
 
 impl BootInformationInner {
+    #[cfg(feature = "builder")]
     fn new(total_size: u32) -> Self {
         Self {
             total_size,

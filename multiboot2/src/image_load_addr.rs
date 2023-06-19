@@ -38,7 +38,7 @@ impl StructAsBytes for ImageLoadPhysAddr {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "builder"))]
 mod tests {
     use super::ImageLoadPhysAddr;
 
