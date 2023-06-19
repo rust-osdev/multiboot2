@@ -23,6 +23,7 @@ keywords = [
     "Multiboot2",
     "kernel",
     "boot",
+    "bootloader",
 ]
 # without this, sometimes crates.io doesn't show the preview of the README
 # I expeciended this multiple times in the past
@@ -32,10 +33,9 @@ repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2"
 
 [features]
-# by default, builder is included
 default = ["builder"]
-std = []
-builder = ["std"]
+alloc = []
+builder = ["alloc"]
 # Nightly-only features that will eventually be stabilized.
 unstable = []
 

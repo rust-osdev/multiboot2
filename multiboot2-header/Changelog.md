@@ -2,6 +2,7 @@
 
 ## Unreleased
 - MSRV is 1.56.1
+- renamed the `std` feature to `alloc`
 
 ## v0.2.0 (2022-05-03)
 - **BREAKING** renamed `EntryHeaderTag` to `EntryAddressHeaderTag`

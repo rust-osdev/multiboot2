@@ -28,10 +28,9 @@ repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2-header"
 
 [features]
-# by default, builder is included
 default = ["builder"]
-std = []
-builder = ["std"]
+alloc = []
+builder = ["alloc"]
 
 [dependencies]
 # used for MBI tags
