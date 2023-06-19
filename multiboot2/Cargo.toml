@@ -40,7 +40,7 @@ builder = ["alloc"]
 unstable = []
 
 [dependencies]
-bitflags = "1"
+bitflags = "2"
 derive_more = { version = "0.99", default-features = false, features = ["display"] }
 log = { version = "0.4", default-features = false }
 uefi-raw = { version = "0.2.0", default-features = false }

@@ -409,6 +409,8 @@ pub enum ElfSectionType {
 
 bitflags! {
     /// ELF Section bitflags.
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+    #[repr(transparent)]
     pub struct ElfSectionFlags: u64 {
         /// The section contains data that should be writable during program execution.
         const WRITABLE = 0x1;
