@@ -26,6 +26,7 @@ readme = "README.md"
 homepage = "https://github.com/rust-osdev/multiboot2-header"
 repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2-header"
+rust-version = "1.60"
 
 [[example]]
 name = "minimal"
