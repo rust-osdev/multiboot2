@@ -35,6 +35,8 @@ required-features = ["builder"]
 default = ["builder"]
 alloc = []
 builder = ["alloc"]
+# Nightly-only features, which will eventually be stabilized.
+unstable = []
 
 [dependencies]
 # used for MBI tags

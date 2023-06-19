@@ -36,7 +36,7 @@ documentation = "https://docs.rs/multiboot2"
 default = ["builder"]
 alloc = []
 builder = ["alloc"]
-# Nightly-only features that will eventually be stabilized.
+# Nightly-only features, which will eventually be stabilized.
 unstable = []
 
 [dependencies]
