@@ -27,6 +27,10 @@ homepage = "https://github.com/rust-osdev/multiboot2-header"
 repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2-header"
 
+[[example]]
+name = "minimal"
+required-features = ["builder"]
+
 [features]
 default = ["builder"]
 alloc = []

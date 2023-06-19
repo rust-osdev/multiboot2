@@ -22,6 +22,7 @@ jobs:
     with:
       rust-version: 1.56.1
       do-style-check: false
+      features: builder
 
   build_stable:
     name: build (stable)
@@ -29,6 +30,7 @@ jobs:
     with:
       rust-version: stable
       do-style-check: false
+      features: builder
 
   build_nightly:
     name: build (nightly)
@@ -36,7 +38,7 @@ jobs:
     with:
       rust-version: nightly
       do-style-check: false
-      features: unstable
+      features: builder,unstable
 
   ### no-std Build   #########################
   build_nostd_msrv:
@@ -47,9 +49,21 @@ jobs:
       rust-version: 1.56.1
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
+      features: builder
 
   build_nostd_stable:
     name: build no_std (stable)
+    needs: build_stable
+    uses: ./.github/workflows/_build-rust.yml
+    with:
+      rust-version: stable
+      do-style-check: false
+      rust-target: thumbv7em-none-eabihf
+      features: builder
+
+  # Also tests the build one time without the "builder" feature.
+  build_nostd_stable_no_builder:
+    name: build no_std (stable) [w/o builder]
     needs: build_stable
     uses: ./.github/workflows/_build-rust.yml
     with:
@@ -65,11 +79,12 @@ jobs:
     with:
       runs-on: windows-latest
       # Quirk for the Windows powershell and its handling of empty arguments.
-      features: >
-        '""'
+      # features: >
+      #   '""'
       rust-version: stable
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
+      features: builder
 
   build_nostd_nightly:
     name: build no_std (nightly)
@@ -79,7 +94,7 @@ jobs:
       rust-version: nightly
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
-      features: unstable
+      features: builder,unstable
 
   ### Style Checks + Doc #####################
   style_msrv:
@@ -90,6 +105,7 @@ jobs:
       rust-version: 1.56.1
       do-style-check: true
       do-test: false
+      features: builder
 
   style_stable:
     name: style (stable)
@@ -99,6 +115,7 @@ jobs:
       rust-version: stable
       do-style-check: true
       do-test: false
+      features: builder
 
   style_nightly:
     name: style (nightly)
@@ -108,4 +125,4 @@ jobs:
       rust-version: nightly
       do-style-check: true
       do-test: false
-      features: unstable
+      features: builder,unstable
