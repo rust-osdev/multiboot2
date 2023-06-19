@@ -1,8 +1,19 @@
 //! Module for [CommandLineTag].
 
-use crate::{Tag, TagTrait, TagTypeId};
+use crate::{Tag, TagTrait, TagType, TagTypeId};
+
+use core::convert::TryInto;
 use core::fmt::{Debug, Formatter};
+use core::mem;
 use core::str;
+
+#[cfg(feature = "builder")]
+use {
+    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box,
+    alloc::vec::Vec,
+};
+
+pub(crate) const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
 
 /// This tag contains the command line string.
 ///
@@ -18,6 +29,14 @@ pub struct CommandLineTag {
 }
 
 impl CommandLineTag {
+    /// Create a new command line tag from the given string.
+    #[cfg(feature = "builder")]
+    pub fn new(command_line: &str) -> Box<Self> {
+        let mut bytes: Vec<_> = command_line.bytes().collect();
+        bytes.push(0);
+        boxed_dst_tag(TagType::Cmdline, &bytes)
+    }
+
     /// Reads the command line of the kernel as Rust string slice without
     /// the null-byte.
     ///
@@ -52,10 +71,15 @@ impl Debug for CommandLineTag {
 
 impl TagTrait for CommandLineTag {
     fn dst_size(base_tag: &Tag) -> usize {
-        // The size of the sized portion of the command line tag.
-        let tag_base_size = 8;
-        assert!(base_tag.size >= 8);
-        base_tag.size as usize - tag_base_size
+        assert!(base_tag.size as usize >= METADATA_SIZE);
+        base_tag.size as usize - METADATA_SIZE
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for CommandLineTag {
+    fn byte_size(&self) -> usize {
+        self.size.try_into().unwrap()
     }
 }
 
@@ -90,5 +114,16 @@ mod tests {
         let tag = tag.cast_tag::<CommandLineTag>();
         assert_eq!({ tag.typ }, TagType::Cmdline);
         assert_eq!(tag.command_line().expect("must be valid UTF-8"), MSG);
+    }
+
+    /// Test to generate a tag from a given string.
+    #[test]
+    #[cfg(feature = "builder")]
+    fn test_build_str() {
+        use crate::builder::traits::StructAsBytes;
+
+        let tag = CommandLineTag::new(MSG);
+        let bytes = tag.struct_as_bytes();
+        assert_eq!(bytes, get_bytes());
     }
 }

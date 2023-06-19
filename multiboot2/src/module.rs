@@ -1,8 +1,16 @@
-use crate::tag_type::{Tag, TagIter, TagType};
-use crate::TagTrait;
-use crate::TagTypeId;
+use crate::{Tag, TagIter, TagTrait, TagType, TagTypeId};
+
 use core::fmt::{Debug, Formatter};
+use core::mem::size_of;
 use core::str::Utf8Error;
+
+#[cfg(feature = "builder")]
+use {
+    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box,
+    alloc::vec::Vec,
+};
+
+const METADATA_SIZE: usize = size_of::<TagTypeId>() + 3 * size_of::<u32>();
 
 /// This tag indicates to the kernel what boot module was loaded along with
 /// the kernel image, and where it can be found.
@@ -18,8 +26,21 @@ pub struct ModuleTag {
 }
 
 impl ModuleTag {
+    #[cfg(feature = "builder")]
+    pub fn new(start: u32, end: u32, cmdline: &str) -> Box<Self> {
+        let mut cmdline_bytes: Vec<_> = cmdline.bytes().collect();
+        cmdline_bytes.push(0);
+        let start_bytes = start.to_le_bytes();
+        let end_bytes = end.to_le_bytes();
+        let mut content_bytes = [start_bytes, end_bytes].concat();
+        content_bytes.extend_from_slice(&cmdline_bytes);
+        boxed_dst_tag(TagType::Module, &content_bytes)
+    }
+
     /// Reads the command line of the boot module as Rust string slice without
     /// the null-byte.
+    /// This is an null-terminated UTF-8 string. If this returns `Err` then perhaps the memory
+    /// is invalid or the bootloader doesn't follow the spec.
     ///
     /// For example, this returns `"--test cmdline-option"`.if the GRUB config
     /// contains  `"module2 /some_boot_module --test cmdline-option"`.
@@ -47,10 +68,15 @@ impl ModuleTag {
 
 impl TagTrait for ModuleTag {
     fn dst_size(base_tag: &Tag) -> usize {
-        // The size of the sized portion of the module tag.
-        let tag_base_size = 16;
-        assert!(base_tag.size >= 8);
-        base_tag.size as usize - tag_base_size
+        assert!(base_tag.size as usize >= METADATA_SIZE);
+        base_tag.size as usize - METADATA_SIZE
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for ModuleTag {
+    fn byte_size(&self) -> usize {
+        self.size.try_into().unwrap()
     }
 }
 
@@ -132,5 +158,16 @@ mod tests {
         let tag = tag.cast_tag::<ModuleTag>();
         assert_eq!({ tag.typ }, TagType::Module);
         assert_eq!(tag.cmdline().expect("must be valid UTF-8"), MSG);
+    }
+
+    /// Test to generate a tag from a given string.
+    #[test]
+    #[cfg(feature = "builder")]
+    fn test_build_str() {
+        use crate::builder::traits::StructAsBytes;
+
+        let tag = ModuleTag::new(0, 0, MSG);
+        let bytes = tag.struct_as_bytes();
+        assert_eq!(bytes, get_bytes());
     }
 }

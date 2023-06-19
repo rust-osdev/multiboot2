@@ -1,6 +1,10 @@
-use crate::{Tag, TagTrait, TagTypeId};
+use crate::{Tag, TagTrait, TagType, TagTypeId};
 
+use core::convert::TryInto;
 use core::fmt::Debug;
+
+#[cfg(feature = "builder")]
+use {crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box};
 
 const METADATA_SIZE: usize = core::mem::size_of::<TagTypeId>()
     + core::mem::size_of::<u32>()
@@ -18,10 +22,26 @@ pub struct SmbiosTag {
     pub tables: [u8],
 }
 
+impl SmbiosTag {
+    #[cfg(feature = "builder")]
+    pub fn new(major: u8, minor: u8, tables: &[u8]) -> Box<Self> {
+        let mut bytes = [major, minor, 0, 0, 0, 0, 0, 0].to_vec();
+        bytes.extend(tables);
+        boxed_dst_tag(TagType::Smbios, &bytes)
+    }
+}
+
 impl TagTrait for SmbiosTag {
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= METADATA_SIZE);
         base_tag.size as usize - METADATA_SIZE
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for SmbiosTag {
+    fn byte_size(&self) -> usize {
+        self.size.try_into().unwrap()
     }
 }
 
@@ -65,5 +85,16 @@ mod tests {
         assert_eq!(tag.major, 3);
         assert_eq!(tag.minor, 0);
         assert_eq!(tag.tables, [0xabu8; 24]);
+    }
+
+    /// Test to generate a tag.
+    #[test]
+    #[cfg(feature = "builder")]
+    fn test_build() {
+        use crate::builder::traits::StructAsBytes;
+
+        let tag = SmbiosTag::new(3, 0, &[0xabu8; 24]);
+        let bytes = tag.struct_as_bytes();
+        assert_eq!(bytes, get_bytes());
     }
 }

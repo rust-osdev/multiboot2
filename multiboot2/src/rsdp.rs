@@ -8,7 +8,12 @@
 //!
 //! Even though the bootloader should give the address of the real RSDP/XSDT, the checksum and
 //! signature should be manually verified.
-use crate::TagTypeId;
+#[cfg(feature = "builder")]
+use crate::builder::traits::StructAsBytes;
+use crate::tag_type::{TagType, TagTypeId};
+
+use core::convert::TryInto;
+use core::mem::size_of;
 use core::slice;
 use core::str;
 use core::str::Utf8Error;
@@ -29,6 +34,25 @@ pub struct RsdpV1Tag {
 }
 
 impl RsdpV1Tag {
+    #[cfg(feature = "builder")]
+    pub fn new(
+        signature: [u8; 8],
+        checksum: u8,
+        oem_id: [u8; 6],
+        revision: u8,
+        rsdt_address: u32,
+    ) -> Self {
+        Self {
+            typ: TagType::AcpiV1.into(),
+            size: size_of::<Self>().try_into().unwrap(),
+            signature,
+            checksum,
+            oem_id,
+            revision,
+            rsdt_address,
+        }
+    }
+
     /// The "RSD PTR " marker signature.
     ///
     /// This is originally a 8-byte C string (not null terminated!) that must contain "RSD PTR "
@@ -62,6 +86,13 @@ impl RsdpV1Tag {
     }
 }
 
+#[cfg(feature = "builder")]
+impl StructAsBytes for RsdpV1Tag {
+    fn byte_size(&self) -> usize {
+        size_of::<Self>()
+    }
+}
+
 /// This tag contains a copy of RSDP as defined per ACPI 2.0 or later specification.
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
@@ -72,7 +103,7 @@ pub struct RsdpV2Tag {
     checksum: u8,
     oem_id: [u8; 6],
     revision: u8,
-    _rsdt_address: u32,
+    rsdt_address: u32,
     length: u32,
     xsdt_address: u64, // This is the PHYSICAL address of the XSDT
     ext_checksum: u8,
@@ -80,6 +111,33 @@ pub struct RsdpV2Tag {
 }
 
 impl RsdpV2Tag {
+    #[cfg(feature = "builder")]
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        signature: [u8; 8],
+        checksum: u8,
+        oem_id: [u8; 6],
+        revision: u8,
+        rsdt_address: u32,
+        length: u32,
+        xsdt_address: u64,
+        ext_checksum: u8,
+    ) -> Self {
+        Self {
+            typ: TagType::AcpiV2.into(),
+            size: size_of::<Self>().try_into().unwrap(),
+            signature,
+            checksum,
+            oem_id,
+            revision,
+            rsdt_address,
+            length,
+            xsdt_address,
+            ext_checksum,
+            _reserved: [0; 3],
+        }
+    }
+
     /// The "RSD PTR " marker signature.
     ///
     /// This is originally a 8-byte C string (not null terminated!) that must contain "RSD PTR ".
@@ -118,5 +176,12 @@ impl RsdpV2Tag {
     /// This field is used to calculate the checksum of the entire table, including both checksum fields.
     pub fn ext_checksum(&self) -> u8 {
         self.ext_checksum
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for RsdpV2Tag {
+    fn byte_size(&self) -> usize {
+        size_of::<Self>()
     }
 }

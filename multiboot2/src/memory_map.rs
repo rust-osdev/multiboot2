@@ -1,5 +1,14 @@
-use crate::TagTypeId;
+use crate::{Tag, TagTrait, TagType, TagTypeId};
+
+use core::convert::TryInto;
+use core::fmt::Debug;
 use core::marker::PhantomData;
+use core::mem;
+
+#[cfg(feature = "builder")]
+use {crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box};
+
+const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
 
 /// This tag provides an initial host memory map.
 ///
@@ -11,17 +20,28 @@ use core::marker::PhantomData;
 /// This tag may not be provided by some boot loaders on EFI platforms if EFI
 /// boot services are enabled and available for the loaded image (The EFI boot
 /// services tag may exist in the Multiboot2 boot information structure).
-#[derive(Debug)]
+#[derive(Debug, ptr_meta::Pointee)]
 #[repr(C)]
 pub struct MemoryMapTag {
     typ: TagTypeId,
     size: u32,
     entry_size: u32,
     entry_version: u32,
-    first_area: [MemoryArea; 0],
+    areas: [MemoryArea],
 }
 
 impl MemoryMapTag {
+    #[cfg(feature = "builder")]
+    pub fn new(areas: &[MemoryArea]) -> Box<Self> {
+        let entry_size: u32 = mem::size_of::<MemoryArea>().try_into().unwrap();
+        let entry_version: u32 = 0;
+        let mut bytes = [entry_size.to_le_bytes(), entry_version.to_le_bytes()].concat();
+        for area in areas {
+            bytes.extend(area.struct_as_bytes());
+        }
+        boxed_dst_tag(TagType::Mmap, bytes.as_slice())
+    }
+
     /// Return an iterator over all memory areas that have the type
     /// [`MemoryAreaType::Available`].
     pub fn available_memory_areas(&self) -> impl Iterator<Item = &MemoryArea> {
@@ -32,21 +52,33 @@ impl MemoryMapTag {
     /// Return an iterator over all memory areas.
     pub fn memory_areas(&self) -> MemoryAreaIter {
         let self_ptr = self as *const MemoryMapTag;
-        let start_area = self.first_area.as_ptr();
-
+        let start_area = (&self.areas[0]) as *const MemoryArea;
         MemoryAreaIter {
             current_area: start_area as u64,
             // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
-            last_area: (self_ptr as u64
-                + (self.size as u64 - core::mem::size_of::<MemoryMapTag>() as u64)),
+            last_area: (self_ptr as *const () as u64 + (self.size - self.entry_size) as u64),
             entry_size: self.entry_size,
             phantom: PhantomData,
         }
     }
 }
 
+impl TagTrait for MemoryMapTag {
+    fn dst_size(base_tag: &Tag) -> usize {
+        assert!(base_tag.size as usize >= METADATA_SIZE);
+        base_tag.size as usize - METADATA_SIZE
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for MemoryMapTag {
+    fn byte_size(&self) -> usize {
+        self.size.try_into().unwrap()
+    }
+}
+
 /// A memory area entry descriptor.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(C)]
 pub struct MemoryArea {
     base_addr: u64,
@@ -56,6 +88,16 @@ pub struct MemoryArea {
 }
 
 impl MemoryArea {
+    /// Create a new MemoryArea.
+    pub fn new(base_addr: u64, length: u64, typ: MemoryAreaType) -> Self {
+        Self {
+            base_addr,
+            length,
+            typ,
+            _reserved: 0,
+        }
+    }
+
     /// The start address of the memory region.
     pub fn start_address(&self) -> u64 {
         self.base_addr
@@ -74,6 +116,13 @@ impl MemoryArea {
     /// The type of the memory region.
     pub fn typ(&self) -> MemoryAreaType {
         self.typ
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for MemoryArea {
+    fn byte_size(&self) -> usize {
+        mem::size_of::<Self>()
     }
 }
 
@@ -139,7 +188,6 @@ impl<'a> Iterator for MemoryAreaIter<'a> {
 /// (which had a 24-bit address bus) could use, historically.
 /// Nowadays, much bigger chunks of continuous memory are available at higher
 /// addresses, but the Multiboot standard still references those two terms.
-#[derive(Debug)]
 #[repr(C, packed)]
 pub struct BasicMemoryInfoTag {
     typ: TagTypeId,
@@ -149,6 +197,15 @@ pub struct BasicMemoryInfoTag {
 }
 
 impl BasicMemoryInfoTag {
+    pub fn new(memory_lower: u32, memory_upper: u32) -> Self {
+        Self {
+            typ: TagType::BasicMeminfo.into(),
+            size: mem::size_of::<BasicMemoryInfoTag>().try_into().unwrap(),
+            memory_lower,
+            memory_upper,
+        }
+    }
+
     pub fn memory_lower(&self) -> u32 {
         self.memory_lower
     }
@@ -158,38 +215,89 @@ impl BasicMemoryInfoTag {
     }
 }
 
+#[cfg(feature = "builder")]
+impl StructAsBytes for BasicMemoryInfoTag {
+    fn byte_size(&self) -> usize {
+        mem::size_of::<Self>()
+    }
+}
+
+impl Debug for BasicMemoryInfoTag {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("BasicMemoryInfoTag")
+            .field("typ", &{ self.typ })
+            .field("size", &{ self.size })
+            .field("memory_lower", &{ self.memory_lower })
+            .field("memory_upper", &{ self.memory_upper })
+            .finish()
+    }
+}
+
+const EFI_METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
+
 /// EFI memory map as per EFI specification.
-#[derive(Debug)]
+#[derive(Debug, ptr_meta::Pointee)]
 #[repr(C)]
 pub struct EFIMemoryMapTag {
     typ: TagTypeId,
     size: u32,
     desc_size: u32,
     desc_version: u32,
-    first_desc: [EFIMemoryDesc; 0],
+    descs: [EFIMemoryDesc],
 }
 
 impl EFIMemoryMapTag {
+    #[cfg(feature = "builder")]
+    /// Create a new EFI memory map tag with the given memory descriptors.
+    /// Version and size can't be set because you're passing a slice of
+    /// EFIMemoryDescs, not the ones you might have gotten from the firmware.
+    pub fn new(descs: &[EFIMemoryDesc]) -> Box<Self> {
+        // update this when updating EFIMemoryDesc
+        const MEMORY_DESCRIPTOR_VERSION: u32 = 1;
+        let mut bytes = [
+            (mem::size_of::<EFIMemoryDesc>() as u32).to_le_bytes(),
+            MEMORY_DESCRIPTOR_VERSION.to_le_bytes(),
+        ]
+        .concat();
+        for desc in descs {
+            bytes.extend(desc.struct_as_bytes());
+        }
+        boxed_dst_tag(TagType::EfiMmap, bytes.as_slice())
+    }
+
     /// Return an iterator over ALL marked memory areas.
     ///
     /// This differs from `MemoryMapTag` as for UEFI, the OS needs some non-
     /// available memory areas for tables and such.
     pub fn memory_areas(&self) -> EFIMemoryAreaIter {
         let self_ptr = self as *const EFIMemoryMapTag;
-        let start_area = self.first_desc.as_ptr();
+        let start_area = (&self.descs[0]) as *const EFIMemoryDesc;
         EFIMemoryAreaIter {
             current_area: start_area as u64,
             // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
-            last_area: (self_ptr as u64
-                + (self.size as u64 - core::mem::size_of::<EFIMemoryMapTag>() as u64)),
+            last_area: (self_ptr as *const () as u64 + self.size as u64),
             entry_size: self.desc_size,
             phantom: PhantomData,
         }
     }
 }
 
+impl TagTrait for EFIMemoryMapTag {
+    fn dst_size(base_tag: &Tag) -> usize {
+        assert!(base_tag.size as usize >= EFI_METADATA_SIZE);
+        base_tag.size as usize - EFI_METADATA_SIZE
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for EFIMemoryMapTag {
+    fn byte_size(&self) -> usize {
+        self.size.try_into().unwrap()
+    }
+}
+
 /// EFI Boot Memory Map Descriptor
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(C)]
 pub struct EFIMemoryDesc {
     typ: u32,
@@ -198,6 +306,13 @@ pub struct EFIMemoryDesc {
     virt_addr: u64,
     num_pages: u64,
     attr: u64,
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for EFIMemoryDesc {
+    fn byte_size(&self) -> usize {
+        mem::size_of::<Self>()
+    }
 }
 
 /// An enum of possible reported region types.
@@ -254,6 +369,29 @@ pub enum EFIMemoryAreaType {
     EfiUnknown,
 }
 
+impl From<EFIMemoryAreaType> for u32 {
+    fn from(area: EFIMemoryAreaType) -> Self {
+        match area {
+            EFIMemoryAreaType::EfiReservedMemoryType => 0,
+            EFIMemoryAreaType::EfiLoaderCode => 1,
+            EFIMemoryAreaType::EfiLoaderData => 2,
+            EFIMemoryAreaType::EfiBootServicesCode => 3,
+            EFIMemoryAreaType::EfiBootServicesData => 4,
+            EFIMemoryAreaType::EfiRuntimeServicesCode => 5,
+            EFIMemoryAreaType::EfiRuntimeServicesData => 6,
+            EFIMemoryAreaType::EfiConventionalMemory => 7,
+            EFIMemoryAreaType::EfiUnusableMemory => 8,
+            EFIMemoryAreaType::EfiACPIReclaimMemory => 9,
+            EFIMemoryAreaType::EfiACPIMemoryNVS => 10,
+            EFIMemoryAreaType::EfiMemoryMappedIO => 11,
+            EFIMemoryAreaType::EfiMemoryMappedIOPortSpace => 12,
+            EFIMemoryAreaType::EfiPalCode => 13,
+            EFIMemoryAreaType::EfiPersistentMemory => 14,
+            EFIMemoryAreaType::EfiUnknown => panic!("unknown type"),
+        }
+    }
+}
+
 impl EFIMemoryDesc {
     /// The physical address of the memory region.
     pub fn physical_address(&self) -> u64 {
@@ -294,12 +432,49 @@ impl EFIMemoryDesc {
     }
 }
 
+impl Default for EFIMemoryDesc {
+    fn default() -> Self {
+        Self {
+            typ: EFIMemoryAreaType::EfiReservedMemoryType.into(),
+            _padding: 0,
+            phys_addr: 0,
+            virt_addr: 0,
+            num_pages: 0,
+            attr: 0,
+        }
+    }
+}
+
 /// EFI ExitBootServices was not called
 #[derive(Debug)]
 #[repr(C)]
 pub struct EFIBootServicesNotExited {
-    typ: u32,
+    typ: TagTypeId,
     size: u32,
+}
+
+impl EFIBootServicesNotExited {
+    #[cfg(feature = "builder")]
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+#[cfg(feature = "builder")]
+impl Default for EFIBootServicesNotExited {
+    fn default() -> Self {
+        Self {
+            typ: TagType::EfiBs.into(),
+            size: mem::size_of::<Self>().try_into().unwrap(),
+        }
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for EFIBootServicesNotExited {
+    fn byte_size(&self) -> usize {
+        mem::size_of::<Self>()
+    }
 }
 
 /// An iterator over ALL EFI memory areas.

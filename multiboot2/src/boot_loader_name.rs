@@ -1,7 +1,15 @@
-use crate::TagTrait;
-use crate::{Tag, TagTypeId};
+use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
+use core::mem::size_of;
 use core::str::Utf8Error;
+
+#[cfg(feature = "builder")]
+use {
+    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box,
+    alloc::vec::Vec,
+};
+
+const METADATA_SIZE: usize = size_of::<TagTypeId>() + size_of::<u32>();
 
 /// The bootloader name tag.
 #[derive(ptr_meta::Pointee)]
@@ -14,6 +22,13 @@ pub struct BootLoaderNameTag {
 }
 
 impl BootLoaderNameTag {
+    #[cfg(feature = "builder")]
+    pub fn new(name: &str) -> Box<Self> {
+        let mut bytes: Vec<_> = name.bytes().collect();
+        bytes.push(0);
+        boxed_dst_tag(TagType::BootLoaderName, &bytes)
+    }
+
     /// Reads the name of the bootloader that is booting the kernel as Rust
     /// string slice without the null-byte.
     ///
@@ -46,10 +61,15 @@ impl Debug for BootLoaderNameTag {
 
 impl TagTrait for BootLoaderNameTag {
     fn dst_size(base_tag: &Tag) -> usize {
-        // The size of the sized portion of the bootloader name tag.
-        let tag_base_size = 8;
-        assert!(base_tag.size >= 8);
-        base_tag.size as usize - tag_base_size
+        assert!(base_tag.size as usize >= METADATA_SIZE);
+        base_tag.size as usize - METADATA_SIZE
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for BootLoaderNameTag {
+    fn byte_size(&self) -> usize {
+        self.size.try_into().unwrap()
     }
 }
 
@@ -84,5 +104,16 @@ mod tests {
         let tag = tag.cast_tag::<BootLoaderNameTag>();
         assert_eq!({ tag.typ }, TagType::BootLoaderName);
         assert_eq!(tag.name().expect("must be valid UTF-8"), MSG);
+    }
+
+    /// Test to generate a tag from a given string.
+    #[test]
+    #[cfg(feature = "builder")]
+    fn test_build_str() {
+        use crate::builder::traits::StructAsBytes;
+
+        let tag = BootLoaderNameTag::new(MSG);
+        let bytes = tag.struct_as_bytes();
+        assert_eq!(bytes, get_bytes());
     }
 }
