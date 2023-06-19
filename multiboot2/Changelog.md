@@ -9,6 +9,10 @@
 - renamed `MULTIBOOT2_BOOTLOADER_MAGIC` to `MAGIC`
 - added a `builder` feature and a `builder` module with a `Multiboot2InformationBuilder`
   struct
+- `EFIMemoryDesc` was removed and is now an alias of
+  `uefi_raw::table::boot::MemoryDescriptor`
+- `EFIMemoryAreaType` was removed and is now an alias of
+  `uefi_raw::table::boot::MemoryType`
 
 ## 0.15.1 (2023-03-18)
 - **BREAKING** `MemoryMapTag::all_memory_areas()` was renamed to `memory_areas`

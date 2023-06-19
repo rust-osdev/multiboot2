@@ -1483,7 +1483,6 @@ mod tests {
 
     #[test]
     fn efi_memory_map() {
-        use memory_map::EFIMemoryAreaType;
         #[repr(C, align(8))]
         struct Bytes([u8; 72]);
         // test that the EFI memory map is detected.
@@ -1516,9 +1515,9 @@ mod tests {
         let efi_memory_map = bi.efi_memory_map_tag().unwrap();
         let mut efi_mmap_iter = efi_memory_map.memory_areas();
         let desc = efi_mmap_iter.next().unwrap();
-        assert_eq!(desc.physical_address(), 0x100000);
-        assert_eq!(desc.size(), 16384);
-        assert_eq!(desc.typ(), EFIMemoryAreaType::EfiConventionalMemory);
+        assert_eq!(desc.phys_start, 0x100000);
+        assert_eq!(desc.page_count, 4);
+        assert_eq!(desc.ty, EFIMemoryAreaType::CONVENTIONAL);
         // test that the EFI memory map is not detected if the boot services
         // are not exited.
         struct Bytes2([u8; 80]);

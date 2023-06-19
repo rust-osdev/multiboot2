@@ -1,9 +1,11 @@
 use crate::{Tag, TagTrait, TagType, TagTypeId};
-
 use core::convert::TryInto;
 use core::fmt::Debug;
 use core::marker::PhantomData;
 use core::mem;
+
+pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
+pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
 
 #[cfg(feature = "builder")]
 use {crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box};
@@ -296,152 +298,10 @@ impl StructAsBytes for EFIMemoryMapTag {
     }
 }
 
-/// EFI Boot Memory Map Descriptor
-#[derive(Debug, Clone)]
-#[repr(C)]
-pub struct EFIMemoryDesc {
-    typ: u32,
-    _padding: u32,
-    phys_addr: u64,
-    virt_addr: u64,
-    num_pages: u64,
-    attr: u64,
-}
-
 #[cfg(feature = "builder")]
 impl StructAsBytes for EFIMemoryDesc {
     fn byte_size(&self) -> usize {
         mem::size_of::<Self>()
-    }
-}
-
-/// An enum of possible reported region types.
-#[derive(Debug, PartialEq, Eq)]
-pub enum EFIMemoryAreaType {
-    /// Unusable.
-    EfiReservedMemoryType,
-    /// Code area of a UEFI application.
-    EfiLoaderCode,
-    /// Data area of a UEFI application.
-    EfiLoaderData,
-    /// Code area of a UEFI Boot Service Driver.
-    EfiBootServicesCode,
-    /// Data area of a UEFI Boot Service Driver.
-    EfiBootServicesData,
-    /// Code area of a UEFI Runtime Driver.
-    ///
-    /// Must be preserved in working and ACPI S1-S3 states.
-    EfiRuntimeServicesCode,
-    /// Data area of a UEFI Runtime Driver.
-    ///
-    /// Must be preserved in working and ACPI S1-S3 states.
-    EfiRuntimeServicesData,
-    /// Available memory.
-    EfiConventionalMemory,
-    /// Memory with errors, treat as unusable.
-    EfiUnusableMemory,
-    /// Memory containing the ACPI tables.
-    ///
-    /// Must be preserved in working and ACPI S1-S3 states.
-    EfiACPIReclaimMemory,
-    /// Memory reserved by firmware.
-    ///
-    /// Must be preserved in working and ACPI S1-S3 states.
-    EfiACPIMemoryNVS,
-    /// Memory used by firmware for requesting memory mapping of IO.
-    ///
-    /// Should not be used by the OS. Use the ACPI tables for memory mapped IO
-    /// information.
-    EfiMemoryMappedIO,
-    /// Memory used to translate memory cycles to IO cycles.
-    ///
-    /// Should not be used by the OS. Use the ACPI tables for memory mapped IO
-    /// information.
-    EfiMemoryMappedIOPortSpace,
-    /// Memory used by the processor.
-    ///
-    /// Must be preserved in working and ACPI S1-S4 states. Processor defined
-    /// otherwise.
-    EfiPalCode,
-    /// Available memory supporting byte-addressable non-volatility.
-    EfiPersistentMemory,
-    /// Unknown region type, treat as unusable.
-    EfiUnknown,
-}
-
-impl From<EFIMemoryAreaType> for u32 {
-    fn from(area: EFIMemoryAreaType) -> Self {
-        match area {
-            EFIMemoryAreaType::EfiReservedMemoryType => 0,
-            EFIMemoryAreaType::EfiLoaderCode => 1,
-            EFIMemoryAreaType::EfiLoaderData => 2,
-            EFIMemoryAreaType::EfiBootServicesCode => 3,
-            EFIMemoryAreaType::EfiBootServicesData => 4,
-            EFIMemoryAreaType::EfiRuntimeServicesCode => 5,
-            EFIMemoryAreaType::EfiRuntimeServicesData => 6,
-            EFIMemoryAreaType::EfiConventionalMemory => 7,
-            EFIMemoryAreaType::EfiUnusableMemory => 8,
-            EFIMemoryAreaType::EfiACPIReclaimMemory => 9,
-            EFIMemoryAreaType::EfiACPIMemoryNVS => 10,
-            EFIMemoryAreaType::EfiMemoryMappedIO => 11,
-            EFIMemoryAreaType::EfiMemoryMappedIOPortSpace => 12,
-            EFIMemoryAreaType::EfiPalCode => 13,
-            EFIMemoryAreaType::EfiPersistentMemory => 14,
-            EFIMemoryAreaType::EfiUnknown => panic!("unknown type"),
-        }
-    }
-}
-
-impl EFIMemoryDesc {
-    /// The physical address of the memory region.
-    pub fn physical_address(&self) -> u64 {
-        self.phys_addr
-    }
-
-    /// The virtual address of the memory region.
-    pub fn virtual_address(&self) -> u64 {
-        self.virt_addr
-    }
-
-    /// The size in bytes of the memory region.
-    pub fn size(&self) -> u64 {
-        // Spec says this is number of 4KiB pages.
-        self.num_pages * 4096
-    }
-
-    /// The type of the memory region.
-    pub fn typ(&self) -> EFIMemoryAreaType {
-        match self.typ {
-            0 => EFIMemoryAreaType::EfiReservedMemoryType,
-            1 => EFIMemoryAreaType::EfiLoaderCode,
-            2 => EFIMemoryAreaType::EfiLoaderData,
-            3 => EFIMemoryAreaType::EfiBootServicesCode,
-            4 => EFIMemoryAreaType::EfiBootServicesData,
-            5 => EFIMemoryAreaType::EfiRuntimeServicesCode,
-            6 => EFIMemoryAreaType::EfiRuntimeServicesData,
-            7 => EFIMemoryAreaType::EfiConventionalMemory,
-            8 => EFIMemoryAreaType::EfiUnusableMemory,
-            9 => EFIMemoryAreaType::EfiACPIReclaimMemory,
-            10 => EFIMemoryAreaType::EfiACPIMemoryNVS,
-            11 => EFIMemoryAreaType::EfiMemoryMappedIO,
-            12 => EFIMemoryAreaType::EfiMemoryMappedIOPortSpace,
-            13 => EFIMemoryAreaType::EfiPalCode,
-            14 => EFIMemoryAreaType::EfiPersistentMemory,
-            _ => EFIMemoryAreaType::EfiUnknown,
-        }
-    }
-}
-
-impl Default for EFIMemoryDesc {
-    fn default() -> Self {
-        Self {
-            typ: EFIMemoryAreaType::EfiReservedMemoryType.into(),
-            _padding: 0,
-            phys_addr: 0,
-            virt_addr: 0,
-            num_pages: 0,
-            attr: 0,
-        }
     }
 }
 
