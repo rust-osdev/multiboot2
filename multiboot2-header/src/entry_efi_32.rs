@@ -9,7 +9,7 @@ use core::mem::size_of;
 ///
 /// Technically, this is equivalent to the [`crate::EntryAddressHeaderTag`] but with a different
 /// [`crate::HeaderTagType`].
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EntryEfi32HeaderTag {
     typ: HeaderTagType,

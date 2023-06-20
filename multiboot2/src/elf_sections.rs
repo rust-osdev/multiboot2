@@ -142,7 +142,7 @@ impl Default for ElfSectionIter {
 }
 
 /// A single generic ELF Section.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ElfSection {
     inner: *const u8,
     string_section: *const u8,

@@ -18,7 +18,7 @@ pub(crate) const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_
 ///
 /// The string is a normal C-style UTF-8 zero-terminated string that can be
 /// obtained via the `command_line` method.
-#[derive(ptr_meta::Pointee, PartialEq, Eq)]
+#[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct CommandLineTag {
     typ: TagTypeId,

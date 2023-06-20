@@ -3,7 +3,7 @@ use core::fmt;
 
 /// This tag contains VBE metadata, VBE controller information returned by the
 /// VBE Function 00h and VBE mode information returned by the VBE Function 01h.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct VBEInfoTag {
     typ: TagTypeId,
@@ -45,7 +45,7 @@ pub struct VBEInfoTag {
 ///
 /// The purpose of this struct is to provide information to the kernel about the general
 /// capabilities of the installed VBE software and hardware.
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, packed)]
 pub struct VBEControlInfo {
     /// VBE Signature aka "VESA".
@@ -106,7 +106,7 @@ impl fmt::Debug for VBEControlInfo {
 
 /// Extended information about a specific VBE display mode from the
 /// mode list returned by `VBEControlInfo` (VBE Function `00h`).
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, packed)]
 pub struct VBEModeInfo {
     /// Mode attributes.
@@ -234,7 +234,7 @@ impl fmt::Debug for VBEModeInfo {
 /// A VBE colour field.
 ///
 /// Describes the size and position of some colour capability.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, packed)]
 pub struct VBEField {
     /// The size, in bits, of the color components of a direct color pixel.
@@ -247,7 +247,7 @@ pub struct VBEField {
 
 bitflags! {
     /// The Capabilities field indicates the support of specific features in the graphics environment.
-    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[repr(transparent)]
     pub struct VBECapabilities: u32 {
         /// Can the DAC be switched between 6 and 8 bit modes.
@@ -265,7 +265,7 @@ bitflags! {
 
 bitflags! {
     /// A Mode attributes bitfield.
-    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[repr(transparent)]
     pub struct VBEModeAttributes: u16 {
         /// Mode supported by hardware configuration.
@@ -298,7 +298,7 @@ bitflags! {
 bitflags! {
     /// The WindowAttributes describe the characteristics of the CPU windowing
     /// scheme such as whether the windows exist and are read/writeable, as follows:
-    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[repr(transparent)]
     pub struct VBEWindowAttributes: u8 {
         /// Relocatable window(s) supported?
@@ -323,7 +323,7 @@ bitflags! {
     /// (it is assumed all color ramp data is 8 bits per primary).
     /// Bit D1 specifies whether the bits in the Rsvd field of the direct color
     /// pixel can be used by the application or are reserved, and thus unusable.
-    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[repr(transparent)]
     pub struct VBEDirectColorAttributes: u8 {
         /// Color ramp is fixed when cleared and programmable when set.

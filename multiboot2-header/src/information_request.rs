@@ -8,7 +8,7 @@ use multiboot2::TagType;
 
 /// Specifies what specific tag types the bootloader should provide
 /// inside the mbi.
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct InformationRequestHeaderTag<const N: usize> {
     typ: HeaderTagType,

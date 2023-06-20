@@ -13,7 +13,7 @@ pub enum ConsoleHeaderTagFlags {
 
 /// Tells that a console must be available in MBI.
 /// Only relevant for legacy BIOS.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct ConsoleHeaderTag {
     typ: HeaderTagType,

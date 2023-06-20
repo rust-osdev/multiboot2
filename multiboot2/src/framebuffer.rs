@@ -220,7 +220,7 @@ impl PartialEq for FramebufferTag {
 }
 
 /// Helper struct for [`FramebufferType`].
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 #[allow(clippy::upper_case_acronyms)]
 enum FramebufferTypeId {
