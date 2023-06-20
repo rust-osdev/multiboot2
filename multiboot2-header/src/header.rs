@@ -5,7 +5,7 @@ use crate::{
     RelocatableHeaderTag,
 };
 use core::convert::TryInto;
-use core::fmt::{Debug, Display, Formatter};
+use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 
 /// Magic value for a [`Multiboot2Header`], as defined in spec.
@@ -200,7 +200,7 @@ impl<'a> Debug for Multiboot2Header<'a> {
 
 /// Errors that can occur when parsing a header from a slice.
 /// See [`Multiboot2Header::find_header`].
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, derive_more::Display, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum LoadError {
     /// The checksum does not match the data.
     ChecksumMismatch,
@@ -210,12 +210,6 @@ pub enum LoadError {
     MagicNotFound,
     /// The header is truncated.
     TooSmall,
-}
-
-impl Display for LoadError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self)
-    }
 }
 
 #[cfg(feature = "unstable")]
