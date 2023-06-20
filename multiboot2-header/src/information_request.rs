@@ -98,12 +98,12 @@ pub struct InformationRequestHeaderTagIter<'a> {
 }
 
 impl<'a> InformationRequestHeaderTagIter<'a> {
-    fn new(count: u32, base_ptr: *const MbiTagTypeId) -> Self {
+    const fn new(count: u32, base_ptr: *const MbiTagTypeId) -> Self {
         Self {
             i: 0,
             count,
             base_ptr,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         }
     }
 }

@@ -75,6 +75,7 @@ jobs:
   # check that devs can also use this on Windows.
   build_nostd_stable_windows:
     name: build no_std (stable) [Windows]
+    needs: build_stable
     uses: ./.github/workflows/_build-rust.yml
     with:
       runs-on: windows-latest
