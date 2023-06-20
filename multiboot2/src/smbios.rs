@@ -12,7 +12,8 @@ const METADATA_SIZE: usize = core::mem::size_of::<TagTypeId>()
 
 /// This tag contains a copy of SMBIOS tables as well as their version.
 #[derive(ptr_meta::Pointee)]
-#[repr(C, packed)]
+#[derive(PartialEq, Eq)]
+#[repr(C, align(8))]
 pub struct SmbiosTag {
     typ: TagTypeId,
     size: u32,

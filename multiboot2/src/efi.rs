@@ -9,8 +9,8 @@ use core::mem::size_of;
 use crate::builder::traits::StructAsBytes;
 
 /// EFI system table in 32 bit mode
-#[derive(Clone, Copy, Debug)]
-#[repr(C, packed)] // only repr(C) would add unwanted padding before first_section
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(C, align(8))]
 pub struct EFISdt32 {
     typ: TagTypeId,
     size: u32,
@@ -41,8 +41,8 @@ impl StructAsBytes for EFISdt32 {
 }
 
 /// EFI system table in 64 bit mode
-#[derive(Clone, Copy, Debug)]
-#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(C, align(8))]
 pub struct EFISdt64 {
     typ: TagTypeId,
     size: u32,
@@ -73,8 +73,8 @@ impl StructAsBytes for EFISdt64 {
 }
 
 /// Contains pointer to boot loader image handle.
-#[derive(Debug)]
-#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(C, align(8))]
 pub struct EFIImageHandle32 {
     typ: TagTypeId,
     size: u32,
@@ -105,8 +105,8 @@ impl StructAsBytes for EFIImageHandle32 {
 }
 
 /// Contains pointer to boot loader image handle.
-#[derive(Debug)]
-#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(C, align(8))]
 pub struct EFIImageHandle64 {
     typ: TagTypeId,
     size: u32,

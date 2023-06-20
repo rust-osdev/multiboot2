@@ -8,7 +8,7 @@ use core::mem::size_of;
 /// but not lower than min addr and ‘2’ means load image at highest possible
 /// address but not higher than max addr.
 #[repr(u32)]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum RelocatableHeaderTagPreference {
     /// Let boot loader decide.
     None = 0,
@@ -19,8 +19,8 @@ pub enum RelocatableHeaderTagPreference {
 }
 
 /// This tag indicates that the image is relocatable.
-#[derive(Copy, Clone)]
-#[repr(C)]
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[repr(C, align(8))]
 pub struct RelocatableHeaderTag {
     typ: HeaderTagType,
     flags: HeaderTagFlag,

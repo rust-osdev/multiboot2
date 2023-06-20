@@ -33,7 +33,7 @@ impl TagTypeId {
 /// to a specific semantic according to the specification. Additionally, it
 /// allows to use the [`TagType::Custom`] variant. It is **not binary compatible**
 /// with [`TagTypeId`].
-#[derive(Copy, Clone, Debug, PartialOrd, PartialEq, Eq, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TagType {
     /// Tag `0`: Marks the end of the tags.
     End,

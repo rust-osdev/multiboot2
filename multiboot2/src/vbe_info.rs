@@ -3,8 +3,8 @@ use core::fmt;
 
 /// This tag contains VBE metadata, VBE controller information returned by the
 /// VBE Function 00h and VBE mode information returned by the VBE Function 01h.
-#[derive(Debug, Copy, Clone)]
-#[repr(C, packed)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(C, align(8))]
 pub struct VBEInfoTag {
     typ: TagTypeId,
     length: u32,
@@ -45,7 +45,7 @@ pub struct VBEInfoTag {
 ///
 /// The purpose of this struct is to provide information to the kernel about the general
 /// capabilities of the installed VBE software and hardware.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(C, packed)]
 pub struct VBEControlInfo {
     /// VBE Signature aka "VESA".
@@ -106,7 +106,7 @@ impl fmt::Debug for VBEControlInfo {
 
 /// Extended information about a specific VBE display mode from the
 /// mode list returned by `VBEControlInfo` (VBE Function `00h`).
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(C, packed)]
 pub struct VBEModeInfo {
     /// Mode attributes.
@@ -234,7 +234,7 @@ impl fmt::Debug for VBEModeInfo {
 /// A VBE colour field.
 ///
 /// Describes the size and position of some colour capability.
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(C, packed)]
 pub struct VBEField {
     /// The size, in bits, of the color components of a direct color pixel.
@@ -335,7 +335,7 @@ bitflags! {
 }
 
 /// The MemoryModel field specifies the general type of memory organization used in modes.
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 #[allow(missing_docs)]
 #[allow(clippy::upper_case_acronyms)]

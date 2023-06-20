@@ -4,7 +4,7 @@
 
 /// ISA/ARCH in Multiboot2 header.
 #[repr(u32)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HeaderTagISA {
     /// Spec: "means 32-bit (protected) mode of i386".
     /// Caution: This is confusing. If you use the EFI64-tag
@@ -19,7 +19,7 @@ pub enum HeaderTagISA {
 /// from the example C code at the bottom of the Multiboot2 specification. This value
 /// stands in the `typ` property of [`crate::tags::HeaderTag`].
 #[repr(u16)]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HeaderTagType {
     /// Type for [`crate::EndHeaderTag`].
     End = 0,
@@ -54,7 +54,7 @@ impl HeaderTagType {
 
 /// Flags for Multiboot2 header tags.
 #[repr(u16)]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HeaderTagFlag {
     Required = 0,
     Optional = 1,
@@ -63,8 +63,8 @@ pub enum HeaderTagFlag {
 /// Common properties for all header tags. Other tags may have additional fields
 /// that depend on the `typ` and the `size` field. All tags share the same beginning of the
 /// struct.
-#[derive(Copy, Clone, Debug)]
-#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(C, align(8))]
 pub struct HeaderTag {
     // u16 value
     typ: HeaderTagType,

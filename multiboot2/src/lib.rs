@@ -173,7 +173,8 @@ pub unsafe fn load_with_offset(
 
 /// Error type that describes errors while loading/parsing a multiboot2 information structure
 /// from a given address.
-#[derive(Debug, Display)]
+#[derive(Display)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum MbiLoadError {
     /// The address is invalid. Make sure that the address is 8-byte aligned,
     /// according to the spec.

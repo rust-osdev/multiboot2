@@ -15,6 +15,7 @@ use core::mem::size_of;
 /// The tags will appear in the order of their corresponding enumeration,
 /// except for the END tag.
 #[derive(Debug)]
+// #[derive(Debug, PartialEq, Eq)] // wait for uefi-raw 0.3.0
 pub struct Multiboot2InformationBuilder {
     basic_memory_info_tag: Option<BasicMemoryInfoTag>,
     boot_loader_name_tag: Option<Box<BootLoaderNameTag>>,

@@ -3,8 +3,8 @@ use core::mem::size_of;
 
 /// This tag indicates that payload supports starting without terminating UEFI boot services.
 /// Or in other words: The payload wants to use UEFI boot services.
-#[derive(Copy, Clone, Debug)]
-#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(C, align(8))]
 pub struct EfiBootServiceHeaderTag {
     typ: HeaderTagType,
     flags: HeaderTagFlag,

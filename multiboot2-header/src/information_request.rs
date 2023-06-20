@@ -8,7 +8,7 @@ use multiboot2::TagType;
 
 /// Specifies what specific tag types the bootloader should provide
 /// inside the mbi.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(C)]
 pub struct InformationRequestHeaderTag<const N: usize> {
     typ: HeaderTagType,
@@ -126,7 +126,7 @@ impl<'a> Iterator for InformationRequestHeaderTagIter<'a> {
 impl<'a> Debug for InformationRequestHeaderTagIter<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut debug = f.debug_list();
-        (*self).for_each(|e| {
+        self.for_each(|e| {
             debug.entry(&e);
         });
         debug.finish()

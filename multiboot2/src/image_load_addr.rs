@@ -7,8 +7,8 @@ use {
 
 /// If the image has relocatable header tag, this tag contains the image's
 /// base physical address.
-#[derive(Debug)]
-#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(C, align(8))]
 pub struct ImageLoadPhysAddr {
     typ: TagTypeId,
     size: u32,
