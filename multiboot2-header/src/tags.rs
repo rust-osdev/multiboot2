@@ -63,7 +63,7 @@ pub enum HeaderTagFlag {
 /// Common properties for all header tags. Other tags may have additional fields
 /// that depend on the `typ` and the `size` field. All tags share the same beginning of the
 /// struct.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct HeaderTag {
     // u16 value

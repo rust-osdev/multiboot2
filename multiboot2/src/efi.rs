@@ -9,7 +9,7 @@ use core::mem::size_of;
 use crate::builder::traits::StructAsBytes;
 
 /// EFI system table in 32 bit mode
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFISdt32 {
     typ: TagTypeId,
@@ -41,7 +41,7 @@ impl StructAsBytes for EFISdt32 {
 }
 
 /// EFI system table in 64 bit mode
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFISdt64 {
     typ: TagTypeId,
@@ -73,7 +73,7 @@ impl StructAsBytes for EFISdt64 {
 }
 
 /// Contains pointer to boot loader image handle.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIImageHandle32 {
     typ: TagTypeId,
@@ -105,7 +105,7 @@ impl StructAsBytes for EFIImageHandle32 {
 }
 
 /// Contains pointer to boot loader image handle.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIImageHandle64 {
     typ: TagTypeId,

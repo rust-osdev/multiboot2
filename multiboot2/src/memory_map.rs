@@ -80,7 +80,7 @@ impl StructAsBytes for MemoryMapTag {
 }
 
 /// A memory area entry descriptor.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct MemoryArea {
     base_addr: u64,
@@ -190,7 +190,7 @@ impl<'a> Iterator for MemoryAreaIter<'a> {
 /// (which had a 24-bit address bus) could use, historically.
 /// Nowadays, much bigger chunks of continuous memory are available at higher
 /// addresses, but the Multiboot standard still references those two terms.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct BasicMemoryInfoTag {
     typ: TagTypeId,
@@ -298,7 +298,7 @@ impl StructAsBytes for EFIMemoryDesc {
 }
 
 /// EFI ExitBootServices was not called
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIBootServicesNotExited {
     typ: TagTypeId,

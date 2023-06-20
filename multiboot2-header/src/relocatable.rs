@@ -19,7 +19,7 @@ pub enum RelocatableHeaderTagPreference {
 }
 
 /// This tag indicates that the image is relocatable.
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct RelocatableHeaderTag {
     typ: HeaderTagType,

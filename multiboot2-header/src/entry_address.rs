@@ -5,7 +5,7 @@ use core::mem::size_of;
 
 /// Specifies the physical address to which the boot loader should jump in
 /// order to start running the operating system. Not needed for ELF files.
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EntryAddressHeaderTag {
     typ: HeaderTagType,
