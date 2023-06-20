@@ -1,10 +1,11 @@
 use super::traits::StructAsBytes;
-use crate::InformationRequestHeaderTag;
 use crate::{HeaderTagFlag, MbiTagType};
+use crate::{InformationRequestHeaderTag, MbiTagTypeId};
 use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 use core::fmt::Debug;
 use core::mem::size_of;
+use multiboot2::TagTypeId;
 
 /// Helper to build the dynamically sized [`InformationRequestHeaderTag`]
 /// at runtime. The information request tag has a dedicated builder because this way one
@@ -21,7 +22,6 @@ pub struct InformationRequestHeaderTagBuilder {
 #[cfg(feature = "builder")]
 impl InformationRequestHeaderTagBuilder {
     /// New builder.
-    #[allow(clippy::missing_const_for_fn)] // TODO remove once MSRV is higher than 1.65.0
     pub fn new(flag: HeaderTagFlag) -> Self {
         Self {
             irs: BTreeSet::new(),
@@ -31,10 +31,9 @@ impl InformationRequestHeaderTagBuilder {
 
     /// Returns the expected length of the information request tag,
     /// when the `build`-method gets called.
-    #[allow(clippy::missing_const_for_fn)] // TODO remove once MSRV is higher than 1.65.0
     pub fn expected_len(&self) -> usize {
         let basic_header_size = size_of::<InformationRequestHeaderTag<0>>();
-        let req_tags_size = self.irs.len() * size_of::<MbiTagType>();
+        let req_tags_size = self.irs.len() * size_of::<MbiTagTypeId>();
         basic_header_size + req_tags_size
     }
 
@@ -74,8 +73,13 @@ impl InformationRequestHeaderTagBuilder {
             );
         }
 
-        for tag in &self.irs {
-            let bytes: [u8; 4] = (*tag as u32).to_ne_bytes();
+        for tag_type in self
+            .irs
+            .into_iter()
+            // Transform to the ABI-compatible type
+            .map(TagTypeId::from)
+        {
+            let bytes: [u8; 4] = (u32::from(tag_type)).to_le_bytes();
             data.extend(&bytes);
         }
 
@@ -91,7 +95,7 @@ impl InformationRequestHeaderTagBuilder {
 #[cfg(test)]
 mod tests {
     use crate::builder::information_request::InformationRequestHeaderTagBuilder;
-    use crate::{HeaderTagFlag, InformationRequestHeaderTag, MbiTagType};
+    use crate::{HeaderTagFlag, InformationRequestHeaderTag, MbiTagType, MbiTagTypeId};
 
     #[test]
     fn test_builder() {
@@ -111,11 +115,19 @@ mod tests {
         // type(u16) + flags(u16) + size(u32) + 3 tags (u32)
         assert_eq!(tag.size(), 2 + 2 + 4 + 3 * 4);
         assert_eq!(tag.dynamic_requests_size(), 3);
-        assert!(tag.requests().contains(&MbiTagType::EfiMmap));
-        assert!(tag.requests().contains(&MbiTagType::BootLoaderName));
-        assert!(tag.requests().contains(&MbiTagType::Cmdline));
+        assert!(tag
+            .requests()
+            .contains(&MbiTagTypeId::from(MbiTagType::EfiMmap)));
+        assert!(tag
+            .requests()
+            .contains(&MbiTagTypeId::from(MbiTagType::BootLoaderName)));
+        assert!(tag
+            .requests()
+            .contains(&MbiTagTypeId::from(MbiTagType::Cmdline)));
         assert_eq!(tag.requests().len(), 3);
-        assert!(!tag.requests().contains(&MbiTagType::AcpiV1));
+        assert!(!tag
+            .requests()
+            .contains(&MbiTagTypeId::from(MbiTagType::AcpiV1)));
         println!("{:#?}", tag);
     }
 }
