@@ -44,31 +44,30 @@ impl MemoryMapTag {
         boxed_dst_tag(TagType::Mmap, bytes.as_slice())
     }
 
-    /// Return an iterator over all memory areas that have the type
-    /// [`MemoryAreaType::Available`].
-    pub fn available_memory_areas(&self) -> impl Iterator<Item = &MemoryArea> {
-        self.memory_areas()
-            .filter(|entry| matches!(entry.typ, MemoryAreaType::Available))
+    /// Returns the entry size.
+    pub fn entry_size(&self) -> u32 {
+        self.entry_size
     }
 
-    /// Return an iterator over all memory areas.
-    pub fn memory_areas(&self) -> MemoryAreaIter {
-        let self_ptr = self as *const MemoryMapTag;
-        let start_area = (&self.areas[0]) as *const MemoryArea;
-        MemoryAreaIter {
-            current_area: start_area as u64,
-            // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
-            last_area: (self_ptr as *const () as u64 + (self.size - self.entry_size) as u64),
-            entry_size: self.entry_size,
-            phantom: PhantomData,
-        }
+    /// Returns the entry version.
+    pub fn entry_version(&self) -> u32 {
+        self.entry_version
+    }
+
+    /// Return the slice with all memory areas.
+    pub fn memory_areas(&self) -> &[MemoryArea] {
+        // If this ever fails, we need to model this differently in this crate.
+        assert_eq!(self.entry_size as usize, mem::size_of::<MemoryArea>());
+        &self.areas
     }
 }
 
 impl TagTrait for MemoryMapTag {
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= METADATA_SIZE);
-        base_tag.size as usize - METADATA_SIZE
+        let size = base_tag.size as usize - METADATA_SIZE;
+        assert_eq!(size % mem::size_of::<MemoryArea>(), 0);
+        size / mem::size_of::<MemoryArea>()
     }
 }
 
@@ -150,28 +149,6 @@ pub enum MemoryAreaType {
 
     /// Memory which is occupied by defective RAM modules.
     Defective = 5,
-}
-
-/// An iterator over all memory areas
-#[derive(Clone, Debug)]
-pub struct MemoryAreaIter<'a> {
-    current_area: u64,
-    last_area: u64,
-    entry_size: u32,
-    phantom: PhantomData<&'a MemoryArea>,
-}
-
-impl<'a> Iterator for MemoryAreaIter<'a> {
-    type Item = &'a MemoryArea;
-    fn next(&mut self) -> Option<&'a MemoryArea> {
-        if self.current_area > self.last_area {
-            None
-        } else {
-            let area = unsafe { &*(self.current_area as *const MemoryArea) };
-            self.current_area += self.entry_size as u64;
-            Some(area)
-        }
-    }
 }
 
 /// Basic memory info
@@ -279,7 +256,9 @@ impl EFIMemoryMapTag {
 impl TagTrait for EFIMemoryMapTag {
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= EFI_METADATA_SIZE);
-        base_tag.size as usize - EFI_METADATA_SIZE
+        let size = base_tag.size as usize - EFI_METADATA_SIZE;
+        assert_eq!(size % mem::size_of::<EFIMemoryDesc>(), 0);
+        size / mem::size_of::<EFIMemoryDesc>()
     }
 }
 
