@@ -6,6 +6,7 @@
 - added the optional `unstable` feature (requires nightly)
   - implement `core::error::Error` for `LoadError`
 - depends on `multiboot2@v0.16.0`
+- **BREAKING** renamed `Multiboot2HeaderBuilder` to `HeaderBuilder`
 
 ## 0.2.0 (2022-05-03)
 - **BREAKING** renamed `EntryHeaderTag` to `EntryAddressHeaderTag`

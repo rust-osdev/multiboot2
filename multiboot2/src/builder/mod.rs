@@ -3,7 +3,7 @@
 mod information;
 pub(crate) mod traits;
 
-pub use information::Multiboot2InformationBuilder;
+pub use information::InformationBuilder;
 
 use alloc::alloc::alloc;
 use alloc::boxed::Box;

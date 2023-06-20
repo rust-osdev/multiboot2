@@ -1,4 +1,4 @@
-use multiboot2_header::builder::{InformationRequestHeaderTagBuilder, Multiboot2HeaderBuilder};
+use multiboot2_header::builder::{HeaderBuilder, InformationRequestHeaderTagBuilder};
 use multiboot2_header::{
     HeaderTagFlag, HeaderTagISA, MbiTagType, Multiboot2Header, RelocatableHeaderTag,
     RelocatableHeaderTagPreference,
@@ -8,7 +8,7 @@ use multiboot2_header::{
 fn main() {
     // We create a Multiboot2 header during runtime here. A practical example is that your
     // program gets the header from a file and parses it afterwards.
-    let mb2_hdr_bytes = Multiboot2HeaderBuilder::new(HeaderTagISA::I386)
+    let mb2_hdr_bytes = HeaderBuilder::new(HeaderTagISA::I386)
         .relocatable_tag(RelocatableHeaderTag::new(
             HeaderTagFlag::Required,
             0x1337,

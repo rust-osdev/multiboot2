@@ -1,4 +1,4 @@
-//! Exports item [`Multiboot2HeaderBuilder`].
+//! Exports item [`HeaderBuilder`].
 
 use crate::builder::information_request::InformationRequestHeaderTagBuilder;
 use crate::builder::traits::StructAsBytes;
@@ -15,7 +15,7 @@ use core::mem::size_of;
 /// The tags will appear in the order of their corresponding enumeration,
 /// except for the END tag.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Multiboot2HeaderBuilder {
+pub struct HeaderBuilder {
     arch: HeaderTagISA,
     // first
     information_request_tag: Option<InformationRequestHeaderTagBuilder>,
@@ -39,7 +39,7 @@ pub struct Multiboot2HeaderBuilder {
     relocatable_tag: Option<RelocatableHeaderTag>,
 }
 
-impl Multiboot2HeaderBuilder {
+impl HeaderBuilder {
     pub const fn new(arch: HeaderTagISA) -> Self {
         Self {
             arch,
@@ -228,7 +228,7 @@ impl Multiboot2HeaderBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::builder::header::Multiboot2HeaderBuilder;
+    use crate::builder::header::HeaderBuilder;
     use crate::builder::information_request::InformationRequestHeaderTagBuilder;
     use crate::{
         HeaderTagFlag, HeaderTagISA, MbiTagType, Multiboot2Header, RelocatableHeaderTag,
@@ -237,15 +237,15 @@ mod tests {
 
     #[test]
     fn test_size_or_up_aligned() {
-        assert_eq!(0, Multiboot2HeaderBuilder::size_or_up_aligned(0));
-        assert_eq!(8, Multiboot2HeaderBuilder::size_or_up_aligned(1));
-        assert_eq!(8, Multiboot2HeaderBuilder::size_or_up_aligned(8));
-        assert_eq!(16, Multiboot2HeaderBuilder::size_or_up_aligned(9));
+        assert_eq!(0, HeaderBuilder::size_or_up_aligned(0));
+        assert_eq!(8, HeaderBuilder::size_or_up_aligned(1));
+        assert_eq!(8, HeaderBuilder::size_or_up_aligned(8));
+        assert_eq!(16, HeaderBuilder::size_or_up_aligned(9));
     }
 
     #[test]
     fn test_builder() {
-        let builder = Multiboot2HeaderBuilder::new(HeaderTagISA::I386);
+        let builder = HeaderBuilder::new(HeaderTagISA::I386);
         // Multiboot2 basic header + end tag
         let mut expected_len = 16 + 8;
         assert_eq!(builder.expected_len(), expected_len);
