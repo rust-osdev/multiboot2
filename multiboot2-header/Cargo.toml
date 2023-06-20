@@ -40,5 +40,11 @@ builder = ["alloc"]
 unstable = []
 
 [dependencies]
+# Not yet used.
+# bitflags.workspace = true
+derive_more.workspace = true
+# Not yet used.
+# log.workspace = true
+
 # used for MBI tags
 multiboot2 = "0.16.0"
