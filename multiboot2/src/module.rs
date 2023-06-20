@@ -136,10 +136,10 @@ mod tests {
         //          4 bytes mod_start + 4 bytes mod_end
         let size = (4 + 4 + 4 + 4 + MSG.as_bytes().len() + 1) as u32;
         [
-            &((TagType::Module.val()).to_ne_bytes()),
-            &size.to_ne_bytes(),
-            &0_u32.to_ne_bytes(),
-            &0_u32.to_ne_bytes(),
+            &((TagType::Module.val()).to_le_bytes()),
+            &size.to_le_bytes(),
+            &0_u32.to_le_bytes(),
+            &0_u32.to_le_bytes(),
             MSG.as_bytes(),
             // Null Byte
             &[0],

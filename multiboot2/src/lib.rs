@@ -1573,10 +1573,10 @@ mod tests {
             0,
             0,
             0, // end: padding; end of multiboot2 boot information begin
-            CUSTOM_TAG_ID.to_ne_bytes()[0],
-            CUSTOM_TAG_ID.to_ne_bytes()[1],
-            CUSTOM_TAG_ID.to_ne_bytes()[2],
-            CUSTOM_TAG_ID.to_ne_bytes()[3], // end: my custom tag id
+            CUSTOM_TAG_ID.to_le_bytes()[0],
+            CUSTOM_TAG_ID.to_le_bytes()[1],
+            CUSTOM_TAG_ID.to_le_bytes()[2],
+            CUSTOM_TAG_ID.to_le_bytes()[3], // end: my custom tag id
             12,
             0,
             0,
@@ -1649,10 +1649,10 @@ mod tests {
             0,
             0,
             0, // end: padding; end of multiboot2 boot information begin
-            CUSTOM_TAG_ID.to_ne_bytes()[0],
-            CUSTOM_TAG_ID.to_ne_bytes()[1],
-            CUSTOM_TAG_ID.to_ne_bytes()[2],
-            CUSTOM_TAG_ID.to_ne_bytes()[3], // end: my custom tag id
+            CUSTOM_TAG_ID.to_le_bytes()[0],
+            CUSTOM_TAG_ID.to_le_bytes()[1],
+            CUSTOM_TAG_ID.to_le_bytes()[2],
+            CUSTOM_TAG_ID.to_le_bytes()[3], // end: my custom tag id
             14,
             0,
             0,
@@ -1699,10 +1699,10 @@ mod tests {
             0,
             0,
             0, // reserved
-            TagType::Cmdline.val().to_ne_bytes()[0],
-            TagType::Cmdline.val().to_ne_bytes()[1],
-            TagType::Cmdline.val().to_ne_bytes()[2],
-            TagType::Cmdline.val().to_ne_bytes()[3],
+            TagType::Cmdline.val().to_le_bytes()[0],
+            TagType::Cmdline.val().to_le_bytes()[1],
+            TagType::Cmdline.val().to_le_bytes()[2],
+            TagType::Cmdline.val().to_le_bytes()[3],
             13,
             0,
             0,

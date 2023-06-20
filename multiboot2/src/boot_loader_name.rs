@@ -84,8 +84,8 @@ mod tests {
         // size is: 4 bytes for tag + 4 bytes for size + length of null-terminated string
         let size = (4 + 4 + MSG.as_bytes().len() + 1) as u32;
         [
-            &((TagType::BootLoaderName.val()).to_ne_bytes()),
-            &size.to_ne_bytes(),
+            &((TagType::BootLoaderName.val()).to_le_bytes()),
+            &size.to_le_bytes(),
             MSG.as_bytes(),
             // Null Byte
             &[0],
