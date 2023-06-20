@@ -67,7 +67,7 @@ mod tests {
         // + 6 bytes reserved + the actual tables
         let size = (4 + 4 + 1 + 1 + 6 + tables.len()) as u32;
         let typ: u32 = TagType::Smbios.into();
-        let mut bytes = [typ.to_ne_bytes(), size.to_ne_bytes()].concat();
+        let mut bytes = [typ.to_le_bytes(), size.to_le_bytes()].concat();
         bytes.push(3);
         bytes.push(0);
         bytes.extend([0; 6]);

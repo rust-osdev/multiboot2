@@ -1,9 +1,10 @@
-use crate::HeaderTagType;
 use crate::{HeaderTagFlag, MbiTagType};
+use crate::{HeaderTagType, MbiTagTypeId};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use core::mem::size_of;
+use multiboot2::TagType;
 
 /// Specifies what specific tag types the bootloader should provide
 /// inside the mbi.
@@ -15,14 +16,14 @@ pub struct InformationRequestHeaderTag<const N: usize> {
     size: u32,
     // Length is determined by size.
     // Must be parsed during runtime with unsafe pointer magic and the size field.
-    requests: [MbiTagType; N],
+    requests: [MbiTagTypeId; N],
 }
 
 impl<const N: usize> InformationRequestHeaderTag<N> {
     /// Creates a new object. The size parameter is the value of the size property.
     /// It doesn't have to match with `N` necessarily, because during compile time we
     /// can't know the size of the tag in all runtime situations.
-    pub fn new(flags: HeaderTagFlag, requests: [MbiTagType; N], size: Option<u32>) -> Self {
+    pub fn new(flags: HeaderTagFlag, requests: [MbiTagTypeId; N], size: Option<u32>) -> Self {
         InformationRequestHeaderTag {
             typ: HeaderTagType::InformationRequest,
             flags,
@@ -44,7 +45,7 @@ impl<const N: usize> InformationRequestHeaderTag<N> {
     /// Returns the requests as array. Only works if the number of requests
     /// is known at compile time. For safety and correctness during runtime,
     /// you should use `req_iter()`.
-    pub const fn requests(&self) -> [MbiTagType; N] {
+    pub const fn requests(&self) -> [MbiTagTypeId; N] {
         // cheap to copy, otherwise difficult with lifetime
         self.requests
     }
@@ -70,7 +71,7 @@ impl<const N: usize> InformationRequestHeaderTag<N> {
         let base_ptr = self as *const InformationRequestHeaderTag<N>;
         let base_ptr = base_ptr as *const u8;
         let base_ptr = unsafe { base_ptr.add(base_struct_size) };
-        let base_ptr = base_ptr as *const MbiTagType;
+        let base_ptr = base_ptr as *const MbiTagTypeId;
         InformationRequestHeaderTagIter::new(count, base_ptr)
     }
 }
@@ -90,32 +91,32 @@ impl<const N: usize> Debug for InformationRequestHeaderTag<N> {
 /// that are requested.
 #[derive(Copy, Clone)]
 pub struct InformationRequestHeaderTagIter<'a> {
-    base_ptr: *const MbiTagType,
+    base_ptr: *const MbiTagTypeId,
     i: u32,
     count: u32,
     _marker: PhantomData<&'a ()>,
 }
 
 impl<'a> InformationRequestHeaderTagIter<'a> {
-    fn new(count: u32, base_ptr: *const MbiTagType) -> Self {
-        #[allow(clippy::default_constructed_unit_structs)]
+    const fn new(count: u32, base_ptr: *const MbiTagTypeId) -> Self {
         Self {
             i: 0,
             count,
             base_ptr,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         }
     }
 }
 
 impl<'a> Iterator for InformationRequestHeaderTagIter<'a> {
-    type Item = &'a MbiTagType;
+    type Item = MbiTagType;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.i < self.count {
             let ptr = unsafe { self.base_ptr.offset(self.i as isize) };
             self.i += 1;
-            Some(unsafe { &*ptr })
+            let tag_type_id = unsafe { *ptr };
+            Some(TagType::from(tag_type_id))
         } else {
             None
         }
@@ -126,7 +127,7 @@ impl<'a> Debug for InformationRequestHeaderTagIter<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut debug = f.debug_list();
         (*self).for_each(|e| {
-            debug.entry(e);
+            debug.entry(&e);
         });
         debug.finish()
     }

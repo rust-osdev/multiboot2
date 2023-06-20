@@ -79,4 +79,4 @@ pub use self::tags::*;
 pub use self::uefi_bs::*;
 
 /// Re-export of [`multiboot2::TagType`] from `multiboot2`-crate.
-pub use multiboot2::TagType as MbiTagType;
+pub use multiboot2::{TagType as MbiTagType, TagTypeId as MbiTagTypeId};

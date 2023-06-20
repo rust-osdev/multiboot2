@@ -1,6 +1,6 @@
 # CHANGELOG for crate `multiboot2`
 
-## unreleased
+## 0.16.0 (xxxx-xx-xx)
 - Add `TagTrait` trait which enables to use DSTs as multiboot2 tags. This is
   mostly relevant for the command line tag, the modules tag, and the bootloader
   name tag. However, this might also be relevant for users of custom multiboot2

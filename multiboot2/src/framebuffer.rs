@@ -1,4 +1,4 @@
-use crate::{Reader, Tag, TagTrait, TagTypeId};
+use crate::{Tag, TagTrait, TagTypeId};
 
 use core::fmt::Debug;
 use core::mem::size_of;
@@ -10,6 +10,39 @@ use {
     crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, crate::TagType,
     alloc::boxed::Box, alloc::vec::Vec,
 };
+
+/// Helper struct to read bytes from a raw pointer and increase the pointer
+/// automatically.
+struct Reader {
+    ptr: *const u8,
+    off: usize,
+}
+
+impl Reader {
+    fn new<T>(ptr: *const T) -> Reader {
+        Reader {
+            ptr: ptr as *const u8,
+            off: 0,
+        }
+    }
+
+    fn read_u8(&mut self) -> u8 {
+        self.off += 1;
+        unsafe { *self.ptr.add(self.off - 1) }
+    }
+
+    fn read_u16(&mut self) -> u16 {
+        self.read_u8() as u16 | (self.read_u8() as u16) << 8
+    }
+
+    fn read_u32(&mut self) -> u32 {
+        self.read_u16() as u32 | (self.read_u16() as u32) << 16
+    }
+
+    fn current_address(&self) -> usize {
+        unsafe { self.ptr.add(self.off) as usize }
+    }
+}
 
 const METADATA_SIZE: usize = size_of::<TagTypeId>()
     + 4 * size_of::<u32>()

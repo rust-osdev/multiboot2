@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn test_build_eftih64() {
-        let tag = EFIImageHandle32::new(ADDR.try_into().unwrap());
+        let tag = EFIImageHandle64::new(ADDR.try_into().unwrap());
         assert_eq!(tag.image_handle(), ADDR);
     }
 }

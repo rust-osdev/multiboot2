@@ -502,37 +502,6 @@ impl fmt::Debug for BootInformation {
     }
 }
 
-pub(crate) struct Reader {
-    pub(crate) ptr: *const u8,
-    pub(crate) off: usize,
-}
-
-impl Reader {
-    pub(crate) fn new<T>(ptr: *const T) -> Reader {
-        Reader {
-            ptr: ptr as *const u8,
-            off: 0,
-        }
-    }
-
-    pub(crate) fn read_u8(&mut self) -> u8 {
-        self.off += 1;
-        unsafe { *self.ptr.add(self.off - 1) }
-    }
-
-    pub(crate) fn read_u16(&mut self) -> u16 {
-        self.read_u8() as u16 | (self.read_u8() as u16) << 8
-    }
-
-    pub(crate) fn read_u32(&mut self) -> u32 {
-        self.read_u16() as u32 | (self.read_u16() as u32) << 16
-    }
-
-    pub(crate) fn current_address(&self) -> usize {
-        unsafe { self.ptr.add(self.off) as usize }
-    }
-}
-
 /// A trait to abstract over all sized and unsized tags (DSTs). For sized tags,
 /// this trait does not much. For DSTs, a `TagTrait::dst_size` implementation
 /// must me provided, which returns the right size hint for the dynamically
@@ -1573,10 +1542,10 @@ mod tests {
             0,
             0,
             0, // end: padding; end of multiboot2 boot information begin
-            CUSTOM_TAG_ID.to_ne_bytes()[0],
-            CUSTOM_TAG_ID.to_ne_bytes()[1],
-            CUSTOM_TAG_ID.to_ne_bytes()[2],
-            CUSTOM_TAG_ID.to_ne_bytes()[3], // end: my custom tag id
+            CUSTOM_TAG_ID.to_le_bytes()[0],
+            CUSTOM_TAG_ID.to_le_bytes()[1],
+            CUSTOM_TAG_ID.to_le_bytes()[2],
+            CUSTOM_TAG_ID.to_le_bytes()[3], // end: my custom tag id
             12,
             0,
             0,
@@ -1649,10 +1618,10 @@ mod tests {
             0,
             0,
             0, // end: padding; end of multiboot2 boot information begin
-            CUSTOM_TAG_ID.to_ne_bytes()[0],
-            CUSTOM_TAG_ID.to_ne_bytes()[1],
-            CUSTOM_TAG_ID.to_ne_bytes()[2],
-            CUSTOM_TAG_ID.to_ne_bytes()[3], // end: my custom tag id
+            CUSTOM_TAG_ID.to_le_bytes()[0],
+            CUSTOM_TAG_ID.to_le_bytes()[1],
+            CUSTOM_TAG_ID.to_le_bytes()[2],
+            CUSTOM_TAG_ID.to_le_bytes()[3], // end: my custom tag id
             14,
             0,
             0,
@@ -1699,10 +1668,10 @@ mod tests {
             0,
             0,
             0, // reserved
-            TagType::Cmdline.val().to_ne_bytes()[0],
-            TagType::Cmdline.val().to_ne_bytes()[1],
-            TagType::Cmdline.val().to_ne_bytes()[2],
-            TagType::Cmdline.val().to_ne_bytes()[3],
+            TagType::Cmdline.val().to_le_bytes()[0],
+            TagType::Cmdline.val().to_le_bytes()[1],
+            TagType::Cmdline.val().to_le_bytes()[2],
+            TagType::Cmdline.val().to_le_bytes()[3],
             13,
             0,
             0,
