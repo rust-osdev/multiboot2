@@ -6,6 +6,7 @@
 - **BREAKING** bumped dependency to `multiboot2@v0.16.0`
 - **BREAKING** renamed `MULTIBOOT2_HEADER_MAGIC` to `MAGIC`
 - **BREAKING** renamed `Multiboot2HeaderBuilder` to `HeaderBuilder`
+- **BREAKING** renamed `from_addr` to `load`. The function now consumes a ptr.
 - added the optional `unstable` feature (requires nightly)
   - implement `core::error::Error` for `LoadError`
 

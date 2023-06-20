@@ -281,8 +281,8 @@ mod tests {
         println!("expected_len: {} bytes", builder.expected_len());
 
         let mb2_hdr_data = builder.build();
-        let mb2_hdr = mb2_hdr_data.as_ptr() as usize;
-        let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr) }
+        let mb2_hdr = mb2_hdr_data.as_ptr().cast();
+        let mb2_hdr = unsafe { Multiboot2Header::load(mb2_hdr) }
             .expect("the generated header to be loadable");
         println!("{:#?}", mb2_hdr);
         assert_eq!(

@@ -204,12 +204,8 @@ impl BootInformation<'_> {
     /// * The memory at `ptr` must not be modified after calling `load` or the
     ///   program may observe unsynchronized mutation.
     pub unsafe fn load(ptr: *const u8) -> Result<Self, MbiLoadError> {
-        if ptr.is_null() {
-            return Err(MbiLoadError::IllegalAddress);
-        }
-
-        // not aligned
-        if ptr.align_offset(8) != 0 {
+        // null or not aligned
+        if ptr.is_null() || ptr.align_offset(8) != 0 {
             return Err(MbiLoadError::IllegalAddress);
         }
 

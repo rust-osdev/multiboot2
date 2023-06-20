@@ -52,7 +52,7 @@ fn main() {
         .build();
 
     // Cast bytes in vector to Multiboot2 information structure
-    let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr_bytes.as_ptr() as usize) };
+    let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr_bytes.as_ptr().cast()) };
     println!("{:#?}", mb2_hdr);
 }
 ```
