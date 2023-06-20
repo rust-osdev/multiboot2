@@ -1,4 +1,4 @@
-//! Exports item [`Multiboot2InformationBuilder`].
+//! Exports item [`InformationBuilder`].
 use crate::builder::traits::StructAsBytes;
 use crate::{
     BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag,
@@ -16,7 +16,7 @@ use core::mem::size_of;
 /// except for the END tag.
 #[derive(Debug)]
 // #[derive(Debug, PartialEq, Eq)] // wait for uefi-raw 0.3.0
-pub struct Multiboot2InformationBuilder {
+pub struct InformationBuilder {
     basic_memory_info_tag: Option<BasicMemoryInfoTag>,
     boot_loader_name_tag: Option<Box<BootLoaderNameTag>>,
     command_line_tag: Option<Box<CommandLineTag>>,
@@ -36,7 +36,7 @@ pub struct Multiboot2InformationBuilder {
     smbios_tags: Vec<Box<SmbiosTag>>,
 }
 
-impl Multiboot2InformationBuilder {
+impl InformationBuilder {
     pub const fn new() -> Self {
         Self {
             basic_memory_info_tag: None,
@@ -289,20 +289,20 @@ impl Multiboot2InformationBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::builder::information::Multiboot2InformationBuilder;
+    use crate::builder::information::InformationBuilder;
     use crate::{load, BasicMemoryInfoTag, CommandLineTag, ModuleTag};
 
     #[test]
     fn test_size_or_up_aligned() {
-        assert_eq!(0, Multiboot2InformationBuilder::size_or_up_aligned(0));
-        assert_eq!(8, Multiboot2InformationBuilder::size_or_up_aligned(1));
-        assert_eq!(8, Multiboot2InformationBuilder::size_or_up_aligned(8));
-        assert_eq!(16, Multiboot2InformationBuilder::size_or_up_aligned(9));
+        assert_eq!(0, InformationBuilder::size_or_up_aligned(0));
+        assert_eq!(8, InformationBuilder::size_or_up_aligned(1));
+        assert_eq!(8, InformationBuilder::size_or_up_aligned(8));
+        assert_eq!(16, InformationBuilder::size_or_up_aligned(9));
     }
 
     #[test]
     fn test_builder() {
-        let mut builder = Multiboot2InformationBuilder::new();
+        let mut builder = InformationBuilder::new();
         // Multiboot2 basic information + end tag
         let mut expected_len = 8 + 8;
         assert_eq!(builder.expected_len(), expected_len);

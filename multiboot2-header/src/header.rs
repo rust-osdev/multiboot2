@@ -16,7 +16,7 @@ pub const MULTIBOOT2_HEADER_MAGIC: u32 = 0xe85250d6;
 /// by all tags (see [`crate::tags::HeaderTagType`]).
 /// Use this if you get a pointer to the header and just want
 /// to parse it. If you want to construct the type by yourself,
-/// please look at [`crate::builder::Multiboot2HeaderBuilder`].
+/// please look at [`crate::builder::HeaderBuilder`].
 #[repr(transparent)]
 pub struct Multiboot2Header<'a> {
     inner: &'a Multiboot2BasicHeader,

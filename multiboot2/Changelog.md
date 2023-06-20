@@ -7,8 +7,8 @@
   tags that use DSTs as types. See the example provided in the doc of the
   `get_tag` method.
 - renamed `MULTIBOOT2_BOOTLOADER_MAGIC` to `MAGIC`
-- added a `builder` feature and a `builder` module with a `Multiboot2InformationBuilder`
-  struct
+- added a `builder` feature and a `builder` module with a
+  `builder::InformationBuilder` struct
 - `EFIMemoryDesc` was removed and is now an alias of
   `uefi_raw::table::boot::MemoryDescriptor`
 - `EFIMemoryAreaType` was removed and is now an alias of
