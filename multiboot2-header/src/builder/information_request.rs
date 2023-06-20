@@ -22,7 +22,7 @@ pub struct InformationRequestHeaderTagBuilder {
 #[cfg(feature = "builder")]
 impl InformationRequestHeaderTagBuilder {
     /// New builder.
-    pub fn new(flag: HeaderTagFlag) -> Self {
+    pub const fn new(flag: HeaderTagFlag) -> Self {
         Self {
             irs: BTreeSet::new(),
             flag,

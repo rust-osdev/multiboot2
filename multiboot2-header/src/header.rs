@@ -8,8 +8,8 @@ use core::convert::TryInto;
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 
-/// Magic value for a [`Multiboot2Header`], as defined in spec.
-pub const MULTIBOOT2_HEADER_MAGIC: u32 = 0xe85250d6;
+/// Magic value for a [`Multiboot2Header`], as defined by the spec.
+pub const MAGIC: u32 = 0xe85250d6;
 
 /// Wrapper type around a pointer to the Multiboot2 header.
 /// The Multiboot2 header is the [`Multiboot2BasicHeader`] followed
@@ -43,7 +43,7 @@ impl<'a> Multiboot2Header<'a> {
         }
         let ptr = addr as *const Multiboot2BasicHeader;
         let reference = &*ptr;
-        if reference.header_magic() != MULTIBOOT2_HEADER_MAGIC {
+        if reference.header_magic() != MAGIC {
             return Err(LoadError::MagicNotFound);
         }
         if !reference.verify_checksum() {
@@ -56,16 +56,18 @@ impl<'a> Multiboot2Header<'a> {
     ///
     /// If it succeeds, it returns a tuple consisting of the subslice containing
     /// just the header and the index of the header in the given slice.
-    /// If it fails (either because the header is not properply 64-bit aligned
+    /// If it fails (either because the header is not properly 64-bit aligned
     /// or because it is truncated), it returns a [`LoadError`].
     /// If there is no header, it returns `None`.
     pub fn find_header(buffer: &[u8]) -> Result<Option<(&[u8], u32)>, LoadError> {
-        // the magic is 32 bit aligned and inside the first 8192 bytes
-        assert!(buffer.len() >= 8192);
+        if buffer.as_ptr().align_offset(4) != 0 {
+            return Err(LoadError::InvalidAddress)
+        }
+
         let mut windows = buffer[0..8192].windows(4);
         let magic_index = match windows.position(|vals| {
             u32::from_le_bytes(vals.try_into().unwrap()) // yes, there's 4 bytes here
-            == MULTIBOOT2_HEADER_MAGIC
+            == MAGIC
         }) {
             Some(idx) => {
                 if idx % 8 == 0 {
@@ -223,7 +225,7 @@ impl core::error::Error for LoadError {}
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct Multiboot2BasicHeader {
-    /// Must be the value of [`MULTIBOOT2_HEADER_MAGIC`].
+    /// Must be the value of [`MAGIC`].
     header_magic: u32,
     arch: HeaderTagISA,
     length: u32,
@@ -236,7 +238,7 @@ impl Multiboot2BasicHeader {
     #[cfg(feature = "builder")]
     /// Constructor for the basic header.
     pub(crate) const fn new(arch: HeaderTagISA, length: u32) -> Self {
-        let magic = MULTIBOOT2_HEADER_MAGIC;
+        let magic = MAGIC;
         let checksum = Self::calc_checksum(magic, arch, length);
         Multiboot2BasicHeader {
             header_magic: magic,

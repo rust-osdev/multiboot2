@@ -65,7 +65,7 @@ impl<const N: usize> InformationRequestHeaderTag<N> {
     }
 
     /// Returns an [`InformationRequestHeaderTagIter`].
-    pub fn req_iter(&self) -> InformationRequestHeaderTagIter {
+    pub const fn req_iter(&self) -> InformationRequestHeaderTagIter {
         let base_struct_size = size_of::<InformationRequestHeaderTag<0>>();
         let count = self.dynamic_requests_size();
         let base_ptr = self as *const InformationRequestHeaderTag<N>;
