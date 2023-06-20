@@ -51,9 +51,8 @@ const METADATA_SIZE: usize = size_of::<TagTypeId>()
     + 2 * size_of::<u8>();
 
 /// The VBE Framebuffer information Tag.
-#[derive(ptr_meta::Pointee)]
-#[derive(Eq)]
-#[repr(C, align(8))]
+#[derive(ptr_meta::Pointee, Eq)]
+#[repr(C)]
 pub struct FramebufferTag {
     typ: TagTypeId,
     size: u32,

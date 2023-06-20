@@ -173,8 +173,7 @@ pub unsafe fn load_with_offset(
 
 /// Error type that describes errors while loading/parsing a multiboot2 information structure
 /// from a given address.
-#[derive(Display)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Display, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum MbiLoadError {
     /// The address is invalid. Make sure that the address is 8-byte aligned,
     /// according to the spec.
@@ -386,7 +385,7 @@ impl BootInformation {
     /// use std::str::Utf8Error;
     /// use multiboot2::{Tag, TagTrait, TagTypeId};
     ///
-    /// #[repr(C, align(8))]
+    /// #[repr(C)]
     /// #[derive(multiboot2::Pointee)] // Only needed for DSTs.
     /// struct CustomTag {
     ///     // new type from the lib: has repr(u32)

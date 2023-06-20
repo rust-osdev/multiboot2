@@ -15,9 +15,8 @@ const METADATA_SIZE: usize = size_of::<TagTypeId>() + 4 * size_of::<u32>();
 /// This tag contains section header table from an ELF kernel.
 ///
 /// The sections iterator is provided via the `sections` method.
-#[derive(ptr_meta::Pointee)]
-#[derive(PartialEq, Eq)]
-#[repr(C, align(8))]
+#[derive(ptr_meta::Pointee, PartialEq, Eq)]
+#[repr(C)]
 pub struct ElfSectionsTag {
     typ: TagTypeId,
     pub(crate) size: u32,

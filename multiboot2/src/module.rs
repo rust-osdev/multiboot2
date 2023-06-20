@@ -14,9 +14,8 @@ const METADATA_SIZE: usize = size_of::<TagTypeId>() + 3 * size_of::<u32>();
 
 /// This tag indicates to the kernel what boot module was loaded along with
 /// the kernel image, and where it can be found.
-#[derive(ptr_meta::Pointee)]
-#[derive(PartialEq, Eq)]
-#[repr(C, align(8))]
+#[derive(ptr_meta::Pointee, PartialEq, Eq)]
+#[repr(C)]
 pub struct ModuleTag {
     typ: TagTypeId,
     size: u32,

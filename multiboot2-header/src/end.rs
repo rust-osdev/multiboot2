@@ -3,7 +3,7 @@ use core::mem::size_of;
 
 /// Terminates a list of optional tags in a Multiboot2 header.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-#[repr(C, align(8))]
+#[repr(C)]
 pub struct EndHeaderTag {
     // u16 value
     typ: HeaderTagType,

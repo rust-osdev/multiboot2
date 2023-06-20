@@ -227,7 +227,7 @@ impl core::error::Error for LoadError {}
 /// The "basic" Multiboot2 header. This means only the properties, that are known during
 /// compile time. All other information are derived during runtime from the size property.
 #[derive(Copy, Clone, PartialEq, Eq)]
-#[repr(C, align(8))]
+#[repr(C)]
 pub struct Multiboot2BasicHeader {
     /// Must be the value of [`MULTIBOOT2_HEADER_MAGIC`].
     header_magic: u32,

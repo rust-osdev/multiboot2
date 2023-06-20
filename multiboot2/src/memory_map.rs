@@ -22,9 +22,8 @@ const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u3
 /// This tag may not be provided by some boot loaders on EFI platforms if EFI
 /// boot services are enabled and available for the loaded image (The EFI boot
 /// services tag may exist in the Multiboot2 boot information structure).
-#[derive( ptr_meta::Pointee)]
-#[derive(Debug, PartialEq, Eq)]
-#[repr(C, align(8))]
+#[derive(ptr_meta::Pointee, Debug, PartialEq, Eq)]
+#[repr(C)]
 pub struct MemoryMapTag {
     typ: TagTypeId,
     size: u32,
@@ -82,7 +81,7 @@ impl StructAsBytes for MemoryMapTag {
 
 /// A memory area entry descriptor.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-#[repr(C, align(8))]
+#[repr(C)]
 pub struct MemoryArea {
     base_addr: u64,
     length: u64,
@@ -192,7 +191,7 @@ impl<'a> Iterator for MemoryAreaIter<'a> {
 /// Nowadays, much bigger chunks of continuous memory are available at higher
 /// addresses, but the Multiboot standard still references those two terms.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-#[repr(C, align(8))]
+#[repr(C)]
 pub struct BasicMemoryInfoTag {
     typ: TagTypeId,
     size: u32,
@@ -232,7 +231,7 @@ const EFI_METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of:
 #[derive(ptr_meta::Pointee)]
 // #[derive(Debug, PartialEq, Eq)] // wait for uefi-raw 0.3.0
 #[derive(Debug)]
-#[repr(C, align(8))]
+#[repr(C)]
 pub struct EFIMemoryMapTag {
     typ: TagTypeId,
     size: u32,
@@ -300,7 +299,7 @@ impl StructAsBytes for EFIMemoryDesc {
 
 /// EFI ExitBootServices was not called
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-#[repr(C, align(8))]
+#[repr(C)]
 pub struct EFIBootServicesNotExited {
     typ: TagTypeId,
     size: u32,

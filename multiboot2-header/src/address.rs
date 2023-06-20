@@ -6,7 +6,7 @@ use core::mem::size_of;
 /// other format. Required for legacy boot (BIOS).
 /// Determines load addresses.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-#[repr(C, align(8))]
+#[repr(C)]
 pub struct AddressHeaderTag {
     typ: HeaderTagType,
     flags: HeaderTagFlag,
