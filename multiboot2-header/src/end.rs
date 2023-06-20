@@ -2,7 +2,7 @@ use crate::{HeaderTagFlag, HeaderTagType};
 use core::mem::size_of;
 
 /// Terminates a list of optional tags in a Multiboot2 header.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(C)]
 pub struct EndHeaderTag {
     // u16 value

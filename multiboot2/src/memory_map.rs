@@ -22,7 +22,7 @@ const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u3
 /// This tag may not be provided by some boot loaders on EFI platforms if EFI
 /// boot services are enabled and available for the loaded image (The EFI boot
 /// services tag may exist in the Multiboot2 boot information structure).
-#[derive(Debug, ptr_meta::Pointee)]
+#[derive(ptr_meta::Pointee, Debug, PartialEq, Eq)]
 #[repr(C)]
 pub struct MemoryMapTag {
     typ: TagTypeId,
@@ -80,7 +80,7 @@ impl StructAsBytes for MemoryMapTag {
 }
 
 /// A memory area entry descriptor.
-#[derive(Debug, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(C)]
 pub struct MemoryArea {
     base_addr: u64,
@@ -131,7 +131,7 @@ impl StructAsBytes for MemoryArea {
 /// An enum of possible reported region types.
 /// Inside the Multiboot2 spec this is kind of hidden
 /// inside the implementation of `struct multiboot_mmap_entry`.
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u32)]
 pub enum MemoryAreaType {
     /// Available memory free to be used by the OS.
@@ -190,7 +190,8 @@ impl<'a> Iterator for MemoryAreaIter<'a> {
 /// (which had a 24-bit address bus) could use, historically.
 /// Nowadays, much bigger chunks of continuous memory are available at higher
 /// addresses, but the Multiboot standard still references those two terms.
-#[repr(C, packed)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(C)]
 pub struct BasicMemoryInfoTag {
     typ: TagTypeId,
     size: u32,
@@ -224,21 +225,12 @@ impl StructAsBytes for BasicMemoryInfoTag {
     }
 }
 
-impl Debug for BasicMemoryInfoTag {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("BasicMemoryInfoTag")
-            .field("typ", &{ self.typ })
-            .field("size", &{ self.size })
-            .field("memory_lower", &{ self.memory_lower })
-            .field("memory_upper", &{ self.memory_upper })
-            .finish()
-    }
-}
-
 const EFI_METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
 
 /// EFI memory map as per EFI specification.
-#[derive(Debug, ptr_meta::Pointee)]
+#[derive(ptr_meta::Pointee)]
+// #[derive(Debug, PartialEq, Eq)] // wait for uefi-raw 0.3.0
+#[derive(Debug)]
 #[repr(C)]
 pub struct EFIMemoryMapTag {
     typ: TagTypeId,
@@ -306,7 +298,7 @@ impl StructAsBytes for EFIMemoryDesc {
 }
 
 /// EFI ExitBootServices was not called
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(C)]
 pub struct EFIBootServicesNotExited {
     typ: TagTypeId,

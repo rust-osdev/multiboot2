@@ -11,7 +11,7 @@ use multiboot2::TagTypeId;
 /// at runtime. The information request tag has a dedicated builder because this way one
 /// can dynamically attach several requests to it. Otherwise, the number of requested tags
 /// must be known at compile time.
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg(feature = "builder")]
 pub struct InformationRequestHeaderTagBuilder {
     flag: HeaderTagFlag,

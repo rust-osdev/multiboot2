@@ -15,8 +15,8 @@ const METADATA_SIZE: usize = size_of::<TagTypeId>() + 4 * size_of::<u32>();
 /// This tag contains section header table from an ELF kernel.
 ///
 /// The sections iterator is provided via the `sections` method.
-#[derive(ptr_meta::Pointee)]
-#[repr(C, packed)]
+#[derive(ptr_meta::Pointee, PartialEq, Eq)]
+#[repr(C)]
 pub struct ElfSectionsTag {
     typ: TagTypeId,
     pub(crate) size: u32,
@@ -142,7 +142,7 @@ impl Default for ElfSectionIter {
 }
 
 /// A single generic ELF Section.
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct ElfSection {
     inner: *const u8,
     string_section: *const u8,
@@ -353,7 +353,7 @@ impl ElfSectionInner for ElfSectionInner64 {
 }
 
 /// An enum abstraction over raw ELF section types.
-#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u32)]
 pub enum ElfSectionType {
     /// This value marks the section header as inactive; it does not have an

@@ -3,7 +3,7 @@ use core::mem::size_of;
 
 /// Possible flags for [`ConsoleHeaderTag`].
 #[repr(u32)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ConsoleHeaderTagFlags {
     /// Console required.
     ConsoleRequired = 0,
@@ -13,7 +13,7 @@ pub enum ConsoleHeaderTagFlags {
 
 /// Tells that a console must be available in MBI.
 /// Only relevant for legacy BIOS.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(C)]
 pub struct ConsoleHeaderTag {
     typ: HeaderTagType,

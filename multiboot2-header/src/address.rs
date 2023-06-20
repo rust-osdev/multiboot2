@@ -5,7 +5,7 @@ use core::mem::size_of;
 /// format, but it must be provided if the image is in a.out format or in some
 /// other format. Required for legacy boot (BIOS).
 /// Determines load addresses.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(C)]
 pub struct AddressHeaderTag {
     typ: HeaderTagType,

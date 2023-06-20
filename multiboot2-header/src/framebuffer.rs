@@ -5,7 +5,7 @@ use core::mem::size_of;
 /// is present the bootloader assumes that the payload
 /// has framebuffer support. Note: This is only a
 /// recommended mode. Only relevant on legacy BIOS.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(C)]
 pub struct FramebufferHeaderTag {
     typ: HeaderTagType,

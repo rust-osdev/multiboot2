@@ -51,8 +51,8 @@ const METADATA_SIZE: usize = size_of::<TagTypeId>()
     + 2 * size_of::<u8>();
 
 /// The VBE Framebuffer information Tag.
-#[derive(Eq, ptr_meta::Pointee)]
-#[repr(C, packed)]
+#[derive(ptr_meta::Pointee, Eq)]
+#[repr(C)]
 pub struct FramebufferTag {
     typ: TagTypeId,
     size: u32,
@@ -244,7 +244,7 @@ impl TryFrom<u8> for FramebufferTypeId {
 }
 
 /// The type of framebuffer.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FramebufferType<'a> {
     /// Indexed color.
     Indexed {
@@ -300,7 +300,7 @@ impl<'a> FramebufferType<'a> {
 }
 
 /// An RGB color type field.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FramebufferField {
     /// Color field position.
     pub position: u8,
@@ -317,8 +317,8 @@ impl StructAsBytes for FramebufferField {
 }
 
 /// A framebuffer color descriptor in the palette.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[repr(C, packed)] // only repr(C) would add unwanted padding at the end
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(C)] // no align(8) here is correct
 pub struct FramebufferColor {
     /// The Red component of the color.
     pub red: u8,
@@ -342,5 +342,16 @@ impl core::error::Error for UnknownFramebufferType {}
 impl StructAsBytes for FramebufferColor {
     fn byte_size(&self) -> usize {
         size_of::<Self>()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Compile time test
+    #[test]
+    fn test_size() {
+        assert_eq!(size_of::<FramebufferColor>(), 3)
     }
 }

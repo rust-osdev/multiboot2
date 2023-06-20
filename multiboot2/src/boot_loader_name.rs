@@ -12,8 +12,8 @@ use {
 const METADATA_SIZE: usize = size_of::<TagTypeId>() + size_of::<u32>();
 
 /// The bootloader name tag.
-#[derive(ptr_meta::Pointee)]
-#[repr(C, packed)] // only repr(C) would add unwanted padding before first_section
+#[derive(ptr_meta::Pointee, PartialEq, Eq)]
+#[repr(C)]
 pub struct BootLoaderNameTag {
     typ: TagTypeId,
     size: u32,

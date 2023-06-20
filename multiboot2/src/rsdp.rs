@@ -23,8 +23,8 @@ use {
 const RSDPV1_LENGTH: usize = 20;
 
 /// This tag contains a copy of RSDP as defined per ACPI 1.0 specification.
-#[derive(Clone, Copy, Debug)]
-#[repr(C, packed)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(C)]
 pub struct RsdpV1Tag {
     typ: TagTypeId,
     size: u32,
@@ -96,8 +96,8 @@ impl StructAsBytes for RsdpV1Tag {
 }
 
 /// This tag contains a copy of RSDP as defined per ACPI 2.0 or later specification.
-#[derive(Clone, Copy, Debug)]
-#[repr(C, packed)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(C)]
 pub struct RsdpV2Tag {
     typ: TagTypeId,
     size: u32,

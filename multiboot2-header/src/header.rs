@@ -200,7 +200,7 @@ impl<'a> Debug for Multiboot2Header<'a> {
 
 /// Errors that can occur when parsing a header from a slice.
 /// See [`Multiboot2Header::find_header`].
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum LoadError {
     /// The checksum does not match the data.
     ChecksumMismatch,
@@ -226,7 +226,7 @@ impl core::error::Error for LoadError {}
 ///
 /// The "basic" Multiboot2 header. This means only the properties, that are known during
 /// compile time. All other information are derived during runtime from the size property.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(C)]
 pub struct Multiboot2BasicHeader {
     /// Must be the value of [`MULTIBOOT2_HEADER_MAGIC`].

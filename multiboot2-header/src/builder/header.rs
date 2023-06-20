@@ -14,7 +14,7 @@ use core::mem::size_of;
 /// Builder to construct a valid Multiboot2 header dynamically at runtime.
 /// The tags will appear in the order of their corresponding enumeration,
 /// except for the END tag.
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Multiboot2HeaderBuilder {
     arch: HeaderTagISA,
     // first
