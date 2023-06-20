@@ -58,7 +58,7 @@ pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, Frameb
 pub use image_load_addr::ImageLoadPhysAddr;
 pub use memory_map::{
     BasicMemoryInfoTag, EFIBootServicesNotExited, EFIMemoryAreaType, EFIMemoryDesc,
-    EFIMemoryMapTag, MemoryArea, MemoryAreaIter, MemoryAreaType, MemoryMapTag,
+    EFIMemoryMapTag, MemoryArea, MemoryAreaType, MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
@@ -514,7 +514,10 @@ impl fmt::Debug for BootInformation {
 /// This crate uses the [`Pointee`]-abstraction of the [`ptr_meta`] crate to
 /// create fat pointers.
 pub trait TagTrait: Pointee {
-    /// Returns
+    /// Returns the amount of items in the dynamically sized portion of the
+    /// DST. Note that this is not the amount of bytes. So if the dynamically
+    /// sized portion is 16 bytes in size and each element is 4 bytes big, then
+    /// this function must return 4.
     fn dst_size(base_tag: &Tag) -> Self::Metadata;
 
     /// Creates a reference to a (dynamically sized) tag type in a safe way.
@@ -1218,10 +1221,11 @@ mod tests {
         let addr = bytes.0.as_ptr() as usize;
         let bi = unsafe { load(addr) };
         let bi = bi.unwrap();
-        test_grub2_boot_info(bi, addr, string_addr, &bytes.0, &string_bytes.0);
+
+        test_grub2_boot_info(&bi, addr, string_addr, &bytes.0, &string_bytes.0);
         let bi = unsafe { load_with_offset(addr, 0) };
         let bi = bi.unwrap();
-        test_grub2_boot_info(bi, addr, string_addr, &bytes.0, &string_bytes.0);
+        test_grub2_boot_info(&bi, addr, string_addr, &bytes.0, &string_bytes.0);
         let offset = 8usize;
         for i in 0..8 {
             bytes.0[796 + i] = ((string_addr - offset as u64) >> (i * 8)) as u8;
@@ -1229,16 +1233,21 @@ mod tests {
         let bi = unsafe { load_with_offset(addr - offset, offset) };
         let bi = bi.unwrap();
         test_grub2_boot_info(
-            bi,
+            &bi,
             addr,
             string_addr - offset as u64,
             &bytes.0,
             &string_bytes.0,
         );
+
+        // Check that the MBI's debug output can be printed without SEGFAULT.
+        // If this works, it is a good indicator than transitively a lot of
+        // stuff works.
+        println!("{bi:#?}");
     }
 
     fn test_grub2_boot_info(
-        bi: BootInformation,
+        bi: &BootInformation,
         addr: usize,
         string_addr: u64,
         bytes: &[u8],
@@ -1317,7 +1326,12 @@ mod tests {
         assert_eq!(ElfSectionFlags::empty(), s8.flags());
         assert_eq!(ElfSectionType::StringTable, s8.section_type());
         assert!(es.next().is_none());
-        let mut mm = bi.memory_map_tag().unwrap().available_memory_areas();
+        let mut mm = bi
+            .memory_map_tag()
+            .unwrap()
+            .memory_areas()
+            .iter()
+            .filter(|area| area.typ() == MemoryAreaType::Available);
         let mm1 = mm.next().unwrap();
         assert_eq!(0x00000000, mm1.start_address());
         assert_eq!(0x009_FC00, mm1.end_address());

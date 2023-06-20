@@ -14,6 +14,8 @@
 - `EFIMemoryAreaType` was removed and is now an alias of
   `uefi_raw::table::boot::MemoryType`
 - MSRV is 1.68.0
+- **BREAKING** Removed `MemoryAreaIter` and `MemoryMapTag::available_memory_areas`
+- Added `MemoryMapTag::entry_size` and `MemoryMapTag::entry_version`
 
 ## 0.15.1 (2023-03-18)
 - **BREAKING** `MemoryMapTag::all_memory_areas()` was renamed to `memory_areas`
