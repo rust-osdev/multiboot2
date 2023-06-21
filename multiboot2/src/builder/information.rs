@@ -3,7 +3,7 @@ use crate::builder::traits::StructAsBytes;
 use crate::{
     BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag,
     EFIBootServicesNotExited, EFIImageHandle32, EFIImageHandle64, EFIMemoryMapTag, EFISdt32,
-    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddr, MemoryMapTag, ModuleTag,
+    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag, MemoryMapTag, ModuleTag,
     RsdpV1Tag, RsdpV2Tag, SmbiosTag,
 };
 
@@ -25,7 +25,7 @@ pub struct InformationBuilder {
     efi_memory_map_tag: Option<Box<EFIMemoryMapTag>>,
     elf_sections_tag: Option<Box<ElfSectionsTag>>,
     framebuffer_tag: Option<Box<FramebufferTag>>,
-    image_load_addr: Option<ImageLoadPhysAddr>,
+    image_load_addr: Option<ImageLoadPhysAddrTag>,
     memory_map_tag: Option<Box<MemoryMapTag>>,
     module_tags: Vec<Box<ModuleTag>>,
     efisdt32: Option<EFISdt32>,
@@ -261,7 +261,7 @@ impl InformationBuilder {
         self.framebuffer_tag = Some(framebuffer_tag);
     }
 
-    pub fn image_load_addr(&mut self, image_load_addr: ImageLoadPhysAddr) {
+    pub fn image_load_addr(&mut self, image_load_addr: ImageLoadPhysAddrTag) {
         self.image_load_addr = Some(image_load_addr);
     }
 

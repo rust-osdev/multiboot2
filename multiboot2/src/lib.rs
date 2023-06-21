@@ -55,7 +55,7 @@ pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
-pub use image_load_addr::ImageLoadPhysAddr;
+pub use image_load_addr::ImageLoadPhysAddrTag;
 pub use memory_map::{
     BasicMemoryInfoTag, EFIBootServicesNotExited, EFIMemoryAreaType, EFIMemoryDesc,
     EFIMemoryMapTag, MemoryArea, MemoryAreaType, MemoryMapTag,
@@ -335,19 +335,19 @@ impl BootInformation {
         }
     }
 
-    /// Search for the EFI 32-bit image handle pointer.
+    /// Search for the EFI 32-bit image handle pointer tag.
     pub fn efi_32_ih(&self) -> Option<&EFIImageHandle32> {
         self.get_tag::<EFIImageHandle32, _>(TagType::Efi32Ih)
     }
 
-    /// Search for the EFI 64-bit image handle pointer.
+    /// Search for the EFI 64-bit image handle pointer tag.
     pub fn efi_64_ih(&self) -> Option<&EFIImageHandle64> {
         self.get_tag::<EFIImageHandle64, _>(TagType::Efi64Ih)
     }
 
-    /// Search for the Image Load Base Physical Address.
-    pub fn load_base_addr(&self) -> Option<&ImageLoadPhysAddr> {
-        self.get_tag::<ImageLoadPhysAddr, _>(TagType::LoadBaseAddr)
+    /// Search for the Image Load Base Physical Address tag.
+    pub fn load_base_addr_tag(&self) -> Option<&ImageLoadPhysAddrTag> {
+        self.get_tag::<ImageLoadPhysAddrTag, _>(TagType::LoadBaseAddr)
     }
 
     /// Search for the VBE information tag.
@@ -496,8 +496,8 @@ impl fmt::Debug for BootInformation {
             .field("efi_32_ih", &self.efi_32_ih())
             .field("efi_64_ih", &self.efi_64_ih())
             .field("efi_sdt_32_tag", &self.efi_sdt_32_tag())
-            .field("efi_sdt_64_tag", &self.efi_sdt_64_tag())
-            .field("efi_memory_map_tag", &self.efi_memory_map_tag())
+            .field("efi_sdt_64_tag", &self.efi_sdt_64())
+            .field("efi_memory_map_tag", &self.efi_memory_map())
             .finish()
     }
 }
@@ -868,8 +868,8 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        assert!(bi.vbe_info_tag().is_some());
-        let vbe = bi.vbe_info_tag().unwrap();
+        assert!(bi.vbe_info().is_some());
+        let vbe = bi.vbe_info().unwrap();
         use vbe_info::*;
 
         assert_eq!({ vbe.mode }, 16762);
@@ -1345,7 +1345,7 @@ mod tests {
         assert!(mm.next().is_none());
 
         // Test the RSDP tag
-        let rsdp_old = bi.rsdp_v1_tag().unwrap();
+        let rsdp_old = bi.rsdp_v1().unwrap();
         assert_eq!("RSD PTR ", rsdp_old.signature().unwrap());
         assert!(rsdp_old.checksum_is_valid());
         assert_eq!("BOCHS ", rsdp_old.oem_id().unwrap());
@@ -1487,7 +1487,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        let efi_memory_map = bi.efi_memory_map_tag().unwrap();
+        let efi_memory_map = bi.efi_memory_map().unwrap();
         let mut efi_mmap_iter = efi_memory_map.memory_areas();
         let desc = efi_mmap_iter.next().unwrap();
         assert_eq!(desc.phys_start, 0x100000);
@@ -1520,7 +1520,7 @@ mod tests {
         ]);
         let bi = unsafe { load(bytes2.0.as_ptr() as usize) };
         let bi = bi.unwrap();
-        let efi_mmap = bi.efi_memory_map_tag();
+        let efi_mmap = bi.efi_memory_map();
         assert!(efi_mmap.is_none());
     }
 
