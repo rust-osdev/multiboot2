@@ -3,8 +3,8 @@ use crate::builder::traits::StructAsBytes;
 use crate::{
     BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag,
     EFIBootServicesNotExited, EFIImageHandle32, EFIImageHandle64, EFIMemoryMapTag, EFISdt32,
-    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag, MemoryMapTag, ModuleTag,
-    RsdpV1Tag, RsdpV2Tag, SmbiosTag,
+    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag, MemoryMapTag,
+    ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag,
 };
 
 use alloc::boxed::Box;

@@ -868,8 +868,8 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        assert!(bi.vbe_info().is_some());
-        let vbe = bi.vbe_info().unwrap();
+        assert!(bi.vbe_info_tag().is_some());
+        let vbe = bi.vbe_info_tag().unwrap();
         use vbe_info::*;
 
         assert_eq!({ vbe.mode }, 16762);
@@ -1345,7 +1345,7 @@ mod tests {
         assert!(mm.next().is_none());
 
         // Test the RSDP tag
-        let rsdp_old = bi.rsdp_v1().unwrap();
+        let rsdp_old = bi.rsdp_v1_tag().unwrap();
         assert_eq!("RSD PTR ", rsdp_old.signature().unwrap());
         assert!(rsdp_old.checksum_is_valid());
         assert_eq!("BOCHS ", rsdp_old.oem_id().unwrap());
@@ -1487,7 +1487,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        let efi_memory_map = bi.efi_memory_map().unwrap();
+        let efi_memory_map = bi.efi_memory_map_tag().unwrap();
         let mut efi_mmap_iter = efi_memory_map.memory_areas();
         let desc = efi_mmap_iter.next().unwrap();
         assert_eq!(desc.phys_start, 0x100000);
@@ -1520,7 +1520,7 @@ mod tests {
         ]);
         let bi = unsafe { load(bytes2.0.as_ptr() as usize) };
         let bi = bi.unwrap();
-        let efi_mmap = bi.efi_memory_map();
+        let efi_mmap = bi.efi_memory_map_tag();
         assert!(efi_mmap.is_none());
     }
 
