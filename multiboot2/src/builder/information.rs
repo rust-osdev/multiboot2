@@ -1,7 +1,7 @@
 //! Exports item [`InformationBuilder`].
 use crate::builder::traits::StructAsBytes;
 use crate::{
-    BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag,
+    BasicMemoryInfoTag, BootInformationHeader, BootLoaderNameTag, CommandLineTag,
     EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
     EFISdt32Tag, EFISdt64Tag, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag,
     MemoryMapTag, ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag,
@@ -74,7 +74,7 @@ impl InformationBuilder {
     /// Returns the expected length of the Multiboot2 header,
     /// when the `build()`-method gets called.
     pub fn expected_len(&self) -> usize {
-        let base_len = size_of::<BootInformationInner>();
+        let base_len = size_of::<BootInformationHeader>();
         // size_or_up_aligned not required, because length is 16 and the
         // begin is 8 byte aligned => first tag automatically 8 byte aligned
         let mut len = Self::size_or_up_aligned(base_len);
@@ -156,7 +156,7 @@ impl InformationBuilder {
         Self::build_add_bytes(
             &mut data,
             // important that we write the correct expected length into the header!
-            &BootInformationInner::new(self.expected_len() as u32).struct_as_bytes(),
+            &BootInformationHeader::new(self.expected_len() as u32).struct_as_bytes(),
             false,
         );
 
@@ -327,7 +327,7 @@ mod tests {
         assert_eq!(builder.expected_len(), expected_len);
 
         let mb2i_data = builder.build();
-        let mb2i = unsafe { BootInformation::load(mb2i_data.as_ptr()) }
+        let mb2i = unsafe { BootInformation::load(mb2i_data.as_ptr().cast()) }
             .expect("the generated information to be readable");
         println!("{:#?}", mb2i);
         assert_eq!(mb2i.basic_memory_info_tag().unwrap().memory_lower(), 640);
