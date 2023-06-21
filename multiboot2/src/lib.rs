@@ -50,7 +50,7 @@ pub use boot_loader_name::BootLoaderNameTag;
 #[cfg(feature = "builder")]
 use builder::traits::StructAsBytes;
 pub use command_line::CommandLineTag;
-pub use efi::{EFIImageHandle32Tag, EFIImageHandle64Tag, EFISdt32, EFISdt64};
+pub use efi::{EFIImageHandle32Tag, EFIImageHandle64Tag, EFISdt32Tag, EFISdt64Tag};
 pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
@@ -303,13 +303,13 @@ impl BootInformation {
     }
 
     /// Search for the EFI 32-bit SDT tag.
-    pub fn efi_sdt_32_tag(&self) -> Option<&EFISdt32> {
-        self.get_tag::<EFISdt32, _>(TagType::Efi32)
+    pub fn efi_sdt_32_tag(&self) -> Option<&EFISdt32Tag> {
+        self.get_tag::<EFISdt32Tag, _>(TagType::Efi32)
     }
 
     /// Search for the EFI 64-bit SDT tag.
-    pub fn efi_sdt_64_tag(&self) -> Option<&EFISdt64> {
-        self.get_tag::<EFISdt64, _>(TagType::Efi64)
+    pub fn efi_sdt_64_tag(&self) -> Option<&EFISdt64Tag> {
+        self.get_tag::<EFISdt64Tag, _>(TagType::Efi64)
     }
 
     /// Search for the (ACPI 1.0) RSDP tag.

@@ -2,9 +2,9 @@
 use crate::builder::traits::StructAsBytes;
 use crate::{
     BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag,
-    EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag, EFISdt32,
-    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag, MemoryMapTag,
-    ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag,
+    EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
+    EFISdt32Tag, EFISdt64Tag, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag,
+    MemoryMapTag, ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag,
 };
 
 use alloc::boxed::Box;
@@ -28,8 +28,8 @@ pub struct InformationBuilder {
     image_load_addr: Option<ImageLoadPhysAddrTag>,
     memory_map_tag: Option<Box<MemoryMapTag>>,
     module_tags: Vec<Box<ModuleTag>>,
-    efisdt32: Option<EFISdt32>,
-    efisdt64: Option<EFISdt64>,
+    efisdt32: Option<EFISdt32Tag>,
+    efisdt64: Option<EFISdt64Tag>,
     rsdp_v1_tag: Option<RsdpV1Tag>,
     rsdp_v2_tag: Option<RsdpV2Tag>,
     smbios_tags: Vec<Box<SmbiosTag>>,
@@ -229,11 +229,11 @@ impl InformationBuilder {
         self.command_line_tag = Some(command_line_tag);
     }
 
-    pub fn efisdt32(&mut self, efisdt32: EFISdt32) {
+    pub fn efisdt32(&mut self, efisdt32: EFISdt32Tag) {
         self.efisdt32 = Some(efisdt32);
     }
 
-    pub fn efisdt64(&mut self, efisdt64: EFISdt64) {
+    pub fn efisdt64(&mut self, efisdt64: EFISdt64Tag) {
         self.efisdt64 = Some(efisdt64);
     }
 
