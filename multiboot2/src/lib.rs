@@ -22,9 +22,9 @@
 //! ## Example
 //!
 //! ```rust
-//! use multiboot2::load;
+//! use multiboot2::BootInformation;
 //! fn kmain(multiboot_info_ptr: u32) {
-//!     let boot_info = unsafe { load(multiboot_info_ptr as usize).unwrap() };
+//!     let boot_info = unsafe { BootInformation::load(multiboot_info_ptr as *const u8).unwrap() };
 //!     println!("{:?}", boot_info);
 //! }
 //! ```
@@ -98,77 +98,24 @@ pub mod builder;
 /// that the Rust compiler output changes `eax` before you can access it.
 pub const MAGIC: u32 = 0x36d76289;
 
-/// Load the multiboot boot information struct from an address.
-///
-/// This is the same as [`load_with_offset`] but the offset is omitted and set
-/// to zero.
-///
-/// ## Example
-///
-/// ```rust
-/// use multiboot2::load;
-///
-/// fn kmain(multiboot_info_ptr: u32) {
-///     let boot_info = unsafe { load(multiboot_info_ptr as usize).unwrap() };
-///     println!("{:?}", boot_info);
-/// }
-/// ```
-///
-/// ## Safety
-/// * `address` must be valid for reading. Otherwise this function might
-///   terminate the program. This can be the case in environments with standard
-///   environment (segfault) but also in UEFI-applications, where the referenced
-///   memory is not (identity) mapped (UEFI does only identity mapping).
-/// * The memory at `address` must not be modified after calling `load` or the
-///   program may observe unsynchronized mutation.
-pub unsafe fn load(address: usize) -> Result<BootInformation, MbiLoadError> {
-    load_with_offset(address, 0)
+/// # Safety
+/// Deprecated. Please use BootInformation::load() instead.
+#[deprecated = "Please use BootInformation::load() instead."]
+pub unsafe fn load<'a>(address: usize) -> Result<BootInformation<'a>, MbiLoadError> {
+    let ptr = address as *const u8;
+    BootInformation::load(ptr)
 }
 
-/// Load the multiboot boot information struct from an address at an offset.
-///
-/// ## Example
-///
-/// ```rust,no_run
-/// use multiboot2::load_with_offset;
-///
-/// let ptr = 0xDEADBEEF as *const u32;
-/// let boot_info = unsafe { load_with_offset(ptr as usize, 0xCAFEBABE).unwrap() };
-/// println!("{:?}", boot_info);
-/// ```
-///
-/// ## Safety
-/// * `address` must be valid for reading. Otherwise this function might
-///   terminate the program. This can be the case in environments with standard
-///   environment (segfault) but also in UEFI-applications, where the referenced
-///   memory is not (identity) mapped (UEFI does only identity mapping).
-/// * The memory at `address` must not be modified after calling `load` or the
-///   program may observe unsynchronized mutation.
-pub unsafe fn load_with_offset(
+/// # Safety
+/// Deprecated. Please use BootInformation::load() instead.
+#[deprecated = "Please use BootInformation::load() instead."]
+pub unsafe fn load_with_offset<'a>(
     address: usize,
     offset: usize,
-) -> Result<BootInformation, MbiLoadError> {
-    let address = address + offset;
-    let null_ptr = address == 0;
-    let eight_byte_aligned = address & 0b111 == 0;
-    if null_ptr || !eight_byte_aligned {
-        return Err(MbiLoadError::IllegalAddress);
-    }
-
-    let multiboot = &*(address as *const BootInformationInner);
-    // Check if total size is a multiple of 8.
-    // See MbiLoadError::IllegalTotalSize for comments
-    if multiboot.total_size & 0b111 != 0 {
-        return Err(MbiLoadError::IllegalTotalSize(multiboot.total_size));
-    }
-    if !multiboot.has_valid_end_tag() {
-        return Err(MbiLoadError::NoEndTag);
-    }
-
-    Ok(BootInformation {
-        inner: multiboot,
-        offset,
-    })
+) -> Result<BootInformation<'a>, MbiLoadError> {
+    let ptr = address as *const u8;
+    let ptr = ptr.add(offset);
+    BootInformation::load(ptr.cast())
 }
 
 /// Error type that describes errors while loading/parsing a multiboot2 information structure
@@ -192,17 +139,66 @@ pub enum MbiLoadError {
 #[cfg(feature = "unstable")]
 impl core::error::Error for MbiLoadError {}
 
-/// A Multiboot 2 Boot Information struct.
-pub struct BootInformation {
-    inner: *const BootInformationInner,
-    offset: usize,
+/// A Multiboot 2 Boot Information (MBI) accessor.
+#[repr(transparent)]
+pub struct BootInformation<'a>(&'a BootInformationInner);
+
+impl BootInformation<'_> {
+    /// Loads the [`BootInformation`] from a pointer. The pointer must be valid
+    /// and aligned to an 8-byte boundary, as defined by the spec.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// use multiboot2::BootInformation;
+    ///
+    /// fn kernel_entry(mb_magic: u32, mbi_ptr: u32) {
+    ///     if mb_magic == multiboot2::MAGIC {
+    ///         let boot_info = unsafe { BootInformation::load(mbi_ptr as *const u8).unwrap() };
+    ///         let _cmd = boot_info.command_line_tag();
+    ///     } else { /* Panic or use multiboot1 flow. */ }
+    /// }
+    /// ```
+    ///
+    /// ## Safety
+    /// * `ptr` must be valid for reading. Otherwise this function might cause
+    ///   invalid machine state or crash your binary (kernel). This can be the
+    ///   case in environments with standard environment (segfault), but also in
+    ///   boot environments, such as UEFI.
+    /// * The memory at `ptr` must not be modified after calling `load` or the
+    ///   program may observe unsynchronized mutation.
+    pub unsafe fn load(ptr: *const u8) -> Result<Self, MbiLoadError> {
+        if ptr.is_null() {
+            return Err(MbiLoadError::IllegalAddress);
+        }
+
+        // not aligned
+        if ptr.align_offset(8) != 0 {
+            return Err(MbiLoadError::IllegalAddress);
+        }
+
+        let mbi = &*ptr.cast::<BootInformationInner>();
+
+        // Check if total size is a multiple of 8.
+        // See MbiLoadError::IllegalTotalSize for comments
+        if mbi.total_size & 0b111 != 0 {
+            return Err(MbiLoadError::IllegalTotalSize(mbi.total_size));
+        }
+
+        if !mbi.has_valid_end_tag() {
+            return Err(MbiLoadError::NoEndTag);
+        }
+
+        Ok(Self(mbi))
+    }
 }
 
-#[derive(Clone, Copy)]
-#[repr(C)]
+#[repr(C, align(8))]
 struct BootInformationInner {
     total_size: u32,
     _reserved: u32,
+    // followed by various, dynamically sized multiboot2 tags
+    tags: [Tag; 0],
 }
 
 impl BootInformationInner {
@@ -211,6 +207,7 @@ impl BootInformationInner {
         Self {
             total_size,
             _reserved: 0,
+            tags: [],
         }
     }
 }
@@ -222,10 +219,15 @@ impl StructAsBytes for BootInformationInner {
     }
 }
 
-impl BootInformation {
+impl BootInformation<'_> {
     /// Get the start address of the boot info.
     pub fn start_address(&self) -> usize {
-        self.inner as usize
+        core::ptr::addr_of!(*self.0) as usize
+    }
+
+    /// Get the start address of the boot info as pointer.
+    pub fn as_ptr(&self) -> *const () {
+        core::ptr::addr_of!(*self.0).cast()
     }
 
     /// Get the end address of the boot info.
@@ -242,7 +244,7 @@ impl BootInformation {
 
     /// Get the total size of the boot info struct.
     pub fn total_size(&self) -> usize {
-        self.get().total_size as usize
+        self.0.total_size as usize
     }
 
     /// Search for the basic memory info tag.
@@ -268,7 +270,7 @@ impl BootInformation {
         let tag = self.get_tag::<ElfSectionsTag, _>(TagType::ElfSections);
         tag.map(|t| {
             assert!((t.entry_size * t.shndx) <= t.size);
-            t.sections(self.offset)
+            t.sections()
         })
     }
 
@@ -365,10 +367,6 @@ impl BootInformation {
         self.get_tag::<SmbiosTag, _>(TagType::Smbios)
     }
 
-    fn get(&self) -> &BootInformationInner {
-        unsafe { &*self.inner }
-    }
-
     /// Public getter to find any Multiboot tag by its type, including
     /// specified and custom ones.
     ///
@@ -434,7 +432,9 @@ impl BootInformation {
     }
 
     fn tags(&self) -> TagIter {
-        TagIter::new(unsafe { self.inner.offset(1) } as *const _)
+        // The first tag starts 8 bytes after the begin of the boot info header
+        let ptr = core::ptr::addr_of!(self.0.tags).cast();
+        TagIter::new(ptr)
     }
 }
 
@@ -452,9 +452,9 @@ impl BootInformationInner {
 
 // SAFETY: BootInformation contains a const ptr to memory that is never mutated.
 // Sending this pointer to other threads is sound.
-unsafe impl Send for BootInformation {}
+unsafe impl Send for BootInformation<'_> {}
 
-impl fmt::Debug for BootInformation {
+impl fmt::Debug for BootInformation<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         /// Limit how many Elf-Sections should be debug-formatted.
         /// Can be thousands of sections for a Rust binary => this is useless output.
@@ -575,8 +575,9 @@ mod tests {
             0, 0, 0, 0, // end tag type
             8, 0, 0, 0, // end tag size
         ]);
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
@@ -599,8 +600,9 @@ mod tests {
             0, 0, 0, 0, // end tag type
             8, 0, 0, // end tag size
         ]);
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
@@ -623,8 +625,9 @@ mod tests {
             0, 0, 0, 0, // end tag type
             9, 0, 0, 0, // end tag size
         ]);
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
@@ -650,8 +653,9 @@ mod tests {
             0, 0, 0, 0, // end tag type
             8, 0, 0, 0, // end tag size
         ]);
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
@@ -692,8 +696,9 @@ mod tests {
             0, 0, 0, 0, // end tag type
             8, 0, 0, 0, // end tag size
         ]);
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
@@ -714,16 +719,16 @@ mod tests {
             FramebufferType::RGB {
                 red: FramebufferField {
                     position: 16,
-                    size: 8
+                    size: 8,
                 },
                 green: FramebufferField {
                     position: 8,
-                    size: 8
+                    size: 8,
                 },
                 blue: FramebufferField {
                     position: 0,
-                    size: 8
-                }
+                    size: 8,
+                },
             }
         );
     }
@@ -751,8 +756,9 @@ mod tests {
             255, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, // end tag type
             8, 0, 0, 0, // end tag size
         ]);
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
@@ -775,22 +781,22 @@ mod tests {
                     FramebufferColor {
                         red: 255,
                         green: 0,
-                        blue: 0
+                        blue: 0,
                     },
                     FramebufferColor {
                         red: 0,
                         green: 255,
-                        blue: 0
+                        blue: 0,
                     },
                     FramebufferColor {
                         red: 0,
                         green: 0,
-                        blue: 255
+                        blue: 255,
                     },
                     FramebufferColor {
                         red: 0,
                         green: 0,
-                        blue: 0
+                        blue: 0,
                     }
                 ]
             ),
@@ -867,8 +873,9 @@ mod tests {
             8, 0, 0, 0, // End tag size.
         ]);
 
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
@@ -923,28 +930,28 @@ mod tests {
             vbe.mode_info.red_field,
             VBEField {
                 position: 16,
-                size: 8
+                size: 8,
             }
         );
         assert_eq!(
             vbe.mode_info.green_field,
             VBEField {
                 position: 8,
-                size: 8
+                size: 8,
             }
         );
         assert_eq!(
             vbe.mode_info.blue_field,
             VBEField {
                 position: 0,
-                size: 8
+                size: 8,
             }
         );
         assert_eq!(
             vbe.mode_info.reserved_field,
             VBEField {
                 position: 24,
-                size: 8
+                size: 8,
             }
         );
         assert_eq!(
@@ -965,6 +972,8 @@ mod tests {
         }
     }
 
+    /// Tests to parse a MBI that was statically extracted from a test run with
+    /// GRUB as bootloader.
     #[test]
     fn grub2() {
         #[repr(C, align(8))]
@@ -1223,27 +1232,20 @@ mod tests {
         for i in 0..8 {
             bytes.0[796 + i] = (string_addr >> (i * 8)) as u8;
         }
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
-
         test_grub2_boot_info(&bi, addr, string_addr, &bytes.0, &string_bytes.0);
+
         let bi = unsafe { load_with_offset(addr, 0) };
         let bi = bi.unwrap();
         test_grub2_boot_info(&bi, addr, string_addr, &bytes.0, &string_bytes.0);
+
         let offset = 8usize;
-        for i in 0..8 {
-            bytes.0[796 + i] = ((string_addr - offset as u64) >> (i * 8)) as u8;
-        }
         let bi = unsafe { load_with_offset(addr - offset, offset) };
         let bi = bi.unwrap();
-        test_grub2_boot_info(
-            &bi,
-            addr,
-            string_addr - offset as u64,
-            &bytes.0,
-            &string_bytes.0,
-        );
+        test_grub2_boot_info(&bi, addr, string_addr, &bytes.0, &string_bytes.0);
 
         // Check that the MBI's debug output can be printed without SEGFAULT.
         // If this works, it is a good indicator than transitively a lot of
@@ -1251,6 +1253,7 @@ mod tests {
         println!("{bi:#?}");
     }
 
+    /// Helper for [`grub2`].
     fn test_grub2_boot_info(
         bi: &BootInformation,
         addr: usize,
@@ -1444,8 +1447,9 @@ mod tests {
             assert_eq!(255, bytes.0[offset + i]);
             bytes.0[offset + i] = (string_addr >> (i * 8)) as u8;
         }
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
@@ -1486,8 +1490,9 @@ mod tests {
             0, 0, 0, 0, // end tag type.
             8, 0, 0, 0, // end tag size.
         ]);
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
@@ -1523,7 +1528,7 @@ mod tests {
             0, 0, 0, 0, // end tag type.
             8, 0, 0, 0, // end tag size.
         ]);
-        let bi = unsafe { load(bytes2.0.as_ptr() as usize) };
+        let bi = unsafe { BootInformation::load(bytes2.0.as_ptr()) };
         let bi = bi.unwrap();
         let efi_mmap = bi.efi_memory_map_tag();
         assert!(efi_mmap.is_none());
@@ -1586,8 +1591,9 @@ mod tests {
             0,
             0, // end: end tag size
         ]);
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
@@ -1662,8 +1668,9 @@ mod tests {
             0,
             0, // end: end tag size
         ]);
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
@@ -1713,8 +1720,8 @@ mod tests {
             0, // end tag size
         ]);
 
-        let addr = bytes.0.as_ptr() as usize;
-        let bi = unsafe { load(addr) };
+        let ptr = bytes.0.as_ptr();
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
 
         let _tag = bi.get_tag::<CommandLineTag, _>(TagType::Cmdline).unwrap();

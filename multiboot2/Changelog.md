@@ -25,7 +25,8 @@
 - **BREAKING** Renamed `EFISdt32` to `EFISdt32Tag`
 - **BREAKING** Renamed `EFISdt64` to `EFISdt64Tag`
 - **BREAKING** Renamed `EFIBootServicesNotExited` to `EFIBootServicesNotExitedTag`
-- added `BootInformation::efi_bs_not_exited_tag`
+- deprecated `load` and `load_with_offset`
+- added `BootInformation::load` as new default constructor
 
 ## 0.15.1 (2023-03-18)
 - **BREAKING** `MemoryMapTag::all_memory_areas()` was renamed to `memory_areas`

@@ -12,9 +12,9 @@ use {
 
 const METADATA_SIZE: usize = size_of::<TagTypeId>() + 4 * size_of::<u32>();
 
-/// This tag contains section header table from an ELF kernel.
-///
-/// The sections iterator is provided via the `sections` method.
+/// This tag contains the section header table from an ELF binary.
+// The sections iterator is provided via the [`ElfSectionsTag::sections`]
+// method.
 #[derive(ptr_meta::Pointee, PartialEq, Eq)]
 #[repr(C)]
 pub struct ElfSectionsTag {
@@ -41,7 +41,7 @@ impl ElfSectionsTag {
     }
 
     /// Get an iterator of loaded ELF sections.
-    pub(crate) fn sections(&self, offset: usize) -> ElfSectionIter {
+    pub(crate) fn sections(&self) -> ElfSectionIter {
         let string_section_offset = (self.shndx * self.entry_size) as isize;
         let string_section_ptr =
             unsafe { self.first_section().offset(string_section_offset) as *const _ };
@@ -50,7 +50,6 @@ impl ElfSectionsTag {
             remaining_sections: self.number_of_sections,
             entry_size: self.entry_size,
             string_section: string_section_ptr,
-            offset,
         }
     }
 
@@ -81,7 +80,7 @@ impl Debug for ElfSectionsTag {
             .field("number_of_sections", &{ self.number_of_sections })
             .field("entry_size", &{ self.entry_size })
             .field("shndx", &{ self.shndx })
-            .field("sections", &self.sections(0))
+            .field("sections", &self.sections())
             .finish()
     }
 }
@@ -93,7 +92,6 @@ pub struct ElfSectionIter {
     remaining_sections: u32,
     entry_size: u32,
     string_section: *const u8,
-    offset: usize,
 }
 
 impl Iterator for ElfSectionIter {
@@ -105,7 +103,6 @@ impl Iterator for ElfSectionIter {
                 inner: self.current_section,
                 string_section: self.string_section,
                 entry_size: self.entry_size,
-                offset: self.offset,
             };
 
             self.current_section = unsafe { self.current_section.offset(self.entry_size as isize) };
@@ -136,7 +133,6 @@ impl Default for ElfSectionIter {
             remaining_sections: 0,
             entry_size: 0,
             string_section: core::ptr::null(),
-            offset: 0,
         }
     }
 }
@@ -147,7 +143,6 @@ pub struct ElfSection {
     inner: *const u8,
     string_section: *const u8,
     entry_size: u32,
-    offset: usize,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -282,7 +277,7 @@ impl ElfSection {
             64 => (*(self.string_section as *const ElfSectionInner64)).addr as usize,
             s => panic!("Unexpected entry size: {}", s),
         };
-        (addr + self.offset) as *const _
+        addr as *const _
     }
 }
 
