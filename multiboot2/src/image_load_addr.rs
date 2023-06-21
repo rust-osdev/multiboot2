@@ -5,8 +5,9 @@ use {
     core::mem::size_of,
 };
 
-/// If the image has relocatable header tag, this tag contains the image's
-/// base physical address.
+/// The physical load address tag. Typically, this is only available if the
+/// binary was relocated, for example if the relocatable header tag was
+/// specified.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct ImageLoadPhysAddrTag {

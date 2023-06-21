@@ -8,7 +8,7 @@ use core::mem::size_of;
 #[cfg(feature = "builder")]
 use crate::builder::traits::StructAsBytes;
 
-/// EFI system table in 32 bit mode
+/// EFI system table in 32 bit mode tag.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFISdt32Tag {
@@ -40,7 +40,7 @@ impl StructAsBytes for EFISdt32Tag {
     }
 }
 
-/// EFI system table in 64 bit mode
+/// EFI system table in 64 bit mode tag.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFISdt64Tag {

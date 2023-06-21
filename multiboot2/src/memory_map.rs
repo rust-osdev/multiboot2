@@ -12,7 +12,7 @@ use {crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc
 
 const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
 
-/// This tag provides an initial host memory map.
+/// This tag provides an initial host memory map (legacy boot, not UEFI).
 ///
 /// The map provided is guaranteed to list all standard RAM that should be
 /// available for normal use. This type however includes the regions occupied
@@ -151,20 +151,18 @@ pub enum MemoryAreaType {
     Defective = 5,
 }
 
-/// Basic memory info
+/// Basic memory info tag.
 ///
-/// This tag includes "basic memory information".
-/// This means (legacy) lower and upper memory:
-/// In Real Mode (modeled after the 8086),
-/// only the first 1MB of memory is accessible.
-/// Typically, the region between 640KB and 1MB is not freely usable,
-/// because it is used for memory-mapped IO, for instance.
-/// The term “lower memory” refers to those first 640KB of memory that are
-/// freely usable for an application in Real Mode.
-/// “Upper memory” then refers to the next freely usable chunk of memory,
-/// starting at 1MB up to about 10MB, in practice.
-/// This is the memory an application running on a 286
-/// (which had a 24-bit address bus) could use, historically.
+/// This tag includes "basic memory information". This means (legacy) lower and
+/// upper memory: In Real Mode (modeled after the 8086), only the first 1MB of
+/// memory is accessible. Typically, the region between 640KB and 1MB is not
+/// freely usable, because it is used for memory-mapped IO, for instance. The
+/// term “lower memory” refers to those first 640KB of memory that are freely
+/// usable for an application in Real Mode. “Upper memory” then refers to the
+/// next freely usable chunk of memory, starting at 1MB up to about 10MB, in
+/// practice. This is the memory an application running on a 286 (which had a
+/// 24-bit address bus) could use, historically.
+///
 /// Nowadays, much bigger chunks of continuous memory are available at higher
 /// addresses, but the Multiboot standard still references those two terms.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -204,7 +202,7 @@ impl StructAsBytes for BasicMemoryInfoTag {
 
 const EFI_METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
 
-/// EFI memory map as per EFI specification.
+/// EFI memory map tag. The [`EFIMemoryDesc`] follows the EFI specification.
 #[derive(ptr_meta::Pointee, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIMemoryMapTag {
@@ -274,7 +272,7 @@ impl StructAsBytes for EFIMemoryDesc {
     }
 }
 
-/// EFI ExitBootServices was not called
+/// EFI ExitBootServices was not called tag.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIBootServicesNotExitedTag {
