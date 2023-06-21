@@ -25,7 +25,10 @@ impl BootLoaderNameTag {
     #[cfg(feature = "builder")]
     pub fn new(name: &str) -> Box<Self> {
         let mut bytes: Vec<_> = name.bytes().collect();
-        bytes.push(0);
+        if !bytes.ends_with(&[0]) {
+            // terminating null-byte
+            bytes.push(0);
+        }
         boxed_dst_tag(TagType::BootLoaderName, &bytes)
     }
 

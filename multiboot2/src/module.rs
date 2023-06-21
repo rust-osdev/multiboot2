@@ -30,7 +30,10 @@ impl ModuleTag {
     #[cfg(feature = "builder")]
     pub fn new(start: u32, end: u32, cmdline: &str) -> Box<Self> {
         let mut cmdline_bytes: Vec<_> = cmdline.bytes().collect();
-        cmdline_bytes.push(0);
+        if !cmdline_bytes.ends_with(&[0]) {
+            // terminating null-byte
+            cmdline_bytes.push(0);
+        }
         let start_bytes = start.to_le_bytes();
         let end_bytes = end.to_le_bytes();
         let mut content_bytes = [start_bytes, end_bytes].concat();
