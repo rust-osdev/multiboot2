@@ -206,8 +206,7 @@ const EFI_METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of:
 
 /// EFI memory map as per EFI specification.
 #[derive(ptr_meta::Pointee)]
-// #[derive(Debug, PartialEq, Eq)] // wait for uefi-raw 0.3.0
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIMemoryMapTag {
     typ: TagTypeId,

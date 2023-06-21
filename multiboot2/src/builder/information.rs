@@ -14,8 +14,7 @@ use core::mem::size_of;
 /// Builder to construct a valid Multiboot2 information dynamically at runtime.
 /// The tags will appear in the order of their corresponding enumeration,
 /// except for the END tag.
-#[derive(Debug)]
-// #[derive(Debug, PartialEq, Eq)] // wait for uefi-raw 0.3.0
+#[derive(Debug, PartialEq, Eq)]
 pub struct InformationBuilder {
     basic_memory_info_tag: Option<BasicMemoryInfoTag>,
     boot_loader_name_tag: Option<Box<BootLoaderNameTag>>,

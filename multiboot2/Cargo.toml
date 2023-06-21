@@ -45,5 +45,5 @@ bitflags.workspace = true
 derive_more.workspace = true
 log.workspace = true
 
-uefi-raw = { version = "0.2.0", default-features = false }
-ptr_meta = { version = "0.2.0", default-features = false }
+uefi-raw = { version = "0.3", default-features = false }
+ptr_meta = { version = "0.2", default-features = false }
