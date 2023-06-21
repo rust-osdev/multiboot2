@@ -22,6 +22,10 @@
 - **BREAKING** Renamed `ImageLoadPhysAddr` to `ImageLoadPhysAddrTag`
 - **BREAKING** Renamed `EFIImageHandle32` to `EFIImageHandle32Tag`
 - **BREAKING** Renamed `EFIImageHandle64` to `EFIImageHandle64Tag`
+- **BREAKING** Renamed `EFISdt32` to `EFISdt32Tag`
+- **BREAKING** Renamed `EFISdt64` to `EFISdt64Tag`
+- **BREAKING** Renamed `EFIBootServicesNotExited` to `EFIBootServicesNotExitedTag`
+- added `BootInformation::efi_bs_not_exited_tag`
 
 ## 0.15.1 (2023-03-18)
 - **BREAKING** `MemoryMapTag::all_memory_areas()` was renamed to `memory_areas`

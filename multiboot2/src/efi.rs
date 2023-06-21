@@ -8,16 +8,16 @@ use core::mem::size_of;
 #[cfg(feature = "builder")]
 use crate::builder::traits::StructAsBytes;
 
-/// EFI system table in 32 bit mode
+/// EFI system table in 32 bit mode tag.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
-pub struct EFISdt32 {
+pub struct EFISdt32Tag {
     typ: TagTypeId,
     size: u32,
     pointer: u32,
 }
 
-impl EFISdt32 {
+impl EFISdt32Tag {
     /// Create a new tag to pass the EFI32 System Table pointer.
     pub fn new(pointer: u32) -> Self {
         Self {
@@ -34,22 +34,22 @@ impl EFISdt32 {
 }
 
 #[cfg(feature = "builder")]
-impl StructAsBytes for EFISdt32 {
+impl StructAsBytes for EFISdt32Tag {
     fn byte_size(&self) -> usize {
         size_of::<Self>()
     }
 }
 
-/// EFI system table in 64 bit mode
+/// EFI system table in 64 bit mode tag.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
-pub struct EFISdt64 {
+pub struct EFISdt64Tag {
     typ: TagTypeId,
     size: u32,
     pointer: u64,
 }
 
-impl EFISdt64 {
+impl EFISdt64Tag {
     /// Create a new tag to pass the EFI64 System Table pointer.
     pub fn new(pointer: u64) -> Self {
         Self {
@@ -66,7 +66,7 @@ impl EFISdt64 {
 }
 
 #[cfg(feature = "builder")]
-impl StructAsBytes for EFISdt64 {
+impl StructAsBytes for EFISdt64Tag {
     fn byte_size(&self) -> usize {
         size_of::<Self>()
     }
@@ -140,19 +140,19 @@ impl StructAsBytes for EFIImageHandle64Tag {
 
 #[cfg(all(test, feature = "builder"))]
 mod tests {
-    use super::{EFIImageHandle32Tag, EFIImageHandle64Tag, EFISdt32, EFISdt64};
+    use super::{EFIImageHandle32Tag, EFIImageHandle64Tag, EFISdt32Tag, EFISdt64Tag};
 
     const ADDR: usize = 0xABCDEF;
 
     #[test]
     fn test_build_eftsdt32() {
-        let tag = EFISdt32::new(ADDR.try_into().unwrap());
+        let tag = EFISdt32Tag::new(ADDR.try_into().unwrap());
         assert_eq!(tag.sdt_address(), ADDR);
     }
 
     #[test]
     fn test_build_eftsdt64() {
-        let tag = EFISdt64::new(ADDR.try_into().unwrap());
+        let tag = EFISdt64Tag::new(ADDR.try_into().unwrap());
         assert_eq!(tag.sdt_address(), ADDR);
     }
 
