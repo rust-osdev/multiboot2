@@ -50,7 +50,7 @@ pub use boot_loader_name::BootLoaderNameTag;
 #[cfg(feature = "builder")]
 use builder::traits::StructAsBytes;
 pub use command_line::CommandLineTag;
-pub use efi::{EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64};
+pub use efi::{EFIImageHandle32Tag, EFIImageHandle64Tag, EFISdt32, EFISdt64};
 pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
@@ -336,13 +336,13 @@ impl BootInformation {
     }
 
     /// Search for the EFI 32-bit image handle pointer tag.
-    pub fn efi_32_ih(&self) -> Option<&EFIImageHandle32> {
-        self.get_tag::<EFIImageHandle32, _>(TagType::Efi32Ih)
+    pub fn efi_32_ih_tag(&self) -> Option<&EFIImageHandle32Tag> {
+        self.get_tag::<EFIImageHandle32Tag, _>(TagType::Efi32Ih)
     }
 
     /// Search for the EFI 64-bit image handle pointer tag.
-    pub fn efi_64_ih(&self) -> Option<&EFIImageHandle64> {
-        self.get_tag::<EFIImageHandle64, _>(TagType::Efi64Ih)
+    pub fn efi_64_ih_tag(&self) -> Option<&EFIImageHandle64Tag> {
+        self.get_tag::<EFIImageHandle64Tag, _>(TagType::Efi64Ih)
     }
 
     /// Search for the Image Load Base Physical Address tag.
@@ -374,7 +374,7 @@ impl BootInformation {
     /// However, it doesn't forbid to use custom tags. Because of this, there
     /// exists the [`TagType`] abstraction. It is recommended to use this
     /// getter only for custom tags. For specified tags, use getters, such as
-    /// [`Self::efi_64_ih`].
+    /// [`Self::efi_64_ih_tag`].
     ///
     /// ## Use Custom Tags
     /// The following example shows how you may use this interface to parse
@@ -493,11 +493,11 @@ impl fmt::Debug for BootInformation {
         }
 
         debug
-            .field("efi_32_ih", &self.efi_32_ih())
-            .field("efi_64_ih", &self.efi_64_ih())
+            .field("efi_32_ih", &self.efi_32_ih_tag())
+            .field("efi_64_ih", &self.efi_64_ih_tag())
             .field("efi_sdt_32_tag", &self.efi_sdt_32_tag())
-            .field("efi_sdt_64_tag", &self.efi_sdt_64())
-            .field("efi_memory_map_tag", &self.efi_memory_map())
+            .field("efi_sdt_64_tag", &self.efi_sdt_64_tag())
+            .field("efi_memory_map_tag", &self.efi_memory_map_tag())
             .finish()
     }
 }

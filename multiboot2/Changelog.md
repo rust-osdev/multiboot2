@@ -17,7 +17,11 @@
 - **BREAKING** Removed `MemoryAreaIter` and `MemoryMapTag::available_memory_areas`
 - Added `MemoryMapTag::entry_size` and `MemoryMapTag::entry_version`
 - **BREAKING** Renamed `BootInformation::load_base_addr` to `BootInformation::load_base_addr_tag`
+- **BREAKING** Renamed `BootInformation::efi_32_ih` to `BootInformation::efi_32_ih_tag`
+- **BREAKING** Renamed `BootInformation::efi_32_ih` to `BootInformation::efi_32_ih_tag`
 - **BREAKING** Renamed `ImageLoadPhysAddr` to `ImageLoadPhysAddrTag`
+- **BREAKING** Renamed `EFIImageHandle32` to `EFIImageHandle32Tag`
+- **BREAKING** Renamed `EFIImageHandle64` to `EFIImageHandle64Tag`
 
 ## 0.15.1 (2023-03-18)
 - **BREAKING** `MemoryMapTag::all_memory_areas()` was renamed to `memory_areas`
