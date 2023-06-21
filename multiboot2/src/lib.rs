@@ -57,7 +57,7 @@ pub use elf_sections::{
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
 pub use image_load_addr::ImageLoadPhysAddrTag;
 pub use memory_map::{
-    BasicMemoryInfoTag, EFIBootServicesNotExited, EFIMemoryAreaType, EFIMemoryDesc,
+    BasicMemoryInfoTag, EFIBootServicesNotExitedTag, EFIMemoryAreaType, EFIMemoryDesc,
     EFIMemoryMapTag, MemoryArea, MemoryAreaType, MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
@@ -343,6 +343,11 @@ impl BootInformation {
     /// Search for the EFI 64-bit image handle pointer tag.
     pub fn efi_64_ih_tag(&self) -> Option<&EFIImageHandle64Tag> {
         self.get_tag::<EFIImageHandle64Tag, _>(TagType::Efi64Ih)
+    }
+
+    /// Search for the EFI boot services not exited tag.
+    pub fn efi_bs_not_exited_tag(&self) -> Option<&EFIBootServicesNotExitedTag> {
+        self.get_tag::<EFIBootServicesNotExitedTag, _>(TagType::EfiBs)
     }
 
     /// Search for the Image Load Base Physical Address tag.

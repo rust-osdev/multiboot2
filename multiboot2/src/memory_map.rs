@@ -277,12 +277,12 @@ impl StructAsBytes for EFIMemoryDesc {
 /// EFI ExitBootServices was not called
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
-pub struct EFIBootServicesNotExited {
+pub struct EFIBootServicesNotExitedTag {
     typ: TagTypeId,
     size: u32,
 }
 
-impl EFIBootServicesNotExited {
+impl EFIBootServicesNotExitedTag {
     #[cfg(feature = "builder")]
     pub fn new() -> Self {
         Self::default()
@@ -290,7 +290,7 @@ impl EFIBootServicesNotExited {
 }
 
 #[cfg(feature = "builder")]
-impl Default for EFIBootServicesNotExited {
+impl Default for EFIBootServicesNotExitedTag {
     fn default() -> Self {
         Self {
             typ: TagType::EfiBs.into(),
@@ -300,7 +300,7 @@ impl Default for EFIBootServicesNotExited {
 }
 
 #[cfg(feature = "builder")]
-impl StructAsBytes for EFIBootServicesNotExited {
+impl StructAsBytes for EFIBootServicesNotExitedTag {
     fn byte_size(&self) -> usize {
         mem::size_of::<Self>()
     }

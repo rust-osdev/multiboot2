@@ -2,7 +2,7 @@
 use crate::builder::traits::StructAsBytes;
 use crate::{
     BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag,
-    EFIBootServicesNotExited, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag, EFISdt32,
+    EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag, EFISdt32,
     EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag, MemoryMapTag,
     ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag,
 };
@@ -19,7 +19,7 @@ pub struct InformationBuilder {
     basic_memory_info_tag: Option<BasicMemoryInfoTag>,
     boot_loader_name_tag: Option<Box<BootLoaderNameTag>>,
     command_line_tag: Option<Box<CommandLineTag>>,
-    efi_boot_services_not_exited: Option<EFIBootServicesNotExited>,
+    efi_boot_services_not_exited: Option<EFIBootServicesNotExitedTag>,
     efi_image_handle32: Option<EFIImageHandle32Tag>,
     efi_image_handle64: Option<EFIImageHandle64Tag>,
     efi_memory_map_tag: Option<Box<EFIMemoryMapTag>>,
@@ -238,7 +238,7 @@ impl InformationBuilder {
     }
 
     pub fn efi_boot_services_not_exited(&mut self) {
-        self.efi_boot_services_not_exited = Some(EFIBootServicesNotExited::new());
+        self.efi_boot_services_not_exited = Some(EFIBootServicesNotExitedTag::new());
     }
 
     pub fn efi_image_handle32(&mut self, efi_image_handle32: EFIImageHandle32Tag) {
