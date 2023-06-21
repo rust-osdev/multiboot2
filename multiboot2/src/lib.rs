@@ -50,12 +50,12 @@ pub use boot_loader_name::BootLoaderNameTag;
 #[cfg(feature = "builder")]
 use builder::traits::StructAsBytes;
 pub use command_line::CommandLineTag;
-pub use efi::{EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64};
+pub use efi::{EFIImageHandle32Tag, EFIImageHandle64Tag, EFISdt32, EFISdt64};
 pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
-pub use image_load_addr::ImageLoadPhysAddr;
+pub use image_load_addr::ImageLoadPhysAddrTag;
 pub use memory_map::{
     BasicMemoryInfoTag, EFIBootServicesNotExited, EFIMemoryAreaType, EFIMemoryDesc,
     EFIMemoryMapTag, MemoryArea, MemoryAreaType, MemoryMapTag,
@@ -335,19 +335,19 @@ impl BootInformation {
         }
     }
 
-    /// Search for the EFI 32-bit image handle pointer.
-    pub fn efi_32_ih(&self) -> Option<&EFIImageHandle32> {
-        self.get_tag::<EFIImageHandle32, _>(TagType::Efi32Ih)
+    /// Search for the EFI 32-bit image handle pointer tag.
+    pub fn efi_32_ih_tag(&self) -> Option<&EFIImageHandle32Tag> {
+        self.get_tag::<EFIImageHandle32Tag, _>(TagType::Efi32Ih)
     }
 
-    /// Search for the EFI 64-bit image handle pointer.
-    pub fn efi_64_ih(&self) -> Option<&EFIImageHandle64> {
-        self.get_tag::<EFIImageHandle64, _>(TagType::Efi64Ih)
+    /// Search for the EFI 64-bit image handle pointer tag.
+    pub fn efi_64_ih_tag(&self) -> Option<&EFIImageHandle64Tag> {
+        self.get_tag::<EFIImageHandle64Tag, _>(TagType::Efi64Ih)
     }
 
-    /// Search for the Image Load Base Physical Address.
-    pub fn load_base_addr(&self) -> Option<&ImageLoadPhysAddr> {
-        self.get_tag::<ImageLoadPhysAddr, _>(TagType::LoadBaseAddr)
+    /// Search for the Image Load Base Physical Address tag.
+    pub fn load_base_addr_tag(&self) -> Option<&ImageLoadPhysAddrTag> {
+        self.get_tag::<ImageLoadPhysAddrTag, _>(TagType::LoadBaseAddr)
     }
 
     /// Search for the VBE information tag.
@@ -374,7 +374,7 @@ impl BootInformation {
     /// However, it doesn't forbid to use custom tags. Because of this, there
     /// exists the [`TagType`] abstraction. It is recommended to use this
     /// getter only for custom tags. For specified tags, use getters, such as
-    /// [`Self::efi_64_ih`].
+    /// [`Self::efi_64_ih_tag`].
     ///
     /// ## Use Custom Tags
     /// The following example shows how you may use this interface to parse
@@ -493,8 +493,8 @@ impl fmt::Debug for BootInformation {
         }
 
         debug
-            .field("efi_32_ih", &self.efi_32_ih())
-            .field("efi_64_ih", &self.efi_64_ih())
+            .field("efi_32_ih", &self.efi_32_ih_tag())
+            .field("efi_64_ih", &self.efi_64_ih_tag())
             .field("efi_sdt_32_tag", &self.efi_sdt_32_tag())
             .field("efi_sdt_64_tag", &self.efi_sdt_64_tag())
             .field("efi_memory_map_tag", &self.efi_memory_map_tag())

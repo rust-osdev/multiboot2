@@ -2,9 +2,9 @@
 use crate::builder::traits::StructAsBytes;
 use crate::{
     BasicMemoryInfoTag, BootInformationInner, BootLoaderNameTag, CommandLineTag,
-    EFIBootServicesNotExited, EFIImageHandle32, EFIImageHandle64, EFIMemoryMapTag, EFISdt32,
-    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddr, MemoryMapTag, ModuleTag,
-    RsdpV1Tag, RsdpV2Tag, SmbiosTag,
+    EFIBootServicesNotExited, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag, EFISdt32,
+    EFISdt64, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag, MemoryMapTag,
+    ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag,
 };
 
 use alloc::boxed::Box;
@@ -14,19 +14,18 @@ use core::mem::size_of;
 /// Builder to construct a valid Multiboot2 information dynamically at runtime.
 /// The tags will appear in the order of their corresponding enumeration,
 /// except for the END tag.
-#[derive(Debug)]
-// #[derive(Debug, PartialEq, Eq)] // wait for uefi-raw 0.3.0
+#[derive(Debug, PartialEq, Eq)]
 pub struct InformationBuilder {
     basic_memory_info_tag: Option<BasicMemoryInfoTag>,
     boot_loader_name_tag: Option<Box<BootLoaderNameTag>>,
     command_line_tag: Option<Box<CommandLineTag>>,
     efi_boot_services_not_exited: Option<EFIBootServicesNotExited>,
-    efi_image_handle32: Option<EFIImageHandle32>,
-    efi_image_handle64: Option<EFIImageHandle64>,
+    efi_image_handle32: Option<EFIImageHandle32Tag>,
+    efi_image_handle64: Option<EFIImageHandle64Tag>,
     efi_memory_map_tag: Option<Box<EFIMemoryMapTag>>,
     elf_sections_tag: Option<Box<ElfSectionsTag>>,
     framebuffer_tag: Option<Box<FramebufferTag>>,
-    image_load_addr: Option<ImageLoadPhysAddr>,
+    image_load_addr: Option<ImageLoadPhysAddrTag>,
     memory_map_tag: Option<Box<MemoryMapTag>>,
     module_tags: Vec<Box<ModuleTag>>,
     efisdt32: Option<EFISdt32>,
@@ -242,11 +241,11 @@ impl InformationBuilder {
         self.efi_boot_services_not_exited = Some(EFIBootServicesNotExited::new());
     }
 
-    pub fn efi_image_handle32(&mut self, efi_image_handle32: EFIImageHandle32) {
+    pub fn efi_image_handle32(&mut self, efi_image_handle32: EFIImageHandle32Tag) {
         self.efi_image_handle32 = Some(efi_image_handle32);
     }
 
-    pub fn efi_image_handle64(&mut self, efi_image_handle64: EFIImageHandle64) {
+    pub fn efi_image_handle64(&mut self, efi_image_handle64: EFIImageHandle64Tag) {
         self.efi_image_handle64 = Some(efi_image_handle64);
     }
 
@@ -262,7 +261,7 @@ impl InformationBuilder {
         self.framebuffer_tag = Some(framebuffer_tag);
     }
 
-    pub fn image_load_addr(&mut self, image_load_addr: ImageLoadPhysAddr) {
+    pub fn image_load_addr(&mut self, image_load_addr: ImageLoadPhysAddrTag) {
         self.image_load_addr = Some(image_load_addr);
     }
 

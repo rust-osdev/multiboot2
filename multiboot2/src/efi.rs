@@ -72,16 +72,17 @@ impl StructAsBytes for EFISdt64 {
     }
 }
 
-/// Contains pointer to boot loader image handle.
+/// Tag that contains the pointer to the boot loader's UEFI image handle
+/// (32-bit).
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
-pub struct EFIImageHandle32 {
+pub struct EFIImageHandle32Tag {
     typ: TagTypeId,
     size: u32,
     pointer: u32,
 }
 
-impl EFIImageHandle32 {
+impl EFIImageHandle32Tag {
     #[cfg(feature = "builder")]
     pub fn new(pointer: u32) -> Self {
         Self {
@@ -98,22 +99,23 @@ impl EFIImageHandle32 {
 }
 
 #[cfg(feature = "builder")]
-impl StructAsBytes for EFIImageHandle32 {
+impl StructAsBytes for EFIImageHandle32Tag {
     fn byte_size(&self) -> usize {
         size_of::<Self>()
     }
 }
 
-/// Contains pointer to boot loader image handle.
+/// Tag that contains the pointer to the boot loader's UEFI image handle
+/// (64-bit).
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
-pub struct EFIImageHandle64 {
+pub struct EFIImageHandle64Tag {
     typ: TagTypeId,
     size: u32,
     pointer: u64,
 }
 
-impl EFIImageHandle64 {
+impl EFIImageHandle64Tag {
     #[cfg(feature = "builder")]
     pub fn new(pointer: u64) -> Self {
         Self {
@@ -130,7 +132,7 @@ impl EFIImageHandle64 {
 }
 
 #[cfg(feature = "builder")]
-impl StructAsBytes for EFIImageHandle64 {
+impl StructAsBytes for EFIImageHandle64Tag {
     fn byte_size(&self) -> usize {
         size_of::<Self>()
     }
@@ -138,7 +140,7 @@ impl StructAsBytes for EFIImageHandle64 {
 
 #[cfg(all(test, feature = "builder"))]
 mod tests {
-    use super::{EFIImageHandle32, EFIImageHandle64, EFISdt32, EFISdt64};
+    use super::{EFIImageHandle32Tag, EFIImageHandle64Tag, EFISdt32, EFISdt64};
 
     const ADDR: usize = 0xABCDEF;
 
@@ -156,13 +158,13 @@ mod tests {
 
     #[test]
     fn test_build_eftih32() {
-        let tag = EFIImageHandle32::new(ADDR.try_into().unwrap());
+        let tag = EFIImageHandle32Tag::new(ADDR.try_into().unwrap());
         assert_eq!(tag.image_handle(), ADDR);
     }
 
     #[test]
     fn test_build_eftih64() {
-        let tag = EFIImageHandle64::new(ADDR.try_into().unwrap());
+        let tag = EFIImageHandle64Tag::new(ADDR.try_into().unwrap());
         assert_eq!(tag.image_handle(), ADDR);
     }
 }

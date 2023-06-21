@@ -9,13 +9,13 @@ use {
 /// base physical address.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
-pub struct ImageLoadPhysAddr {
+pub struct ImageLoadPhysAddrTag {
     typ: TagTypeId,
     size: u32,
     load_base_addr: u32,
 }
 
-impl ImageLoadPhysAddr {
+impl ImageLoadPhysAddrTag {
     #[cfg(feature = "builder")]
     pub fn new(load_base_addr: u32) -> Self {
         Self {
@@ -32,7 +32,7 @@ impl ImageLoadPhysAddr {
 }
 
 #[cfg(feature = "builder")]
-impl StructAsBytes for ImageLoadPhysAddr {
+impl StructAsBytes for ImageLoadPhysAddrTag {
     fn byte_size(&self) -> usize {
         size_of::<Self>()
     }
@@ -40,13 +40,13 @@ impl StructAsBytes for ImageLoadPhysAddr {
 
 #[cfg(all(test, feature = "builder"))]
 mod tests {
-    use super::ImageLoadPhysAddr;
+    use super::ImageLoadPhysAddrTag;
 
     const ADDR: u32 = 0xABCDEF;
 
     #[test]
     fn test_build_load_addr() {
-        let tag = ImageLoadPhysAddr::new(ADDR);
+        let tag = ImageLoadPhysAddrTag::new(ADDR);
         assert_eq!(tag.load_base_addr(), ADDR);
     }
 }
