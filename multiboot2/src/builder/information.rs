@@ -289,7 +289,7 @@ impl InformationBuilder {
 #[cfg(test)]
 mod tests {
     use crate::builder::information::InformationBuilder;
-    use crate::{load, BasicMemoryInfoTag, CommandLineTag, ModuleTag};
+    use crate::{BasicMemoryInfoTag, BootInformation, CommandLineTag, ModuleTag};
 
     #[test]
     fn test_size_or_up_aligned() {
@@ -327,8 +327,8 @@ mod tests {
         assert_eq!(builder.expected_len(), expected_len);
 
         let mb2i_data = builder.build();
-        let mb2i_addr = mb2i_data.as_ptr() as usize;
-        let mb2i = unsafe { load(mb2i_addr) }.expect("the generated information to be readable");
+        let mb2i = unsafe { BootInformation::load(mb2i_data.as_ptr()) }
+            .expect("the generated information to be readable");
         println!("{:#?}", mb2i);
         assert_eq!(mb2i.basic_memory_info_tag().unwrap().memory_lower(), 640);
         assert_eq!(
