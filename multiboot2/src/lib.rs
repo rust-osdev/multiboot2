@@ -30,7 +30,7 @@
 //! ```
 //!
 //! ## MSRV
-//! The MSRV is 1.56.1 stable.
+//! The MSRV is 1.68.0 stable.
 
 #[cfg(feature = "builder")]
 extern crate alloc;
