@@ -25,13 +25,13 @@
 //!     .build();
 //!
 //! // Cast bytes in vector to Multiboot2 information structure
-//! let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr_bytes.as_ptr() as usize) };
+//! let mb2_hdr = unsafe { Multiboot2Header::load(mb2_hdr_bytes.as_ptr().cast()) };
 //! println!("{:#?}", mb2_hdr);
 //!
 //! ```
 //!
 //! ## MSRV
-//! The MSRV is 1.56.1 stable.
+//! The MSRV is 1.68.0 stable.
 
 #![no_std]
 #![cfg_attr(feature = "unstable", feature(error_in_core))]

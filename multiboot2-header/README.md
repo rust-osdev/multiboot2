@@ -52,7 +52,7 @@ fn main() {
         .build();
 
     // Cast bytes in vector to Multiboot2 information structure
-    let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr_bytes.as_ptr() as usize) };
+    let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr_bytes.as_ptr().cast()) };
     println!("{:#?}", mb2_hdr);
 }
 ```
@@ -69,7 +69,7 @@ You may need a special linker script to place this in a LOAD segment with a file
 See specification.
 
 ## MSRV
-The MSRV is 1.56.1 stable.
+The MSRV is 1.68.0 stable.
 
 ## License & Contribution
 

@@ -1,12 +1,14 @@
 # CHANGELOG for crate `multiboot2-header`
 
 ## 0.3.0 (xxxx-xx-xx)
-- MSRV is 1.68.0
-- renamed the `std` feature to `alloc`
+- **BREAKING** MSRV is 1.68.0
+- **BREAKING** renamed the `std` feature to `alloc`
+- **BREAKING** bumped dependency to `multiboot2@v0.16.0`
+- **BREAKING** renamed `MULTIBOOT2_HEADER_MAGIC` to `MAGIC`
+- **BREAKING** renamed `Multiboot2HeaderBuilder` to `HeaderBuilder`
+- **BREAKING** renamed `from_addr` to `load`. The function now consumes a ptr.
 - added the optional `unstable` feature (requires nightly)
   - implement `core::error::Error` for `LoadError`
-- depends on `multiboot2@v0.16.0`
-- **BREAKING** renamed `Multiboot2HeaderBuilder` to `HeaderBuilder`
 
 ## 0.2.0 (2022-05-03)
 - **BREAKING** renamed `EntryHeaderTag` to `EntryAddressHeaderTag`

@@ -287,7 +287,7 @@ mod partial_eq_impls {
 }
 
 /// Common base structure for all tags that can be passed via the Multiboot2
-/// information structure (MBI) to a Multiboot2 payload/program/kernel.
+/// Information Structure (MBI) to a Multiboot2 payload/program/kernel.
 ///
 /// Can be transformed to any other tag (sized or unsized/DST) via
 /// [`Tag::cast_tag`].

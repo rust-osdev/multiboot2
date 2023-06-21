@@ -9,7 +9,7 @@
 #![allow(rustdoc::private_doc_tests)]
 // --- END STYLE CHECKS ---
 
-//! Library that helps you to parse the multiboot information structure (mbi) from
+//! Library that assists parsing the Multiboot2 Information Structure (MBI) from
 //! Multiboot2-compliant bootloaders, like GRUB. It supports all tags from the specification
 //! including full support for the sections of ELF-64. This library is `no_std` and can be
 //! used in a Multiboot2-kernel.
@@ -30,7 +30,7 @@
 //! ```
 //!
 //! ## MSRV
-//! The MSRV is 1.56.1 stable.
+//! The MSRV is 1.68.0 stable.
 
 #[cfg(feature = "builder")]
 extern crate alloc;
@@ -139,6 +139,42 @@ pub enum MbiLoadError {
 #[cfg(feature = "unstable")]
 impl core::error::Error for MbiLoadError {}
 
+#[repr(C, align(8))]
+struct BootInformationInner {
+    total_size: u32,
+    _reserved: u32,
+    // followed by various, dynamically sized multiboot2 tags
+    tags: [Tag; 0],
+}
+
+impl BootInformationInner {
+    #[cfg(feature = "builder")]
+    fn new(total_size: u32) -> Self {
+        Self {
+            total_size,
+            _reserved: 0,
+            tags: [],
+        }
+    }
+
+    fn has_valid_end_tag(&self) -> bool {
+        let end_tag_prototype = EndTag::default();
+
+        let self_ptr = self as *const _;
+        let end_tag_addr = self_ptr as usize + (self.total_size - end_tag_prototype.size) as usize;
+        let end_tag = unsafe { &*(end_tag_addr as *const Tag) };
+
+        end_tag.typ == end_tag_prototype.typ && end_tag.size == end_tag_prototype.size
+    }
+}
+
+#[cfg(feature = "builder")]
+impl StructAsBytes for BootInformationInner {
+    fn byte_size(&self) -> usize {
+        core::mem::size_of::<Self>()
+    }
+}
+
 /// A Multiboot 2 Boot Information (MBI) accessor.
 #[repr(transparent)]
 pub struct BootInformation<'a>(&'a BootInformationInner);
@@ -168,12 +204,8 @@ impl BootInformation<'_> {
     /// * The memory at `ptr` must not be modified after calling `load` or the
     ///   program may observe unsynchronized mutation.
     pub unsafe fn load(ptr: *const u8) -> Result<Self, MbiLoadError> {
-        if ptr.is_null() {
-            return Err(MbiLoadError::IllegalAddress);
-        }
-
-        // not aligned
-        if ptr.align_offset(8) != 0 {
+        // null or not aligned
+        if ptr.is_null() || ptr.align_offset(8) != 0 {
             return Err(MbiLoadError::IllegalAddress);
         }
 
@@ -191,35 +223,7 @@ impl BootInformation<'_> {
 
         Ok(Self(mbi))
     }
-}
 
-#[repr(C, align(8))]
-struct BootInformationInner {
-    total_size: u32,
-    _reserved: u32,
-    // followed by various, dynamically sized multiboot2 tags
-    tags: [Tag; 0],
-}
-
-impl BootInformationInner {
-    #[cfg(feature = "builder")]
-    fn new(total_size: u32) -> Self {
-        Self {
-            total_size,
-            _reserved: 0,
-            tags: [],
-        }
-    }
-}
-
-#[cfg(feature = "builder")]
-impl StructAsBytes for BootInformationInner {
-    fn byte_size(&self) -> usize {
-        core::mem::size_of::<Self>()
-    }
-}
-
-impl BootInformation<'_> {
     /// Get the start address of the boot info.
     pub fn start_address(&self) -> usize {
         core::ptr::addr_of!(*self.0) as usize
@@ -435,18 +439,6 @@ impl BootInformation<'_> {
         // The first tag starts 8 bytes after the begin of the boot info header
         let ptr = core::ptr::addr_of!(self.0.tags).cast();
         TagIter::new(ptr)
-    }
-}
-
-impl BootInformationInner {
-    fn has_valid_end_tag(&self) -> bool {
-        let end_tag_prototype = EndTag::default();
-
-        let self_ptr = self as *const _;
-        let end_tag_addr = self_ptr as usize + (self.total_size - end_tag_prototype.size) as usize;
-        let end_tag = unsafe { &*(end_tag_addr as *const Tag) };
-
-        end_tag.typ == end_tag_prototype.typ && end_tag.size == end_tag_prototype.size
     }
 }
 

@@ -1,7 +1,7 @@
 [package]
 name = "multiboot2"
 description = """
-Library that helps you to parse the multiboot information structure (mbi) from
+Library that assists parsing the Multiboot2 Information Structure (MBI) from
 Multiboot2-compliant bootloaders, like GRUB. It supports all tags from the specification
 including full support for the sections of ELF-64. This library is `no_std` and can be
 used in a Multiboot2-kernel.
@@ -31,7 +31,7 @@ readme = "README.md"
 homepage = "https://github.com/rust-osdev/multiboot2"
 repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2"
-rust-version = "1.60"
+rust-version = "1.68"
 
 [features]
 default = ["builder"]

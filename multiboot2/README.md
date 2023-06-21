@@ -3,7 +3,7 @@
 [![crates.io](https://img.shields.io/crates/v/multiboot2.svg)](https://crates.io/crates/multiboot2)
 [![docs](https://docs.rs/multiboot2/badge.svg)](https://docs.rs/multiboot2/)
 
-Rust library that helps you to parse the multiboot information structure (mbi) from
+Rust library that assists parsing the Multiboot2 Information Structure (MBI) from
 Multiboot2-compliant bootloaders, like GRUB. It supports all tags from the specification
 including full support for the sections of ELF-64 files. This library is `no_std` and can be
 used in a Multiboot2-kernel.
@@ -37,7 +37,7 @@ other fields  | variable
 All tags and the mbi itself are 8-byte aligned. The last tag must be the _end tag_, which is a tag of type `0` and size `8`.
 
 ## MSRV
-The MSRV is 1.56.1 stable.
+The MSRV is 1.68.0 stable.
 
 ## License & Contribution
 
