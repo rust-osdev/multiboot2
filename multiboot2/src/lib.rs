@@ -202,7 +202,7 @@ impl BootInformationInner {
 #[repr(transparent)]
 pub struct BootInformation<'a>(&'a BootInformationInner);
 
-impl BootInformation<'_> {
+impl<'a> BootInformation<'a> {
     /// Loads the [`BootInformation`] from a pointer. The pointer must be valid
     /// and aligned to an 8-byte boundary, as defined by the spec.
     ///
@@ -454,10 +454,10 @@ impl BootInformation<'_> {
     ///     .unwrap();
     /// assert_eq!(tag.name(), Ok("name"));
     /// ```
-    pub fn get_tag<TagT: TagTrait + ?Sized, TagType: Into<TagTypeId>>(
-        &self,
+    pub fn get_tag<TagT: TagTrait + ?Sized + 'a, TagType: Into<TagTypeId>>(
+        &'a self,
         typ: TagType,
-    ) -> Option<&TagT> {
+    ) -> Option<&'a TagT> {
         let typ = typ.into();
         self.tags()
             .find(|tag| tag.typ == typ)
@@ -553,8 +553,8 @@ pub trait TagTrait: Pointee {
     /// sane and the underlying memory valid. The implementation of this trait
     /// **must have** a correct [`Self::dst_size`] implementation.
     unsafe fn from_base_tag<'a>(tag: &Tag) -> &'a Self {
-        let ptr = tag as *const _ as *const ();
-        let ptr = ptr_meta::from_raw_parts(ptr, Self::dst_size(tag));
+        let ptr = core::ptr::addr_of!(*tag);
+        let ptr = ptr_meta::from_raw_parts(ptr.cast(), Self::dst_size(tag));
         &*ptr
     }
 }

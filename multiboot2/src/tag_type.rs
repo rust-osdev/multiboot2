@@ -297,14 +297,15 @@ mod partial_eq_impls {
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct Tag {
-    pub typ: TagTypeId, // u32
+    // u32
+    pub typ: TagTypeId,
     pub size: u32,
     // additional, tag specific fields
 }
 
 impl Tag {
     /// Casts the base tag to the specific tag type.
-    pub fn cast_tag<'a, T: TagTrait + ?Sized>(&self) -> &'a T {
+    pub fn cast_tag<'a, T: TagTrait + ?Sized + 'a>(&'a self) -> &'a T {
         // Safety: At this point, we trust that "self.size" and the size hint
         // for DST tags are sane.
         unsafe { TagTrait::from_base_tag(self) }
