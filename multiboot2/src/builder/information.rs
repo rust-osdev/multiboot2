@@ -182,6 +182,8 @@ impl InformationBuilder {
     pub fn build(self) -> BootInformationBytes {
         const ALIGN: usize = 8;
 
+        // PHASE 1/3: Prepare Vector
+
         // We allocate more than necessary so that we can ensure an correct
         // alignment within this data.
         let alloc_len = self.expected_len() + 7;
@@ -199,65 +201,12 @@ impl InformationBuilder {
         let offset = bytes.as_ptr().align_offset(ALIGN);
         bytes.extend([0].repeat(offset));
 
-        Self::build_add_bytes(
-            &mut bytes,
-            // important that we write the correct expected length into the header!
-            &BootInformationHeader::new(self.expected_len() as u32).struct_as_bytes(),
-            false,
-        );
+        // -----------------------------------------------
+        // PHASE 2/3: Add Tags
+        self.build_add_tags(&mut bytes);
 
-        if let Some(tag) = self.basic_memory_info_tag.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.boot_loader_name_tag.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.command_line_tag.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.efisdt32_tag.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.efisdt64_tag.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.efi_boot_services_not_exited_tag.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.efi_image_handle32.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.efi_image_handle64.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.efi_memory_map_tag.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.elf_sections_tag.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.framebuffer_tag.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.image_load_addr.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.memory_map_tag.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        for tag in self.module_tags {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.rsdp_v1_tag.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        if let Some(tag) = self.rsdp_v2_tag.as_ref() {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        for tag in self.smbios_tags {
-            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
-        }
-        Self::build_add_bytes(&mut bytes, &EndTag::default().struct_as_bytes(), true);
+        // -----------------------------------------------
+        // PHASE 3/3: Finalize Vector
 
         // Ensure that the vector has the same length as it's capacity. This is
         // important so that miri doesn't complain that the boxed memory is
@@ -283,6 +232,68 @@ impl InformationBuilder {
         assert_eq!(bytes.len(), alloc_len);
 
         BootInformationBytes { offset, bytes }
+    }
+
+    /// Helper method that adds all the tags to the given vector.
+    fn build_add_tags(&self, bytes: &mut Vec<u8>) {
+        Self::build_add_bytes(
+            bytes,
+            // important that we write the correct expected length into the header!
+            &BootInformationHeader::new(self.expected_len() as u32).struct_as_bytes(),
+            false,
+        );
+        if let Some(tag) = self.basic_memory_info_tag.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.boot_loader_name_tag.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.command_line_tag.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.efisdt32_tag.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.efisdt64_tag.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.efi_boot_services_not_exited_tag.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.efi_image_handle32.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.efi_image_handle64.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.efi_memory_map_tag.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.elf_sections_tag.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.framebuffer_tag.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.image_load_addr.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.memory_map_tag.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        for tag in &self.module_tags {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.rsdp_v1_tag.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        if let Some(tag) = self.rsdp_v2_tag.as_ref() {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        for tag in &self.smbios_tags {
+            Self::build_add_bytes(bytes, &tag.struct_as_bytes(), false)
+        }
+        Self::build_add_bytes(bytes, &EndTag::default().struct_as_bytes(), true);
     }
 
     pub fn basic_memory_info_tag(&mut self, basic_memory_info_tag: BasicMemoryInfoTag) {
