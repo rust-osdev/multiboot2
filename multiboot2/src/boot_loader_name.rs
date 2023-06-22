@@ -118,5 +118,6 @@ mod tests {
         let tag = BootLoaderNameTag::new(MSG);
         let bytes = tag.struct_as_bytes();
         assert_eq!(bytes, get_bytes());
+        assert_eq!(tag.name(), Ok(MSG));
     }
 }

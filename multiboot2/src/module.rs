@@ -173,5 +173,6 @@ mod tests {
         let tag = ModuleTag::new(0, 0, MSG);
         let bytes = tag.struct_as_bytes();
         assert_eq!(bytes, get_bytes());
+        assert_eq!(tag.cmdline(), Ok(MSG));
     }
 }
