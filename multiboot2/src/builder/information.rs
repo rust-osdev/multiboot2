@@ -10,6 +10,37 @@ use crate::{
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::mem::size_of;
+use core::ops::Deref;
+
+/// Holds the raw bytes of a boot information built with [`InformationBuilder`]
+/// on the heap. The bytes returned by [`BootInformationBytes::as_bytes`] are
+/// guaranteed to be properly aligned.
+#[derive(Clone, Debug)]
+pub struct BootInformationBytes {
+    // Offset into the bytes where the MBI starts. This is necessary to
+    // guarantee alignment at the moment.
+    offset: usize,
+    bytes: Box<[u8]>,
+}
+
+impl BootInformationBytes {
+    /// Returns the bytes. They are guaranteed to be correctly aligned.
+    pub fn as_bytes(&self) -> &[u8] {
+        let slice = &self.bytes[self.offset..];
+        // At this point, the alignment is guaranteed. If not, something is
+        // broken fundamentally.
+        assert_eq!(slice.as_ptr().align_offset(8), 0);
+        slice
+    }
+}
+
+impl Deref for BootInformationBytes {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.as_bytes()
+    }
+}
 
 /// Builder to construct a valid Multiboot2 information dynamically at runtime.
 /// The tags will appear in the order of their corresponding enumeration,
@@ -19,7 +50,7 @@ pub struct InformationBuilder {
     basic_memory_info_tag: Option<BasicMemoryInfoTag>,
     boot_loader_name_tag: Option<Box<BootLoaderNameTag>>,
     command_line_tag: Option<Box<CommandLineTag>>,
-    efi_boot_services_not_exited: Option<EFIBootServicesNotExitedTag>,
+    efi_boot_services_not_exited_tag: Option<EFIBootServicesNotExitedTag>,
     efi_image_handle32: Option<EFIImageHandle32Tag>,
     efi_image_handle64: Option<EFIImageHandle64Tag>,
     efi_memory_map_tag: Option<Box<EFIMemoryMapTag>>,
@@ -28,8 +59,8 @@ pub struct InformationBuilder {
     image_load_addr: Option<ImageLoadPhysAddrTag>,
     memory_map_tag: Option<Box<MemoryMapTag>>,
     module_tags: Vec<Box<ModuleTag>>,
-    efisdt32: Option<EFISdt32Tag>,
-    efisdt64: Option<EFISdt64Tag>,
+    efisdt32_tag: Option<EFISdt32Tag>,
+    efisdt64_tag: Option<EFISdt64Tag>,
     rsdp_v1_tag: Option<RsdpV1Tag>,
     rsdp_v2_tag: Option<RsdpV2Tag>,
     smbios_tags: Vec<Box<SmbiosTag>>,
@@ -41,9 +72,9 @@ impl InformationBuilder {
             basic_memory_info_tag: None,
             boot_loader_name_tag: None,
             command_line_tag: None,
-            efisdt32: None,
-            efisdt64: None,
-            efi_boot_services_not_exited: None,
+            efisdt32_tag: None,
+            efisdt64_tag: None,
+            efi_boot_services_not_exited_tag: None,
             efi_image_handle32: None,
             efi_image_handle64: None,
             efi_memory_map_tag: None,
@@ -63,16 +94,11 @@ impl InformationBuilder {
     /// easily calculate the size of a Multiboot2 header, where
     /// all the tags are 8-byte aligned.
     const fn size_or_up_aligned(size: usize) -> usize {
-        let remainder = size % 8;
-        if remainder == 0 {
-            size
-        } else {
-            size + 8 - remainder
-        }
+        (size + 7) & !7
     }
 
-    /// Returns the expected length of the Multiboot2 header,
-    /// when the `build()`-method gets called.
+    /// Returns the expected length of the boot information, when the
+    /// [`Self::build`]-method gets called.
     pub fn expected_len(&self) -> usize {
         let base_len = size_of::<BootInformationHeader>();
         // size_or_up_aligned not required, because length is 16 and the
@@ -88,13 +114,13 @@ impl InformationBuilder {
         if let Some(tag) = &self.command_line_tag {
             len += Self::size_or_up_aligned(tag.byte_size())
         }
-        if let Some(tag) = &self.efisdt32 {
+        if let Some(tag) = &self.efisdt32_tag {
             len += Self::size_or_up_aligned(tag.byte_size())
         }
-        if let Some(tag) = &self.efisdt64 {
+        if let Some(tag) = &self.efisdt64_tag {
             len += Self::size_or_up_aligned(tag.byte_size())
         }
-        if let Some(tag) = &self.efi_boot_services_not_exited {
+        if let Some(tag) = &self.efi_boot_services_not_exited_tag {
             len += Self::size_or_up_aligned(tag.byte_size())
         }
         if let Some(tag) = &self.efi_image_handle32 {
@@ -136,8 +162,12 @@ impl InformationBuilder {
     }
 
     /// Adds the bytes of a tag to the final Multiboot2 information byte vector.
-    /// Align should be true for all tags except the end tag.
     fn build_add_bytes(dest: &mut Vec<u8>, source: &[u8], is_end_tag: bool) {
+        let vec_next_write_ptr = unsafe { dest.as_ptr().add(dest.len()) };
+        // At this point, the alignment is guaranteed. If not, something is
+        // broken fundamentally.
+        assert_eq!(vec_next_write_ptr.align_offset(8), 0);
+
         dest.extend(source);
         if !is_end_tag {
             let size = source.len();
@@ -149,72 +179,110 @@ impl InformationBuilder {
     }
 
     /// Constructs the bytes for a valid Multiboot2 information with the given properties.
-    /// The bytes can be casted to a Multiboot2 structure.
-    pub fn build(self) -> Vec<u8> {
-        let mut data = Vec::new();
+    pub fn build(self) -> BootInformationBytes {
+        const ALIGN: usize = 8;
+
+        // We allocate more than necessary so that we can ensure an correct
+        // alignment within this data.
+        let alloc_len = self.expected_len() + 7;
+        let mut bytes = Vec::<u8>::with_capacity(alloc_len);
+        // Pointer to check that no relocation happened.
+        let alloc_ptr = bytes.as_ptr();
+
+        // As long as there is no nice way in stable Rust to guarantee the
+        // alignment of a vector, I add zero bytes at the beginning and the MBI
+        // might not start at the start of the allocation.
+        //
+        // Unfortunately, it is not possible to reliably test this in a unit
+        // test as long as the allocator_api feature is not stable.
+        // Due to my manual testing, however, it works.
+        let offset = bytes.as_ptr().align_offset(ALIGN);
+        bytes.extend([0].repeat(offset));
 
         Self::build_add_bytes(
-            &mut data,
+            &mut bytes,
             // important that we write the correct expected length into the header!
             &BootInformationHeader::new(self.expected_len() as u32).struct_as_bytes(),
             false,
         );
 
         if let Some(tag) = self.basic_memory_info_tag.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         if let Some(tag) = self.boot_loader_name_tag.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         if let Some(tag) = self.command_line_tag.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
-        if let Some(tag) = self.efisdt32.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        if let Some(tag) = self.efisdt32_tag.as_ref() {
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
-        if let Some(tag) = self.efisdt64.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        if let Some(tag) = self.efisdt64_tag.as_ref() {
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
-        if let Some(tag) = self.efi_boot_services_not_exited.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+        if let Some(tag) = self.efi_boot_services_not_exited_tag.as_ref() {
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         if let Some(tag) = self.efi_image_handle32.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         if let Some(tag) = self.efi_image_handle64.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         if let Some(tag) = self.efi_memory_map_tag.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         if let Some(tag) = self.elf_sections_tag.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         if let Some(tag) = self.framebuffer_tag.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         if let Some(tag) = self.image_load_addr.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         if let Some(tag) = self.memory_map_tag.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         for tag in self.module_tags {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         if let Some(tag) = self.rsdp_v1_tag.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         if let Some(tag) = self.rsdp_v2_tag.as_ref() {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
         for tag in self.smbios_tags {
-            Self::build_add_bytes(&mut data, &tag.struct_as_bytes(), false)
+            Self::build_add_bytes(&mut bytes, &tag.struct_as_bytes(), false)
         }
+        Self::build_add_bytes(&mut bytes, &EndTag::default().struct_as_bytes(), true);
 
-        Self::build_add_bytes(&mut data, &EndTag::default().struct_as_bytes(), true);
+        // Ensure that the vector has the same length as it's capacity. This is
+        // important so that miri doesn't complain that the boxed memory is
+        // smaller than the original allocation.
+        bytes.extend([0].repeat(bytes.capacity() - bytes.len()));
 
-        data
+        assert_eq!(
+            alloc_ptr,
+            bytes.as_ptr(),
+            "Vector was reallocated. Alignment of MBI probably broken!"
+        );
+        assert_eq!(
+            bytes[0..offset].iter().sum::<u8>(),
+            0,
+            "The offset to alignment area should be zero."
+        );
+
+        // Construct a box from a vec without `into_boxed_slice`. The latter
+        // calls `shrink` on the allocator, which might reallocate this memory.
+        // We don't want that!
+        let bytes = unsafe { Box::from_raw(bytes.leak()) };
+
+        assert_eq!(bytes.len(), alloc_len);
+
+        BootInformationBytes { offset, bytes }
     }
 
     pub fn basic_memory_info_tag(&mut self, basic_memory_info_tag: BasicMemoryInfoTag) {
@@ -229,16 +297,16 @@ impl InformationBuilder {
         self.command_line_tag = Some(command_line_tag);
     }
 
-    pub fn efisdt32(&mut self, efisdt32: EFISdt32Tag) {
-        self.efisdt32 = Some(efisdt32);
+    pub fn efisdt32_tag(&mut self, efisdt32: EFISdt32Tag) {
+        self.efisdt32_tag = Some(efisdt32);
     }
 
-    pub fn efisdt64(&mut self, efisdt64: EFISdt64Tag) {
-        self.efisdt64 = Some(efisdt64);
+    pub fn efisdt64_tag(&mut self, efisdt64: EFISdt64Tag) {
+        self.efisdt64_tag = Some(efisdt64);
     }
 
-    pub fn efi_boot_services_not_exited(&mut self) {
-        self.efi_boot_services_not_exited = Some(EFIBootServicesNotExitedTag::new());
+    pub fn efi_boot_services_not_exited_tag(&mut self) {
+        self.efi_boot_services_not_exited_tag = Some(EFIBootServicesNotExitedTag::new());
     }
 
     pub fn efi_image_handle32(&mut self, efi_image_handle32: EFIImageHandle32Tag) {
@@ -301,50 +369,61 @@ mod tests {
 
     #[test]
     fn test_builder() {
-        let mut builder = InformationBuilder::new();
-        // Multiboot2 basic information + end tag
-        let mut expected_len = 8 + 8;
-        assert_eq!(builder.expected_len(), expected_len);
+        // Step 1/2: Build MBI
+        let mb2i_data = {
+            let mut builder = InformationBuilder::new();
 
-        // the most simple tag
-        builder.basic_memory_info_tag(BasicMemoryInfoTag::new(640, 7 * 1024));
-        expected_len += 16;
-        assert_eq!(builder.expected_len(), expected_len);
-        // a tag that has a dynamic size
-        builder.command_line_tag(CommandLineTag::new("test"));
-        expected_len += 8 + 5 + 3; // padding
-        assert_eq!(builder.expected_len(), expected_len);
-        // many modules
-        builder.add_module_tag(ModuleTag::new(0, 1234, "module1"));
-        expected_len += 16 + 8;
-        assert_eq!(builder.expected_len(), expected_len);
-        builder.add_module_tag(ModuleTag::new(5678, 6789, "module2"));
-        expected_len += 16 + 8;
-        assert_eq!(builder.expected_len(), expected_len);
+            // Multiboot2 basic information + end tag
+            let mut expected_len = 8 + 8;
+            assert_eq!(builder.expected_len(), expected_len);
 
-        println!("builder: {:#?}", builder);
-        println!("expected_len: {} bytes", builder.expected_len());
-        assert_eq!(builder.expected_len(), expected_len);
+            // the most simple tag
+            builder.basic_memory_info_tag(BasicMemoryInfoTag::new(640, 7 * 1024));
+            expected_len += 16;
+            assert_eq!(builder.expected_len(), expected_len);
+            // a tag that has a dynamic size
+            builder.command_line_tag(CommandLineTag::new("test"));
+            expected_len += 8 + 5 + 3; // padding
+            assert_eq!(builder.expected_len(), expected_len);
+            // many modules
+            builder.add_module_tag(ModuleTag::new(0, 1234, "module1"));
+            expected_len += 16 + 8;
+            assert_eq!(builder.expected_len(), expected_len);
+            builder.add_module_tag(ModuleTag::new(5678, 6789, "module2"));
+            expected_len += 16 + 8;
+            assert_eq!(builder.expected_len(), expected_len);
 
-        let mb2i_data = builder.build();
-        let mb2i = unsafe { BootInformation::load(mb2i_data.as_ptr().cast()) }
-            .expect("the generated information to be readable");
-        println!("{:#?}", mb2i);
-        assert_eq!(mb2i.basic_memory_info_tag().unwrap().memory_lower(), 640);
-        assert_eq!(
-            mb2i.basic_memory_info_tag().unwrap().memory_upper(),
-            7 * 1024
-        );
-        assert_eq!(mb2i.command_line_tag().unwrap().cmdline().unwrap(), "test");
-        let mut modules = mb2i.module_tags();
-        let module_1 = modules.next().unwrap();
-        assert_eq!(module_1.start_address(), 0);
-        assert_eq!(module_1.end_address(), 1234);
-        assert_eq!(module_1.cmdline().unwrap(), "module1");
-        let module_2 = modules.next().unwrap();
-        assert_eq!(module_2.start_address(), 5678);
-        assert_eq!(module_2.end_address(), 6789);
-        assert_eq!(module_2.cmdline().unwrap(), "module2");
-        assert!(modules.next().is_none());
+            println!("builder: {:#?}", builder);
+            println!("expected_len: {} bytes", builder.expected_len());
+            assert_eq!(builder.expected_len(), expected_len);
+
+            builder.build()
+        };
+
+        // Step 2/2: Test the built MBI
+        {
+            let mb2i = unsafe { BootInformation::load(mb2i_data.as_ptr().cast()) }
+                .expect("generated information should be readable");
+
+            assert_eq!(mb2i.basic_memory_info_tag().unwrap().memory_lower(), 640);
+            assert_eq!(
+                mb2i.basic_memory_info_tag().unwrap().memory_upper(),
+                7 * 1024
+            );
+            assert_eq!(mb2i.command_line_tag().unwrap().cmdline().unwrap(), "test");
+            let mut modules = mb2i.module_tags();
+            let module_1 = modules.next().unwrap();
+            assert_eq!(module_1.start_address(), 0);
+            assert_eq!(module_1.end_address(), 1234);
+            assert_eq!(module_1.cmdline().unwrap(), "module1");
+            let module_2 = modules.next().unwrap();
+            assert_eq!(module_2.start_address(), 5678);
+            assert_eq!(module_2.end_address(), 6789);
+            assert_eq!(module_2.cmdline().unwrap(), "module2");
+            assert!(modules.next().is_none());
+
+            // Printing the MBI transitively ensures that a lot of stuff works.
+            println!("{:#?}", mb2i);
+        }
     }
 }
