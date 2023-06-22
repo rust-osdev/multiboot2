@@ -22,10 +22,13 @@
 //! ## Example
 //!
 //! ```rust
-//! use multiboot2::BootInformation;
-//! fn kmain(multiboot_info_ptr: u32) {
-//!     let boot_info = unsafe { BootInformation::load(multiboot_info_ptr as *const u8).unwrap() };
-//!     println!("{:?}", boot_info);
+//! use multiboot2::{BootInformation, BootInformationHeader};
+//!
+//! fn kernel_entry(mb_magic: u32, mbi_ptr: u32) {
+//!     if mb_magic == multiboot2::MAGIC {
+//!         let boot_info = unsafe { BootInformation::load(mbi_ptr as *const BootInformationHeader).unwrap() };
+//!         let _cmd = boot_info.command_line_tag();
+//!     } else { /* Panic or use multiboot1 flow. */ }
 //! }
 //! ```
 //!
@@ -41,6 +44,7 @@ extern crate alloc;
 extern crate std;
 
 use core::fmt;
+use core::mem::size_of;
 use derive_more::Display;
 // Must be public so that custom tags can be DSTs.
 pub use ptr_meta::Pointee;
@@ -102,7 +106,7 @@ pub const MAGIC: u32 = 0x36d76289;
 /// Deprecated. Please use BootInformation::load() instead.
 #[deprecated = "Please use BootInformation::load() instead."]
 pub unsafe fn load<'a>(address: usize) -> Result<BootInformation<'a>, MbiLoadError> {
-    let ptr = address as *const u8;
+    let ptr = address as *const BootInformationHeader;
     BootInformation::load(ptr)
 }
 
@@ -139,39 +143,58 @@ pub enum MbiLoadError {
 #[cfg(feature = "unstable")]
 impl core::error::Error for MbiLoadError {}
 
+/// The basic header of a boot information.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, align(8))]
-struct BootInformationInner {
+pub struct BootInformationHeader {
+    // size is multiple of 8
     total_size: u32,
     _reserved: u32,
-    // followed by various, dynamically sized multiboot2 tags
-    tags: [Tag; 0],
+    // Followed by the boot information tags.
 }
 
-impl BootInformationInner {
+impl BootInformationHeader {
     #[cfg(feature = "builder")]
     fn new(total_size: u32) -> Self {
         Self {
             total_size,
             _reserved: 0,
-            tags: [],
         }
-    }
-
-    fn has_valid_end_tag(&self) -> bool {
-        let end_tag_prototype = EndTag::default();
-
-        let self_ptr = self as *const _;
-        let end_tag_addr = self_ptr as usize + (self.total_size - end_tag_prototype.size) as usize;
-        let end_tag = unsafe { &*(end_tag_addr as *const Tag) };
-
-        end_tag.typ == end_tag_prototype.typ && end_tag.size == end_tag_prototype.size
     }
 }
 
 #[cfg(feature = "builder")]
-impl StructAsBytes for BootInformationInner {
+impl StructAsBytes for BootInformationHeader {
     fn byte_size(&self) -> usize {
         core::mem::size_of::<Self>()
+    }
+}
+
+/// This type holds the whole data of the MBI. This helps to better satisfy miri
+/// when it checks for memory issues.
+#[derive(ptr_meta::Pointee)]
+#[repr(C)]
+struct BootInformationInner {
+    header: BootInformationHeader,
+    tags: [u8],
+}
+
+impl BootInformationInner {
+    /// Checks if the MBI has a valid end tag by checking the end of the mbi's
+    /// bytes.
+    fn has_valid_end_tag(&self) -> bool {
+        let end_tag_prototype = EndTag::default();
+
+        let self_ptr = unsafe { self.tags.as_ptr().sub(size_of::<BootInformationHeader>()) };
+
+        let end_tag_ptr = unsafe {
+            self_ptr
+                .add(self.header.total_size as usize)
+                .sub(size_of::<EndTag>())
+        };
+        let end_tag = unsafe { &*(end_tag_ptr as *const EndTag) };
+
+        end_tag.typ == end_tag_prototype.typ && end_tag.size == end_tag_prototype.size
     }
 }
 
@@ -179,18 +202,18 @@ impl StructAsBytes for BootInformationInner {
 #[repr(transparent)]
 pub struct BootInformation<'a>(&'a BootInformationInner);
 
-impl BootInformation<'_> {
+impl<'a> BootInformation<'a> {
     /// Loads the [`BootInformation`] from a pointer. The pointer must be valid
     /// and aligned to an 8-byte boundary, as defined by the spec.
     ///
     /// ## Example
     ///
     /// ```rust
-    /// use multiboot2::BootInformation;
+    /// use multiboot2::{BootInformation, BootInformationHeader};
     ///
     /// fn kernel_entry(mb_magic: u32, mbi_ptr: u32) {
     ///     if mb_magic == multiboot2::MAGIC {
-    ///         let boot_info = unsafe { BootInformation::load(mbi_ptr as *const u8).unwrap() };
+    ///         let boot_info = unsafe { BootInformation::load(mbi_ptr as *const BootInformationHeader).unwrap() };
     ///         let _cmd = boot_info.command_line_tag();
     ///     } else { /* Panic or use multiboot1 flow. */ }
     /// }
@@ -203,19 +226,25 @@ impl BootInformation<'_> {
     ///   boot environments, such as UEFI.
     /// * The memory at `ptr` must not be modified after calling `load` or the
     ///   program may observe unsynchronized mutation.
-    pub unsafe fn load(ptr: *const u8) -> Result<Self, MbiLoadError> {
+    pub unsafe fn load(ptr: *const BootInformationHeader) -> Result<Self, MbiLoadError> {
         // null or not aligned
         if ptr.is_null() || ptr.align_offset(8) != 0 {
             return Err(MbiLoadError::IllegalAddress);
         }
 
-        let mbi = &*ptr.cast::<BootInformationInner>();
+        // mbi: reference to basic header
+        let mbi = &*ptr;
 
         // Check if total size is a multiple of 8.
         // See MbiLoadError::IllegalTotalSize for comments
         if mbi.total_size & 0b111 != 0 {
             return Err(MbiLoadError::IllegalTotalSize(mbi.total_size));
         }
+
+        let slice_size = mbi.total_size as usize - size_of::<BootInformationHeader>();
+        // mbi: reference to full mbi
+        let mbi = ptr_meta::from_raw_parts::<BootInformationInner>(ptr.cast(), slice_size);
+        let mbi = &*mbi;
 
         if !mbi.has_valid_end_tag() {
             return Err(MbiLoadError::NoEndTag);
@@ -226,7 +255,7 @@ impl BootInformation<'_> {
 
     /// Get the start address of the boot info.
     pub fn start_address(&self) -> usize {
-        core::ptr::addr_of!(*self.0) as usize
+        self.as_ptr() as usize
     }
 
     /// Get the start address of the boot info as pointer.
@@ -248,7 +277,7 @@ impl BootInformation<'_> {
 
     /// Get the total size of the boot info struct.
     pub fn total_size(&self) -> usize {
-        self.0.total_size as usize
+        self.0.header.total_size as usize
     }
 
     /// Search for the basic memory info tag.
@@ -425,20 +454,19 @@ impl BootInformation<'_> {
     ///     .unwrap();
     /// assert_eq!(tag.name(), Ok("name"));
     /// ```
-    pub fn get_tag<TagT: TagTrait + ?Sized, TagType: Into<TagTypeId>>(
-        &self,
+    pub fn get_tag<TagT: TagTrait + ?Sized + 'a, TagType: Into<TagTypeId>>(
+        &'a self,
         typ: TagType,
-    ) -> Option<&TagT> {
+    ) -> Option<&'a TagT> {
         let typ = typ.into();
         self.tags()
             .find(|tag| tag.typ == typ)
             .map(|tag| tag.cast_tag::<TagT>())
     }
 
+    /// Returns an iterator over all tags.
     fn tags(&self) -> TagIter {
-        // The first tag starts 8 bytes after the begin of the boot info header
-        let ptr = core::ptr::addr_of!(self.0.tags).cast();
-        TagIter::new(ptr)
+        TagIter::new(&self.0.tags)
     }
 }
 
@@ -525,8 +553,8 @@ pub trait TagTrait: Pointee {
     /// sane and the underlying memory valid. The implementation of this trait
     /// **must have** a correct [`Self::dst_size`] implementation.
     unsafe fn from_base_tag<'a>(tag: &Tag) -> &'a Self {
-        let ptr = tag as *const _ as *const ();
-        let ptr = ptr_meta::from_raw_parts(ptr, Self::dst_size(tag));
+        let ptr = core::ptr::addr_of!(*tag);
+        let ptr = ptr_meta::from_raw_parts(ptr.cast(), Self::dst_size(tag));
         &*ptr
     }
 }
@@ -1520,7 +1548,7 @@ mod tests {
             0, 0, 0, 0, // end tag type.
             8, 0, 0, 0, // end tag size.
         ]);
-        let bi = unsafe { BootInformation::load(bytes2.0.as_ptr()) };
+        let bi = unsafe { BootInformation::load(bytes2.0.as_ptr().cast()) };
         let bi = bi.unwrap();
         let efi_mmap = bi.efi_memory_map_tag();
         assert!(efi_mmap.is_none());
