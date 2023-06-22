@@ -52,11 +52,11 @@ impl CommandLineTag {
     /// ```rust,no_run
     /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
     /// if let Some(tag) = boot_info.command_line_tag() {
-    ///     let command_line = tag.command_line();
+    ///     let command_line = tag.cmdline();
     ///     assert_eq!(Ok("/bootarg"), command_line);
     /// }
     /// ```
-    pub fn command_line(&self) -> Result<&str, str::Utf8Error> {
+    pub fn cmdline(&self) -> Result<&str, str::Utf8Error> {
         Tag::get_dst_str_slice(&self.cmdline)
     }
 }
@@ -66,7 +66,7 @@ impl Debug for CommandLineTag {
         f.debug_struct("CommandLineTag")
             .field("typ", &{ self.typ })
             .field("size", &{ self.size })
-            .field("cmdline", &self.command_line())
+            .field("cmdline", &self.cmdline())
             .finish()
     }
 }
@@ -115,7 +115,7 @@ mod tests {
         let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };
         let tag = tag.cast_tag::<CommandLineTag>();
         assert_eq!({ tag.typ }, TagType::Cmdline);
-        assert_eq!(tag.command_line().expect("must be valid UTF-8"), MSG);
+        assert_eq!(tag.cmdline().expect("must be valid UTF-8"), MSG);
     }
 
     /// Test to generate a tag from a given string.
@@ -127,5 +127,6 @@ mod tests {
         let tag = CommandLineTag::new(MSG);
         let bytes = tag.struct_as_bytes();
         assert_eq!(bytes, get_bytes());
+        assert_eq!(tag.cmdline(), Ok(MSG));
     }
 }

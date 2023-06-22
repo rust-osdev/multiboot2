@@ -17,6 +17,7 @@
 - **BREAKING** Renamed `EFISdt32` to `EFISdt32Tag`
 - **BREAKING** Renamed `EFISdt64` to `EFISdt64Tag`
 - **BREAKING** Renamed `EFIBootServicesNotExited` to `EFIBootServicesNotExitedTag`
+- **BREAKING** Renamed `CommandLineTag::command_line` renamed to `CommandLineTag::cmdline`
 - **\[Might be\] BREAKING** Added `TagTrait` trait which enables to use DSTs as multiboot2 tags. This is
   mostly relevant for the command line tag, the modules tag, and the bootloader
   name tag. However, this might also be relevant for users of custom multiboot2

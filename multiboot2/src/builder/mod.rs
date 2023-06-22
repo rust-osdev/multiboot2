@@ -8,7 +8,7 @@ pub use information::InformationBuilder;
 use alloc::alloc::alloc;
 use alloc::boxed::Box;
 use core::alloc::Layout;
-use core::mem::{align_of_val, size_of, size_of_val};
+use core::mem::{align_of_val, size_of};
 use core::ops::Deref;
 
 use crate::{Tag, TagTrait, TagTypeId};
@@ -28,11 +28,7 @@ pub(super) fn boxed_dst_tag<T: TagTrait<Metadata = usize> + ?Sized>(
     const ALIGN: usize = 4;
 
     let tag_size = size_of::<TagTypeId>() + size_of::<u32>() + content.len();
-    // round up to the next multiple of 8
-    // Rust uses this convention for all types. I found out so by checking
-    // miris output of the corresponding unit test.
-    let alloc_size = (tag_size + 7) & !0b111;
-    let layout = Layout::from_size_align(alloc_size, ALIGN).unwrap();
+    let layout = Layout::from_size_align(tag_size, ALIGN).unwrap();
     let ptr = unsafe { alloc(layout) };
     assert!(!ptr.is_null());
 
@@ -61,7 +57,6 @@ pub(super) fn boxed_dst_tag<T: TagTrait<Metadata = usize> + ?Sized>(
         let boxed = Box::from_raw(raw);
         let reference: &T = boxed.deref();
         // If this panics, please create an issue on GitHub.
-        assert_eq!(size_of_val(reference), alloc_size);
         assert_eq!(align_of_val(reference), ALIGN);
         boxed
     }

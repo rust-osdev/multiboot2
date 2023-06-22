@@ -285,7 +285,8 @@ impl<'a> BootInformation<'a> {
         self.get_tag::<BasicMemoryInfoTag, _>(TagType::BasicMeminfo)
     }
 
-    /// Search for the ELF Sections.
+    /// Returns an [`ElfSectionIter`] iterator over the ELF Sections, if the
+    /// [`ElfSectionsTag`] is present.
     ///
     /// # Examples
     ///
@@ -497,7 +498,7 @@ impl fmt::Debug for BootInformation<'_> {
                 "command_line",
                 &self
                     .command_line_tag()
-                    .and_then(|x| x.command_line().ok())
+                    .and_then(|x| x.cmdline().ok())
                     .unwrap_or(""),
             )
             .field("memory_areas", &self.memory_map_tag())
@@ -1392,7 +1393,7 @@ mod tests {
             "",
             bi.command_line_tag()
                 .expect("tag must present")
-                .command_line()
+                .cmdline()
                 .expect("must be valid utf-8")
         );
 
