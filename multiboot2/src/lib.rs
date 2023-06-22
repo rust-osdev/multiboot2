@@ -464,10 +464,9 @@ impl BootInformation<'_> {
             .map(|tag| tag.cast_tag::<TagT>())
     }
 
+    /// Returns an iterator over all tags.
     fn tags(&self) -> TagIter {
-        // The first tag starts 8 bytes after the begin of the boot info header
-        let ptr = core::ptr::addr_of!(self.0.tags).cast();
-        TagIter::new(ptr)
+        TagIter::new(&self.0.tags)
     }
 }
 
