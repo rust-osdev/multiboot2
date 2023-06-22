@@ -21,13 +21,14 @@ pub struct HeaderBytes {
     // Offset into the bytes where the header starts. This is necessary to
     // guarantee alignment at the moment.
     offset: usize,
+    structure_len: usize,
     bytes: Box<[u8]>,
 }
 
 impl HeaderBytes {
     /// Returns the bytes. They are guaranteed to be correctly aligned.
     pub fn as_bytes(&self) -> &[u8] {
-        let slice = &self.bytes[self.offset..];
+        let slice = &self.bytes[self.offset..self.offset + self.structure_len];
         // At this point, the alignment is guaranteed. If not, something is
         // broken fundamentally.
         assert_eq!(slice.as_ptr().align_offset(8), 0);
@@ -166,7 +167,8 @@ impl HeaderBuilder {
 
         // We allocate more than necessary so that we can ensure an correct
         // alignment within this data.
-        let alloc_len = self.expected_len() + 7;
+        let expected_len = self.expected_len();
+        let alloc_len = expected_len + 7;
         let mut bytes = Vec::<u8>::with_capacity(alloc_len);
         // Pointer to check that no relocation happened.
         let alloc_ptr = bytes.as_ptr();
@@ -209,9 +211,11 @@ impl HeaderBuilder {
         // We don't want that!
         let bytes = unsafe { Box::from_raw(bytes.leak()) };
 
-        assert_eq!(bytes.len(), alloc_len);
-
-        HeaderBytes { offset, bytes }
+        HeaderBytes {
+            offset,
+            bytes,
+            structure_len: expected_len,
+        }
     }
 
     /// Helper method that adds all the tags to the given vector.
@@ -223,7 +227,7 @@ impl HeaderBuilder {
             false,
         );
 
-        if let Some(irs) = self.information_request_tag.take() {
+        if let Some(irs) = self.information_request_tag.clone() {
             Self::build_add_bytes(bytes, &irs.build(), false)
         }
         if let Some(tag) = self.address_tag.as_ref() {
@@ -323,7 +327,7 @@ mod tests {
     #[test]
     fn test_builder() {
         // Step 1/2: Build Header
-        let mb2_hdr_data = {
+        let (mb2_hdr_data, expected_len) = {
             let builder = HeaderBuilder::new(HeaderTagISA::I386);
             // Multiboot2 basic header + end tag
             let mut expected_len = 16 + 8;
@@ -359,8 +363,10 @@ mod tests {
             println!("builder: {:#?}", builder);
             println!("expected_len: {} bytes", builder.expected_len());
 
-            builder.build()
+            (builder.build(), expected_len)
         };
+
+        assert_eq!(mb2_hdr_data.as_bytes().len(), expected_len);
 
         // Step 2/2: Test the built Header
         {

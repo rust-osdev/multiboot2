@@ -20,13 +20,14 @@ pub struct BootInformationBytes {
     // Offset into the bytes where the MBI starts. This is necessary to
     // guarantee alignment at the moment.
     offset: usize,
+    structure_len: usize,
     bytes: Box<[u8]>,
 }
 
 impl BootInformationBytes {
     /// Returns the bytes. They are guaranteed to be correctly aligned.
     pub fn as_bytes(&self) -> &[u8] {
-        let slice = &self.bytes[self.offset..];
+        let slice = &self.bytes[self.offset..self.offset + self.structure_len];
         // At this point, the alignment is guaranteed. If not, something is
         // broken fundamentally.
         assert_eq!(slice.as_ptr().align_offset(8), 0);
@@ -186,7 +187,8 @@ impl InformationBuilder {
 
         // We allocate more than necessary so that we can ensure an correct
         // alignment within this data.
-        let alloc_len = self.expected_len() + 7;
+        let expected_len = self.expected_len();
+        let alloc_len = expected_len + 7;
         let mut bytes = Vec::<u8>::with_capacity(alloc_len);
         // Pointer to check that no relocation happened.
         let alloc_ptr = bytes.as_ptr();
@@ -231,7 +233,11 @@ impl InformationBuilder {
 
         assert_eq!(bytes.len(), alloc_len);
 
-        BootInformationBytes { offset, bytes }
+        BootInformationBytes {
+            offset,
+            bytes,
+            structure_len: expected_len,
+        }
     }
 
     /// Helper method that adds all the tags to the given vector.
@@ -381,7 +387,7 @@ mod tests {
     #[test]
     fn test_builder() {
         // Step 1/2: Build MBI
-        let mb2i_data = {
+        let (mb2i_data, expected_len) = {
             let mut builder = InformationBuilder::new();
 
             // Multiboot2 basic information + end tag
@@ -408,8 +414,10 @@ mod tests {
             println!("expected_len: {} bytes", builder.expected_len());
             assert_eq!(builder.expected_len(), expected_len);
 
-            builder.build()
+            (builder.build(), expected_len)
         };
+
+        assert_eq!(mb2i_data.as_bytes().len(), expected_len);
 
         // Step 2/2: Test the built MBI
         {
