@@ -285,7 +285,8 @@ impl<'a> BootInformation<'a> {
         self.get_tag::<BasicMemoryInfoTag, _>(TagType::BasicMeminfo)
     }
 
-    /// Search for the ELF Sections.
+    /// Returns an [`ElfSectionIter`] iterator over the ELF Sections, if the
+    /// [`ElfSectionsTag`] is present.
     ///
     /// # Examples
     ///
