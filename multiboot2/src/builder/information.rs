@@ -335,10 +335,7 @@ mod tests {
             mb2i.basic_memory_info_tag().unwrap().memory_upper(),
             7 * 1024
         );
-        assert_eq!(
-            mb2i.command_line_tag().unwrap().command_line().unwrap(),
-            "test"
-        );
+        assert_eq!(mb2i.command_line_tag().unwrap().cmdline().unwrap(), "test");
         let mut modules = mb2i.module_tags();
         let module_1 = modules.next().unwrap();
         assert_eq!(module_1.start_address(), 0);
