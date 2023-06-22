@@ -7,6 +7,8 @@
 - **BREAKING** renamed `MULTIBOOT2_HEADER_MAGIC` to `MAGIC`
 - **BREAKING** renamed `Multiboot2HeaderBuilder` to `HeaderBuilder`
 - **BREAKING** renamed `from_addr` to `load`. The function now consumes a ptr.
+- **BREAKING** `HeaderBuilder::build` now returns a value of type `HeaderBytes`
+  The old builder could produce misaligned structures.
 - added the optional `unstable` feature (requires nightly)
   - implement `core::error::Error` for `LoadError`
 
