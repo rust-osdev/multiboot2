@@ -356,6 +356,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn test_builder() {
         // Step 1/2: Build Header
         let mb2_hdr_data = create_builder().build();

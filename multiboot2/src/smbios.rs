@@ -77,6 +77,7 @@ mod tests {
 
     /// Test to parse a given tag.
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn test_parse() {
         let tag = get_bytes();
         let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };

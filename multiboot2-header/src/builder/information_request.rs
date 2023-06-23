@@ -98,6 +98,7 @@ mod tests {
     use crate::{HeaderTagFlag, InformationRequestHeaderTag, MbiTagType, MbiTagTypeId};
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn test_builder() {
         let builder = InformationRequestHeaderTagBuilder::new(HeaderTagFlag::Required)
             .add_ir(MbiTagType::EfiMmap)

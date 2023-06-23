@@ -51,6 +51,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn test_as_bytes() {
         struct Foobar {
             a: u32,

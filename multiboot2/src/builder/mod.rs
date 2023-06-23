@@ -139,7 +139,7 @@ mod tests {
         let tag_type_id = 1337_u32;
         let content = "hallo";
 
-        let tag = unsafe { BoxedDst::<CustomTag>::new(tag_type_id, content.as_bytes()) };
+        let tag = BoxedDst::<CustomTag>::new(tag_type_id, content.as_bytes());
         assert_eq!(tag.typ, tag_type_id);
         assert_eq!(tag.size as usize, METADATA_SIZE + content.len());
         assert_eq!(tag.string(), Ok(content));

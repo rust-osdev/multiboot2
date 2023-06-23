@@ -145,7 +145,7 @@ impl core::error::Error for MbiLoadError {}
 
 /// The basic header of a boot information.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C, align(8))]
+#[repr(C)]
 pub struct BootInformationHeader {
     // size is multiple of 8
     total_size: u32,
@@ -661,6 +661,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn name_tag() {
         #[repr(C, align(8))]
         struct Bytes([u8; 32]);
@@ -695,6 +696,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn framebuffer_tag_rgb() {
         // direct RGB mode test:
         // taken from GRUB2 running in QEMU at
@@ -755,6 +757,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn framebuffer_tag_indexed() {
         // indexed mode test:
         // this is synthetic, as I can't get QEMU
@@ -826,6 +829,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn vbe_info_tag() {
         //Taken from GRUB2 running in QEMU.
         #[repr(C, align(8))]
@@ -996,6 +1000,7 @@ mod tests {
     /// Tests to parse a MBI that was statically extracted from a test run with
     /// GRUB as bootloader.
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn grub2() {
         #[repr(C, align(8))]
         struct Bytes([u8; 960]);
@@ -1411,6 +1416,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn elf_sections() {
         #[repr(C, align(8))]
         struct Bytes([u8; 168]);
@@ -1487,6 +1493,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn efi_memory_map() {
         #[repr(C, align(8))]
         struct Bytes([u8; 72]);
@@ -1565,6 +1572,7 @@ mod tests {
 
     /// Example for a custom tag.
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn get_custom_tag_from_mbi() {
         const CUSTOM_TAG_ID: u32 = 0x1337;
 
@@ -1626,10 +1634,11 @@ mod tests {
 
     /// Example for a custom DST tag.
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn get_custom_dst_tag_from_mbi() {
         const CUSTOM_TAG_ID: u32 = 0x1337;
 
-        #[repr(C, align(8))]
+        #[repr(C)]
         #[derive(crate::Pointee)]
         struct CustomTag {
             tag: TagTypeId,
@@ -1703,6 +1712,7 @@ mod tests {
 
     /// Tests that `get_tag` can consume multiple types that implement `Into<TagTypeId>`
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn get_tag_into_variants() {
         #[repr(C, align(8))]
         struct Bytes([u8; 32]);
