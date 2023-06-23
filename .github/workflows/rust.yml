@@ -143,6 +143,21 @@ jobs:
           # Everything inside that nix-shell will use a pinned version of
           # nixpkgs.
           nix_path: nixpkgs=channel:nixos-23.05
-      - run: |
-          cd integration-test
-          nix-shell --run ./run.sh
+      - name: Set up cargo cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            integration-test/bins/target/
+          # Hash over Cargo.toml and Cargo.lock, as this might be copied to
+          # projects that do not have a Cargo.lock in their repository tree!
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('integration-test/**/Cargo.toml', 'integration-test/**/Cargo.lock', 'integration-test/bins/rust-toolchain.toml') }}
+      # Have all the "copying into Nix store" messages in a dedicated step for
+      # better log visibility.
+      - run: cd integration-test && nix-shell --run "echo OK" && cd ..
+      # Now, run the actual test.
+      - run: cd integration-test && nix-shell --run ./run.sh && cd ..
