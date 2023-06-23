@@ -9,4 +9,9 @@ pkgs.mkShell rec {
     rustup
     xorriso
   ];
+
+  # To invoke "nix-shell" in the CI-runner, we need a global Nix channel.
+  # For better reproducibility inside the Nix shell, we override this channel
+  # with the pinned nixpkgs version.
+  NIX_PATH = "nixpkgs=${sources.nixpkgs}";
 }
