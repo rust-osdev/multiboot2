@@ -9,8 +9,8 @@ publish = false
 util = { path = "../util" }
 multiboot2 = { path = "../../../multiboot2" }
 multiboot2-header = { path = "../../../multiboot2-header" }
-anyhow = { version = "1.0.69", default-features = false }
-elf_rs = "0.3.0"
-log = { version = "0.4.17", default-features = false }
-good_memory_allocator = "0.1.7"
-multiboot = "0.8.0"
+anyhow = { version = "1.0", default-features = false }
+elf_rs = "0.3"
+log = { version = "0.4", default-features = false }
+good_memory_allocator = "0.1"
+multiboot = "0.8"
