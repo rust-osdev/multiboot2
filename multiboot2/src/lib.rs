@@ -145,7 +145,7 @@ impl core::error::Error for MbiLoadError {}
 
 /// The basic header of a boot information.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C, align(8))]
+#[repr(C)]
 pub struct BootInformationHeader {
     // size is multiple of 8
     total_size: u32,
@@ -1638,7 +1638,7 @@ mod tests {
     fn get_custom_dst_tag_from_mbi() {
         const CUSTOM_TAG_ID: u32 = 0x1337;
 
-        #[repr(C, align(8))]
+        #[repr(C)]
         #[derive(crate::Pointee)]
         struct CustomTag {
             tag: TagTypeId,
