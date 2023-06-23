@@ -8,7 +8,7 @@ pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
 pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
 
 #[cfg(feature = "builder")]
-use {crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box};
+use {crate::builder::traits::StructAsBytes, crate::builder::BoxedDst};
 
 const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
 
@@ -34,14 +34,14 @@ pub struct MemoryMapTag {
 
 impl MemoryMapTag {
     #[cfg(feature = "builder")]
-    pub fn new(areas: &[MemoryArea]) -> Box<Self> {
+    pub fn new(areas: &[MemoryArea]) -> BoxedDst<Self> {
         let entry_size: u32 = mem::size_of::<MemoryArea>().try_into().unwrap();
         let entry_version: u32 = 0;
         let mut bytes = [entry_size.to_le_bytes(), entry_version.to_le_bytes()].concat();
         for area in areas {
             bytes.extend(area.struct_as_bytes());
         }
-        boxed_dst_tag(TagType::Mmap, bytes.as_slice())
+        BoxedDst::new(TagType::Mmap, bytes.as_slice())
     }
 
     /// Returns the entry size.
@@ -218,7 +218,7 @@ impl EFIMemoryMapTag {
     /// Create a new EFI memory map tag with the given memory descriptors.
     /// Version and size can't be set because you're passing a slice of
     /// EFIMemoryDescs, not the ones you might have gotten from the firmware.
-    pub fn new(descs: &[EFIMemoryDesc]) -> Box<Self> {
+    pub fn new(descs: &[EFIMemoryDesc]) -> BoxedDst<Self> {
         // update this when updating EFIMemoryDesc
         const MEMORY_DESCRIPTOR_VERSION: u32 = 1;
         let mut bytes = [
@@ -229,7 +229,7 @@ impl EFIMemoryMapTag {
         for desc in descs {
             bytes.extend(desc.struct_as_bytes());
         }
-        boxed_dst_tag(TagType::EfiMmap, bytes.as_slice())
+        BoxedDst::new(TagType::EfiMmap, bytes.as_slice())
     }
 
     /// Return an iterator over ALL marked memory areas.

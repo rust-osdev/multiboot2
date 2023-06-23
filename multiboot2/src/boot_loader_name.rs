@@ -5,8 +5,8 @@ use core::str::Utf8Error;
 
 #[cfg(feature = "builder")]
 use {
-    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, crate::TagType,
-    alloc::boxed::Box, alloc::vec::Vec,
+    crate::builder::traits::StructAsBytes, crate::builder::BoxedDst, crate::TagType,
+    alloc::vec::Vec,
 };
 
 const METADATA_SIZE: usize = size_of::<TagTypeId>() + size_of::<u32>();
@@ -23,13 +23,13 @@ pub struct BootLoaderNameTag {
 
 impl BootLoaderNameTag {
     #[cfg(feature = "builder")]
-    pub fn new(name: &str) -> Box<Self> {
+    pub fn new(name: &str) -> BoxedDst<Self> {
         let mut bytes: Vec<_> = name.bytes().collect();
         if !bytes.ends_with(&[0]) {
             // terminating null-byte
             bytes.push(0);
         }
-        boxed_dst_tag(TagType::BootLoaderName, &bytes)
+        BoxedDst::new(TagType::BootLoaderName, &bytes)
     }
 
     /// Reads the name of the bootloader that is booting the kernel as Rust
@@ -119,5 +119,11 @@ mod tests {
         let bytes = tag.struct_as_bytes();
         assert_eq!(bytes, get_bytes());
         assert_eq!(tag.name(), Ok(MSG));
+
+        // test also some bigger message
+        let tag = BootLoaderNameTag::new("AbCdEfGhUjK YEAH");
+        assert_eq!(tag.name(), Ok("AbCdEfGhUjK YEAH"));
+        let tag = BootLoaderNameTag::new("AbCdEfGhUjK YEAH".repeat(42).as_str());
+        assert_eq!(tag.name(), Ok("AbCdEfGhUjK YEAH".repeat(42).as_str()));
     }
 }

@@ -5,10 +5,7 @@ use core::mem::size_of;
 use core::str::Utf8Error;
 
 #[cfg(feature = "builder")]
-use {
-    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, alloc::boxed::Box,
-    alloc::vec::Vec,
-};
+use {crate::builder::traits::StructAsBytes, crate::builder::BoxedDst, alloc::vec::Vec};
 
 const METADATA_SIZE: usize = size_of::<TagTypeId>() + 3 * size_of::<u32>();
 
@@ -28,7 +25,7 @@ pub struct ModuleTag {
 
 impl ModuleTag {
     #[cfg(feature = "builder")]
-    pub fn new(start: u32, end: u32, cmdline: &str) -> Box<Self> {
+    pub fn new(start: u32, end: u32, cmdline: &str) -> BoxedDst<Self> {
         let mut cmdline_bytes: Vec<_> = cmdline.bytes().collect();
         if !cmdline_bytes.ends_with(&[0]) {
             // terminating null-byte
@@ -38,7 +35,7 @@ impl ModuleTag {
         let end_bytes = end.to_le_bytes();
         let mut content_bytes = [start_bytes, end_bytes].concat();
         content_bytes.extend_from_slice(&cmdline_bytes);
-        boxed_dst_tag(TagType::Module, &content_bytes)
+        BoxedDst::new(TagType::Module, &content_bytes)
     }
 
     /// Reads the command line of the boot module as Rust string slice without
@@ -174,5 +171,11 @@ mod tests {
         let bytes = tag.struct_as_bytes();
         assert_eq!(bytes, get_bytes());
         assert_eq!(tag.cmdline(), Ok(MSG));
+
+        // test also some bigger message
+        let tag = ModuleTag::new(0, 0, "AbCdEfGhUjK YEAH");
+        assert_eq!(tag.cmdline(), Ok("AbCdEfGhUjK YEAH"));
+        let tag = ModuleTag::new(0, 0, "AbCdEfGhUjK YEAH".repeat(42).as_str());
+        assert_eq!(tag.cmdline(), Ok("AbCdEfGhUjK YEAH".repeat(42).as_str()));
     }
 }

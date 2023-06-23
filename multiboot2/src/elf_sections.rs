@@ -5,10 +5,7 @@ use core::mem::size_of;
 use core::str::Utf8Error;
 
 #[cfg(feature = "builder")]
-use {
-    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, crate::TagType,
-    alloc::boxed::Box,
-};
+use {crate::builder::traits::StructAsBytes, crate::builder::BoxedDst, crate::TagType};
 
 const METADATA_SIZE: usize = size_of::<TagTypeId>() + 4 * size_of::<u32>();
 
@@ -29,7 +26,12 @@ pub struct ElfSectionsTag {
 impl ElfSectionsTag {
     /// Create a new ElfSectionsTag with the given data.
     #[cfg(feature = "builder")]
-    pub fn new(number_of_sections: u32, entry_size: u32, shndx: u32, sections: &[u8]) -> Box<Self> {
+    pub fn new(
+        number_of_sections: u32,
+        entry_size: u32,
+        shndx: u32,
+        sections: &[u8],
+    ) -> BoxedDst<Self> {
         let mut bytes = [
             number_of_sections.to_le_bytes(),
             entry_size.to_le_bytes(),
@@ -37,7 +39,7 @@ impl ElfSectionsTag {
         ]
         .concat();
         bytes.extend_from_slice(sections);
-        boxed_dst_tag(TagType::ElfSections, &bytes)
+        BoxedDst::new(TagType::ElfSections, &bytes)
     }
 
     /// Get an iterator of loaded ELF sections.
