@@ -60,7 +60,7 @@ impl Debug for SmbiosTag {
 mod tests {
     use crate::{SmbiosTag, Tag, TagType};
 
-    /// Returns the tag structure in bytes in native endian format.
+    /// Returns the tag structure in bytes in little endian format.
     fn get_bytes() -> std::vec::Vec<u8> {
         let tables = [0xabu8; 24];
         // size is: 4 bytes for tag + 4 bytes for size + 1 byte for major and minor
