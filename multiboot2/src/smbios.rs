@@ -2,8 +2,8 @@ use crate::{Tag, TagTrait, TagTypeId};
 use core::fmt::Debug;
 #[cfg(feature = "builder")]
 use {
-    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, crate::TagType,
-    alloc::boxed::Box, core::convert::TryInto,
+    crate::builder::traits::StructAsBytes, crate::builder::BoxedDst, crate::TagType,
+    core::convert::TryInto,
 };
 
 const METADATA_SIZE: usize = core::mem::size_of::<TagTypeId>()
@@ -24,10 +24,10 @@ pub struct SmbiosTag {
 
 impl SmbiosTag {
     #[cfg(feature = "builder")]
-    pub fn new(major: u8, minor: u8, tables: &[u8]) -> Box<Self> {
+    pub fn new(major: u8, minor: u8, tables: &[u8]) -> BoxedDst<Self> {
         let mut bytes = [major, minor, 0, 0, 0, 0, 0, 0].to_vec();
         bytes.extend(tables);
-        boxed_dst_tag(TagType::Smbios, &bytes)
+        BoxedDst::new(TagType::Smbios, &bytes)
     }
 }
 

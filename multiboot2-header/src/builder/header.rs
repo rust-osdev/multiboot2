@@ -8,7 +8,6 @@ use crate::{
     EntryAddressHeaderTag, EntryEfi32HeaderTag, EntryEfi64HeaderTag, FramebufferHeaderTag,
     ModuleAlignHeaderTag, Multiboot2BasicHeader, RelocatableHeaderTag,
 };
-use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::mem::size_of;
 use core::ops::Deref;
@@ -22,7 +21,7 @@ pub struct HeaderBytes {
     // guarantee alignment at the moment.
     offset: usize,
     structure_len: usize,
-    bytes: Box<[u8]>,
+    bytes: Vec<u8>,
 }
 
 impl HeaderBytes {
@@ -163,7 +162,7 @@ impl HeaderBuilder {
     pub fn build(mut self) -> HeaderBytes {
         const ALIGN: usize = 8;
 
-        // PHASE 1/3: Prepare Vector
+        // PHASE 1/2: Prepare Vector
 
         // We allocate more than necessary so that we can ensure an correct
         // alignment within this data.
@@ -184,16 +183,8 @@ impl HeaderBuilder {
         bytes.extend([0].repeat(offset));
 
         // -----------------------------------------------
-        // PHASE 2/3: Add Tags
+        // PHASE 2/2: Add Tags
         self.build_add_tags(&mut bytes);
-
-        // -----------------------------------------------
-        // PHASE 3/3: Finalize Vector
-
-        // Ensure that the vector has the same length as it's capacity. This is
-        // important so that miri doesn't complain that the boxed memory is
-        // smaller than the original allocation.
-        bytes.extend([0].repeat(bytes.capacity() - bytes.len()));
 
         assert_eq!(
             alloc_ptr,
@@ -205,11 +196,6 @@ impl HeaderBuilder {
             0,
             "The offset to alignment area should be zero."
         );
-
-        // Construct a box from a vec without `into_boxed_slice`. The latter
-        // calls `shrink` on the allocator, which might reallocate this memory.
-        // We don't want that!
-        let bytes = unsafe { Box::from_raw(bytes.leak()) };
 
         HeaderBytes {
             offset,
@@ -316,6 +302,42 @@ mod tests {
         RelocatableHeaderTagPreference,
     };
 
+    fn create_builder() -> HeaderBuilder {
+        let builder = HeaderBuilder::new(HeaderTagISA::I386);
+        // Multiboot2 basic header + end tag
+        let mut expected_len = 16 + 8;
+        assert_eq!(builder.expected_len(), expected_len);
+
+        // add information request tag
+        let ifr_builder =
+            InformationRequestHeaderTagBuilder::new(HeaderTagFlag::Required).add_irs(&[
+                MbiTagType::EfiMmap,
+                MbiTagType::Cmdline,
+                MbiTagType::ElfSections,
+            ]);
+        let ifr_tag_size_with_padding = ifr_builder.expected_len() + 4;
+        assert_eq!(
+            ifr_tag_size_with_padding % 8,
+            0,
+            "the length of the IFR tag with padding must be a multiple of 8"
+        );
+        expected_len += ifr_tag_size_with_padding;
+        let builder = builder.information_request_tag(ifr_builder);
+        assert_eq!(builder.expected_len(), expected_len);
+
+        let builder = builder.relocatable_tag(RelocatableHeaderTag::new(
+            HeaderTagFlag::Required,
+            0x1337,
+            0xdeadbeef,
+            4096,
+            RelocatableHeaderTagPreference::None,
+        ));
+        expected_len += 0x18;
+        assert_eq!(builder.expected_len(), expected_len);
+
+        builder
+    }
+
     #[test]
     fn test_size_or_up_aligned() {
         assert_eq!(0, HeaderBuilder::size_or_up_aligned(0));
@@ -324,73 +346,44 @@ mod tests {
         assert_eq!(16, HeaderBuilder::size_or_up_aligned(9));
     }
 
+    /// Test of the `build` method in isolation specifically for miri to check
+    /// for memory issues.
+    #[test]
+    fn test_builder_miri() {
+        let builder = create_builder();
+        let expected_len = builder.expected_len();
+        assert_eq!(builder.build().as_bytes().len(), expected_len);
+    }
+
     #[test]
     fn test_builder() {
         // Step 1/2: Build Header
-        let (mb2_hdr_data, expected_len) = {
-            let builder = HeaderBuilder::new(HeaderTagISA::I386);
-            // Multiboot2 basic header + end tag
-            let mut expected_len = 16 + 8;
-            assert_eq!(builder.expected_len(), expected_len);
-
-            // add information request tag
-            let ifr_builder = InformationRequestHeaderTagBuilder::new(HeaderTagFlag::Required)
-                .add_irs(&[
-                    MbiTagType::EfiMmap,
-                    MbiTagType::Cmdline,
-                    MbiTagType::ElfSections,
-                ]);
-            let ifr_tag_size_with_padding = ifr_builder.expected_len() + 4;
-            assert_eq!(
-                ifr_tag_size_with_padding % 8,
-                0,
-                "the length of the IFR tag with padding must be a multiple of 8"
-            );
-            expected_len += ifr_tag_size_with_padding;
-            let builder = builder.information_request_tag(ifr_builder);
-            assert_eq!(builder.expected_len(), expected_len);
-
-            let builder = builder.relocatable_tag(RelocatableHeaderTag::new(
-                HeaderTagFlag::Required,
-                0x1337,
-                0xdeadbeef,
-                4096,
-                RelocatableHeaderTagPreference::None,
-            ));
-            expected_len += 0x18;
-            assert_eq!(builder.expected_len(), expected_len);
-
-            println!("builder: {:#?}", builder);
-            println!("expected_len: {} bytes", builder.expected_len());
-
-            (builder.build(), expected_len)
-        };
-
-        assert_eq!(mb2_hdr_data.as_bytes().len(), expected_len);
+        let mb2_hdr_data = create_builder().build();
 
         // Step 2/2: Test the built Header
-        {
-            let mb2_hdr = mb2_hdr_data.as_ptr().cast();
-            let mb2_hdr = unsafe { Multiboot2Header::load(mb2_hdr) }
-                .expect("the generated header to be loadable");
-            println!("{:#?}", mb2_hdr);
-            assert_eq!(
-                mb2_hdr.relocatable_tag().unwrap().flags(),
-                HeaderTagFlag::Required
-            );
-            assert_eq!(mb2_hdr.relocatable_tag().unwrap().min_addr(), 0x1337);
-            assert_eq!(mb2_hdr.relocatable_tag().unwrap().max_addr(), 0xdeadbeef);
-            assert_eq!(mb2_hdr.relocatable_tag().unwrap().align(), 4096);
-            assert_eq!(
-                mb2_hdr.relocatable_tag().unwrap().preference(),
-                RelocatableHeaderTagPreference::None
-            );
+        let mb2_hdr = mb2_hdr_data.as_ptr().cast();
+        let mb2_hdr = unsafe { Multiboot2Header::load(mb2_hdr) }
+            .expect("the generated header to be loadable");
+        println!("{:#?}", mb2_hdr);
+        assert_eq!(
+            mb2_hdr.relocatable_tag().unwrap().flags(),
+            HeaderTagFlag::Required
+        );
+        assert_eq!(mb2_hdr.relocatable_tag().unwrap().min_addr(), 0x1337);
+        assert_eq!(mb2_hdr.relocatable_tag().unwrap().max_addr(), 0xdeadbeef);
+        assert_eq!(mb2_hdr.relocatable_tag().unwrap().align(), 4096);
+        assert_eq!(
+            mb2_hdr.relocatable_tag().unwrap().preference(),
+            RelocatableHeaderTagPreference::None
+        );
 
-            /* you can write the binary to a file and a tool such as crate "bootinfo"
-               will be able to fully parse the MB2 header
-            let mut file = std::file::File::create("mb2_hdr.bin").unwrap();
-            use std::io::Write;
-            file.write_all(mb2_hdr_data.as_slice()).unwrap();*/
-        }
+        // Printing the header transitively ensures that a lot of stuff works.
+        println!("{:#?}", mb2_hdr);
+
+        /* you can write the binary to a file and a tool such as crate "bootinfo"
+           will be able to fully parse the MB2 header
+        let mut file = std::file::File::create("mb2_hdr.bin").unwrap();
+        use std::io::Write;
+        file.write_all(mb2_hdr_data.as_slice()).unwrap();*/
     }
 }

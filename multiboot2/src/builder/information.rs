@@ -7,7 +7,7 @@ use crate::{
     MemoryMapTag, ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag,
 };
 
-use alloc::boxed::Box;
+use crate::builder::BoxedDst;
 use alloc::vec::Vec;
 use core::mem::size_of;
 use core::ops::Deref;
@@ -21,7 +21,7 @@ pub struct BootInformationBytes {
     // guarantee alignment at the moment.
     offset: usize,
     structure_len: usize,
-    bytes: Box<[u8]>,
+    bytes: Vec<u8>,
 }
 
 impl BootInformationBytes {
@@ -49,22 +49,22 @@ impl Deref for BootInformationBytes {
 #[derive(Debug, PartialEq, Eq)]
 pub struct InformationBuilder {
     basic_memory_info_tag: Option<BasicMemoryInfoTag>,
-    boot_loader_name_tag: Option<Box<BootLoaderNameTag>>,
-    command_line_tag: Option<Box<CommandLineTag>>,
+    boot_loader_name_tag: Option<BoxedDst<BootLoaderNameTag>>,
+    command_line_tag: Option<BoxedDst<CommandLineTag>>,
     efi_boot_services_not_exited_tag: Option<EFIBootServicesNotExitedTag>,
     efi_image_handle32: Option<EFIImageHandle32Tag>,
     efi_image_handle64: Option<EFIImageHandle64Tag>,
-    efi_memory_map_tag: Option<Box<EFIMemoryMapTag>>,
-    elf_sections_tag: Option<Box<ElfSectionsTag>>,
-    framebuffer_tag: Option<Box<FramebufferTag>>,
+    efi_memory_map_tag: Option<BoxedDst<EFIMemoryMapTag>>,
+    elf_sections_tag: Option<BoxedDst<ElfSectionsTag>>,
+    framebuffer_tag: Option<BoxedDst<FramebufferTag>>,
     image_load_addr: Option<ImageLoadPhysAddrTag>,
-    memory_map_tag: Option<Box<MemoryMapTag>>,
-    module_tags: Vec<Box<ModuleTag>>,
+    memory_map_tag: Option<BoxedDst<MemoryMapTag>>,
+    module_tags: Vec<BoxedDst<ModuleTag>>,
     efisdt32_tag: Option<EFISdt32Tag>,
     efisdt64_tag: Option<EFISdt64Tag>,
     rsdp_v1_tag: Option<RsdpV1Tag>,
     rsdp_v2_tag: Option<RsdpV2Tag>,
-    smbios_tags: Vec<Box<SmbiosTag>>,
+    smbios_tags: Vec<BoxedDst<SmbiosTag>>,
 }
 
 impl InformationBuilder {
@@ -183,7 +183,7 @@ impl InformationBuilder {
     pub fn build(self) -> BootInformationBytes {
         const ALIGN: usize = 8;
 
-        // PHASE 1/3: Prepare Vector
+        // PHASE 1/2: Prepare Vector
 
         // We allocate more than necessary so that we can ensure an correct
         // alignment within this data.
@@ -204,16 +204,8 @@ impl InformationBuilder {
         bytes.extend([0].repeat(offset));
 
         // -----------------------------------------------
-        // PHASE 2/3: Add Tags
+        // PHASE 2/2: Add Tags
         self.build_add_tags(&mut bytes);
-
-        // -----------------------------------------------
-        // PHASE 3/3: Finalize Vector
-
-        // Ensure that the vector has the same length as it's capacity. This is
-        // important so that miri doesn't complain that the boxed memory is
-        // smaller than the original allocation.
-        bytes.extend([0].repeat(bytes.capacity() - bytes.len()));
 
         assert_eq!(
             alloc_ptr,
@@ -225,13 +217,6 @@ impl InformationBuilder {
             0,
             "The offset to alignment area should be zero."
         );
-
-        // Construct a box from a vec without `into_boxed_slice`. The latter
-        // calls `shrink` on the allocator, which might reallocate this memory.
-        // We don't want that!
-        let bytes = unsafe { Box::from_raw(bytes.leak()) };
-
-        assert_eq!(bytes.len(), alloc_len);
 
         BootInformationBytes {
             offset,
@@ -306,11 +291,11 @@ impl InformationBuilder {
         self.basic_memory_info_tag = Some(basic_memory_info_tag)
     }
 
-    pub fn bootloader_name_tag(&mut self, boot_loader_name_tag: Box<BootLoaderNameTag>) {
+    pub fn bootloader_name_tag(&mut self, boot_loader_name_tag: BoxedDst<BootLoaderNameTag>) {
         self.boot_loader_name_tag = Some(boot_loader_name_tag);
     }
 
-    pub fn command_line_tag(&mut self, command_line_tag: Box<CommandLineTag>) {
+    pub fn command_line_tag(&mut self, command_line_tag: BoxedDst<CommandLineTag>) {
         self.command_line_tag = Some(command_line_tag);
     }
 
@@ -334,15 +319,15 @@ impl InformationBuilder {
         self.efi_image_handle64 = Some(efi_image_handle64);
     }
 
-    pub fn efi_memory_map_tag(&mut self, efi_memory_map_tag: Box<EFIMemoryMapTag>) {
+    pub fn efi_memory_map_tag(&mut self, efi_memory_map_tag: BoxedDst<EFIMemoryMapTag>) {
         self.efi_memory_map_tag = Some(efi_memory_map_tag);
     }
 
-    pub fn elf_sections_tag(&mut self, elf_sections_tag: Box<ElfSectionsTag>) {
+    pub fn elf_sections_tag(&mut self, elf_sections_tag: BoxedDst<ElfSectionsTag>) {
         self.elf_sections_tag = Some(elf_sections_tag);
     }
 
-    pub fn framebuffer_tag(&mut self, framebuffer_tag: Box<FramebufferTag>) {
+    pub fn framebuffer_tag(&mut self, framebuffer_tag: BoxedDst<FramebufferTag>) {
         self.framebuffer_tag = Some(framebuffer_tag);
     }
 
@@ -350,11 +335,11 @@ impl InformationBuilder {
         self.image_load_addr = Some(image_load_addr);
     }
 
-    pub fn memory_map_tag(&mut self, memory_map_tag: Box<MemoryMapTag>) {
+    pub fn memory_map_tag(&mut self, memory_map_tag: BoxedDst<MemoryMapTag>) {
         self.memory_map_tag = Some(memory_map_tag);
     }
 
-    pub fn add_module_tag(&mut self, module_tag: Box<ModuleTag>) {
+    pub fn add_module_tag(&mut self, module_tag: BoxedDst<ModuleTag>) {
         self.module_tags.push(module_tag);
     }
 
@@ -366,7 +351,7 @@ impl InformationBuilder {
         self.rsdp_v2_tag = Some(rsdp_v2_tag);
     }
 
-    pub fn add_smbios_tag(&mut self, smbios_tag: Box<SmbiosTag>) {
+    pub fn add_smbios_tag(&mut self, smbios_tag: BoxedDst<SmbiosTag>) {
         self.smbios_tags.push(smbios_tag);
     }
 }
@@ -376,6 +361,35 @@ mod tests {
     use crate::builder::information::InformationBuilder;
     use crate::{BasicMemoryInfoTag, BootInformation, CommandLineTag, ModuleTag};
 
+    fn create_builder() -> InformationBuilder {
+        let mut builder = InformationBuilder::new();
+
+        // Multiboot2 basic information + end tag
+        let mut expected_len = 8 + 8;
+        assert_eq!(builder.expected_len(), expected_len);
+
+        // the most simple tag
+        builder.basic_memory_info_tag(BasicMemoryInfoTag::new(640, 7 * 1024));
+        expected_len += 16;
+        assert_eq!(builder.expected_len(), expected_len);
+        // a tag that has a dynamic size
+        builder.command_line_tag(CommandLineTag::new("test"));
+        expected_len += 8 + 5 + 3; // padding
+        assert_eq!(builder.expected_len(), expected_len);
+        // many modules
+        builder.add_module_tag(ModuleTag::new(0, 1234, "module1"));
+        expected_len += 16 + 8;
+        assert_eq!(builder.expected_len(), expected_len);
+        builder.add_module_tag(ModuleTag::new(5678, 6789, "module2"));
+        expected_len += 16 + 8;
+        assert_eq!(builder.expected_len(), expected_len);
+
+        println!("builder: {:#?}", builder);
+        println!("expected_len: {} bytes", builder.expected_len());
+
+        builder
+    }
+
     #[test]
     fn test_size_or_up_aligned() {
         assert_eq!(0, InformationBuilder::size_or_up_aligned(0));
@@ -384,65 +398,42 @@ mod tests {
         assert_eq!(16, InformationBuilder::size_or_up_aligned(9));
     }
 
+    /// Test of the `build` method in isolation specifically for miri to check
+    /// for memory issues.
+    #[test]
+    fn test_builder_miri() {
+        let builder = create_builder();
+        let expected_len = builder.expected_len();
+        assert_eq!(builder.build().as_bytes().len(), expected_len);
+    }
+
     #[test]
     fn test_builder() {
         // Step 1/2: Build MBI
-        let (mb2i_data, expected_len) = {
-            let mut builder = InformationBuilder::new();
-
-            // Multiboot2 basic information + end tag
-            let mut expected_len = 8 + 8;
-            assert_eq!(builder.expected_len(), expected_len);
-
-            // the most simple tag
-            builder.basic_memory_info_tag(BasicMemoryInfoTag::new(640, 7 * 1024));
-            expected_len += 16;
-            assert_eq!(builder.expected_len(), expected_len);
-            // a tag that has a dynamic size
-            builder.command_line_tag(CommandLineTag::new("test"));
-            expected_len += 8 + 5 + 3; // padding
-            assert_eq!(builder.expected_len(), expected_len);
-            // many modules
-            builder.add_module_tag(ModuleTag::new(0, 1234, "module1"));
-            expected_len += 16 + 8;
-            assert_eq!(builder.expected_len(), expected_len);
-            builder.add_module_tag(ModuleTag::new(5678, 6789, "module2"));
-            expected_len += 16 + 8;
-            assert_eq!(builder.expected_len(), expected_len);
-
-            println!("builder: {:#?}", builder);
-            println!("expected_len: {} bytes", builder.expected_len());
-            assert_eq!(builder.expected_len(), expected_len);
-
-            (builder.build(), expected_len)
-        };
-
-        assert_eq!(mb2i_data.as_bytes().len(), expected_len);
+        let mb2i_data = create_builder().build();
 
         // Step 2/2: Test the built MBI
-        {
-            let mb2i = unsafe { BootInformation::load(mb2i_data.as_ptr().cast()) }
-                .expect("generated information should be readable");
+        let mb2i = unsafe { BootInformation::load(mb2i_data.as_ptr().cast()) }
+            .expect("generated information should be readable");
 
-            assert_eq!(mb2i.basic_memory_info_tag().unwrap().memory_lower(), 640);
-            assert_eq!(
-                mb2i.basic_memory_info_tag().unwrap().memory_upper(),
-                7 * 1024
-            );
-            assert_eq!(mb2i.command_line_tag().unwrap().cmdline().unwrap(), "test");
-            let mut modules = mb2i.module_tags();
-            let module_1 = modules.next().unwrap();
-            assert_eq!(module_1.start_address(), 0);
-            assert_eq!(module_1.end_address(), 1234);
-            assert_eq!(module_1.cmdline().unwrap(), "module1");
-            let module_2 = modules.next().unwrap();
-            assert_eq!(module_2.start_address(), 5678);
-            assert_eq!(module_2.end_address(), 6789);
-            assert_eq!(module_2.cmdline().unwrap(), "module2");
-            assert!(modules.next().is_none());
+        assert_eq!(mb2i.basic_memory_info_tag().unwrap().memory_lower(), 640);
+        assert_eq!(
+            mb2i.basic_memory_info_tag().unwrap().memory_upper(),
+            7 * 1024
+        );
+        assert_eq!(mb2i.command_line_tag().unwrap().cmdline().unwrap(), "test");
+        let mut modules = mb2i.module_tags();
+        let module_1 = modules.next().unwrap();
+        assert_eq!(module_1.start_address(), 0);
+        assert_eq!(module_1.end_address(), 1234);
+        assert_eq!(module_1.cmdline().unwrap(), "module1");
+        let module_2 = modules.next().unwrap();
+        assert_eq!(module_2.start_address(), 5678);
+        assert_eq!(module_2.end_address(), 6789);
+        assert_eq!(module_2.cmdline().unwrap(), "module2");
+        assert!(modules.next().is_none());
 
-            // Printing the MBI transitively ensures that a lot of stuff works.
-            println!("{:#?}", mb2i);
-        }
+        // Printing the MBI transitively ensures that a lot of stuff works.
+        println!("{:#?}", mb2i);
     }
 }

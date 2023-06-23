@@ -8,8 +8,8 @@ use core::str;
 
 #[cfg(feature = "builder")]
 use {
-    crate::builder::boxed_dst_tag, crate::builder::traits::StructAsBytes, crate::TagType,
-    alloc::boxed::Box, alloc::vec::Vec, core::convert::TryInto,
+    crate::builder::traits::StructAsBytes, crate::builder::BoxedDst, crate::TagType,
+    alloc::vec::Vec, core::convert::TryInto,
 };
 
 pub(crate) const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
@@ -30,13 +30,13 @@ pub struct CommandLineTag {
 impl CommandLineTag {
     /// Create a new command line tag from the given string.
     #[cfg(feature = "builder")]
-    pub fn new(command_line: &str) -> Box<Self> {
+    pub fn new(command_line: &str) -> BoxedDst<Self> {
         let mut bytes: Vec<_> = command_line.bytes().collect();
         if !bytes.ends_with(&[0]) {
             // terminating null-byte
             bytes.push(0);
         }
-        boxed_dst_tag(TagType::Cmdline, &bytes)
+        BoxedDst::new(TagType::Cmdline, &bytes)
     }
 
     /// Reads the command line of the kernel as Rust string slice without
@@ -128,5 +128,11 @@ mod tests {
         let bytes = tag.struct_as_bytes();
         assert_eq!(bytes, get_bytes());
         assert_eq!(tag.cmdline(), Ok(MSG));
+
+        // test also some bigger message
+        let tag = CommandLineTag::new("AbCdEfGhUjK YEAH");
+        assert_eq!(tag.cmdline(), Ok("AbCdEfGhUjK YEAH"));
+        let tag = CommandLineTag::new("AbCdEfGhUjK YEAH".repeat(42).as_str());
+        assert_eq!(tag.cmdline(), Ok("AbCdEfGhUjK YEAH".repeat(42).as_str()));
     }
 }
