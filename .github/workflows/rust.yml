@@ -161,3 +161,14 @@ jobs:
       - run: cd integration-test && nix-shell --run "echo OK" && cd ..
       # Now, run the actual test.
       - run: cd integration-test && nix-shell --run ./run.sh && cd ..
+
+  miri:
+    name: tests with miri (nightly)
+    needs: build_nightly
+    uses: ./.github/workflows/_build-rust.yml
+    with:
+      rust-version: nightly
+      do-style-check: false
+      do-test: false
+      do-miri: true
+      features: builder,unstable

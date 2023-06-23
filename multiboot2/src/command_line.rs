@@ -91,7 +91,7 @@ mod tests {
 
     const MSG: &str = "hello";
 
-    /// Returns the tag structure in bytes in native endian format.
+    /// Returns the tag structure in bytes in little endian format.
     fn get_bytes() -> std::vec::Vec<u8> {
         // size is: 4 bytes for tag + 4 bytes for size + length of null-terminated string
         let size = (4 + 4 + MSG.as_bytes().len() + 1) as u32;
@@ -110,6 +110,7 @@ mod tests {
 
     /// Tests to parse a string with a terminating null byte from the tag (as the spec defines).
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn test_parse_str() {
         let tag = get_bytes();
         let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };

@@ -408,6 +408,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn test_builder() {
         // Step 1/2: Build MBI
         let mb2i_data = create_builder().build();
