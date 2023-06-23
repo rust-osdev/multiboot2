@@ -1,6 +1,6 @@
 # CHANGELOG for crate `multiboot2-header`
 
-## 0.3.0 (xxxx-xx-xx)
+## 0.3.0 (2023-06-23)
 - **BREAKING** MSRV is 1.68.0
 - **BREAKING** renamed the `std` feature to `alloc`
 - **BREAKING** bumped dependency to `multiboot2@v0.16.0`
