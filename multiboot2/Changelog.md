@@ -1,6 +1,6 @@
 # CHANGELOG for crate `multiboot2`
 
-## 0.16.0 (xxxx-xx-xx)
+## 0.16.0 (2023-06-23)
 - **BREAKING** renamed `MULTIBOOT2_BOOTLOADER_MAGIC` to `MAGIC`
 - **BREAKING** `EFIMemoryDesc` was removed and is now an alias of
   `uefi_raw::table::boot::MemoryDescriptor`
