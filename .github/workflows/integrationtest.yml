@@ -1,0 +1,49 @@
+# CI for the whole Cargo workspace. Although having two relatively independent
+# crates in this workspace (as they do not get released together, as for example
+# tokio with its sub crates), a PR for a certain CI may report errors in the
+# other workspace members. I think this is unfortunate. I've experimented with
+# CI runs per workspace member but the complexity in the end was not worth it.
+# Instead, it is the right thing that the CI always covers the whole repository
+# and that it is as stable as possible.
+
+name: "Cargo workspace"
+
+# Run on every push (tag, branch) and pull_request
+on: [pull_request, push, workflow_dispatch]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  integrationtest:
+    name: integrationtest
+    # No "needs" to make CI faster.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v20
+        with:
+          # This channel is only required to invoke "nix-shell".
+          # Everything inside that nix-shell will use a pinned version of
+          # nixpkgs.
+          nix_path: nixpkgs=channel:nixos-23.05
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Set up cargo cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            integration-test/bins/target/
+          # Hash over Cargo.toml and Cargo.lock, as this might be copied to
+          # projects that do not have a Cargo.lock in their repository tree!
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('integration-test/**/Cargo.toml', 'integration-test/**/Cargo.lock', 'integration-test/bins/rust-toolchain.toml') }}
+      # Have all the "copying into Nix store" messages in a dedicated step for
+      # better log visibility.
+      - run: cd integration-test && nix-shell --run "echo OK" && cd ..
+      # Now, run the actual test.
+      - run: cd integration-test && nix-shell --run ./run.sh && cd ..
