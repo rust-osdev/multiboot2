@@ -4,7 +4,7 @@ description = """
 Library with type definitions and parsing functions for Multiboot2 headers.
 This library is `no_std` and can be used in bootloaders.
 """
-version = "0.3.0"
+version = "0.3.1"
 authors = [
     "Philipp Schuster <phip1611@gmail.com>"
 ]
@@ -48,3 +48,6 @@ derive_more.workspace = true
 
 # used for MBI tags
 multiboot2 = "0.16.0"
+
+[package.metadata.docs.rs]
+all-features = true

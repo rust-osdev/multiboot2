@@ -47,3 +47,6 @@ log.workspace = true
 
 uefi-raw = { version = "0.3", default-features = false }
 ptr_meta = { version = "0.2", default-features = false }
+
+[package.metadata.docs.rs]
+all-features = true
