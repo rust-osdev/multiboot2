@@ -1,4 +1,6 @@
 # CHANGELOG for crate `multiboot2`
+## Unreleased
+- **Breaking** Make functions of `InformationBuilder` chainable. They now consume the builder.
 
 ## 0.16.0 (2023-06-23)
 - **BREAKING** renamed `MULTIBOOT2_BOOTLOADER_MAGIC` to `MAGIC`

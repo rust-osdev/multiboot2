@@ -1,5 +1,4 @@
 use elf_rs::{ElfFile, ProgramHeaderEntry, ProgramType};
-use multiboot2::builder::InformationBuilder;
 use multiboot2::{
     BootLoaderNameTag, CommandLineTag, MemoryArea, MemoryAreaType, MemoryMapTag, ModuleTag,
 };
@@ -43,24 +42,21 @@ pub fn load_module(mut modules: multiboot::information::ModuleIter) -> ! {
     // that the basic data structures are usable.
 
     // build MBI
-    let mbi = {
-        let mut mbi_builder: InformationBuilder = multiboot2::builder::InformationBuilder::new();
-        mbi_builder.bootloader_name_tag(BootLoaderNameTag::new("mb2_integrationtest_chainloader"));
-        mbi_builder.command_line_tag(CommandLineTag::new("chainloaded YEAH"));
+    let mbi = multiboot2::builder::InformationBuilder::new()
+        .bootloader_name_tag(BootLoaderNameTag::new("mb2_integrationtest_chainloader"))
+        .command_line_tag(CommandLineTag::new("chainloaded YEAH"))
         // random non-sense memory map
-        mbi_builder.memory_map_tag(MemoryMapTag::new(&[MemoryArea::new(
+        .memory_map_tag(MemoryMapTag::new(&[MemoryArea::new(
             0,
             0xffffffff,
             MemoryAreaType::Reserved,
-        )]));
-        mbi_builder.add_module_tag(ModuleTag::new(
+        )]))
+        .add_module_tag(ModuleTag::new(
             elf_mod.start as u32,
             elf_mod.end as u32,
             elf_mod.string.unwrap(),
-        ));
-
-        mbi_builder.build()
-    };
+        ))
+        .build();
 
     log::info!(
         "Handing over to ELF: {}",
