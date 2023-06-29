@@ -130,12 +130,12 @@ pub enum MbiLoadError {
     /// according to the spec.
     #[display(fmt = "The address is invalid")]
     IllegalAddress,
-    /// The total size of the multiboot2 information structure must be a multiple of 8.
-    /// (Not in spec, but it is implicitly the case, because the begin of MBI
-    /// and all tags are 8-byte aligned and the end tag is exactly 8 byte long).
+    /// The total size of the multiboot2 information structure must be not zero
+    /// and a multiple of 8.
     #[display(fmt = "The size of the MBI is unexpected")]
     IllegalTotalSize(u32),
-    /// End tag missing. Each multiboot2 header requires to have an end tag.
+    /// Missing end tag. Each multiboot2 boot information requires to have an
+    /// end tag.
     #[display(fmt = "There is no end tag")]
     NoEndTag,
 }
@@ -148,7 +148,7 @@ impl core::error::Error for MbiLoadError {}
 #[repr(C)]
 pub struct BootInformationHeader {
     // size is multiple of 8
-    total_size: u32,
+    pub total_size: u32,
     _reserved: u32,
     // Followed by the boot information tags.
 }
@@ -235,9 +235,8 @@ impl<'a> BootInformation<'a> {
         // mbi: reference to basic header
         let mbi = &*ptr;
 
-        // Check if total size is a multiple of 8.
-        // See MbiLoadError::IllegalTotalSize for comments
-        if mbi.total_size & 0b111 != 0 {
+        // Check if total size is not 0 and a multiple of 8.
+        if mbi.total_size == 0 || mbi.total_size & 0b111 != 0 {
             return Err(MbiLoadError::IllegalTotalSize(mbi.total_size));
         }
 
