@@ -1,6 +1,7 @@
 use elf_rs::{ElfFile, ProgramHeaderEntry, ProgramType};
 use multiboot2::{
-    BootLoaderNameTag, CommandLineTag, MemoryArea, MemoryAreaType, MemoryMapTag, ModuleTag,
+    BootLoaderNameTag, CommandLineTag, MemoryArea, MemoryAreaType, MemoryMapTag,
+    ModuleTag,
 };
 
 /// Loads the first module into memory. Assumes that the module is a ELF file.
@@ -25,7 +26,6 @@ pub fn load_module(mut modules: multiboot::information::ModuleIter) -> ! {
             unsafe { multiboot2_header::Multiboot2Header::load(hdr.0.as_ptr().cast()) }.unwrap();
         log::info!("Multiboot2 header:\n{hdr:#?}");
     }
-
 
     // Map the load segments into memory (at their corresponding link).
     {
