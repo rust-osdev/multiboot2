@@ -319,7 +319,7 @@ impl EFIMemoryMapTag {
     ///
     /// This differs from `MemoryMapTag` as for UEFI, the OS needs some non-
     /// available memory areas for tables and such.
-    pub fn memory_areas(&self) -> EFIMemoryAreaIter {
+    pub fn memory_areas(&self) -> EFIMemoryAreaIter<&EFIMemoryDesc> {
         let self_ptr = self as *const EFIMemoryMapTag;
         let start_area = (&self.descs[0]) as *const EFIMemoryDesc;
         EFIMemoryAreaIter {
@@ -335,10 +335,10 @@ impl EFIMemoryMapTag {
     ///
     /// This differs from `MemoryMapTag` as for UEFI, the OS needs some non-
     /// available memory areas for tables and such.
-    pub fn memory_areas_mut(&mut self) -> EFIMemoryAreaIterMut {
+    pub fn memory_areas_mut(&mut self) -> EFIMemoryAreaIter<&mut EFIMemoryDesc> {
         let self_ptr = self as *mut EFIMemoryMapTag;
         let start_area = (&mut self.descs[0]) as *mut EFIMemoryDesc;
-        EFIMemoryAreaIterMut {
+        EFIMemoryAreaIter {
             current_area: start_area as u64,
             // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
             last_area: (self_ptr as *mut () as u64 + self.size as u64),
@@ -361,14 +361,14 @@ impl TagTrait for EFIMemoryMapTag {
 
 /// An iterator over ALL EFI memory areas.
 #[derive(Clone, Debug)]
-pub struct EFIMemoryAreaIter<'a> {
+pub struct EFIMemoryAreaIter<T> {
     current_area: u64,
     last_area: u64,
     entry_size: u32,
-    phantom: PhantomData<&'a EFIMemoryDesc>,
+    phantom: PhantomData<T>,
 }
 
-impl<'a> Iterator for EFIMemoryAreaIter<'a> {
+impl<'a> Iterator for EFIMemoryAreaIter<&'a EFIMemoryDesc> {
     type Item = &'a EFIMemoryDesc;
     fn next(&mut self) -> Option<&'a EFIMemoryDesc> {
         if self.current_area > self.last_area {
@@ -381,16 +381,7 @@ impl<'a> Iterator for EFIMemoryAreaIter<'a> {
     }
 }
 
-/// An iterator over ALL EFI memory areas, mutably.
-#[derive(Clone, Debug)]
-pub struct EFIMemoryAreaIterMut<'a> {
-    current_area: u64,
-    last_area: u64,
-    entry_size: u32,
-    phantom: PhantomData<&'a mut EFIMemoryDesc>,
-}
-
-impl<'a> Iterator for EFIMemoryAreaIterMut<'a> {
+impl<'a> Iterator for EFIMemoryAreaIter<&'a mut EFIMemoryDesc> {
     type Item = &'a mut EFIMemoryDesc;
     fn next(&mut self) -> Option<&'a mut EFIMemoryDesc> {
         if self.current_area > self.last_area {
