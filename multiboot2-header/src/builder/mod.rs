@@ -2,7 +2,7 @@
 
 mod header;
 mod information_request;
-pub(self) mod traits;
+pub(crate) mod traits;
 
 pub use header::HeaderBuilder;
 pub use information_request::InformationRequestHeaderTagBuilder;
