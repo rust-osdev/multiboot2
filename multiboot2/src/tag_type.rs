@@ -19,13 +19,20 @@ use core::str::Utf8Error;
 /// Multiboot2 [`Tag`]. This type can easily be created from or converted to
 /// [`TagType`].
 #[repr(transparent)]
-#[derive(Copy, Clone, Debug, PartialOrd, PartialEq, Eq, Ord, Hash)]
+#[derive(Copy, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct TagTypeId(u32);
 
 impl TagTypeId {
     /// Constructor.
     pub fn new(val: u32) -> Self {
         Self(val)
+    }
+}
+
+impl Debug for TagTypeId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        let tag_type = TagType::from(*self);
+        Debug::fmt(&tag_type, f)
     }
 }
 
