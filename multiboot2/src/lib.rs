@@ -10,9 +10,9 @@
 // --- END STYLE CHECKS ---
 
 //! Library that assists parsing the Multiboot2 Information Structure (MBI) from
-//! Multiboot2-compliant bootloaders, like GRUB. It supports all tags from the specification
-//! including full support for the sections of ELF-64. This library is `no_std` and can be
-//! used in a Multiboot2-kernel.
+//! Multiboot2-compliant bootloaders, such as GRUB. It supports all tags from the
+//! specification including full support for the sections of ELF files. This library
+//! is `no_std` and can be used in a Multiboot2-kernel.
 //!
 //! The GNU Multiboot(2) specification aims to provide a standardised
 //! method of sharing commonly used information about the host machine at

@@ -1,5 +1,6 @@
 # CHANGELOG for crate `multiboot2`
-## Unreleased
+
+## 0.17.0 (2023-07-12)
 - **BREAKING** Make functions of `InformationBuilder` chainable. They now consume the builder.
 - **BREAKING** Allow non-standard memory area types by using new pair of
   corresponding types: `MemoryAreaTypeId` and `MemoryAreaType`.
