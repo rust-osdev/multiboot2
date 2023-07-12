@@ -7,6 +7,8 @@
   `typ` parameter anymore, as it can be deduced from the provided type.
 - **BREAKING** `BoxedDst::new` doesn't have the `typ` parameter anymore. This
   only effects you when you wrote a custom DST tag.
+- **BREAKING** Removed deprecated functions `load` and `load_with_offset`. Use
+  `BootInformation::load` instead.
 
 ## 0.17.0 (2023-07-12)
 - **BREAKING** Make functions of `InformationBuilder` chainable. They now consume the builder.

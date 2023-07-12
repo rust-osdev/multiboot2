@@ -101,26 +101,6 @@ pub mod builder;
 /// that the Rust compiler output changes `eax` before you can access it.
 pub const MAGIC: u32 = 0x36d76289;
 
-/// # Safety
-/// Deprecated. Please use BootInformation::load() instead.
-#[deprecated = "Please use BootInformation::load() instead."]
-pub unsafe fn load<'a>(address: usize) -> Result<BootInformation<'a>, MbiLoadError> {
-    let ptr = address as *const BootInformationHeader;
-    BootInformation::load(ptr)
-}
-
-/// # Safety
-/// Deprecated. Please use BootInformation::load() instead.
-#[deprecated = "Please use BootInformation::load() instead."]
-pub unsafe fn load_with_offset<'a>(
-    address: usize,
-    offset: usize,
-) -> Result<BootInformation<'a>, MbiLoadError> {
-    let ptr = address as *const u8;
-    let ptr = ptr.add(offset);
-    BootInformation::load(ptr.cast())
-}
-
 /// Error type that describes errors while loading/parsing a multiboot2 information structure
 /// from a given address.
 #[derive(Display, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -262,7 +242,9 @@ impl<'a> BootInformation<'a> {
     /// This is the same as doing:
     ///
     /// ```rust,no_run
-    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
+    /// # use multiboot2::{BootInformation, BootInformationHeader};
+    /// # let ptr = 0xdeadbeef as *const BootInformationHeader;
+    /// # let boot_info = unsafe { BootInformation::load(ptr).unwrap() };
     /// let end_addr = boot_info.start_address() + boot_info.total_size();
     /// ```
     pub fn end_address(&self) -> usize {
@@ -285,7 +267,9 @@ impl<'a> BootInformation<'a> {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
+    /// # use multiboot2::{BootInformation, BootInformationHeader};
+    /// # let ptr = 0xdeadbeef as *const BootInformationHeader;
+    /// # let boot_info = unsafe { BootInformation::load(ptr).unwrap() };
     /// if let Some(sections) = boot_info.elf_sections() {
     ///     let mut total = 0;
     ///     for section in sections {
@@ -414,7 +398,7 @@ impl<'a> BootInformation<'a> {
     ///
     /// ```no_run
     /// use std::str::Utf8Error;
-    /// use multiboot2::{Tag, TagTrait, TagType, TagTypeId};
+    /// use multiboot2::{BootInformation, BootInformationHeader, Tag, TagTrait, TagType, TagTypeId};
     ///
     /// #[repr(C)]
     /// #[derive(multiboot2::Pointee)] // Only needed for DSTs.
@@ -442,8 +426,8 @@ impl<'a> BootInformation<'a> {
     ///         Tag::get_dst_str_slice(&self.name)
     ///     }
     /// }
-    ///
-    /// let mbi = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
+    /// let mbi_ptr = 0xdeadbeef as *const BootInformationHeader;
+    /// let mbi = unsafe { BootInformation::load(mbi_ptr).unwrap() };
     ///
     /// let tag = mbi
     ///     .get_tag::<CustomTag>()
@@ -1255,15 +1239,6 @@ mod tests {
         let ptr = bytes.0.as_ptr();
         let addr = ptr as usize;
         let bi = unsafe { BootInformation::load(ptr.cast()) };
-        let bi = bi.unwrap();
-        test_grub2_boot_info(&bi, addr, string_addr, &bytes.0, &string_bytes.0);
-
-        let bi = unsafe { load_with_offset(addr, 0) };
-        let bi = bi.unwrap();
-        test_grub2_boot_info(&bi, addr, string_addr, &bytes.0, &string_bytes.0);
-
-        let offset = 8usize;
-        let bi = unsafe { load_with_offset(addr - offset, offset) };
         let bi = bi.unwrap();
         test_grub2_boot_info(&bi, addr, string_addr, &bytes.0, &string_bytes.0);
 

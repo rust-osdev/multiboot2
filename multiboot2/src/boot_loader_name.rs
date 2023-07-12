@@ -38,7 +38,9 @@ impl BootLoaderNameTag {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
+    /// # use multiboot2::{BootInformation, BootInformationHeader};
+    /// # let ptr = 0xdeadbeef as *const BootInformationHeader;
+    /// # let boot_info = unsafe { BootInformation::load(ptr).unwrap() };
     /// if let Some(tag) = boot_info.boot_loader_name_tag() {
     ///     assert_eq!(Ok("GRUB 2.02~beta3-5"), tag.name());
     /// }
