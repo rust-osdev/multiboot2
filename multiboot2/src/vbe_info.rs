@@ -1,4 +1,4 @@
-use crate::TagTypeId;
+use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt;
 
 /// This tag contains VBE metadata, VBE controller information returned by the
@@ -35,6 +35,12 @@ pub struct VBEInfoTag {
 
     /// Contains VBE mode information returned by the VBE Function `01h`.
     pub mode_info: VBEModeInfo,
+}
+
+impl TagTrait for VBEInfoTag {
+    const ID: TagType = TagType::Vbe;
+
+    fn dst_size(_base_tag: &Tag) {}
 }
 
 /// VBE controller information.

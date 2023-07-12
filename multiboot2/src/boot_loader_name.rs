@@ -1,13 +1,9 @@
-use crate::{Tag, TagTrait, TagTypeId};
+use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 use core::str::Utf8Error;
-
 #[cfg(feature = "builder")]
-use {
-    crate::builder::traits::StructAsBytes, crate::builder::BoxedDst, crate::TagType,
-    alloc::vec::Vec,
-};
+use {crate::builder::BoxedDst, alloc::vec::Vec};
 
 const METADATA_SIZE: usize = size_of::<TagTypeId>() + size_of::<u32>();
 
@@ -63,22 +59,17 @@ impl Debug for BootLoaderNameTag {
 }
 
 impl TagTrait for BootLoaderNameTag {
+    const ID: TagType = TagType::BootLoaderName;
+
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= METADATA_SIZE);
         base_tag.size as usize - METADATA_SIZE
     }
 }
 
-#[cfg(feature = "builder")]
-impl StructAsBytes for BootLoaderNameTag {
-    fn byte_size(&self) -> usize {
-        self.size.try_into().unwrap()
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::{BootLoaderNameTag, Tag, TagType};
+    use crate::{BootLoaderNameTag, Tag, TagTrait, TagType};
 
     const MSG: &str = "hello";
 
@@ -114,10 +105,8 @@ mod tests {
     #[test]
     #[cfg(feature = "builder")]
     fn test_build_str() {
-        use crate::builder::traits::StructAsBytes;
-
         let tag = BootLoaderNameTag::new(MSG);
-        let bytes = tag.struct_as_bytes();
+        let bytes = tag.as_bytes();
         assert_eq!(bytes, get_bytes());
         assert_eq!(tag.name(), Ok(MSG));
 

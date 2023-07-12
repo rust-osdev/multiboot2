@@ -1,15 +1,10 @@
-use crate::{Tag, TagTrait, TagTypeId};
-
+use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::Debug;
 use core::mem::size_of;
 use core::slice;
 use derive_more::Display;
-
 #[cfg(feature = "builder")]
-use {
-    crate::builder::traits::StructAsBytes, crate::builder::BoxedDst, crate::TagType,
-    alloc::vec::Vec,
-};
+use {crate::builder::AsBytes, crate::builder::BoxedDst, alloc::vec::Vec};
 
 /// Helper struct to read bytes from a raw pointer and increase the pointer
 /// automatically.
@@ -177,16 +172,11 @@ impl FramebufferTag {
 }
 
 impl TagTrait for FramebufferTag {
+    const ID: TagType = TagType::Framebuffer;
+
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= METADATA_SIZE);
         base_tag.size as usize - METADATA_SIZE
-    }
-}
-
-#[cfg(feature = "builder")]
-impl StructAsBytes for FramebufferTag {
-    fn byte_size(&self) -> usize {
-        self.size.try_into().unwrap()
     }
 }
 
@@ -280,15 +270,15 @@ impl<'a> FramebufferType<'a> {
                 v.extend(0u16.to_le_bytes()); // reserved
                 v.extend((palette.len() as u32).to_le_bytes());
                 for color in palette.iter() {
-                    v.extend(color.struct_as_bytes());
+                    v.extend(color.as_bytes());
                 }
             }
             FramebufferType::RGB { red, green, blue } => {
                 v.extend(1u8.to_le_bytes()); // type
                 v.extend(0u16.to_le_bytes()); // reserved
-                v.extend(red.struct_as_bytes());
-                v.extend(green.struct_as_bytes());
-                v.extend(blue.struct_as_bytes());
+                v.extend(red.as_bytes());
+                v.extend(green.as_bytes());
+                v.extend(blue.as_bytes());
             }
             FramebufferType::Text => {
                 v.extend(2u8.to_le_bytes()); // type
@@ -301,6 +291,7 @@ impl<'a> FramebufferType<'a> {
 
 /// An RGB color type field.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(C)]
 pub struct FramebufferField {
     /// Color field position.
     pub position: u8,
@@ -310,11 +301,7 @@ pub struct FramebufferField {
 }
 
 #[cfg(feature = "builder")]
-impl StructAsBytes for FramebufferField {
-    fn byte_size(&self) -> usize {
-        size_of::<Self>()
-    }
-}
+impl AsBytes for FramebufferField {}
 
 /// A framebuffer color descriptor in the palette.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -330,6 +317,9 @@ pub struct FramebufferColor {
     pub blue: u8,
 }
 
+#[cfg(feature = "builder")]
+impl AsBytes for FramebufferColor {}
+
 /// Error when an unknown [`FramebufferTypeId`] is found.
 #[derive(Debug, Copy, Clone, Display, PartialEq, Eq)]
 #[display(fmt = "Unknown framebuffer type {}", _0)]
@@ -337,13 +327,6 @@ pub struct UnknownFramebufferType(u8);
 
 #[cfg(feature = "unstable")]
 impl core::error::Error for UnknownFramebufferType {}
-
-#[cfg(feature = "builder")]
-impl StructAsBytes for FramebufferColor {
-    fn byte_size(&self) -> usize {
-        size_of::<Self>()
-    }
-}
 
 #[cfg(test)]
 mod tests {

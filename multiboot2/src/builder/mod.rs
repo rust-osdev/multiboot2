@@ -1,8 +1,8 @@
 //! Module for the builder-feature.
 
 mod information;
-pub(crate) mod traits;
 
+pub(crate) use information::AsBytes;
 pub use information::InformationBuilder;
 
 use alloc::alloc::alloc;
@@ -110,6 +110,7 @@ impl<T: ?Sized + PartialEq> PartialEq for BoxedDst<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::TagType;
 
     const METADATA_SIZE: usize = 8;
 
@@ -128,6 +129,8 @@ mod tests {
     }
 
     impl TagTrait for CustomTag {
+        const ID: TagType = TagType::Custom(0x1337);
+
         fn dst_size(base_tag: &Tag) -> usize {
             assert!(base_tag.size as usize >= METADATA_SIZE);
             base_tag.size as usize - METADATA_SIZE

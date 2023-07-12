@@ -1,9 +1,6 @@
-use crate::tag_type::TagTypeId;
+use crate::{Tag, TagTrait, TagType, TagTypeId};
 #[cfg(feature = "builder")]
-use {
-    crate::builder::traits::StructAsBytes, crate::TagType, core::convert::TryInto,
-    core::mem::size_of,
-};
+use {core::convert::TryInto, core::mem::size_of};
 
 /// The physical load address tag. Typically, this is only available if the
 /// binary was relocated, for example if the relocatable header tag was
@@ -20,7 +17,7 @@ impl ImageLoadPhysAddrTag {
     #[cfg(feature = "builder")]
     pub fn new(load_base_addr: u32) -> Self {
         Self {
-            typ: TagType::LoadBaseAddr.into(),
+            typ: TagType::ImageLoadPhysAddr.into(),
             size: size_of::<Self>().try_into().unwrap(),
             load_base_addr,
         }
@@ -32,11 +29,10 @@ impl ImageLoadPhysAddrTag {
     }
 }
 
-#[cfg(feature = "builder")]
-impl StructAsBytes for ImageLoadPhysAddrTag {
-    fn byte_size(&self) -> usize {
-        size_of::<Self>()
-    }
+impl TagTrait for ImageLoadPhysAddrTag {
+    const ID: TagType = TagType::ImageLoadPhysAddr;
+
+    fn dst_size(_base_tag: &Tag) {}
 }
 
 #[cfg(all(test, feature = "builder"))]

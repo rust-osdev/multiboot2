@@ -1,14 +1,13 @@
+pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
+pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
+
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::convert::TryInto;
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use core::mem;
-
-pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
-pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
-
 #[cfg(feature = "builder")]
-use {crate::builder::traits::StructAsBytes, crate::builder::BoxedDst};
+use {crate::builder::AsBytes, crate::builder::BoxedDst};
 
 const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
 
@@ -39,7 +38,7 @@ impl MemoryMapTag {
         let entry_version: u32 = 0;
         let mut bytes = [entry_size.to_le_bytes(), entry_version.to_le_bytes()].concat();
         for area in areas {
-            bytes.extend(area.struct_as_bytes());
+            bytes.extend(area.as_bytes());
         }
         BoxedDst::new(TagType::Mmap, bytes.as_slice())
     }
@@ -63,18 +62,13 @@ impl MemoryMapTag {
 }
 
 impl TagTrait for MemoryMapTag {
+    const ID: TagType = TagType::Mmap;
+
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= METADATA_SIZE);
         let size = base_tag.size as usize - METADATA_SIZE;
         assert_eq!(size % mem::size_of::<MemoryArea>(), 0);
         size / mem::size_of::<MemoryArea>()
-    }
-}
-
-#[cfg(feature = "builder")]
-impl StructAsBytes for MemoryMapTag {
-    fn byte_size(&self) -> usize {
-        self.size.try_into().unwrap()
     }
 }
 
@@ -121,11 +115,7 @@ impl MemoryArea {
 }
 
 #[cfg(feature = "builder")]
-impl StructAsBytes for MemoryArea {
-    fn byte_size(&self) -> usize {
-        mem::size_of::<Self>()
-    }
-}
+impl AsBytes for MemoryArea {}
 
 /// ABI-friendly version of [`MemoryAreaType`].
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -265,14 +255,16 @@ impl BasicMemoryInfoTag {
     }
 }
 
-#[cfg(feature = "builder")]
-impl StructAsBytes for BasicMemoryInfoTag {
-    fn byte_size(&self) -> usize {
-        mem::size_of::<Self>()
-    }
+impl TagTrait for BasicMemoryInfoTag {
+    const ID: TagType = TagType::BasicMeminfo;
+
+    fn dst_size(_base_tag: &Tag) {}
 }
 
 const EFI_METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
+
+#[cfg(feature = "builder")]
+impl AsBytes for EFIMemoryDesc {}
 
 /// EFI memory map tag. The [`EFIMemoryDesc`] follows the EFI specification.
 #[derive(ptr_meta::Pointee, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -299,7 +291,7 @@ impl EFIMemoryMapTag {
         ]
         .concat();
         for desc in descs {
-            bytes.extend(desc.struct_as_bytes());
+            bytes.extend(desc.as_bytes());
         }
         BoxedDst::new(TagType::EfiMmap, bytes.as_slice())
     }
@@ -322,25 +314,13 @@ impl EFIMemoryMapTag {
 }
 
 impl TagTrait for EFIMemoryMapTag {
+    const ID: TagType = TagType::EfiMmap;
+
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= EFI_METADATA_SIZE);
         let size = base_tag.size as usize - EFI_METADATA_SIZE;
         assert_eq!(size % mem::size_of::<EFIMemoryDesc>(), 0);
         size / mem::size_of::<EFIMemoryDesc>()
-    }
-}
-
-#[cfg(feature = "builder")]
-impl StructAsBytes for EFIMemoryMapTag {
-    fn byte_size(&self) -> usize {
-        self.size.try_into().unwrap()
-    }
-}
-
-#[cfg(feature = "builder")]
-impl StructAsBytes for EFIMemoryDesc {
-    fn byte_size(&self) -> usize {
-        mem::size_of::<Self>()
     }
 }
 
@@ -369,11 +349,10 @@ impl Default for EFIBootServicesNotExitedTag {
     }
 }
 
-#[cfg(feature = "builder")]
-impl StructAsBytes for EFIBootServicesNotExitedTag {
-    fn byte_size(&self) -> usize {
-        mem::size_of::<Self>()
-    }
+impl TagTrait for EFIBootServicesNotExitedTag {
+    const ID: TagType = TagType::EfiBs;
+
+    fn dst_size(_base_tag: &Tag) {}
 }
 
 /// An iterator over ALL EFI memory areas.

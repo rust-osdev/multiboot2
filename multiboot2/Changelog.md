@@ -1,5 +1,11 @@
 # CHANGELOG for crate `multiboot2`
 
+## 0.18.0 (2023-xx-xx)
+- **BREAKING** The `TagTrait` was enhanced and now has an associated `ID`
+  constant. This is only breaking to users that used `BootInformation::get_tag`
+  or that implement custom tags. `BootInformation::get_tag` doesn't need the
+  `typ` parameter anymore, as it can be deduced from the provided type.
+
 ## 0.17.0 (2023-07-12)
 - **BREAKING** Make functions of `InformationBuilder` chainable. They now consume the builder.
 - **BREAKING** Allow non-standard memory area types by using new pair of
