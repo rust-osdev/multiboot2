@@ -62,7 +62,7 @@ pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, Frameb
 pub use image_load_addr::ImageLoadPhysAddrTag;
 pub use memory_map::{
     BasicMemoryInfoTag, EFIBootServicesNotExitedTag, EFIMemoryAreaType, EFIMemoryDesc,
-    EFIMemoryMapTag, MemoryArea, MemoryAreaType, MemoryMapTag,
+    EFIMemoryMapTag, MemoryArea, MemoryAreaType, MemoryAreaTypeId, MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
@@ -583,6 +583,7 @@ impl<T: Pointee<Metadata = ()>> TagTrait for T {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::memory_map::MemoryAreaType;
     use core::str::Utf8Error;
 
     #[test]
