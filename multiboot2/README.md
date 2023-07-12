@@ -11,10 +11,11 @@ is `no_std` and can be used in a Multiboot2-kernel.
 It follows the Multiboot 2.0 specification at https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html and the ELF 64 specification at http://www.uclibc.org/docs/elf-64-gen.pdf.
 
 ## Features and `no_std` Compatibility
-This library is always `no_std`. However, the default `builder`-feature requires
-the `alloc`-crate to be available. You need the `builder` only if you want to
-construct new boot information structures at run time. For parsing, this is not
-relevant, and you can deactivate the default feature.
+This library is always `no_std` without `alloc`. However, the default `builder`-
+feature requires the `alloc`-crate and an `#[global_allocator]` to be available.
+You need the `builder` only if you want to construct new boot information
+structures at runtime. For parsing, this is not relevant, and you can
+deactivate the default feature.
 
 ## Background: The Multiboot 2 Information Structure
 The Multiboot information structure looks like this:
