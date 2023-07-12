@@ -97,7 +97,7 @@ impl FramebufferTag {
         bytes.extend(height.to_le_bytes());
         bytes.extend(bpp.to_le_bytes());
         bytes.extend(buffer_type.to_bytes());
-        BoxedDst::new(TagType::Framebuffer, &bytes)
+        BoxedDst::new(&bytes)
     }
 
     /// Contains framebuffer physical address.

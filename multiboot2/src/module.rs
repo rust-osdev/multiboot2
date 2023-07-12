@@ -35,7 +35,7 @@ impl ModuleTag {
         let end_bytes = end.to_le_bytes();
         let mut content_bytes = [start_bytes, end_bytes].concat();
         content_bytes.extend_from_slice(&cmdline_bytes);
-        BoxedDst::new(TagType::Module, &content_bytes)
+        BoxedDst::new(&content_bytes)
     }
 
     /// Reads the command line of the boot module as Rust string slice without

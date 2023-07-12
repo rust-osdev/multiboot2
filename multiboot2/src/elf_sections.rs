@@ -37,7 +37,7 @@ impl ElfSectionsTag {
         ]
         .concat();
         bytes.extend_from_slice(sections);
-        BoxedDst::new(TagType::ElfSections, &bytes)
+        BoxedDst::new(&bytes)
     }
 
     /// Get an iterator of loaded ELF sections.

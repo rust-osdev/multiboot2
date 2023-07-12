@@ -24,7 +24,7 @@ impl SmbiosTag {
     pub fn new(major: u8, minor: u8, tables: &[u8]) -> BoxedDst<Self> {
         let mut bytes = [major, minor, 0, 0, 0, 0, 0, 0].to_vec();
         bytes.extend(tables);
-        BoxedDst::new(TagType::Smbios, &bytes)
+        BoxedDst::new(&bytes)
     }
 }
 

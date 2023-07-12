@@ -17,7 +17,7 @@ impl ImageLoadPhysAddrTag {
     #[cfg(feature = "builder")]
     pub fn new(load_base_addr: u32) -> Self {
         Self {
-            typ: TagType::ImageLoadPhysAddr.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             load_base_addr,
         }
@@ -30,7 +30,7 @@ impl ImageLoadPhysAddrTag {
 }
 
 impl TagTrait for ImageLoadPhysAddrTag {
-    const ID: TagType = TagType::ImageLoadPhysAddr;
+    const ID: TagType = TagType::LoadBaseAddr;
 
     fn dst_size(_base_tag: &Tag) {}
 }

@@ -33,7 +33,7 @@ impl CommandLineTag {
             // terminating null-byte
             bytes.push(0);
         }
-        BoxedDst::new(TagType::Cmdline, &bytes)
+        BoxedDst::new(&bytes)
     }
 
     /// Reads the command line of the kernel as Rust string slice without

@@ -25,7 +25,7 @@ impl BootLoaderNameTag {
             // terminating null-byte
             bytes.push(0);
         }
-        BoxedDst::new(TagType::BootLoaderName, &bytes)
+        BoxedDst::new(&bytes)
     }
 
     /// Reads the name of the bootloader that is booting the kernel as Rust

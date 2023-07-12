@@ -42,7 +42,7 @@ impl RsdpV1Tag {
         rsdt_address: u32,
     ) -> Self {
         Self {
-            typ: TagType::AcpiV1.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             signature,
             checksum,
@@ -123,7 +123,7 @@ impl RsdpV2Tag {
         ext_checksum: u8,
     ) -> Self {
         Self {
-            typ: TagType::AcpiV2.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             signature,
             checksum,

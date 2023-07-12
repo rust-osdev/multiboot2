@@ -526,7 +526,7 @@ impl fmt::Debug for BootInformation<'_> {
 ///
 /// # Trivia
 /// This crate uses the [`Pointee`]-abstraction of the [`ptr_meta`] crate to
-/// create fat pointers.
+/// create fat pointers for tags that are DST.
 pub trait TagTrait: Pointee {
     /// The numeric ID of this tag.
     const ID: TagType;

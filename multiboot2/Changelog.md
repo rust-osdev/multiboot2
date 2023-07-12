@@ -5,6 +5,8 @@
   constant. This is only breaking to users that used `BootInformation::get_tag`
   or that implement custom tags. `BootInformation::get_tag` doesn't need the
   `typ` parameter anymore, as it can be deduced from the provided type.
+- **BREAKING** `BoxedDst::new` doesn't have the `typ` parameter anymore. This
+  only effects you when you wrote a custom DST tag.
 
 ## 0.17.0 (2023-07-12)
 - **BREAKING** Make functions of `InformationBuilder` chainable. They now consume the builder.

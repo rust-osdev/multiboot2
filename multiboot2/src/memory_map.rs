@@ -40,7 +40,7 @@ impl MemoryMapTag {
         for area in areas {
             bytes.extend(area.as_bytes());
         }
-        BoxedDst::new(TagType::Mmap, bytes.as_slice())
+        BoxedDst::new(bytes.as_slice())
     }
 
     /// Returns the entry size.
@@ -239,7 +239,7 @@ pub struct BasicMemoryInfoTag {
 impl BasicMemoryInfoTag {
     pub fn new(memory_lower: u32, memory_upper: u32) -> Self {
         Self {
-            typ: TagType::BasicMeminfo.into(),
+            typ: Self::ID.into(),
             size: mem::size_of::<BasicMemoryInfoTag>().try_into().unwrap(),
             memory_lower,
             memory_upper,
@@ -293,7 +293,7 @@ impl EFIMemoryMapTag {
         for desc in descs {
             bytes.extend(desc.as_bytes());
         }
-        BoxedDst::new(TagType::EfiMmap, bytes.as_slice())
+        BoxedDst::new(bytes.as_slice())
     }
 
     /// Return an iterator over ALL marked memory areas.

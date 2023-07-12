@@ -35,11 +35,10 @@ impl<T: TagTrait<Metadata = usize> + ?Sized> BoxedDst<T> {
     /// Create a boxed tag with the given content.
     ///
     /// # Parameters
-    /// - `typ` - The given [`TagTypeId`]
     /// - `content` - All payload bytes of the DST tag without the tag type or
     ///               the size. The memory is only read and can be discarded
     ///               afterwards.
-    pub(crate) fn new(typ: impl Into<TagTypeId>, content: &[u8]) -> Self {
+    pub(crate) fn new(content: &[u8]) -> Self {
         // Currently, I do not find a nice way of making this dynamic so that
         // also miri is guaranteed to be happy. But it seems that 4 is fine
         // here. I do have control over allocation and deallocation.
@@ -63,7 +62,7 @@ impl<T: TagTrait<Metadata = usize> + ?Sized> BoxedDst<T> {
         unsafe {
             // write tag type
             let ptrx = ptr.cast::<TagTypeId>();
-            ptrx.write(typ.into());
+            ptrx.write(T::ID.into());
 
             // write tag size
             let ptrx = ptrx.add(1).cast::<u32>();
@@ -139,11 +138,10 @@ mod tests {
 
     #[test]
     fn test_boxed_dst_tag() {
-        let tag_type_id = 1337_u32;
         let content = "hallo";
 
-        let tag = BoxedDst::<CustomTag>::new(tag_type_id, content.as_bytes());
-        assert_eq!(tag.typ, tag_type_id);
+        let tag = BoxedDst::<CustomTag>::new(content.as_bytes());
+        assert_eq!(tag.typ, CustomTag::ID);
         assert_eq!(tag.size as usize, METADATA_SIZE + content.len());
         assert_eq!(tag.string(), Ok(content));
     }

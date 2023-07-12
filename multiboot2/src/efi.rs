@@ -18,7 +18,7 @@ impl EFISdt32Tag {
     /// Create a new tag to pass the EFI32 System Table pointer.
     pub fn new(pointer: u32) -> Self {
         Self {
-            typ: TagType::Efi32.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             pointer,
         }
@@ -49,7 +49,7 @@ impl EFISdt64Tag {
     /// Create a new tag to pass the EFI64 System Table pointer.
     pub fn new(pointer: u64) -> Self {
         Self {
-            typ: TagType::Efi64.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             pointer,
         }
@@ -81,7 +81,7 @@ impl EFIImageHandle32Tag {
     #[cfg(feature = "builder")]
     pub fn new(pointer: u32) -> Self {
         Self {
-            typ: TagType::Efi32Ih.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             pointer,
         }
@@ -113,7 +113,7 @@ impl EFIImageHandle64Tag {
     #[cfg(feature = "builder")]
     pub fn new(pointer: u64) -> Self {
         Self {
-            typ: TagType::Efi64Ih.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             pointer,
         }
