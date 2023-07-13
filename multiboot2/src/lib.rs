@@ -47,12 +47,10 @@ use core::fmt;
 use core::mem::size_of;
 use derive_more::Display;
 // Must be public so that custom tags can be DSTs.
-pub use ptr_meta::Pointee;
-
+#[cfg(feature = "builder")]
+use crate::builder::AsBytes;
 use crate::framebuffer::UnknownFramebufferType;
 pub use boot_loader_name::BootLoaderNameTag;
-#[cfg(feature = "builder")]
-use builder::traits::StructAsBytes;
 pub use command_line::CommandLineTag;
 pub use efi::{EFIImageHandle32Tag, EFIImageHandle64Tag, EFISdt32Tag, EFISdt64Tag};
 pub use elf_sections::{
@@ -65,6 +63,7 @@ pub use memory_map::{
     EFIMemoryMapTag, MemoryArea, MemoryAreaType, MemoryAreaTypeId, MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
+pub use ptr_meta::Pointee;
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
 pub use smbios::SmbiosTag;
 use tag_type::TagIter;
@@ -102,26 +101,6 @@ pub mod builder;
 /// that the Rust compiler output changes `eax` before you can access it.
 pub const MAGIC: u32 = 0x36d76289;
 
-/// # Safety
-/// Deprecated. Please use BootInformation::load() instead.
-#[deprecated = "Please use BootInformation::load() instead."]
-pub unsafe fn load<'a>(address: usize) -> Result<BootInformation<'a>, MbiLoadError> {
-    let ptr = address as *const BootInformationHeader;
-    BootInformation::load(ptr)
-}
-
-/// # Safety
-/// Deprecated. Please use BootInformation::load() instead.
-#[deprecated = "Please use BootInformation::load() instead."]
-pub unsafe fn load_with_offset<'a>(
-    address: usize,
-    offset: usize,
-) -> Result<BootInformation<'a>, MbiLoadError> {
-    let ptr = address as *const u8;
-    let ptr = ptr.add(offset);
-    BootInformation::load(ptr.cast())
-}
-
 /// Error type that describes errors while loading/parsing a multiboot2 information structure
 /// from a given address.
 #[derive(Display, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -153,8 +132,8 @@ pub struct BootInformationHeader {
     // Followed by the boot information tags.
 }
 
+#[cfg(feature = "builder")]
 impl BootInformationHeader {
-    #[cfg(feature = "builder")]
     fn new(total_size: u32) -> Self {
         Self {
             total_size,
@@ -164,11 +143,7 @@ impl BootInformationHeader {
 }
 
 #[cfg(feature = "builder")]
-impl StructAsBytes for BootInformationHeader {
-    fn byte_size(&self) -> usize {
-        core::mem::size_of::<Self>()
-    }
-}
+impl AsBytes for BootInformationHeader {}
 
 /// This type holds the whole data of the MBI. This helps to better satisfy miri
 /// when it checks for memory issues.
@@ -267,7 +242,9 @@ impl<'a> BootInformation<'a> {
     /// This is the same as doing:
     ///
     /// ```rust,no_run
-    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
+    /// # use multiboot2::{BootInformation, BootInformationHeader};
+    /// # let ptr = 0xdeadbeef as *const BootInformationHeader;
+    /// # let boot_info = unsafe { BootInformation::load(ptr).unwrap() };
     /// let end_addr = boot_info.start_address() + boot_info.total_size();
     /// ```
     pub fn end_address(&self) -> usize {
@@ -281,7 +258,7 @@ impl<'a> BootInformation<'a> {
 
     /// Search for the basic memory info tag.
     pub fn basic_memory_info_tag(&self) -> Option<&BasicMemoryInfoTag> {
-        self.get_tag::<BasicMemoryInfoTag, _>(TagType::BasicMeminfo)
+        self.get_tag::<BasicMemoryInfoTag>()
     }
 
     /// Returns an [`ElfSectionIter`] iterator over the ELF Sections, if the
@@ -290,7 +267,9 @@ impl<'a> BootInformation<'a> {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
+    /// # use multiboot2::{BootInformation, BootInformationHeader};
+    /// # let ptr = 0xdeadbeef as *const BootInformationHeader;
+    /// # let boot_info = unsafe { BootInformation::load(ptr).unwrap() };
     /// if let Some(sections) = boot_info.elf_sections() {
     ///     let mut total = 0;
     ///     for section in sections {
@@ -300,7 +279,7 @@ impl<'a> BootInformation<'a> {
     /// }
     /// ```
     pub fn elf_sections(&self) -> Option<ElfSectionIter> {
-        let tag = self.get_tag::<ElfSectionsTag, _>(TagType::ElfSections);
+        let tag = self.get_tag::<ElfSectionsTag>();
         tag.map(|t| {
             assert!((t.entry_size * t.shndx) <= t.size);
             t.sections()
@@ -309,7 +288,7 @@ impl<'a> BootInformation<'a> {
 
     /// Search for the Memory map tag.
     pub fn memory_map_tag(&self) -> Option<&MemoryMapTag> {
-        self.get_tag::<MemoryMapTag, _>(TagType::Mmap)
+        self.get_tag::<MemoryMapTag>()
     }
 
     /// Get an iterator of all module tags.
@@ -319,18 +298,18 @@ impl<'a> BootInformation<'a> {
 
     /// Search for the BootLoader name tag.
     pub fn boot_loader_name_tag(&self) -> Option<&BootLoaderNameTag> {
-        self.get_tag::<BootLoaderNameTag, _>(TagType::BootLoaderName)
+        self.get_tag::<BootLoaderNameTag>()
     }
 
     /// Search for the Command line tag.
     pub fn command_line_tag(&self) -> Option<&CommandLineTag> {
-        self.get_tag::<CommandLineTag, _>(TagType::Cmdline)
+        self.get_tag::<CommandLineTag>()
     }
 
     /// Search for the VBE framebuffer tag. The result is `Some(Err(e))`, if the
     /// framebuffer type is unknown, while the framebuffer tag is present.
     pub fn framebuffer_tag(&self) -> Option<Result<&FramebufferTag, UnknownFramebufferType>> {
-        self.get_tag::<FramebufferTag, _>(TagType::Framebuffer)
+        self.get_tag::<FramebufferTag>()
             .map(|tag| match tag.buffer_type() {
                 Ok(_) => Ok(tag),
                 Err(e) => Err(e),
@@ -339,22 +318,22 @@ impl<'a> BootInformation<'a> {
 
     /// Search for the EFI 32-bit SDT tag.
     pub fn efi_sdt_32_tag(&self) -> Option<&EFISdt32Tag> {
-        self.get_tag::<EFISdt32Tag, _>(TagType::Efi32)
+        self.get_tag::<EFISdt32Tag>()
     }
 
     /// Search for the EFI 64-bit SDT tag.
     pub fn efi_sdt_64_tag(&self) -> Option<&EFISdt64Tag> {
-        self.get_tag::<EFISdt64Tag, _>(TagType::Efi64)
+        self.get_tag::<EFISdt64Tag>()
     }
 
     /// Search for the (ACPI 1.0) RSDP tag.
     pub fn rsdp_v1_tag(&self) -> Option<&RsdpV1Tag> {
-        self.get_tag::<RsdpV1Tag, _>(TagType::AcpiV1)
+        self.get_tag::<RsdpV1Tag>()
     }
 
     /// Search for the (ACPI 2.0 or later) RSDP tag.
     pub fn rsdp_v2_tag(&self) -> Option<&RsdpV2Tag> {
-        self.get_tag::<RsdpV2Tag, _>(TagType::AcpiV2)
+        self.get_tag::<RsdpV2Tag>()
     }
 
     /// Search for the EFI Memory map tag, if the boot services were exited.
@@ -364,40 +343,40 @@ impl<'a> BootInformation<'a> {
     pub fn efi_memory_map_tag(&self) -> Option<&EFIMemoryMapTag> {
         // If the EFIBootServicesNotExited is present, then we should not use
         // the memory map, as it could still be in use.
-        match self.get_tag::<Tag, _>(TagType::EfiBs) {
+        match self.get_tag::<EFIBootServicesNotExitedTag>() {
             Some(_tag) => None,
-            None => self.get_tag::<EFIMemoryMapTag, _>(TagType::EfiMmap),
+            None => self.get_tag::<EFIMemoryMapTag>(),
         }
     }
 
     /// Search for the EFI 32-bit image handle pointer tag.
     pub fn efi_32_ih_tag(&self) -> Option<&EFIImageHandle32Tag> {
-        self.get_tag::<EFIImageHandle32Tag, _>(TagType::Efi32Ih)
+        self.get_tag::<EFIImageHandle32Tag>()
     }
 
     /// Search for the EFI 64-bit image handle pointer tag.
     pub fn efi_64_ih_tag(&self) -> Option<&EFIImageHandle64Tag> {
-        self.get_tag::<EFIImageHandle64Tag, _>(TagType::Efi64Ih)
+        self.get_tag::<EFIImageHandle64Tag>()
     }
 
     /// Search for the EFI boot services not exited tag.
     pub fn efi_bs_not_exited_tag(&self) -> Option<&EFIBootServicesNotExitedTag> {
-        self.get_tag::<EFIBootServicesNotExitedTag, _>(TagType::EfiBs)
+        self.get_tag::<EFIBootServicesNotExitedTag>()
     }
 
     /// Search for the Image Load Base Physical Address tag.
     pub fn load_base_addr_tag(&self) -> Option<&ImageLoadPhysAddrTag> {
-        self.get_tag::<ImageLoadPhysAddrTag, _>(TagType::LoadBaseAddr)
+        self.get_tag::<ImageLoadPhysAddrTag>()
     }
 
     /// Search for the VBE information tag.
     pub fn vbe_info_tag(&self) -> Option<&VBEInfoTag> {
-        self.get_tag::<VBEInfoTag, _>(TagType::Vbe)
+        self.get_tag::<VBEInfoTag>()
     }
 
     /// Search for the SMBIOS tag.
     pub fn smbios_tag(&self) -> Option<&SmbiosTag> {
-        self.get_tag::<SmbiosTag, _>(TagType::Smbios)
+        self.get_tag::<SmbiosTag>()
     }
 
     /// Public getter to find any Multiboot tag by its type, including
@@ -419,12 +398,11 @@ impl<'a> BootInformation<'a> {
     ///
     /// ```no_run
     /// use std::str::Utf8Error;
-    /// use multiboot2::{Tag, TagTrait, TagTypeId};
+    /// use multiboot2::{BootInformation, BootInformationHeader, Tag, TagTrait, TagType, TagTypeId};
     ///
     /// #[repr(C)]
     /// #[derive(multiboot2::Pointee)] // Only needed for DSTs.
     /// struct CustomTag {
-    ///     // new type from the lib: has repr(u32)
     ///     tag: TagTypeId,
     ///     size: u32,
     ///     // begin of inline string
@@ -433,6 +411,8 @@ impl<'a> BootInformation<'a> {
     ///
     /// // This implementation is only necessary for tags that are DSTs.
     /// impl TagTrait for CustomTag {
+    ///     const ID: TagType = TagType::Custom(0x1337);
+    ///
     ///     fn dst_size(base_tag: &Tag) -> usize {
     ///         // The size of the sized portion of the custom tag.
     ///         let tag_base_size = 8; // id + size is 8 byte in size
@@ -446,21 +426,17 @@ impl<'a> BootInformation<'a> {
     ///         Tag::get_dst_str_slice(&self.name)
     ///     }
     /// }
-    ///
-    /// let mbi = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
+    /// let mbi_ptr = 0xdeadbeef as *const BootInformationHeader;
+    /// let mbi = unsafe { BootInformation::load(mbi_ptr).unwrap() };
     ///
     /// let tag = mbi
-    ///     .get_tag::<CustomTag, _>(0x1337)
+    ///     .get_tag::<CustomTag>()
     ///     .unwrap();
     /// assert_eq!(tag.name(), Ok("name"));
     /// ```
-    pub fn get_tag<TagT: TagTrait + ?Sized + 'a, TagType: Into<TagTypeId>>(
-        &'a self,
-        typ: TagType,
-    ) -> Option<&'a TagT> {
-        let typ = typ.into();
+    pub fn get_tag<TagT: TagTrait + ?Sized + 'a>(&'a self) -> Option<&'a TagT> {
         self.tags()
-            .find(|tag| tag.typ == typ)
+            .find(|tag| tag.typ == TagT::ID)
             .map(|tag| tag.cast_tag::<TagT>())
     }
 
@@ -532,18 +508,41 @@ impl fmt::Debug for BootInformation<'_> {
 /// must me provided, which returns the right size hint for the dynamically
 /// sized portion of the struct.
 ///
-/// The [`TagTrait::from_base_tag`] method has a default implementation for all
-/// tags that are `Sized`.
-///
 /// # Trivia
 /// This crate uses the [`Pointee`]-abstraction of the [`ptr_meta`] crate to
-/// create fat pointers.
+/// create fat pointers for tags that are DST.
 pub trait TagTrait: Pointee {
+    /// The numeric ID of this tag.
+    const ID: TagType;
+
     /// Returns the amount of items in the dynamically sized portion of the
     /// DST. Note that this is not the amount of bytes. So if the dynamically
     /// sized portion is 16 bytes in size and each element is 4 bytes big, then
     /// this function must return 4.
+    ///
+    /// For sized tags, this just returns `()`. For DSTs, this returns an
+    /// `usize`.
     fn dst_size(base_tag: &Tag) -> Self::Metadata;
+
+    /// Returns the tag as the common base tag structure.
+    fn as_base_tag(&self) -> &Tag {
+        let ptr = core::ptr::addr_of!(*self);
+        unsafe { &*ptr.cast::<Tag>() }
+    }
+
+    /// Returns the total size of the tag. The depends on the `size` field of
+    /// the tag.
+    fn size(&self) -> usize {
+        self.as_base_tag().size as usize
+    }
+
+    /// Returns a slice to the underlying bytes of the tag. This includes all
+    /// bytes, also for tags that are DSTs. The slice length depends on the
+    /// `size` field of the tag.
+    fn as_bytes(&self) -> &[u8] {
+        let ptr = core::ptr::addr_of!(*self);
+        unsafe { core::slice::from_raw_parts(ptr.cast(), self.size()) }
+    }
 
     /// Creates a reference to a (dynamically sized) tag type in a safe way.
     /// DST tags need to implement a proper [`Self::dst_size`] implementation.
@@ -558,27 +557,6 @@ pub trait TagTrait: Pointee {
         &*ptr
     }
 }
-
-// All sized tags automatically have a Pointee implementation where
-// Pointee::Metadata is (). Hence, the TagTrait is implemented automatically for
-// all tags that are sized.
-impl<T: Pointee<Metadata = ()>> TagTrait for T {
-    #[allow(clippy::unused_unit)]
-    fn dst_size(_: &Tag) -> Self::Metadata {
-        ()
-    }
-}
-
-/* TODO doesn't work, missing support in Rust (so far):
- https://github.com/rust-lang/rust/issues/20400
-    fn dst_size(base_tag: &Tag) -> usize {
-        // The size of the sized portion of the module tag.
-        let tag_base_size = 16;
-        assert!(base_tag.size >= 8);
-        base_tag.size as usize - tag_base_size
-    }
-}
-*/
 
 #[cfg(test)]
 mod tests {
@@ -1264,15 +1242,6 @@ mod tests {
         let bi = bi.unwrap();
         test_grub2_boot_info(&bi, addr, string_addr, &bytes.0, &string_bytes.0);
 
-        let bi = unsafe { load_with_offset(addr, 0) };
-        let bi = bi.unwrap();
-        test_grub2_boot_info(&bi, addr, string_addr, &bytes.0, &string_bytes.0);
-
-        let offset = 8usize;
-        let bi = unsafe { load_with_offset(addr - offset, offset) };
-        let bi = bi.unwrap();
-        test_grub2_boot_info(&bi, addr, string_addr, &bytes.0, &string_bytes.0);
-
         // Check that the MBI's debug output can be printed without SEGFAULT.
         // If this works, it is a good indicator than transitively a lot of
         // stuff works.
@@ -1574,13 +1543,17 @@ mod tests {
     #[test]
     #[cfg_attr(miri, ignore)]
     fn get_custom_tag_from_mbi() {
-        const CUSTOM_TAG_ID: u32 = 0x1337;
-
         #[repr(C, align(8))]
         struct CustomTag {
             tag: TagTypeId,
             size: u32,
             foo: u32,
+        }
+
+        impl TagTrait for CustomTag {
+            const ID: TagType = TagType::Custom(0x1337);
+
+            fn dst_size(_base_tag: &Tag) {}
         }
 
         #[repr(C, align(8))]
@@ -1595,10 +1568,10 @@ mod tests {
             0,
             0,
             0, // end: padding; end of multiboot2 boot information begin
-            CUSTOM_TAG_ID.to_le_bytes()[0],
-            CUSTOM_TAG_ID.to_le_bytes()[1],
-            CUSTOM_TAG_ID.to_le_bytes()[2],
-            CUSTOM_TAG_ID.to_le_bytes()[3], // end: my custom tag id
+            CustomTag::ID.val().to_le_bytes()[0],
+            CustomTag::ID.val().to_le_bytes()[1],
+            CustomTag::ID.val().to_le_bytes()[2],
+            CustomTag::ID.val().to_le_bytes()[3], // end: my custom tag id
             12,
             0,
             0,
@@ -1628,7 +1601,7 @@ mod tests {
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
 
-        let tag = bi.get_tag::<CustomTag, _>(CUSTOM_TAG_ID).unwrap();
+        let tag = bi.get_tag::<CustomTag>().unwrap();
         assert_eq!(tag.foo, 42);
     }
 
@@ -1636,8 +1609,6 @@ mod tests {
     #[test]
     #[cfg_attr(miri, ignore)]
     fn get_custom_dst_tag_from_mbi() {
-        const CUSTOM_TAG_ID: u32 = 0x1337;
-
         #[repr(C)]
         #[derive(crate::Pointee)]
         struct CustomTag {
@@ -1653,6 +1624,8 @@ mod tests {
         }
 
         impl TagTrait for CustomTag {
+            const ID: TagType = TagType::Custom(0x1337);
+
             fn dst_size(base_tag: &Tag) -> usize {
                 // The size of the sized portion of the command line tag.
                 let tag_base_size = 8;
@@ -1673,10 +1646,10 @@ mod tests {
             0,
             0,
             0, // end: padding; end of multiboot2 boot information begin
-            CUSTOM_TAG_ID.to_le_bytes()[0],
-            CUSTOM_TAG_ID.to_le_bytes()[1],
-            CUSTOM_TAG_ID.to_le_bytes()[2],
-            CUSTOM_TAG_ID.to_le_bytes()[3], // end: my custom tag id
+            CustomTag::ID.val().to_le_bytes()[0],
+            CustomTag::ID.val().to_le_bytes()[1],
+            CustomTag::ID.val().to_le_bytes()[2],
+            CustomTag::ID.val().to_le_bytes()[3], // end: my custom tag id
             14,
             0,
             0,
@@ -1706,7 +1679,7 @@ mod tests {
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
 
-        let tag = bi.get_tag::<CustomTag, _>(CUSTOM_TAG_ID).unwrap();
+        let tag = bi.get_tag::<CustomTag>().unwrap();
         assert_eq!(tag.name(), Ok("hello"));
     }
 
@@ -1755,10 +1728,6 @@ mod tests {
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
 
-        let _tag = bi.get_tag::<CommandLineTag, _>(TagType::Cmdline).unwrap();
-
-        let _tag = bi.get_tag::<CommandLineTag, _>(1).unwrap();
-
-        let _tag = bi.get_tag::<CommandLineTag, _>(TagTypeId::new(1)).unwrap();
+        let _tag = bi.get_tag::<CommandLineTag>().unwrap();
     }
 }

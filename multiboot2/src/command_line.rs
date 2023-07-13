@@ -1,16 +1,13 @@
 //! Module for [CommandLineTag].
 
-use crate::{Tag, TagTrait, TagTypeId};
+use crate::{Tag, TagTrait, TagType, TagTypeId};
 
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str;
 
 #[cfg(feature = "builder")]
-use {
-    crate::builder::traits::StructAsBytes, crate::builder::BoxedDst, crate::TagType,
-    alloc::vec::Vec, core::convert::TryInto,
-};
+use {crate::builder::BoxedDst, alloc::vec::Vec};
 
 pub(crate) const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
 
@@ -36,7 +33,7 @@ impl CommandLineTag {
             // terminating null-byte
             bytes.push(0);
         }
-        BoxedDst::new(TagType::Cmdline, &bytes)
+        BoxedDst::new(&bytes)
     }
 
     /// Reads the command line of the kernel as Rust string slice without
@@ -50,7 +47,9 @@ impl CommandLineTag {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// # let boot_info = unsafe { multiboot2::load(0xdeadbeef).unwrap() };
+    /// # use multiboot2::{BootInformation, BootInformationHeader};
+    /// # let ptr = 0xdeadbeef as *const BootInformationHeader;
+    /// # let boot_info = unsafe { BootInformation::load(ptr).unwrap() };
     /// if let Some(tag) = boot_info.command_line_tag() {
     ///     let command_line = tag.cmdline();
     ///     assert_eq!(Ok("/bootarg"), command_line);
@@ -72,22 +71,17 @@ impl Debug for CommandLineTag {
 }
 
 impl TagTrait for CommandLineTag {
+    const ID: TagType = TagType::Cmdline;
+
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= METADATA_SIZE);
         base_tag.size as usize - METADATA_SIZE
     }
 }
 
-#[cfg(feature = "builder")]
-impl StructAsBytes for CommandLineTag {
-    fn byte_size(&self) -> usize {
-        self.size.try_into().unwrap()
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::{CommandLineTag, Tag, TagType};
+    use super::*;
 
     const MSG: &str = "hello";
 
@@ -123,10 +117,8 @@ mod tests {
     #[test]
     #[cfg(feature = "builder")]
     fn test_build_str() {
-        use crate::builder::traits::StructAsBytes;
-
         let tag = CommandLineTag::new(MSG);
-        let bytes = tag.struct_as_bytes();
+        let bytes = tag.as_bytes();
         assert_eq!(bytes, get_bytes());
         assert_eq!(tag.cmdline(), Ok(MSG));
 

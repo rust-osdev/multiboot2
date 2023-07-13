@@ -1,12 +1,9 @@
 //! All MBI tags related to (U)EFI.
 
-use crate::TagType;
 use crate::TagTypeId;
+use crate::{Tag, TagTrait, TagType};
 use core::convert::TryInto;
 use core::mem::size_of;
-
-#[cfg(feature = "builder")]
-use crate::builder::traits::StructAsBytes;
 
 /// EFI system table in 32 bit mode tag.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -21,7 +18,7 @@ impl EFISdt32Tag {
     /// Create a new tag to pass the EFI32 System Table pointer.
     pub fn new(pointer: u32) -> Self {
         Self {
-            typ: TagType::Efi32.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             pointer,
         }
@@ -33,11 +30,10 @@ impl EFISdt32Tag {
     }
 }
 
-#[cfg(feature = "builder")]
-impl StructAsBytes for EFISdt32Tag {
-    fn byte_size(&self) -> usize {
-        size_of::<Self>()
-    }
+impl TagTrait for EFISdt32Tag {
+    const ID: TagType = TagType::Efi32;
+
+    fn dst_size(_base_tag: &Tag) {}
 }
 
 /// EFI system table in 64 bit mode tag.
@@ -53,7 +49,7 @@ impl EFISdt64Tag {
     /// Create a new tag to pass the EFI64 System Table pointer.
     pub fn new(pointer: u64) -> Self {
         Self {
-            typ: TagType::Efi64.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             pointer,
         }
@@ -65,11 +61,10 @@ impl EFISdt64Tag {
     }
 }
 
-#[cfg(feature = "builder")]
-impl StructAsBytes for EFISdt64Tag {
-    fn byte_size(&self) -> usize {
-        size_of::<Self>()
-    }
+impl TagTrait for EFISdt64Tag {
+    const ID: TagType = TagType::Efi64;
+
+    fn dst_size(_base_tag: &Tag) {}
 }
 
 /// Tag that contains the pointer to the boot loader's UEFI image handle
@@ -86,7 +81,7 @@ impl EFIImageHandle32Tag {
     #[cfg(feature = "builder")]
     pub fn new(pointer: u32) -> Self {
         Self {
-            typ: TagType::Efi32Ih.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             pointer,
         }
@@ -98,11 +93,10 @@ impl EFIImageHandle32Tag {
     }
 }
 
-#[cfg(feature = "builder")]
-impl StructAsBytes for EFIImageHandle32Tag {
-    fn byte_size(&self) -> usize {
-        size_of::<Self>()
-    }
+impl TagTrait for EFIImageHandle32Tag {
+    const ID: TagType = TagType::Efi32Ih;
+
+    fn dst_size(_base_tag: &Tag) {}
 }
 
 /// Tag that contains the pointer to the boot loader's UEFI image handle
@@ -119,7 +113,7 @@ impl EFIImageHandle64Tag {
     #[cfg(feature = "builder")]
     pub fn new(pointer: u64) -> Self {
         Self {
-            typ: TagType::Efi64Ih.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             pointer,
         }
@@ -131,11 +125,10 @@ impl EFIImageHandle64Tag {
     }
 }
 
-#[cfg(feature = "builder")]
-impl StructAsBytes for EFIImageHandle64Tag {
-    fn byte_size(&self) -> usize {
-        size_of::<Self>()
-    }
+impl TagTrait for EFIImageHandle64Tag {
+    const ID: TagType = TagType::Efi64Ih;
+
+    fn dst_size(_base_tag: &Tag) {}
 }
 
 #[cfg(all(test, feature = "builder"))]

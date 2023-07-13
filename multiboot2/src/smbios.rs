@@ -1,10 +1,7 @@
-use crate::{Tag, TagTrait, TagTypeId};
-use core::fmt::Debug;
 #[cfg(feature = "builder")]
-use {
-    crate::builder::traits::StructAsBytes, crate::builder::BoxedDst, crate::TagType,
-    core::convert::TryInto,
-};
+use crate::builder::BoxedDst;
+use crate::{Tag, TagTrait, TagType, TagTypeId};
+use core::fmt::Debug;
 
 const METADATA_SIZE: usize = core::mem::size_of::<TagTypeId>()
     + core::mem::size_of::<u32>()
@@ -27,21 +24,16 @@ impl SmbiosTag {
     pub fn new(major: u8, minor: u8, tables: &[u8]) -> BoxedDst<Self> {
         let mut bytes = [major, minor, 0, 0, 0, 0, 0, 0].to_vec();
         bytes.extend(tables);
-        BoxedDst::new(TagType::Smbios, &bytes)
+        BoxedDst::new(&bytes)
     }
 }
 
 impl TagTrait for SmbiosTag {
+    const ID: TagType = TagType::Smbios;
+
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= METADATA_SIZE);
         base_tag.size as usize - METADATA_SIZE
-    }
-}
-
-#[cfg(feature = "builder")]
-impl StructAsBytes for SmbiosTag {
-    fn byte_size(&self) -> usize {
-        self.size.try_into().unwrap()
     }
 }
 
@@ -58,7 +50,7 @@ impl Debug for SmbiosTag {
 
 #[cfg(test)]
 mod tests {
-    use crate::{SmbiosTag, Tag, TagType};
+    use super::*;
 
     /// Returns the tag structure in bytes in little endian format.
     fn get_bytes() -> std::vec::Vec<u8> {
@@ -92,10 +84,8 @@ mod tests {
     #[test]
     #[cfg(feature = "builder")]
     fn test_build() {
-        use crate::builder::traits::StructAsBytes;
-
         let tag = SmbiosTag::new(3, 0, &[0xabu8; 24]);
-        let bytes = tag.struct_as_bytes();
+        let bytes = tag.as_bytes();
         assert_eq!(bytes, get_bytes());
     }
 }

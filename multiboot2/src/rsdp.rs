@@ -10,15 +10,12 @@
 //! signature should be manually verified.
 //!
 
-use crate::tag_type::TagTypeId;
+use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::slice;
 use core::str;
 use core::str::Utf8Error;
 #[cfg(feature = "builder")]
-use {
-    crate::builder::traits::StructAsBytes, crate::TagType, core::convert::TryInto,
-    core::mem::size_of,
-};
+use {core::convert::TryInto, core::mem::size_of};
 
 const RSDPV1_LENGTH: usize = 20;
 
@@ -45,7 +42,7 @@ impl RsdpV1Tag {
         rsdt_address: u32,
     ) -> Self {
         Self {
-            typ: TagType::AcpiV1.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             signature,
             checksum,
@@ -88,11 +85,10 @@ impl RsdpV1Tag {
     }
 }
 
-#[cfg(feature = "builder")]
-impl StructAsBytes for RsdpV1Tag {
-    fn byte_size(&self) -> usize {
-        size_of::<Self>()
-    }
+impl TagTrait for RsdpV1Tag {
+    const ID: TagType = TagType::AcpiV1;
+
+    fn dst_size(_base_tag: &Tag) {}
 }
 
 /// This tag contains a copy of RSDP as defined per ACPI 2.0 or later specification.
@@ -127,7 +123,7 @@ impl RsdpV2Tag {
         ext_checksum: u8,
     ) -> Self {
         Self {
-            typ: TagType::AcpiV2.into(),
+            typ: Self::ID.into(),
             size: size_of::<Self>().try_into().unwrap(),
             signature,
             checksum,
@@ -182,9 +178,8 @@ impl RsdpV2Tag {
     }
 }
 
-#[cfg(feature = "builder")]
-impl StructAsBytes for RsdpV2Tag {
-    fn byte_size(&self) -> usize {
-        size_of::<Self>()
-    }
+impl TagTrait for RsdpV2Tag {
+    const ID: TagType = TagType::AcpiV2;
+
+    fn dst_size(_base_tag: &Tag) {}
 }

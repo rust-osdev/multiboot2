@@ -5,9 +5,6 @@
 //! - [`TagTypeId`]
 //! - [`TagType`]
 //! - [`Tag`]
-#[cfg(feature = "builder")]
-use crate::builder::traits::StructAsBytes;
-
 use crate::TagTrait;
 use core::fmt::{Debug, Formatter};
 use core::hash::Hash;
@@ -313,6 +310,7 @@ pub struct Tag {
 impl Tag {
     /// Casts the base tag to the specific tag type.
     pub fn cast_tag<'a, T: TagTrait + ?Sized + 'a>(&'a self) -> &'a T {
+        assert_eq!(self.typ, T::ID);
         // Safety: At this point, we trust that "self.size" and the size hint
         // for DST tags are sane.
         unsafe { TagTrait::from_base_tag(self) }
@@ -378,11 +376,10 @@ impl Default for EndTag {
     }
 }
 
-#[cfg(feature = "builder")]
-impl StructAsBytes for EndTag {
-    fn byte_size(&self) -> usize {
-        core::mem::size_of::<Self>()
-    }
+impl TagTrait for EndTag {
+    const ID: TagType = TagType::End;
+
+    fn dst_size(_base_tag: &Tag) {}
 }
 
 /// Iterates the MBI's tags from the first tag to the end tag.

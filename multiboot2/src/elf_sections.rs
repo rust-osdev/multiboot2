@@ -1,11 +1,9 @@
-use crate::{Tag, TagTrait, TagTypeId};
-
+#[cfg(feature = "builder")]
+use crate::builder::BoxedDst;
+use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 use core::str::Utf8Error;
-
-#[cfg(feature = "builder")]
-use {crate::builder::traits::StructAsBytes, crate::builder::BoxedDst, crate::TagType};
 
 const METADATA_SIZE: usize = size_of::<TagTypeId>() + 4 * size_of::<u32>();
 
@@ -39,7 +37,7 @@ impl ElfSectionsTag {
         ]
         .concat();
         bytes.extend_from_slice(sections);
-        BoxedDst::new(TagType::ElfSections, &bytes)
+        BoxedDst::new(&bytes)
     }
 
     /// Get an iterator of loaded ELF sections.
@@ -61,16 +59,11 @@ impl ElfSectionsTag {
 }
 
 impl TagTrait for ElfSectionsTag {
+    const ID: TagType = TagType::ElfSections;
+
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= METADATA_SIZE);
         base_tag.size as usize - METADATA_SIZE
-    }
-}
-
-#[cfg(feature = "builder")]
-impl StructAsBytes for ElfSectionsTag {
-    fn byte_size(&self) -> usize {
-        self.size.try_into().unwrap()
     }
 }
 
