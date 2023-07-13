@@ -99,13 +99,9 @@ use crate::builder::AsBytes;
 use crate::framebuffer::UnknownFramebufferType;
 use tag::TagIter;
 
-/// Magic number that a multiboot2-compliant boot loader will store in `eax` register
-/// right before handoff to the payload (the kernel). This value can be used to check,
-/// that the kernel was indeed booted via multiboot2.
-///
-/// Caution: You might need some assembly code (e.g. GAS or NASM) first, which
-/// moves `eax` to another register, like `edi`. Otherwise it probably happens,
-/// that the Rust compiler output changes `eax` before you can access it.
+/// Magic number that a Multiboot2-compliant boot loader will use to identify
+/// the handoff. The location depends on the architecture and the targeted
+/// machine state.
 pub const MAGIC: u32 = 0x36d76289;
 
 /// Error type that describes errors while loading/parsing a multiboot2 information structure

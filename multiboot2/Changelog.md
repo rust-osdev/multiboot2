@@ -1,5 +1,8 @@
 # CHANGELOG for crate `multiboot2`
 
+## 0.18.1 (2023-07-13)
+- Documentation improvements
+
 ## 0.18.0 (2023-07-13)
 - **BREAKING** The `TagTrait` was enhanced and now has an associated `ID`
   constant. This is only breaking to users that used `BootInformation::get_tag`
