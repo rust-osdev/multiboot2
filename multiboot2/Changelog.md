@@ -9,6 +9,16 @@
   only effects you when you wrote a custom DST tag.
 - **BREAKING** Removed deprecated functions `load` and `load_with_offset`. Use
   `BootInformation::load` instead.
+- **BREAKING** Renamed `BootInformation::efi_32_ih_tag` to
+  `BootInformation::efi_ih32_tag` for consistency.
+- **BREAKING** Renamed `BootInformation::efi_64_ih_tag` to
+  `BootInformation::efi_ih64_tag` for consistency.
+- **BREAKING** Renamed `BootInformation::efi_std_32_tag` to
+  `BootInformation::efi_std32_tag` for consistency.
+- **BREAKING** Renamed `BootInformation::efi_std_64_tag` to
+  `BootInformation::efi_std64_tag` for consistency.
+- Better debug output of `BootInformation` and `MemoryArea`
+- Internal code cleanup.
 
 ## 0.17.0 (2023-07-12)
 - **BREAKING** Make functions of `InformationBuilder` chainable. They now consume the builder.

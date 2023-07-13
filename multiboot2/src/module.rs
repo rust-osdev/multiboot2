@@ -80,11 +80,11 @@ impl Debug for ModuleTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("ModuleTag")
             .field("type", &{ self.typ })
-            .field("size (tag)", &{ self.size })
-            .field("size (module)", &self.module_size())
+            .field("size", &{ self.size })
             // Trick to print as hex.
-            .field("mod_start", &(self.mod_start as *const usize))
-            .field("mod_end", &(self.mod_end as *const usize))
+            .field("mod_start", &self.mod_start)
+            .field("mod_end", &self.mod_end)
+            .field("mod_size", &self.module_size())
             .field("cmdline", &self.cmdline())
             .finish()
     }

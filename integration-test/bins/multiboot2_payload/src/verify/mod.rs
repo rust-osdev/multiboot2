@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 use multiboot2::BootInformation;
 
 pub fn run(mbi: &BootInformation) -> anyhow::Result<()> {
-    println!("{mbi:#?}");
+    println!("{mbi:#x?}");
     println!();
 
     let bootloader = mbi
