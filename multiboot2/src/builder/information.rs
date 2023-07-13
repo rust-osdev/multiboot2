@@ -1,25 +1,14 @@
 //! Exports item [`InformationBuilder`].
+use crate::builder::{AsBytes, BoxedDst};
 use crate::{
     BasicMemoryInfoTag, BootInformationHeader, BootLoaderNameTag, CommandLineTag,
     EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
     EFISdt32Tag, EFISdt64Tag, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag,
     MemoryMapTag, ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, TagType,
 };
-
-use crate::builder::BoxedDst;
 use alloc::vec::Vec;
 use core::mem::size_of;
 use core::ops::Deref;
-
-/// Helper trait for all structs that need to be serialized that do not
-/// implement `TagTrait`.
-pub trait AsBytes: Sized {
-    fn as_bytes(&self) -> &[u8] {
-        let ptr = core::ptr::addr_of!(*self);
-        let size = core::mem::size_of::<Self>();
-        unsafe { core::slice::from_raw_parts(ptr.cast(), size) }
-    }
-}
 
 /// Holds the raw bytes of a boot information built with [`InformationBuilder`]
 /// on the heap. The bytes returned by [`BootInformationBytes::as_bytes`] are
