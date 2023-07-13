@@ -263,9 +263,70 @@ impl<'a> BootInformation<'a> {
         self.0.header.total_size as usize
     }
 
+    // ######################################################
+    // ### BEGIN OF TAG GETTERS (in alphabetical order)
+
+    /*fn apm(&self) {
+        // also add to debug output
+        todo!()
+    }*/
+
     /// Search for the basic memory info tag.
     pub fn basic_memory_info_tag(&self) -> Option<&BasicMemoryInfoTag> {
         self.get_tag::<BasicMemoryInfoTag>()
+    }
+
+    /// Search for the BootLoader name tag.
+    pub fn boot_loader_name_tag(&self) -> Option<&BootLoaderNameTag> {
+        self.get_tag::<BootLoaderNameTag>()
+    }
+
+    /*fn bootdev(&self) {
+        // also add to debug output
+        todo!()
+    }*/
+
+    /// Search for the Command line tag.
+    pub fn command_line_tag(&self) -> Option<&CommandLineTag> {
+        self.get_tag::<CommandLineTag>()
+    }
+
+    /// Search for the EFI boot services not exited tag.
+    pub fn efi_bs_not_exited_tag(&self) -> Option<&EFIBootServicesNotExitedTag> {
+        self.get_tag::<EFIBootServicesNotExitedTag>()
+    }
+
+    /// Search for the EFI Memory map tag, if the boot services were exited.
+    /// Otherwise, if the [`TagType::EfiBs`] tag is present, this returns `None`
+    /// as it is strictly recommended to get the memory map from the `uefi`
+    /// services.
+    pub fn efi_memory_map_tag(&self) -> Option<&EFIMemoryMapTag> {
+        // If the EFIBootServicesNotExited is present, then we should not use
+        // the memory map, as it could still be in use.
+        match self.get_tag::<EFIBootServicesNotExitedTag>() {
+            Some(_tag) => None,
+            None => self.get_tag::<EFIMemoryMapTag>(),
+        }
+    }
+
+    /// Search for the EFI 32-bit SDT tag.
+    pub fn efi_sdt32_tag(&self) -> Option<&EFISdt32Tag> {
+        self.get_tag::<EFISdt32Tag>()
+    }
+
+    /// Search for the EFI 64-bit SDT tag.
+    pub fn efi_sdt64_tag(&self) -> Option<&EFISdt64Tag> {
+        self.get_tag::<EFISdt64Tag>()
+    }
+
+    /// Search for the EFI 32-bit image handle pointer tag.
+    pub fn efi_ih32_tag(&self) -> Option<&EFIImageHandle32Tag> {
+        self.get_tag::<EFIImageHandle32Tag>()
+    }
+
+    /// Search for the EFI 64-bit image handle pointer tag.
+    pub fn efi_ih64_tag(&self) -> Option<&EFIImageHandle64Tag> {
+        self.get_tag::<EFIImageHandle64Tag>()
     }
 
     /// Returns an [`ElfSectionIter`] iterator over the ELF Sections, if the
@@ -293,26 +354,6 @@ impl<'a> BootInformation<'a> {
         })
     }
 
-    /// Search for the Memory map tag.
-    pub fn memory_map_tag(&self) -> Option<&MemoryMapTag> {
-        self.get_tag::<MemoryMapTag>()
-    }
-
-    /// Get an iterator of all module tags.
-    pub fn module_tags(&self) -> ModuleIter {
-        module::module_iter(self.tags())
-    }
-
-    /// Search for the BootLoader name tag.
-    pub fn boot_loader_name_tag(&self) -> Option<&BootLoaderNameTag> {
-        self.get_tag::<BootLoaderNameTag>()
-    }
-
-    /// Search for the Command line tag.
-    pub fn command_line_tag(&self) -> Option<&CommandLineTag> {
-        self.get_tag::<CommandLineTag>()
-    }
-
     /// Search for the VBE framebuffer tag. The result is `Some(Err(e))`, if the
     /// framebuffer type is unknown, while the framebuffer tag is present.
     pub fn framebuffer_tag(&self) -> Option<Result<&FramebufferTag, UnknownFramebufferType>> {
@@ -323,15 +364,25 @@ impl<'a> BootInformation<'a> {
             })
     }
 
-    /// Search for the EFI 32-bit SDT tag.
-    pub fn efi_sdt_32_tag(&self) -> Option<&EFISdt32Tag> {
-        self.get_tag::<EFISdt32Tag>()
+    /// Search for the Image Load Base Physical Address tag.
+    pub fn load_base_addr_tag(&self) -> Option<&ImageLoadPhysAddrTag> {
+        self.get_tag::<ImageLoadPhysAddrTag>()
     }
 
-    /// Search for the EFI 64-bit SDT tag.
-    pub fn efi_sdt_64_tag(&self) -> Option<&EFISdt64Tag> {
-        self.get_tag::<EFISdt64Tag>()
+    /// Search for the Memory map tag.
+    pub fn memory_map_tag(&self) -> Option<&MemoryMapTag> {
+        self.get_tag::<MemoryMapTag>()
     }
+
+    /// Get an iterator of all module tags.
+    pub fn module_tags(&self) -> ModuleIter {
+        module::module_iter(self.tags())
+    }
+
+    /*fn network_tag(&self) {
+        // also add to debug output
+        todo!()
+    }*/
 
     /// Search for the (ACPI 1.0) RSDP tag.
     pub fn rsdp_v1_tag(&self) -> Option<&RsdpV1Tag> {
@@ -343,37 +394,9 @@ impl<'a> BootInformation<'a> {
         self.get_tag::<RsdpV2Tag>()
     }
 
-    /// Search for the EFI Memory map tag, if the boot services were exited.
-    /// Otherwise, if the [`TagType::EfiBs`] tag is present, this returns `None`
-    /// as it is strictly recommended to get the memory map from the `uefi`
-    /// services.
-    pub fn efi_memory_map_tag(&self) -> Option<&EFIMemoryMapTag> {
-        // If the EFIBootServicesNotExited is present, then we should not use
-        // the memory map, as it could still be in use.
-        match self.get_tag::<EFIBootServicesNotExitedTag>() {
-            Some(_tag) => None,
-            None => self.get_tag::<EFIMemoryMapTag>(),
-        }
-    }
-
-    /// Search for the EFI 32-bit image handle pointer tag.
-    pub fn efi_32_ih_tag(&self) -> Option<&EFIImageHandle32Tag> {
-        self.get_tag::<EFIImageHandle32Tag>()
-    }
-
-    /// Search for the EFI 64-bit image handle pointer tag.
-    pub fn efi_64_ih_tag(&self) -> Option<&EFIImageHandle64Tag> {
-        self.get_tag::<EFIImageHandle64Tag>()
-    }
-
-    /// Search for the EFI boot services not exited tag.
-    pub fn efi_bs_not_exited_tag(&self) -> Option<&EFIBootServicesNotExitedTag> {
-        self.get_tag::<EFIBootServicesNotExitedTag>()
-    }
-
-    /// Search for the Image Load Base Physical Address tag.
-    pub fn load_base_addr_tag(&self) -> Option<&ImageLoadPhysAddrTag> {
-        self.get_tag::<ImageLoadPhysAddrTag>()
+    /// Search for the SMBIOS tag.
+    pub fn smbios_tag(&self) -> Option<&SmbiosTag> {
+        self.get_tag::<SmbiosTag>()
     }
 
     /// Search for the VBE information tag.
@@ -381,22 +404,18 @@ impl<'a> BootInformation<'a> {
         self.get_tag::<VBEInfoTag>()
     }
 
-    /// Search for the SMBIOS tag.
-    pub fn smbios_tag(&self) -> Option<&SmbiosTag> {
-        self.get_tag::<SmbiosTag>()
-    }
+    // ### END OF TAG GETTERS
+    // ######################################################
 
     /// Public getter to find any Multiboot tag by its type, including
     /// specified and custom ones.
-    ///
-    /// The parameter can be of type `u32`, [`TagType`], or [`TagTypeId`].
     ///
     /// # Specified or Custom Tags
     /// The Multiboot2 specification specifies a list of tags, see [`TagType`].
     /// However, it doesn't forbid to use custom tags. Because of this, there
     /// exists the [`TagType`] abstraction. It is recommended to use this
     /// getter only for custom tags. For specified tags, use getters, such as
-    /// [`Self::efi_64_ih_tag`].
+    /// [`Self::efi_ih64_tag`].
     ///
     /// ## Use Custom Tags
     /// The following example shows how you may use this interface to parse
@@ -462,50 +481,47 @@ impl fmt::Debug for BootInformation<'_> {
         /// Limit how many Elf-Sections should be debug-formatted.
         /// Can be thousands of sections for a Rust binary => this is useless output.
         /// If the user really wants this, they should debug-format the field directly.
-        const ELF_SECTIONS_LIMIT: usize = 17;
+        const ELF_SECTIONS_LIMIT: usize = 7;
 
-        let mut debug = f.debug_struct("Multiboot2 Boot Information");
+        let mut debug = f.debug_struct("Multiboot2BootInformation");
         debug
-            .field("start_address", &(self.start_address() as *const u64))
-            .field("end_address", &(self.end_address() as *const u64))
-            .field("total_size", &(self.total_size() as *const u64))
-            .field(
-                "boot_loader_name_tag",
-                &self
-                    .boot_loader_name_tag()
-                    .and_then(|x| x.name().ok())
-                    .unwrap_or("<unknown>"),
-            )
-            .field(
-                "command_line",
-                &self
-                    .command_line_tag()
-                    .and_then(|x| x.cmdline().ok())
-                    .unwrap_or(""),
-            )
-            .field("memory_areas", &self.memory_map_tag())
-            // so far, I didn't found a nice way to connect the iterator with ".field()" because
-            // the iterator isn't Debug
-            .field("module_tags", &self.module_tags());
+            .field("start_address", &self.start_address())
+            .field("end_address", &self.end_address())
+            .field("total_size", &self.total_size())
+            // now tags in alphabetical order
+            .field("basic_memory_info", &(self.basic_memory_info_tag()))
+            .field("boot_loader_name", &self.boot_loader_name_tag())
+            // .field("bootdev", &self.bootdev_tag())
+            .field("command_line", &self.command_line_tag())
+            .field("efi_bs_not_exited", &self.efi_bs_not_exited_tag())
+            .field("efi_memory_map", &self.efi_memory_map_tag())
+            .field("efi_sdt32", &self.efi_sdt32_tag())
+            .field("efi_sdt64", &self.efi_sdt64_tag())
+            .field("efi_ih32", &self.efi_ih32_tag())
+            .field("efi_ih64", &self.efi_ih64_tag());
+
         // usually this is REALLY big (thousands of tags) => skip it here
+        {
+            let elf_sections_tag_entries_count =
+                self.elf_sections().map(|x| x.count()).unwrap_or(0);
 
-        let elf_sections_tag_entries_count = self.elf_sections().map(|x| x.count()).unwrap_or(0);
-
-        if elf_sections_tag_entries_count > ELF_SECTIONS_LIMIT {
-            debug.field("elf_sections_tags (count)", &elf_sections_tag_entries_count);
-        } else {
-            debug.field(
-                "elf_sections_tags",
-                &self.elf_sections().unwrap_or_default(),
-            );
+            if elf_sections_tag_entries_count > ELF_SECTIONS_LIMIT {
+                debug.field("elf_sections (count)", &elf_sections_tag_entries_count);
+            } else {
+                debug.field("elf_sections", &self.elf_sections().unwrap_or_default());
+            }
         }
 
         debug
-            .field("efi_32_ih", &self.efi_32_ih_tag())
-            .field("efi_64_ih", &self.efi_64_ih_tag())
-            .field("efi_sdt_32_tag", &self.efi_sdt_32_tag())
-            .field("efi_sdt_64_tag", &self.efi_sdt_64_tag())
-            .field("efi_memory_map_tag", &self.efi_memory_map_tag())
+            .field("framebuffer", &self.framebuffer_tag())
+            .field("load_base_addr", &self.load_base_addr_tag())
+            .field("memory_map", &self.memory_map_tag())
+            .field("modules", &self.module_tags())
+            // .field("network", &self.network_tag())
+            .field("rsdp_v1", &self.rsdp_v1_tag())
+            .field("rsdp_v2", &self.rsdp_v2_tag())
+            .field("smbios_tag", &self.smbios_tag())
+            .field("vbe_info_tag", &self.vbe_info_tag())
             .finish()
     }
 }

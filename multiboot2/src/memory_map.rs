@@ -73,7 +73,7 @@ impl TagTrait for MemoryMapTag {
 }
 
 /// A memory area entry descriptor.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct MemoryArea {
     base_addr: u64,
@@ -111,6 +111,16 @@ impl MemoryArea {
     /// The type of the memory region.
     pub fn typ(&self) -> MemoryAreaTypeId {
         self.typ
+    }
+}
+
+impl Debug for MemoryArea {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("MemoryArea")
+            .field("base_addr", &self.base_addr)
+            .field("length", &self.length)
+            .field("typ", &self.typ)
+            .finish()
     }
 }
 
