@@ -448,7 +448,7 @@ mod tests {
         let mb2i_data = create_builder().build();
 
         // Step 2/2: Test the built MBI
-        let mb2i = unsafe { BootInformation::load(mb2i_data.as_ptr().cast()) }
+        let mb2i = unsafe { BootInformation::load(mb2i_data.as_ptr().cast_mut().cast()) }
             .expect("generated information should be readable");
 
         assert_eq!(mb2i.basic_memory_info_tag().unwrap().memory_lower(), 640);

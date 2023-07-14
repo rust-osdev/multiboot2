@@ -48,7 +48,7 @@ impl CommandLineTag {
     ///
     /// ```rust,no_run
     /// # use multiboot2::{BootInformation, BootInformationHeader};
-    /// # let ptr = 0xdeadbeef as *const BootInformationHeader;
+    /// # let ptr = 0xdeadbeef as *mut BootInformationHeader;
     /// # let boot_info = unsafe { BootInformation::load(ptr).unwrap() };
     /// if let Some(tag) = boot_info.command_line_tag() {
     ///     let command_line = tag.cmdline();
