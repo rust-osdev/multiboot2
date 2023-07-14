@@ -1,5 +1,9 @@
 # CHANGELOG for crate `multiboot2`
 
+## 0.19.0 (2023-07-14)
+- `InformationBuilder` now also allows to add custom tags. The new public method
+  `add_tag` was introduced for that.
+
 ## 0.18.1 (2023-07-13)
 - Documentation improvements
 
