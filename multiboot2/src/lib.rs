@@ -468,10 +468,6 @@ impl<'a> BootInformation<'a> {
     }
 }
 
-// SAFETY: BootInformation contains a const ptr to memory that is never mutated.
-// Sending this pointer to other threads is sound.
-unsafe impl Send for BootInformation<'_> {}
-
 impl fmt::Debug for BootInformation<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         /// Limit how many Elf-Sections should be debug-formatted.
@@ -527,6 +523,30 @@ mod tests {
     use super::*;
     use crate::memory_map::MemoryAreaType;
     use core::str::Utf8Error;
+
+    /// Compile time test to check if the boot information is Send and Sync.
+    /// This test is relevant to give library users flexebility in passing the
+    /// struct around.
+    #[test]
+    fn boot_information_is_send_and_sync() {
+        fn accept<T: Send + Sync>(_: T) {}
+
+        #[repr(C, align(8))]
+        struct Bytes([u8; 16]);
+        let bytes: Bytes = Bytes([
+            16, 0, 0, 0, // total_size
+            0, 0, 0, 0, // reserved
+            0, 0, 0, 0, // end tag type
+            8, 0, 0, 0, // end tag size
+        ]);
+        let ptr = bytes.0.as_ptr();
+        let addr = ptr as usize;
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
+        let bi = bi.unwrap();
+
+        // compile time test
+        accept(bi);
+    }
 
     #[test]
     fn no_tags() {
