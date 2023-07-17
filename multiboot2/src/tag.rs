@@ -43,24 +43,17 @@ impl Tag {
     /// UTF-8 Rust string slice without a terminating null byte or an error is
     /// returned.
     pub fn get_dst_str_slice(bytes: &[u8]) -> Result<&str, Utf8Error> {
-        if bytes.is_empty() {
-            // Very unlikely. A sane bootloader would omit the tag in this case.
-            // But better be safe.
-            return Ok("");
-        }
+        // Determine length of string before first NUL character
 
-        // Return without a trailing null byte. By spec, the null byte should
-        // always terminate the string. However, for safety, we do make an extra
-        // check.
-        let str_slice = if bytes.ends_with(&[b'\0']) {
-            let str_len = bytes.len() - 1;
-            &bytes[0..str_len]
-        } else {
-            // Unlikely that a bootloader doesn't follow the spec and does not
-            // add a terminating null byte.
-            bytes
+        let length = match bytes.iter().position(|ch| (*ch) == 0x00) {
+            // Unterminated string case:
+            None => bytes.len(),
+
+            // Terminated case:
+            Some(idx) => idx,
         };
-        core::str::from_utf8(str_slice)
+        // Convert to Rust string:
+        core::str::from_utf8(&bytes[..length])
     }
 }
 
@@ -141,9 +134,11 @@ mod tests {
         // also unlikely case
         assert_eq!(Ok(""), Tag::get_dst_str_slice(&[b'\0']));
         // unlikely case: missing null byte. but the lib can cope with that
-        assert_eq!(Ok("foobar"), Tag::get_dst_str_slice("foobar".as_bytes()));
+        assert_eq!(Ok("foobar"), Tag::get_dst_str_slice(b"foobar"));
         // test that the null bytes is not included in the string slice
-        assert_eq!(Ok("foobar"), Tag::get_dst_str_slice("foobar\0".as_bytes()));
+        assert_eq!(Ok("foobar"), Tag::get_dst_str_slice(b"foobar\0"));
+        // test that C-style null string termination works as expected
+        assert_eq!(Ok("foo"), Tag::get_dst_str_slice(b"foo\0bar"));
         // test invalid utf8
         assert!(matches!(
             Tag::get_dst_str_slice(&[0xff, 0xff]),
