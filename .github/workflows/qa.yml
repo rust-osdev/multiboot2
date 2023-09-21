@@ -1,6 +1,6 @@
 name: QA
 
-on: [ push, pull_request ]
+on: [pull_request, push, merge_group]
 
 jobs:
   spellcheck:

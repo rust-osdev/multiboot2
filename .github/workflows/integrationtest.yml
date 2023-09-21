@@ -6,10 +6,10 @@
 # Instead, it is the right thing that the CI always covers the whole repository
 # and that it is as stable as possible.
 
-name: "Cargo workspace"
+name: "Integration Test"
 
 # Run on every push (tag, branch) and pull_request
-on: [pull_request, push, workflow_dispatch]
+on: [pull_request, push, merge_group]
 
 env:
   CARGO_TERM_COLOR: always
