@@ -7,6 +7,7 @@ use crate::{
     MemoryMapTag, ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, TagType,
 };
 use alloc::vec::Vec;
+use core::fmt::{Display, Formatter};
 use core::mem::size_of;
 use core::ops::Deref;
 
@@ -41,13 +42,30 @@ impl Deref for BootInformationBytes {
     }
 }
 
+type SerializedTag = Vec<u8>;
+
+/// Error that indicates a tag was added multiple times that is not allowed to
+/// be there multiple times.
+#[derive(Debug)]
+pub struct RedundantTagError(TagType);
+
+impl Display for RedundantTagError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[cfg(feature = "unstable")]
+impl core::error::Error for RedundantTagError {}
+
 /// Builder to construct a valid Multiboot2 information dynamically at runtime.
 /// The tags will appear in the order of their corresponding enumeration,
 /// except for the END tag.
 #[derive(Debug, PartialEq, Eq)]
-pub struct InformationBuilder(Vec<(TagType, Vec<u8> /* Serialized tag */)>);
+pub struct InformationBuilder(Vec<(TagType, SerializedTag)>);
 
 impl InformationBuilder {
+    /// Creates a new builder.
     pub const fn new() -> Self {
         Self(Vec::new())
     }
@@ -144,124 +162,126 @@ impl InformationBuilder {
     }
 
     /// Adds a arbitrary tag that implements [`TagTrait`] to the builder. Only
-    /// [`TagType::Module`] and [`TagType::Custom`] are allowed to appear
+    /// [`TagType::Module`] and [`TagType::Custom`] are allowed to occur
     /// multiple times. For other tags, this function returns an error.
     ///
-    /// The tags of the boot information will be ordered naturally by their
-    /// numeric ID.
-    ///
     /// It is not required to manually add the [`TagType::End`] tag.
-    pub fn add_tag<T: TagTrait + ?Sized>(mut self, tag: &T) -> Self {
+    ///
+    /// The tags of the boot information will be ordered naturally, i.e., by
+    /// their numeric ID.
+    pub fn add_tag<T: TagTrait + ?Sized>(mut self, tag: &T) -> Result<Self, RedundantTagError> {
         // not required to do this manually
         if T::ID == TagType::End {
-            return self;
+            return Ok(self);
         }
 
-        if self
+        let is_redundant_tag = self
             .0
             .iter()
             .map(|(typ, _)| *typ)
-            .any(|typ| typ == T::ID && !Self::tag_is_allowed_multiple_times(typ))
-        {
-            // TODO return Result
-            panic!("Can't add tag of type {:?}. Only Module tags and Custom tags are allowed to appear multiple times.", T::ID);
+            .any(|typ| typ == T::ID && !Self::tag_is_allowed_multiple_times(typ));
+
+        if is_redundant_tag {
+            log::debug!(
+                "Can't add tag of type {:?}. Only Module tags and Custom tags are allowed to appear multiple times.",
+                T::ID
+            );
+            return Err(RedundantTagError(T::ID));
         }
         self.0.push((T::ID, tag.as_bytes().to_vec()));
         self.0.sort_by_key(|(typ, _)| *typ);
-        self
+
+        Ok(self)
     }
 
     /// Adds a 'basic memory information' tag (represented by [`BasicMemoryInfoTag`]) to the builder.
     pub fn basic_memory_info_tag(self, tag: BasicMemoryInfoTag) -> Self {
-        self.add_tag(&tag)
+        self.add_tag(&tag).unwrap()
     }
 
     /// Adds a 'bootloader name' tag (represented by [`BootLoaderNameTag`]) to the builder.
     pub fn bootloader_name_tag(self, tag: BoxedDst<BootLoaderNameTag>) -> Self {
-        self.add_tag(&*tag)
+        self.add_tag(&*tag).unwrap()
     }
 
     /// Adds a 'command line' tag (represented by [`CommandLineTag`]) to the builder.
     pub fn command_line_tag(self, tag: BoxedDst<CommandLineTag>) -> Self {
-        self.add_tag(&*tag)
+        self.add_tag(&*tag).unwrap()
     }
 
     /// Adds a 'EFI 32-bit system table pointer' tag (represented by [`EFISdt32Tag`]) to the builder.
     pub fn efisdt32_tag(self, tag: EFISdt32Tag) -> Self {
-        self.add_tag(&tag)
+        self.add_tag(&tag).unwrap()
     }
 
     /// Adds a 'EFI 64-bit system table pointer' tag (represented by [`EFISdt64Tag`]) to the builder.
     pub fn efisdt64_tag(self, tag: EFISdt64Tag) -> Self {
-        self.add_tag(&tag)
+        self.add_tag(&tag).unwrap()
     }
 
     /// Adds a 'EFI boot services not terminated' tag (represented by [`EFIBootServicesNotExitedTag`]) to the builder.
     pub fn efi_boot_services_not_exited_tag(self) -> Self {
-        self.add_tag(&EFIBootServicesNotExitedTag::new())
+        self.add_tag(&EFIBootServicesNotExitedTag::new()).unwrap()
     }
 
     /// Adds a 'EFI 32-bit image handle pointer' tag (represented by [`EFIImageHandle32Tag`]) to the builder.
     pub fn efi_image_handle32(self, tag: EFIImageHandle32Tag) -> Self {
-        self.add_tag(&tag)
+        self.add_tag(&tag).unwrap()
     }
 
     /// Adds a 'EFI 64-bit image handle pointer' tag (represented by [`EFIImageHandle64Tag`]) to the builder.
     pub fn efi_image_handle64(self, tag: EFIImageHandle64Tag) -> Self {
-        self.add_tag(&tag)
+        self.add_tag(&tag).unwrap()
     }
 
     /// Adds a 'EFI Memory map' tag (represented by [`EFIMemoryMapTag`]) to the builder.
     pub fn efi_memory_map_tag(self, tag: BoxedDst<EFIMemoryMapTag>) -> Self {
-        self.add_tag(&*tag)
+        self.add_tag(&*tag).unwrap()
     }
 
     /// Adds a 'ELF-Symbols' tag (represented by [`ElfSectionsTag`]) to the builder.
     pub fn elf_sections_tag(self, tag: BoxedDst<ElfSectionsTag>) -> Self {
-        self.add_tag(&*tag)
+        self.add_tag(&*tag).unwrap()
     }
 
     /// Adds a 'Framebuffer info' tag (represented by [`FramebufferTag`]) to the builder.
     pub fn framebuffer_tag(self, tag: BoxedDst<FramebufferTag>) -> Self {
-        self.add_tag(&*tag)
+        self.add_tag(&*tag).unwrap()
     }
 
     /// Adds a 'Image load base physical address' tag (represented by [`ImageLoadPhysAddrTag`]) to the builder.
     pub fn image_load_addr(self, tag: ImageLoadPhysAddrTag) -> Self {
-        self.add_tag(&tag)
+        self.add_tag(&tag).unwrap()
     }
 
     /// Adds a (*none EFI*) 'memory map' tag (represented by [`MemoryMapTag`]) to the builder.
     pub fn memory_map_tag(self, tag: BoxedDst<MemoryMapTag>) -> Self {
-        self.add_tag(&*tag)
+        self.add_tag(&*tag).unwrap()
     }
 
     /// Adds a 'Modules' tag (represented by [`ModuleTag`]) to the builder.
     /// This tag can occur multiple times in boot information.
     pub fn add_module_tag(self, tag: BoxedDst<ModuleTag>) -> Self {
-        self.add_tag(&*tag)
+        self.add_tag(&*tag).unwrap()
     }
 
     /// Adds a 'ACPI old RSDP' tag (represented by [`RsdpV1Tag`]) to the builder.
     pub fn rsdp_v1_tag(self, tag: RsdpV1Tag) -> Self {
-        self.add_tag(&tag)
+        self.add_tag(&tag).unwrap()
     }
 
     /// Adds a 'ACPI new RSDP' tag (represented by [`RsdpV2Tag`]) to the builder.
     pub fn rsdp_v2_tag(self, tag: RsdpV2Tag) -> Self {
-        self.add_tag(&tag)
+        self.add_tag(&tag).unwrap()
     }
 
     /// Adds a 'SMBIOS tables' tag (represented by [`SmbiosTag`]) to the builder.
-    pub fn add_smbios_tag(self, tag: BoxedDst<SmbiosTag>) -> Self {
-        self.add_tag(&*tag)
+    pub fn smbios_tag(self, tag: BoxedDst<SmbiosTag>) -> Self {
+        self.add_tag(&*tag).unwrap()
     }
 
     fn tag_is_allowed_multiple_times(tag_type: TagType) -> bool {
-        matches!(
-            tag_type,
-            TagType::Module | TagType::Smbios | TagType::Custom(_)
-        )
+        matches!(tag_type, TagType::Module | TagType::Custom(_))
     }
 }
 
