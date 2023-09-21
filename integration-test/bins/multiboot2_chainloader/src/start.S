@@ -36,7 +36,7 @@ start:
 
     # Enable SSE.
     # Strictly speaking, this is not necessary, but I activated SSE in the
-    # compiler spec json file. Rustc/LLVM produces SSE coe for example from the
+    # compiler spec json file. Rustc/LLVM produces SSE code for example from the
     # core::fmt code.
     mov %cr0,       %eax
     and $0xFFFB,    %ax     # clear coprocessor emulation CR0.EM

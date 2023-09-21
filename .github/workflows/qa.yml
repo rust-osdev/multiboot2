@@ -1,12 +1,12 @@
 name: QA
 
-on: [ push, pull_request ]
+on: [pull_request, push, merge_group]
 
 jobs:
   spellcheck:
     name: Spellcheck
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       # Executes "typos ."
-      - uses: crate-ci/typos@v1.15.2
+      - uses: crate-ci/typos@v1.16.2

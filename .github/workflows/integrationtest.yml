@@ -6,10 +6,10 @@
 # Instead, it is the right thing that the CI always covers the whole repository
 # and that it is as stable as possible.
 
-name: "Cargo workspace"
+name: "Integration Test"
 
 # Run on every push (tag, branch) and pull_request
-on: [pull_request, push, workflow_dispatch]
+on: [pull_request, push, merge_group]
 
 env:
   CARGO_TERM_COLOR: always
@@ -21,8 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out
-        uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v20
+        uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v22
         with:
           # This channel is only required to invoke "nix-shell".
           # Everything inside that nix-shell will use a pinned version of

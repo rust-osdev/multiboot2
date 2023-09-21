@@ -61,15 +61,13 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Check out
-        uses: actions/checkout@v3
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions/checkout@v4
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
           toolchain: ${{ inputs.rust-version }}
-          override: true
+          targets: ${{ inputs.rust-target }}
           components: clippy, rustfmt
-          target: ${{ inputs.rust-target }}
       - name: Set up cargo cache
         uses: actions/cache@v3
         continue-on-error: false
@@ -94,7 +92,7 @@ jobs:
       - name: Code Style and Doc Style
         if: inputs.do-style-check
         run: |
-          cargo doc --document-private-items --features ${{ inputs.features }} --no-default-features
+          cargo doc --no-deps --document-private-items --features ${{ inputs.features }} --no-default-features
           cargo clippy --all-targets --features ${{ inputs.features }} --no-default-features
       - name: Unit Test (UNIX)
         if: inputs.do-test && runner.os != 'Windows'

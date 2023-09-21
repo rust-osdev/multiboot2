@@ -8,5 +8,4 @@ publish = false
 [dependencies]
 good_memory_allocator = "0.1"
 log = { version = "0.4", default-features = false }
-# Wait for release > 3.0.1
-qemu-exit = { git = "https://github.com/rust-embedded/qemu-exit.git", rev = "3cee0efb5c1842b5261850c57b3b4d608542ff03" }
+qemu-exit = "3.0.2"
