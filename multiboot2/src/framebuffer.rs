@@ -1,3 +1,5 @@
+//! Module for [`FramebufferTag`].
+
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::Debug;
 use core::mem::size_of;

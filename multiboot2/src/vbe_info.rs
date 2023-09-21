@@ -1,3 +1,5 @@
+//! Module for [`VBEInfoTag`].
+
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt;
 
@@ -319,7 +321,6 @@ bitflags! {
 }
 
 bitflags! {
-
     /// The DirectColorModeInfo field describes important characteristics of direct color modes.
     ///
     /// Bit D0 specifies whether the color ramp of the DAC is fixed or

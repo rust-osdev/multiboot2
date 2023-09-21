@@ -1,3 +1,5 @@
+//! Module for [`ImageLoadPhysAddrTag`].
+
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 #[cfg(feature = "builder")]
 use {core::convert::TryInto, core::mem::size_of};

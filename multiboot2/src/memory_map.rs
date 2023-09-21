@@ -1,3 +1,6 @@
+//! Module for [`MemoryMapTag`], [`EFIMemoryMapTag`] and [`BasicMemoryInfoTag`]
+//! and corresponding helper types.
+
 pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
 pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
 
@@ -332,37 +335,6 @@ impl TagTrait for EFIMemoryMapTag {
         assert_eq!(size % mem::size_of::<EFIMemoryDesc>(), 0);
         size / mem::size_of::<EFIMemoryDesc>()
     }
-}
-
-/// EFI ExitBootServices was not called tag.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
-pub struct EFIBootServicesNotExitedTag {
-    typ: TagTypeId,
-    size: u32,
-}
-
-impl EFIBootServicesNotExitedTag {
-    #[cfg(feature = "builder")]
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
-#[cfg(feature = "builder")]
-impl Default for EFIBootServicesNotExitedTag {
-    fn default() -> Self {
-        Self {
-            typ: TagType::EfiBs.into(),
-            size: mem::size_of::<Self>().try_into().unwrap(),
-        }
-    }
-}
-
-impl TagTrait for EFIBootServicesNotExitedTag {
-    const ID: TagType = TagType::EfiBs;
-
-    fn dst_size(_base_tag: &Tag) {}
 }
 
 /// An iterator over ALL EFI memory areas.
