@@ -1,3 +1,5 @@
+//! Module for [`SmbiosTag`].
+
 #[cfg(feature = "builder")]
 use crate::builder::BoxedDst;
 use crate::{Tag, TagTrait, TagType, TagTypeId};

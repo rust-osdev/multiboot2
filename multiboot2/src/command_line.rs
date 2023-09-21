@@ -1,4 +1,4 @@
-//! Module for [CommandLineTag].
+//! Module for [`CommandLineTag`].
 
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 

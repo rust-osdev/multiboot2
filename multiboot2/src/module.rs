@@ -1,5 +1,6 @@
-use crate::{Tag, TagIter, TagTrait, TagType, TagTypeId};
+//! Module for [`ModuleTag`].
 
+use crate::{Tag, TagIter, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 use core::str::Utf8Error;

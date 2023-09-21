@@ -1,3 +1,5 @@
+//! Module for [`RsdpV1Tag`] and  [`RsdpV2Tag`].
+
 //! Module for RSDP/ACPI. RSDP (Root System Description Pointer) is a data structure used in the
 //! ACPI programming interface.
 //!

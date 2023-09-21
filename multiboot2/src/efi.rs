@@ -1,4 +1,10 @@
-//! All MBI tags related to (U)EFI.
+//! All tags related to (U)EFI with the exception of EFI memory tags:
+//!
+//! - [`EFISdt32Tag`]
+//! - [`EFISdt64Tag`]
+//! - [`EFIImageHandle32Tag`]
+//! - [`EFIImageHandle64Tag`]
+//! - [`EFIBootServicesNotExitedTag`]
 
 use crate::TagTypeId;
 use crate::{Tag, TagTrait, TagType};

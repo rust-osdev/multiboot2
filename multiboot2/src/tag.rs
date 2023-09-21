@@ -1,4 +1,4 @@
-//! Module for the base tag definition.
+//! Module for the base tag definitions and helper types.
 //!
 //! The relevant exports of this module is [`Tag`].
 

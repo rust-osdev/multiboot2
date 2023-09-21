@@ -1,3 +1,5 @@
+//! Module for [`BootLoaderNameTag`].
+
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
