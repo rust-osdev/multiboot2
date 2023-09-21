@@ -1,6 +1,14 @@
 # CHANGELOG for crate `multiboot2`
 
-## 0.19.0 (2023-07-14)
+## 0.19.0 (2023-09-XX)
+- **BREAKING** `Tag::get_dst_str_slice` renamed to
+  `Tag::parse_slice_as_string` and now returns `Result<&str, StringError>`
+- **BREAKING** `BootLoaderNameTag::name` now returns `Result<&str, StringError>`
+- **BREAKING** `CommandLineTag::cmdline` now returns `Result<&str, StringError>`
+- **BREAKING** `ModuleTag::cmdline` now returns `Result<&str, StringError>`
+- Introduced new enum type `StringError`
+- Additionally, a bug was fixed in `parse_slice_as_string` which now parses
+  multiboot2 strings as expected: as null-terminated UTF-8 strings.
 - `InformationBuilder` now also allows to add custom tags. The new public method
   `add_tag` was introduced for that.
 

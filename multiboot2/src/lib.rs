@@ -84,7 +84,7 @@ pub use module::{ModuleIter, ModuleTag};
 pub use ptr_meta::Pointee;
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
 pub use smbios::SmbiosTag;
-pub use tag::Tag;
+pub use tag::{StringError, Tag};
 pub use tag_trait::TagTrait;
 pub use tag_type::{TagType, TagTypeId};
 pub use vbe_info::{
@@ -447,7 +447,7 @@ impl<'a> BootInformation<'a> {
     ///
     /// impl CustomTag {
     ///     fn name(&self) -> Result<&str, Utf8Error> {
-    ///         Tag::get_dst_str_slice(&self.name)
+    ///         Tag::parse_slice_as_string(&self.name)
     ///     }
     /// }
     /// let mbi_ptr = 0xdeadbeef as *const BootInformationHeader;
@@ -524,7 +524,7 @@ impl fmt::Debug for BootInformation<'_> {
 mod tests {
     use super::*;
     use crate::memory_map::MemoryAreaType;
-    use core::str::Utf8Error;
+    use crate::tag::StringError;
 
     /// Compile time test to check if the boot information is Send and Sync.
     /// This test is relevant to give library users flexebility in passing the
@@ -542,7 +542,6 @@ mod tests {
             8, 0, 0, 0, // end tag size
         ]);
         let ptr = bytes.0.as_ptr();
-        let addr = ptr as usize;
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
 
@@ -1604,8 +1603,8 @@ mod tests {
         }
 
         impl CustomTag {
-            fn name(&self) -> Result<&str, Utf8Error> {
-                Tag::get_dst_str_slice(&self.name)
+            fn name(&self) -> Result<&str, StringError> {
+                Tag::parse_slice_as_string(&self.name)
             }
         }
 

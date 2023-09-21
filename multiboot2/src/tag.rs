@@ -4,9 +4,34 @@
 
 use crate::{TagTrait, TagType, TagTypeId};
 use core::fmt;
-use core::fmt::{Debug, Formatter};
+use core::fmt::{Debug, Display, Formatter};
 use core::marker::PhantomData;
 use core::str::Utf8Error;
+
+/// Error type describing failures when parsing the string from a tag.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum StringError {
+    /// There is no terminating null-byte, although the spec requires one.
+    MissingNull(core::ffi::FromBytesUntilNulError),
+    /// The sequence until the first NULL byte is not valid UTF-8.
+    Utf8(Utf8Error),
+}
+
+impl Display for StringError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[cfg(feature = "unstable")]
+impl core::error::Error for StringError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            StringError::MissingNull(e) => Some(e),
+            StringError::Utf8(e) => Some(e),
+        }
+    }
+}
 
 /// Common base structure for all tags that can be passed via the Multiboot2
 /// Information Structure (MBI) to a Multiboot2 payload/program/kernel.
@@ -38,22 +63,13 @@ impl Tag {
         unsafe { TagTrait::from_base_tag(self) }
     }
 
-    /// Some multiboot2 tags are a DST as they end with a dynamically sized byte
-    /// slice. This function parses this slice as [`str`] so that either a valid
-    /// UTF-8 Rust string slice without a terminating null byte or an error is
-    /// returned.
-    pub fn get_dst_str_slice(bytes: &[u8]) -> Result<&str, Utf8Error> {
-        // Determine length of string before first NUL character
+    /// Parses the provided byte sequence as Multiboot string, which maps to a
+    /// [`str`].
+    pub fn parse_slice_as_string(bytes: &[u8]) -> Result<&str, StringError> {
+        let cstr =
+            core::ffi::CStr::from_bytes_until_nul(bytes).map_err(StringError::MissingNull)?;
 
-        let length = match bytes.iter().position(|ch| (*ch) == 0x00) {
-            // Unterminated string case:
-            None => bytes.len(),
-
-            // Terminated case:
-            Some(idx) => idx,
-        };
-        // Convert to Rust string:
-        core::str::from_utf8(&bytes[..length])
+        cstr.to_str().map_err(StringError::Utf8)
     }
 }
 
@@ -128,21 +144,28 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_dst_str_slice() {
-        // unlikely case
-        assert_eq!(Ok(""), Tag::get_dst_str_slice(&[]));
-        // also unlikely case
-        assert_eq!(Ok(""), Tag::get_dst_str_slice(&[b'\0']));
-        // unlikely case: missing null byte. but the lib can cope with that
-        assert_eq!(Ok("foobar"), Tag::get_dst_str_slice(b"foobar"));
-        // test that the null bytes is not included in the string slice
-        assert_eq!(Ok("foobar"), Tag::get_dst_str_slice(b"foobar\0"));
-        // test that C-style null string termination works as expected
-        assert_eq!(Ok("foo"), Tag::get_dst_str_slice(b"foo\0bar"));
-        // test invalid utf8
+    fn parse_slice_as_string() {
+        // empty slice is invalid
         assert!(matches!(
-            Tag::get_dst_str_slice(&[0xff, 0xff]),
-            Err(Utf8Error { .. })
+            Tag::parse_slice_as_string(&[]),
+            Err(StringError::MissingNull(_))
         ));
+        // empty string is fine
+        assert_eq!(Tag::parse_slice_as_string(&[0x00]), Ok(""));
+        // reject invalid utf8
+        assert!(matches!(
+            Tag::parse_slice_as_string(&[0xff, 0x00]),
+            Err(StringError::Utf8(_))
+        ));
+        // reject missing null
+        assert!(matches!(
+            Tag::parse_slice_as_string(b"hello"),
+            Err(StringError::MissingNull(_))
+        ));
+        // must not include final null
+        assert_eq!(Tag::parse_slice_as_string(b"hello\0"), Ok("hello"));
+        assert_eq!(Tag::parse_slice_as_string(b"hello\0\0"), Ok("hello"));
+        // must skip everytihng after first null
+        assert_eq!(Tag::parse_slice_as_string(b"hello\0foo"), Ok("hello"));
     }
 }

@@ -2,10 +2,10 @@
 
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 
+use crate::tag::StringError;
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str;
-
 #[cfg(feature = "builder")]
 use {crate::builder::BoxedDst, alloc::vec::Vec};
 
@@ -55,8 +55,8 @@ impl CommandLineTag {
     ///     assert_eq!(Ok("/bootarg"), command_line);
     /// }
     /// ```
-    pub fn cmdline(&self) -> Result<&str, str::Utf8Error> {
-        Tag::get_dst_str_slice(&self.cmdline)
+    pub fn cmdline(&self) -> Result<&str, StringError> {
+        Tag::parse_slice_as_string(&self.cmdline)
     }
 }
 
