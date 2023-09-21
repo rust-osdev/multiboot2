@@ -67,7 +67,9 @@ mod vbe_info;
 
 pub use boot_loader_name::BootLoaderNameTag;
 pub use command_line::CommandLineTag;
-pub use efi::{EFIImageHandle32Tag, EFIImageHandle64Tag, EFISdt32Tag, EFISdt64Tag};
+pub use efi::{
+    EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFISdt32Tag, EFISdt64Tag,
+};
 pub use elf_sections::{
     ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
@@ -75,8 +77,8 @@ pub use end::EndTag;
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
 pub use image_load_addr::ImageLoadPhysAddrTag;
 pub use memory_map::{
-    BasicMemoryInfoTag, EFIBootServicesNotExitedTag, EFIMemoryAreaType, EFIMemoryDesc,
-    EFIMemoryMapTag, MemoryArea, MemoryAreaType, MemoryAreaTypeId, MemoryMapTag,
+    BasicMemoryInfoTag, EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea,
+    MemoryAreaType, MemoryAreaTypeId, MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use ptr_meta::Pointee;

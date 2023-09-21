@@ -334,37 +334,6 @@ impl TagTrait for EFIMemoryMapTag {
     }
 }
 
-/// EFI ExitBootServices was not called tag.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
-pub struct EFIBootServicesNotExitedTag {
-    typ: TagTypeId,
-    size: u32,
-}
-
-impl EFIBootServicesNotExitedTag {
-    #[cfg(feature = "builder")]
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
-#[cfg(feature = "builder")]
-impl Default for EFIBootServicesNotExitedTag {
-    fn default() -> Self {
-        Self {
-            typ: TagType::EfiBs.into(),
-            size: mem::size_of::<Self>().try_into().unwrap(),
-        }
-    }
-}
-
-impl TagTrait for EFIBootServicesNotExitedTag {
-    const ID: TagType = TagType::EfiBs;
-
-    fn dst_size(_base_tag: &Tag) {}
-}
-
 /// An iterator over ALL EFI memory areas.
 #[derive(Clone, Debug)]
 pub struct EFIMemoryAreaIter<'a> {
