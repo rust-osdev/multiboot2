@@ -1,6 +1,6 @@
 # CHANGELOG for crate `multiboot2`
 
-## 0.19.0 (2023-09-XX)
+## 0.19.0 (2023-09-21)
 - **BREAKING** MSRV is 1.69.0
 - **BREAKING** `Tag::get_dst_str_slice` renamed to
   `Tag::parse_slice_as_string` and now returns `Result<&str, StringError>`
