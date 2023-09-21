@@ -1,7 +1,7 @@
 use crate::verify::{print_memory_map, print_module_info};
-use multiboot2::BootInformation;
+use multiboot2::{BootInformation, BootInformationInner};
 
-pub fn run(mbi: &BootInformation) -> anyhow::Result<()> {
+pub fn run<T: AsRef<BootInformationInner>>(mbi: &BootInformation<T>) -> anyhow::Result<()> {
     basic_sanity_checks(mbi)?;
     print_memory_map(mbi)?;
     print_module_info(mbi)?;
@@ -9,7 +9,7 @@ pub fn run(mbi: &BootInformation) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn basic_sanity_checks(mbi: &BootInformation) -> anyhow::Result<()> {
+fn basic_sanity_checks<T: AsRef<BootInformationInner>>(mbi: &BootInformation<T>) -> anyhow::Result<()> {
     // Some basic sanity checks
     let bootloader_name = mbi
         .boot_loader_name_tag()

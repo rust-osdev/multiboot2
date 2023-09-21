@@ -62,6 +62,13 @@ impl MemoryMapTag {
         assert_eq!(self.entry_size as usize, mem::size_of::<MemoryArea>());
         &self.areas
     }
+
+    /// Return a mutable slice with all memory areas.
+    pub fn all_memory_areas_mut(&mut self) -> &mut [MemoryArea] {
+        // If this ever fails, we need to model this differently in this crate.
+        assert_eq!(self.entry_size as usize, mem::size_of::<MemoryArea>());
+        &mut self.areas
+    }
 }
 
 impl TagTrait for MemoryMapTag {
@@ -313,13 +320,29 @@ impl EFIMemoryMapTag {
     ///
     /// This differs from `MemoryMapTag` as for UEFI, the OS needs some non-
     /// available memory areas for tables and such.
-    pub fn memory_areas(&self) -> EFIMemoryAreaIter {
+    pub fn memory_areas(&self) -> EFIMemoryAreaIter<&EFIMemoryDesc> {
         let self_ptr = self as *const EFIMemoryMapTag;
         let start_area = (&self.descs[0]) as *const EFIMemoryDesc;
         EFIMemoryAreaIter {
             current_area: start_area as u64,
             // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
             last_area: (self_ptr as *const () as u64 + self.size as u64),
+            entry_size: self.desc_size,
+            phantom: PhantomData,
+        }
+    }
+
+    /// Return an iterator over ALL marked memory areas, mutably.
+    ///
+    /// This differs from `MemoryMapTag` as for UEFI, the OS needs some non-
+    /// available memory areas for tables and such.
+    pub fn memory_areas_mut(&mut self) -> EFIMemoryAreaIter<&mut EFIMemoryDesc> {
+        let self_ptr = self as *mut EFIMemoryMapTag;
+        let start_area = (&mut self.descs[0]) as *mut EFIMemoryDesc;
+        EFIMemoryAreaIter {
+            current_area: start_area as u64,
+            // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
+            last_area: (self_ptr as *mut () as u64 + self.size as u64),
             entry_size: self.desc_size,
             phantom: PhantomData,
         }
@@ -339,20 +362,33 @@ impl TagTrait for EFIMemoryMapTag {
 
 /// An iterator over ALL EFI memory areas.
 #[derive(Clone, Debug)]
-pub struct EFIMemoryAreaIter<'a> {
+pub struct EFIMemoryAreaIter<T> {
     current_area: u64,
     last_area: u64,
     entry_size: u32,
-    phantom: PhantomData<&'a EFIMemoryDesc>,
+    phantom: PhantomData<T>,
 }
 
-impl<'a> Iterator for EFIMemoryAreaIter<'a> {
+impl<'a> Iterator for EFIMemoryAreaIter<&'a EFIMemoryDesc> {
     type Item = &'a EFIMemoryDesc;
     fn next(&mut self) -> Option<&'a EFIMemoryDesc> {
         if self.current_area > self.last_area {
             None
         } else {
             let area = unsafe { &*(self.current_area as *const EFIMemoryDesc) };
+            self.current_area += self.entry_size as u64;
+            Some(area)
+        }
+    }
+}
+
+impl<'a> Iterator for EFIMemoryAreaIter<&'a mut EFIMemoryDesc> {
+    type Item = &'a mut EFIMemoryDesc;
+    fn next(&mut self) -> Option<&'a mut EFIMemoryDesc> {
+        if self.current_area > self.last_area {
+            None
+        } else {
+            let area = unsafe { &mut *(self.current_area as *mut EFIMemoryDesc) };
             self.current_area += self.entry_size as u64;
             Some(area)
         }
