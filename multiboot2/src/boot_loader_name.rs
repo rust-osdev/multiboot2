@@ -1,9 +1,9 @@
 //! Module for [`BootLoaderNameTag`].
 
+use crate::tag::StringError;
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
-use core::str::Utf8Error;
 #[cfg(feature = "builder")]
 use {crate::builder::BoxedDst, alloc::vec::Vec};
 
@@ -47,8 +47,8 @@ impl BootLoaderNameTag {
     ///     assert_eq!(Ok("GRUB 2.02~beta3-5"), tag.name());
     /// }
     /// ```
-    pub fn name(&self) -> Result<&str, Utf8Error> {
-        Tag::get_dst_str_slice(&self.name)
+    pub fn name(&self) -> Result<&str, StringError> {
+        Tag::parse_slice_as_string(&self.name)
     }
 }
 
