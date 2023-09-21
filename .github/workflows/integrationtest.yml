@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v22
+      - uses: cachix/install-nix-action@v23
         with:
           # This channel is only required to invoke "nix-shell".
           # Everything inside that nix-shell will use a pinned version of
