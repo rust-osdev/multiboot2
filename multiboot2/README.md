@@ -38,7 +38,7 @@ other fields  | variable
 All tags and the mbi itself are 8-byte aligned. The last tag must be the _end tag_, which is a tag of type `0` and size `8`.
 
 ## MSRV
-The MSRV is 1.68.0 stable.
+The MSRV is 1.69.0 stable.
 
 ## License & Contribution
 
