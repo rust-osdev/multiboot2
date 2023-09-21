@@ -1,9 +1,13 @@
 # CHANGELOG for crate `multiboot2-header`
 
+## 0.4.0 (2023-09-xx)
+- **BREAKING** MSRV is 1.68.0
+- **BREAKING** bumped `multiboot2` dependency to `v0.19.0`
+
 ## 0.3.0 (2023-06-23)
 - **BREAKING** MSRV is 1.68.0
 - **BREAKING** renamed the `std` feature to `alloc`
-- **BREAKING** bumped dependency to `multiboot2@v0.16.0`
+- **BREAKING** bumped `multiboot2` dependency to `v0.16.0`
 - **BREAKING** renamed `MULTIBOOT2_HEADER_MAGIC` to `MAGIC`
 - **BREAKING** renamed `Multiboot2HeaderBuilder` to `HeaderBuilder`
 - **BREAKING** renamed `from_addr` to `load`. The function now consumes a ptr.
