@@ -11,9 +11,10 @@ use core::str::Utf8Error;
 /// Error type describing failures when parsing the string from a tag.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum StringError {
-    /// There is no terminating null-byte, although the spec requires one.
-    MissingNull(core::ffi::FromBytesUntilNulError),
-    /// The sequence until the first NULL byte is not valid UTF-8.
+    /// There is no terminating NUL character, although the specification
+    /// requires one.
+    MissingNul(core::ffi::FromBytesUntilNulError),
+    /// The sequence until the first NUL character is not valid UTF-8.
     Utf8(Utf8Error),
 }
 
@@ -27,7 +28,7 @@ impl Display for StringError {
 impl core::error::Error for StringError {
     fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
         match self {
-            StringError::MissingNull(e) => Some(e),
+            StringError::MissingNul(e) => Some(e),
             StringError::Utf8(e) => Some(e),
         }
     }
@@ -66,8 +67,7 @@ impl Tag {
     /// Parses the provided byte sequence as Multiboot string, which maps to a
     /// [`str`].
     pub fn parse_slice_as_string(bytes: &[u8]) -> Result<&str, StringError> {
-        let cstr =
-            core::ffi::CStr::from_bytes_until_nul(bytes).map_err(StringError::MissingNull)?;
+        let cstr = core::ffi::CStr::from_bytes_until_nul(bytes).map_err(StringError::MissingNul)?;
 
         cstr.to_str().map_err(StringError::Utf8)
     }
@@ -148,7 +148,7 @@ mod tests {
         // empty slice is invalid
         assert!(matches!(
             Tag::parse_slice_as_string(&[]),
-            Err(StringError::MissingNull(_))
+            Err(StringError::MissingNul(_))
         ));
         // empty string is fine
         assert_eq!(Tag::parse_slice_as_string(&[0x00]), Ok(""));
@@ -160,7 +160,7 @@ mod tests {
         // reject missing null
         assert!(matches!(
             Tag::parse_slice_as_string(b"hello"),
-            Err(StringError::MissingNull(_))
+            Err(StringError::MissingNul(_))
         ));
         // must not include final null
         assert_eq!(Tag::parse_slice_as_string(b"hello\0"), Ok("hello"));
