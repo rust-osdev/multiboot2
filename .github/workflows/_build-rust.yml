@@ -61,7 +61,7 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Check out
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
