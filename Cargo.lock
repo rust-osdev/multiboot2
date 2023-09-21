@@ -27,19 +27,6 @@ checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "multiboot2"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b624a7b3f704734d98d21455b617607eb7043d4509d1c34bf9e7ff7dd47b31a"
-dependencies = [
- "bitflags",
- "derive_more",
- "log",
- "ptr_meta",
- "uefi-raw",
-]
-
-[[package]]
-name = "multiboot2"
 version = "0.19.0"
 dependencies = [
  "bitflags",
@@ -54,7 +41,7 @@ name = "multiboot2-header"
 version = "0.3.1"
 dependencies = [
  "derive_more",
- "multiboot2 0.16.0",
+ "multiboot2",
 ]
 
 [[package]]

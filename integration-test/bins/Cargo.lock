@@ -96,19 +96,6 @@ dependencies = [
 
 [[package]]
 name = "multiboot2"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b624a7b3f704734d98d21455b617607eb7043d4509d1c34bf9e7ff7dd47b31a"
-dependencies = [
- "bitflags 2.4.0",
- "derive_more",
- "log",
- "ptr_meta",
- "uefi-raw",
-]
-
-[[package]]
-name = "multiboot2"
 version = "0.19.0"
 dependencies = [
  "bitflags 2.4.0",
@@ -123,7 +110,7 @@ name = "multiboot2-header"
 version = "0.3.1"
 dependencies = [
  "derive_more",
- "multiboot2 0.16.0",
+ "multiboot2",
 ]
 
 [[package]]
@@ -135,7 +122,7 @@ dependencies = [
  "good_memory_allocator",
  "log",
  "multiboot",
- "multiboot2 0.19.0",
+ "multiboot2",
  "multiboot2-header",
  "util",
 ]
@@ -147,7 +134,7 @@ dependencies = [
  "anyhow",
  "good_memory_allocator",
  "log",
- "multiboot2 0.19.0",
+ "multiboot2",
  "util",
  "x86",
 ]
