@@ -95,9 +95,9 @@ dependencies = [
 
 [[package]]
 name = "uefi-raw"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62642516099c6441a5f41b0da8486d5fc3515a0603b0fdaea67b31600e22082e"
+checksum = "8bbf45ee102da89ef37674dd5186cd766418338457e660e7a3a1bad64d122abf"
 dependencies = [
  "bitflags",
  "ptr_meta",
@@ -106,9 +106,9 @@ dependencies = [
 
 [[package]]
 name = "uguid"
-version = "2.0.1"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16dfbd255defbd727b3a30e8950695d2e6d045841ee250ff0f1f7ced17917f8d"
+checksum = "1ef516f0806c5f61da6aa95125d0eb2d91cc95b2df426c06bde8be657282aee5"
 
 [[package]]
 name = "unicode-ident"
