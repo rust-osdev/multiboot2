@@ -1,7 +1,9 @@
-//! Library with type definitions and parsing functions for Multiboot2 headers.
-//! This library is `no_std` and can be used in bootloaders.
+//! Rust library with type definitions and parsing functions for Multiboot2
+//! headers, as well as a builder to build them at runtime. This library is
+//! `no_std` and can be used in bootloaders.
 //!
 //! # Example
+//!
 //! ```rust
 //! use multiboot2_header::builder::{InformationRequestHeaderTagBuilder, HeaderBuilder};
 //! use multiboot2_header::{HeaderTagFlag, HeaderTagISA, MbiTagType, RelocatableHeaderTag, RelocatableHeaderTagPreference, Multiboot2Header};
@@ -31,6 +33,7 @@
 //! ```
 //!
 //! ## MSRV
+//!
 //! The MSRV is 1.69.0 stable.
 
 #![no_std]
