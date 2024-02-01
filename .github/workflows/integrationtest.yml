@@ -30,7 +30,7 @@ jobs:
           nix_path: nixpkgs=channel:nixos-23.05
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Set up cargo cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         continue-on-error: false
         with:
           path: |
