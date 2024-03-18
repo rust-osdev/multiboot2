@@ -95,9 +95,9 @@ dependencies = [
 
 [[package]]
 name = "uefi-raw"
-version = "0.3.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62642516099c6441a5f41b0da8486d5fc3515a0603b0fdaea67b31600e22082e"
+checksum = "6cc02890e65b2b8e390d0e081907c0d5ac3931bc6935f452095d68199e3698c5"
 dependencies = [
  "bitflags",
  "ptr_meta",
