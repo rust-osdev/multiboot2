@@ -64,6 +64,12 @@ impl core::error::Error for RedundantTagError {}
 #[derive(Debug, PartialEq, Eq)]
 pub struct InformationBuilder(Vec<(TagType, SerializedTag)>);
 
+impl Default for InformationBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InformationBuilder {
     /// Creates a new builder.
     pub const fn new() -> Self {
