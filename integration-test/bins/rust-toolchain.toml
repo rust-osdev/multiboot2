@@ -1,5 +1,5 @@
 [toolchain]
-channel = "nightly-2023-06-22"
+channel = "nightly-2024-03-31" # rustc 1.79-nightly
 profile = "default"
 components = [
     "rust-src",
