@@ -2,7 +2,7 @@
 
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 #[cfg(feature = "builder")]
-use {core::convert::TryInto, core::mem::size_of};
+use core::mem::size_of;
 
 /// The physical load address tag. Typically, this is only available if the
 /// binary was relocated, for example if the relocatable header tag was

@@ -31,7 +31,7 @@ readme = "README.md"
 homepage = "https://github.com/rust-osdev/multiboot2"
 repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2"
-rust-version = "1.68"
+rust-version = "1.69"
 
 [features]
 default = ["builder"]

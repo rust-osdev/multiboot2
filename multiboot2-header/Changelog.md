@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added `EndHeaderTag::default()`
+- MSRV is 1.69
 
 ## 0.3.2 (2023-11-30)
 
@@ -17,7 +18,7 @@
 
 ## 0.3.0 (2023-06-23)
 
-- **BREAKING** MSRV is 1.68.0
+- **BREAKING** MSRV is 1.68.0 (UPDATE: This is actually 1.69.)
 - **BREAKING** renamed the `std` feature to `alloc`
 - **BREAKING** bumped `multiboot2` dependency to `v0.16.0`
 - **BREAKING** renamed `MULTIBOOT2_HEADER_MAGIC` to `MAGIC`

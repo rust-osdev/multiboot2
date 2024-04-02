@@ -47,6 +47,7 @@ type SerializedTag = Vec<u8>;
 /// Error that indicates a tag was added multiple times that is not allowed to
 /// be there multiple times.
 #[derive(Debug)]
+#[allow(unused)]
 pub struct RedundantTagError(TagType);
 
 impl Display for RedundantTagError {

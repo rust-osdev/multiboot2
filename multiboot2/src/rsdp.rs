@@ -13,11 +13,11 @@
 //!
 
 use crate::{Tag, TagTrait, TagType, TagTypeId};
+#[cfg(feature = "builder")]
+use core::mem::size_of;
 use core::slice;
 use core::str;
 use core::str::Utf8Error;
-#[cfg(feature = "builder")]
-use {core::convert::TryInto, core::mem::size_of};
 
 const RSDPV1_LENGTH: usize = 20;
 
