@@ -25,4 +25,5 @@ cp grub.cfg .vol/boot/grub
 cp "$MULTIBOOT2_PAYLOAD_PATH" .vol
 
 # Create a GRUB image with the files in ".vol" being embedded.
-grub-mkrescue -o "grub_boot.img" ".vol" 2>/dev/null
+echo "Creating bootable image..."
+grub-mkrescue -o "grub_boot.img" ".vol"

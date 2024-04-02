@@ -1,9 +1,8 @@
 //! Parsing the Multiboot information. Glue code for the [`multiboot`] code.
 
 use anyhow::anyhow;
+use core::ptr::addr_of_mut;
 use core::slice;
-pub use multiboot::information::ModuleIter;
-pub use multiboot::information::Multiboot as Mbi;
 use multiboot::information::{MemoryManagement, Multiboot, PAddr, SIGNATURE_EAX};
 
 static mut MEMORY_MANAGEMENT: Mem = Mem;
@@ -14,7 +13,8 @@ pub fn get_mbi<'a>(magic: u32, ptr: u32) -> anyhow::Result<Multiboot<'a, 'static
     if magic != SIGNATURE_EAX {
         return Err(anyhow!("Unknown Multiboot signature {magic:x}"));
     }
-    unsafe { Multiboot::from_ptr(ptr as u64, &mut MEMORY_MANAGEMENT) }.ok_or(anyhow!(
+    let mmgmt: &mut dyn MemoryManagement = unsafe { &mut *addr_of_mut!(MEMORY_MANAGEMENT) };
+    unsafe { Multiboot::from_ptr(ptr as u64, mmgmt) }.ok_or(anyhow!(
         "Can't read Multiboot boot information from pointer"
     ))
 }

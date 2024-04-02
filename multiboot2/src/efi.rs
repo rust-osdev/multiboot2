@@ -8,7 +8,6 @@
 
 use crate::TagTypeId;
 use crate::{Tag, TagTrait, TagType};
-use core::convert::TryInto;
 use core::mem::size_of;
 
 /// EFI system table in 32 bit mode tag.

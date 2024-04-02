@@ -12,6 +12,12 @@ pub struct EndHeaderTag {
     size: u32,
 }
 
+impl Default for EndHeaderTag {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EndHeaderTag {
     pub const fn new() -> Self {
         EndHeaderTag {

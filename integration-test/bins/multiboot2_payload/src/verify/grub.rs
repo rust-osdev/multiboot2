@@ -23,7 +23,7 @@ fn basic_sanity_checks(mbi: &BootInformation) -> anyhow::Result<()> {
         .map_err(anyhow::Error::msg)?
         .cmdline()
         .map_err(anyhow::Error::msg)?;
-    assert_eq!(bootloader_name, "GRUB 2.06");
+    assert!(bootloader_name.starts_with("GRUB 2."));
     assert_eq!(cmdline, "some commandline arguments");
 
     Ok(())

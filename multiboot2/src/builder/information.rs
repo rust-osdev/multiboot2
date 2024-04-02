@@ -47,6 +47,7 @@ type SerializedTag = Vec<u8>;
 /// Error that indicates a tag was added multiple times that is not allowed to
 /// be there multiple times.
 #[derive(Debug)]
+#[allow(unused)]
 pub struct RedundantTagError(TagType);
 
 impl Display for RedundantTagError {
@@ -63,6 +64,12 @@ impl core::error::Error for RedundantTagError {}
 /// except for the END tag.
 #[derive(Debug, PartialEq, Eq)]
 pub struct InformationBuilder(Vec<(TagType, SerializedTag)>);
+
+impl Default for InformationBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl InformationBuilder {
     /// Creates a new builder.

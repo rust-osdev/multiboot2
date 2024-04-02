@@ -4,7 +4,6 @@ use crate::{
     HeaderTag, HeaderTagISA, HeaderTagType, InformationRequestHeaderTag, ModuleAlignHeaderTag,
     RelocatableHeaderTag,
 };
-use core::convert::TryInto;
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 

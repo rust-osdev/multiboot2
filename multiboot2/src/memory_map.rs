@@ -5,7 +5,6 @@ pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
 pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
 
 use crate::{Tag, TagTrait, TagType, TagTypeId};
-use core::convert::TryInto;
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use core::mem;
