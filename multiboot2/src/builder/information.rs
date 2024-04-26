@@ -288,7 +288,10 @@ impl InformationBuilder {
     }
 
     fn tag_is_allowed_multiple_times(tag_type: TagType) -> bool {
-        matches!(tag_type, TagType::Module | TagType::Custom(_))
+        matches!(
+            tag_type,
+            TagType::Module | TagType::Smbios | TagType::Custom(_)
+        )
     }
 }
 
