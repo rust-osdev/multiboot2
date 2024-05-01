@@ -44,6 +44,6 @@ jobs:
           key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('integration-test/**/Cargo.toml', 'integration-test/**/Cargo.lock', 'integration-test/bins/rust-toolchain.toml') }}
       # Have all the "copying into Nix store" messages in a dedicated step for
       # better log visibility.
-      - run: cd integration-test && nix-shell --run "echo OK" && cd ..
+      - run: nix-shell --run "echo OK"
       # Now, run the actual test.
-      - run: cd integration-test && nix-shell --run ./run.sh && cd ..
+      - run: nix-shell --run run-integrationtest

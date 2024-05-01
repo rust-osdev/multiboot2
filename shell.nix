@@ -13,6 +13,10 @@ pkgs.mkShell rec {
     grub2
     qemu
     xorriso
+
+    (pkgs.writeShellScriptBin "run-integrationtest" ''
+    ./integration-test/run.sh
+    '')
   ];
 
   # To invoke "nix-shell" in the CI-runner, we need a global Nix channel.
