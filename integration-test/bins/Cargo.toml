@@ -10,5 +10,11 @@ members = [
 codegen-units = 1
 lto = true
 
-[patch.crates-io]
-multiboot2 = { path = "../../multiboot2" }
+
+[workspace.dependencies]
+anyhow = { version = "1.0", default-features = false }
+log = { version = "0.4", default-features = false }
+multiboot2 = { path = "../../multiboot2", features = ["builder", "unstable"] }
+multiboot2-header = { path = "../../multiboot2-header", features = ["builder", "unstable"] }
+good_memory_allocator = "0.1"
+util = { path = "./util" }

@@ -9,9 +9,9 @@ exclude = [
 ]
 
 [workspace.dependencies]
-bitflags = "2"
-derive_more = { version = "0.99", default-features = false, features = ["display"] }
-log = { version = "0.4", default-features = false }
+bitflags = "2.0.2"
+derive_more = { version = "~0.99", default-features = false, features = ["display"] }
+log = { version = "~0.4", default-features = false }
 
 # This way, the "multiboot2" dependency in the multiboot2-header crate can be
 # referenced by version, while still the repository version is used
