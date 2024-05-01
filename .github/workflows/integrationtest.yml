@@ -9,7 +9,7 @@
 name: "Integration Test"
 
 # Run on every push (tag, branch) and pull_request
-on: [pull_request, push, merge_group]
+on: [ pull_request, push, merge_group ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -27,7 +27,7 @@ jobs:
           # This channel is only required to invoke "nix-shell".
           # Everything inside that nix-shell will use a pinned version of
           # nixpkgs.
-          nix_path: nixpkgs=channel:nixos-23.05
+          nix_path: nixpkgs=channel:nixos-23.11
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Set up cargo cache
         uses: actions/cache@v4

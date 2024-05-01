@@ -1,4 +1,5 @@
 # multiboot2-header
+
 ![Build](https://github.com/rust-osdev/multiboot2/actions/workflows/rust.yml/badge.svg)
 [![crates.io](https://img.shields.io/crates/v/multiboot2-header.svg)](https://crates.io/crates/multiboot2-header)
 [![docs](https://docs.rs/multiboot2-header/badge.svg)](https://docs.rs/multiboot2-header/)
@@ -8,6 +9,7 @@ as well as a builder to build them at runtime. This library is `no_std` and can
 be used in bootloaders.
 
 What this library is good for:
+
 - construct a Multiboot2 header at runtime (constructing one at build-time with
   macros is not done yet, contributions are welcome!)
 - write a Multiboot2-bootloader that parses a Multiboot2-header
@@ -60,20 +62,24 @@ fn main() {
 
 ## Example 2: Multiboot2 header as static data in Rust file
 
-You can use the builder, construct a Multiboot2 header, write it to a file and include it like this:
+You can use the builder, construct a Multiboot2 header, write it to a file and
+include it like this:
+
 ```
 #[used]
 #[no_mangle]
 #[link_section = ".text.multiboot2_header"]
 static MULTIBOOT2_HDR: [u8; 64] = *include_bytes!("mb2_hdr_dump.bin");
 ```
+
 You may need a special linker script to place this symbol in the first 32768
 bytes of the ELF. See Multiboot2 specification.
 
 ## MSRV
 
-The MSRV is 1.69.0 stable.
+The MSRV is 1.70.0 stable.
 
 ## License & Contribution
 
-See main [README](https://github.com/rust-osdev/multiboot2/blob/main/README.md) file.
+See main [README](https://github.com/rust-osdev/multiboot2/blob/main/README.md)
+file.
