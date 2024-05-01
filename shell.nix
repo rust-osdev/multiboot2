@@ -3,10 +3,15 @@ let
   pkgs = import sources.nixpkgs {};
 in
 pkgs.mkShell rec {
-  nativeBuildInputs = with pkgs; [
+  packages = with pkgs; [
+    # general
+    rustup
+    nixpkgs-fmt
+    niv
+
+    # integration test
     grub2
     qemu
-    rustup
     xorriso
   ];
 
