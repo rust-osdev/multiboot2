@@ -120,7 +120,7 @@ dependencies = [
 
 [[package]]
 name = "multiboot2-header"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
  "derive_more",
  "multiboot2 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
