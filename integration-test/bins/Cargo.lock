@@ -96,26 +96,26 @@ dependencies = [
 
 [[package]]
 name = "multiboot2"
-version = "0.19.0"
+version = "0.20.0"
 dependencies = [
  "bitflags 2.5.0",
  "derive_more",
  "log",
  "ptr_meta",
- "uefi-raw 0.5.2",
+ "uefi-raw",
 ]
 
 [[package]]
 name = "multiboot2"
-version = "0.19.0"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be7a13d71fc2f7747af3ce60e5eccb638acd687b3a580d0bd579c6d0f7b9d010"
+checksum = "3d67e1b461b49127f2226c78a2b4090f72212c44fa27342bcfef93dd39bd6b86"
 dependencies = [
  "bitflags 2.5.0",
  "derive_more",
  "log",
  "ptr_meta",
- "uefi-raw 0.3.0",
+ "uefi-raw",
 ]
 
 [[package]]
@@ -123,7 +123,7 @@ name = "multiboot2-header"
 version = "0.3.2"
 dependencies = [
  "derive_more",
- "multiboot2 0.19.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiboot2 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -135,7 +135,7 @@ dependencies = [
  "good_memory_allocator",
  "log",
  "multiboot",
- "multiboot2 0.19.0",
+ "multiboot2 0.20.0",
  "multiboot2-header",
  "util",
 ]
@@ -147,7 +147,7 @@ dependencies = [
  "anyhow",
  "good_memory_allocator",
  "log",
- "multiboot2 0.19.0",
+ "multiboot2 0.20.0",
  "util",
  "x86",
 ]
@@ -244,17 +244,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "uefi-raw"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62642516099c6441a5f41b0da8486d5fc3515a0603b0fdaea67b31600e22082e"
-dependencies = [
- "bitflags 2.5.0",
- "ptr_meta",
- "uguid",
 ]
 
 [[package]]
