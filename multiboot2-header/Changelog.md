@@ -4,6 +4,7 @@
 
 - added `EndHeaderTag::default()`
 - MSRV is 1.69
+- Can add multiple `TagType::Smbios` tags in the builder.
 
 ## 0.3.2 (2023-11-30)
 

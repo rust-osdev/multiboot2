@@ -141,4 +141,16 @@ mod tests {
         assert_eq!(tag.size as usize, METADATA_SIZE + content.len());
         assert_eq!(tag.string(), Ok(content_rust_str));
     }
+
+    #[test]
+    fn can_hold_tag_trait() {
+        fn consume<T: TagTrait + ?Sized>(_: &T) {}
+        let content = b"hallo\0";
+
+        let tag = BoxedDst::<CustomTag>::new(content);
+        consume(tag.deref());
+        consume(&*tag);
+        // Compiler not smart enough?
+        // consume(&tag);
+    }
 }
