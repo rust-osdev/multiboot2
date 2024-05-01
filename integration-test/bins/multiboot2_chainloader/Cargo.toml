@@ -1,16 +1,16 @@
 [package]
 name = "multiboot2_chainloader"
-description = "Multiboot chainloader that loads a Multiboot2 payload"
+description = "Integrationtest: Multiboot2 chainloader"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [dependencies]
-util = { path = "../util" }
-multiboot2 = { path = "../../../multiboot2" }
-multiboot2-header = { path = "../../../multiboot2-header" }
-anyhow = { version = "1.0", default-features = false }
-elf_rs = "0.3"
-log = { version = "0.4", default-features = false }
-good_memory_allocator = "0.1"
+anyhow.workspace = true
+log.workspace = true
+good_memory_allocator.workspace = true
 multiboot = "0.8"
+multiboot2.workspace = true
+multiboot2-header.workspace = true
+util.workspace = true
+elf_rs = "0.3"

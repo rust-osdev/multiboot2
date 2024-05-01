@@ -9,7 +9,7 @@
 name: "Cargo workspace"
 
 # Run on every push (tag, branch) and pull_request
-on: [pull_request, push, workflow_dispatch, merge_group]
+on: [ pull_request, push, workflow_dispatch, merge_group ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -20,7 +20,7 @@ jobs:
     name: build (msrv)
     uses: ./.github/workflows/_build-rust.yml
     with:
-      rust-version: 1.69.0 # MSRV
+      rust-version: 1.70.0 # MSRV
       do-style-check: false
       features: builder
 
@@ -46,7 +46,7 @@ jobs:
     needs: build_msrv
     uses: ./.github/workflows/_build-rust.yml
     with:
-      rust-version: 1.69.0 # MSRV
+      rust-version: 1.70.0 # MSRV
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
       features: builder
@@ -103,7 +103,7 @@ jobs:
     needs: build_msrv
     uses: ./.github/workflows/_build-rust.yml
     with:
-      rust-version: 1.69.0 # MSRV
+      rust-version: 1.70.0 # MSRV
       do-style-check: true
       do-test: false
       features: builder

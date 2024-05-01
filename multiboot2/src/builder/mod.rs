@@ -3,7 +3,7 @@
 mod boxed_dst;
 mod information;
 
-// This must by public to support external people to create boxed DSTs.
+// This must be public to support external people to create boxed DSTs.
 pub use boxed_dst::BoxedDst;
 pub use information::InformationBuilder;
 

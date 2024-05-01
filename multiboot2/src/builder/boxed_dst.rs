@@ -12,7 +12,7 @@ use core::ptr::NonNull;
 /// builder. This is tricky in Rust. This type behaves similar to the regular
 /// `Box` type except that it ensure the same layout is used for the (explicit)
 /// allocation and the (implicit) deallocation of memory. Otherwise, I didn't
-/// found any way to figure out the right layout for a DST. Miri always reported
+/// find any way to figure out the right layout for a DST. Miri always reported
 /// issues that the deallocation used a wrong layout.
 ///
 /// Technically, I'm certain this code is memory safe. But with this type, I
@@ -140,5 +140,17 @@ mod tests {
         assert_eq!(tag.typ, CustomTag::ID);
         assert_eq!(tag.size as usize, METADATA_SIZE + content.len());
         assert_eq!(tag.string(), Ok(content_rust_str));
+    }
+
+    #[test]
+    fn can_hold_tag_trait() {
+        fn consume<T: TagTrait + ?Sized>(_: &T) {}
+        let content = b"hallo\0";
+
+        let tag = BoxedDst::<CustomTag>::new(content);
+        consume(tag.deref());
+        consume(&*tag);
+        // Compiler not smart enough?
+        // consume(&tag);
     }
 }

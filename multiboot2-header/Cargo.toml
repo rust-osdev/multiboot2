@@ -26,7 +26,7 @@ readme = "README.md"
 homepage = "https://github.com/rust-osdev/multiboot2-header"
 repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2-header"
-rust-version = "1.69"
+rust-version = "1.70"
 
 [[example]]
 name = "minimal"
@@ -40,13 +40,7 @@ builder = ["alloc"]
 unstable = []
 
 [dependencies]
-# Not yet used.
-# bitflags.workspace = true
 derive_more.workspace = true
-# Not yet used.
-# log.workspace = true
-
-# Used for MBI tags.
 multiboot2 = { version = "0.19.0", default-features = false }
 
 [package.metadata.docs.rs]

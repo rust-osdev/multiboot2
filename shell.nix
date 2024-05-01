@@ -3,11 +3,20 @@ let
   pkgs = import sources.nixpkgs {};
 in
 pkgs.mkShell rec {
-  nativeBuildInputs = with pkgs; [
+  packages = with pkgs; [
+    # general
+    rustup
+    nixpkgs-fmt
+    niv
+
+    # integration test
     grub2
     qemu
-    rustup
     xorriso
+
+    (pkgs.writeShellScriptBin "run-integrationtest" ''
+    ./integration-test/run.sh
+    '')
   ];
 
   # To invoke "nix-shell" in the CI-runner, we need a global Nix channel.

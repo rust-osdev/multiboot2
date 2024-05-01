@@ -3,7 +3,7 @@
 ## Unreleased
 
 - added `InformationBuilder::default()`
-- MSRV is 1.69
+- MSRV is 1.70
 
 ## 0.19.0 (2023-09-21)
 

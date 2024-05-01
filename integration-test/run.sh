@@ -15,7 +15,8 @@ function fn_main() {
 
 function fn_build_rust_bins() {
     cd "bins"
-    cargo build --release
+    cargo --version
+    cargo build --release --verbose
     cd "$DIR"
 }
 

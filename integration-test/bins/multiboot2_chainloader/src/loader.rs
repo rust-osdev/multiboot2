@@ -1,7 +1,8 @@
+use core::ops::Deref;
 use elf_rs::{ElfFile, ProgramHeaderEntry, ProgramType};
 use multiboot2::{
-    BootLoaderNameTag, CommandLineTag, MemoryArea, MemoryAreaType, MemoryMapTag,
-    ModuleTag,
+    BootLoaderNameTag, CommandLineTag, MemoryArea, MemoryAreaType, MemoryMapTag, ModuleTag,
+    SmbiosTag,
 };
 
 /// Loads the first module into memory. Assumes that the module is a ELF file.
@@ -56,6 +57,11 @@ pub fn load_module(mut modules: multiboot::information::ModuleIter) -> ! {
             elf_mod.end as u32,
             elf_mod.string.unwrap(),
         ))
+        // Test that we can add SmbiosTag multiple times.
+        .add_tag(SmbiosTag::new(1, 1, &[1, 2, 3]).deref())
+        .unwrap()
+        .add_tag(SmbiosTag::new(1, 2, &[1, 2, 3]).deref())
+        .expect("should allow tag multiple times")
         .build();
 
     log::info!(
