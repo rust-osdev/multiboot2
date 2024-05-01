@@ -12,7 +12,7 @@ use core::ptr::NonNull;
 /// builder. This is tricky in Rust. This type behaves similar to the regular
 /// `Box` type except that it ensure the same layout is used for the (explicit)
 /// allocation and the (implicit) deallocation of memory. Otherwise, I didn't
-/// found any way to figure out the right layout for a DST. Miri always reported
+/// find any way to figure out the right layout for a DST. Miri always reported
 /// issues that the deallocation used a wrong layout.
 ///
 /// Technically, I'm certain this code is memory safe. But with this type, I

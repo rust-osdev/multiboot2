@@ -5,7 +5,7 @@ use ptr_meta::Pointee;
 
 /// A trait to abstract over all sized and unsized tags (DSTs). For sized tags,
 /// this trait does not much. For DSTs, a [`TagTrait::dst_size`] implementation
-/// must me provided, which returns the right size hint for the dynamically
+/// must be provided, which returns the right size hint for the dynamically
 /// sized portion of the struct.
 ///
 /// # Trivia
