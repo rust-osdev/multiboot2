@@ -64,6 +64,14 @@ impl Tag {
         unsafe { TagTrait::from_base_tag(self) }
     }
 
+    /// Casts the base tag to the specific tag type, but mutably.
+    pub fn cast_tag_mut<'a, T: TagTrait + ?Sized + 'a>(&'a mut self) -> &'a mut T {
+        assert_eq!(self.typ, T::ID);
+        // Safety: At this point, we trust that "self.size" and the size hint
+        // for DST tags are sane.
+        unsafe { TagTrait::from_base_tag_mut(self) }
+    }
+
     /// Parses the provided byte sequence as Multiboot string, which maps to a
     /// [`str`].
     pub fn parse_slice_as_string(bytes: &[u8]) -> Result<&str, StringError> {
@@ -121,6 +129,55 @@ impl<'a> Iterator for TagIter<'a> {
         assert!(self.current.cast::<u8>() < self.end_ptr_exclusive);
 
         let tag = unsafe { &*self.current };
+        match tag.typ() {
+            TagType::End => None, // end tag
+            _ => {
+                // We return the tag and update self.current already to the next
+                // tag.
+
+                // next pointer (rounded up to 8-byte alignment)
+                let ptr_offset = (tag.size as usize + 7) & !7;
+
+                // go to next tag
+                self.current = unsafe { self.current.cast::<u8>().add(ptr_offset).cast::<Tag>() };
+
+                Some(tag)
+            }
+        }
+    }
+}
+
+/// Iterates the MBI's tags from the first tag to the end tag.
+#[derive(Clone, Debug)]
+pub struct TagIterMut<'a> {
+    /// Pointer to the next tag. Updated in each iteration.
+    pub current: *mut Tag,
+    /// The pointer right after the MBI. Used for additional bounds checking.
+    end_ptr_exclusive: *mut u8,
+    /// Lifetime capture of the MBI's memory.
+    _mem: PhantomData<&'a mut ()>,
+}
+
+impl<'a> TagIterMut<'a> {
+    /// Creates a new iterator
+    pub fn new(mem: &'a mut [u8]) -> Self {
+        assert_eq!(mem.as_ptr().align_offset(8), 0);
+        TagIterMut {
+            current: mem.as_mut_ptr().cast(),
+            end_ptr_exclusive: unsafe { mem.as_mut_ptr().add(mem.len()) },
+            _mem: PhantomData,
+        }
+    }
+}
+
+impl<'a> Iterator for TagIterMut<'a> {
+    type Item = &'a mut Tag;
+
+    fn next(&mut self) -> Option<&'a mut Tag> {
+        // This never failed so far. But better be safe.
+        assert!(self.current.cast::<u8>() < self.end_ptr_exclusive);
+
+        let tag = unsafe { &mut *self.current };
         match tag.typ() {
             TagType::End => None, // end tag
             _ => {
