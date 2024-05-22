@@ -3,19 +3,6 @@
 
 .code32
 
-.section .multiboot_header, "a", @progbits
-
-/*
- * Multiboot v1 Header.
- * Required so that we can be booted by QEMU via the "-kernel" parameter.
- */
-.align 8
-.global multiboot_header
-multiboot_header:
-    .long   0x1badb002
-    .long   0x0
-    .long  -0x1badb002
-
 .section .text
 
 .global start

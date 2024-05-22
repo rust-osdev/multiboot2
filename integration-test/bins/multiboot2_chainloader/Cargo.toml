@@ -16,6 +16,5 @@ anyhow = { workspace = true }
 elf_rs = { workspace = true }
 integration-test-util = { workspace = true }
 log = { workspace = true }
-multiboot = { workspace = true }
 multiboot2 = { workspace = true, features = ["builder"] }
 multiboot2-header = { workspace = true }
