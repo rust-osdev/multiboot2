@@ -10,7 +10,7 @@ pkgs.mkShell rec {
     niv
 
     # integration test
-    grub2
+    grub2  # for grub-file
     qemu
     xorriso
 
@@ -23,4 +23,6 @@ pkgs.mkShell rec {
   # For better reproducibility inside the Nix shell, we override this channel
   # with the pinned nixpkgs version.
   NIX_PATH = "nixpkgs=${sources.nixpkgs}";
+
+  OVMF = "${pkgs.OVMF.fd}/FV/OVMF.fd";
 }
