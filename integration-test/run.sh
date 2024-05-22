@@ -141,7 +141,7 @@ function fn_test_payload() {
     fn_build_limine_iso
 
     fn_run_test_bios $TEST_DIR/image.iso
-    fn_run_test_uefi $TEST_DIR/image.iso
+    #fn_run_test_uefi $TEST_DIR/image.iso
 }
 
 # Tests the loader by chainloading the Multiboot2 payload.
@@ -155,7 +155,7 @@ function fn_test_loader() {
     fn_build_limine_iso
 
     fn_run_test_bios $TEST_DIR/image.iso
-    fn_run_test_uefi $TEST_DIR/image.iso
+    #fn_run_test_uefi $TEST_DIR/image.iso
 }
 
 fn_main

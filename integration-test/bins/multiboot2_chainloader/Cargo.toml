@@ -1,6 +1,9 @@
 [package]
 name = "multiboot2_chainloader"
-description = "Integrationtest: Multiboot2 chainloader"
+description = """
+Integrationtest: Multiboot2 chainloader. The loader itself loads via Multiboot1,
+but the payload is loaded via Multiboot2 by the loader.
+"""
 version = "0.1.0"
 edition = "2021"
 publish = false
