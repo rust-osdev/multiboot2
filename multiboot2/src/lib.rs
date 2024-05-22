@@ -302,7 +302,10 @@ impl<'a> BootInformation<'a> {
         // If the EFIBootServicesNotExited is present, then we should not use
         // the memory map, as it could still be in use.
         match self.get_tag::<EFIBootServicesNotExitedTag>() {
-            Some(_tag) => None,
+            Some(_tag) => {
+                log::debug!("The EFI memory map is present but the UEFI Boot Services Not Existed Tag is present. Returning None.");
+                None
+            }
             None => self.get_tag::<EFIMemoryMapTag>(),
         }
     }
@@ -1450,15 +1453,15 @@ mod tests {
     #[cfg_attr(miri, ignore)]
     fn efi_memory_map() {
         #[repr(C, align(8))]
-        struct Bytes([u8; 72]);
+        struct Bytes([u8; 80]);
         // test that the EFI memory map is detected.
         let bytes: Bytes = Bytes([
-            72, 0, 0, 0, // size
+            80, 0, 0, 0, // size
             0, 0, 0, 0, // reserved
             17, 0, 0, 0, // EFI memory map type
-            56, 0, 0, 0, // EFI memory map size
+            64, 0, 0, 0, // EFI memory map size
             48, 0, 0, 0, // EFI descriptor size
-            1, 0, 0, 0, // EFI descriptor version, don't think this matters.
+            1, 0, 0, 0, // EFI descriptor version
             7, 0, 0, 0, // Type: EfiConventionalMemory
             0, 0, 0, 0, // Padding
             0, 0, 16, 0, // Physical Address: should be 0x100000
@@ -1469,6 +1472,8 @@ mod tests {
             0, 0, 0, 0, // Extension of pages
             0, 0, 0, 0, // Attributes of this memory range.
             0, 0, 0, 0, // Extension of attributes
+            0, 0, 0, 0, // More padding to extend the efi mmap to `desc_size`.
+            0, 0, 0, 0, // padding/alignment for end tag
             0, 0, 0, 0, // end tag type.
             8, 0, 0, 0, // end tag size.
         ]);

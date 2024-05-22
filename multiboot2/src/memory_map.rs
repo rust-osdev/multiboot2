@@ -55,7 +55,10 @@ impl MemoryMapTag {
         self.entry_version
     }
 
-    /// Return the slice with all memory areas.
+    /// Return the slice of the provided [`MemoryArea`]s.
+    ///
+    /// Usually, this should already reflect the memory consumed by the
+    /// code running this.
     pub fn memory_areas(&self) -> &[MemoryArea] {
         // If this ever fails, we need to model this differently in this crate.
         assert_eq!(self.entry_size as usize, mem::size_of::<MemoryArea>());
@@ -74,7 +77,7 @@ impl TagTrait for MemoryMapTag {
     }
 }
 
-/// A memory area entry descriptor.
+/// A descriptor for an available or taken area of physical memory.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct MemoryArea {
@@ -284,9 +287,20 @@ impl AsBytes for EFIMemoryDesc {}
 pub struct EFIMemoryMapTag {
     typ: TagTypeId,
     size: u32,
+    /// Most likely a little more than the size of a [`EFIMemoryDesc`].
+    /// This is always the reference, and `size_of` never.
+    /// See <https://github.com/tianocore/edk2/blob/7142e648416ff5d3eac6c6d607874805f5de0ca8/MdeModulePkg/Core/PiSmmCore/Page.c#L1059>.
     desc_size: u32,
+    /// Version of the tag. The spec leaves it open to extend the memory
+    /// descriptor in the future. However, this never happened so far.
+    /// At the moment, only version "1" is supported.
     desc_version: u32,
-    descs: [EFIMemoryDesc],
+    /// Contains the UEFI memory map.
+    ///
+    /// To follow the UEFI spec and to allow extendability for future UEFI
+    /// revisions, the length is a multiple of `desc_size` and not a multiple
+    /// of `size_of::<EfiMemoryDescriptor>()`.
+    memory_map: [u8],
 }
 
 impl EFIMemoryMapTag {
@@ -308,20 +322,20 @@ impl EFIMemoryMapTag {
         BoxedDst::new(bytes.as_slice())
     }
 
-    /// Return an iterator over ALL marked memory areas.
+    /// Returns an iterator over the provided memory areas.
     ///
-    /// This differs from `MemoryMapTag` as for UEFI, the OS needs some non-
-    /// available memory areas for tables and such.
+    /// Usually, this should already reflect the memory consumed by the
+    /// code running this.
     pub fn memory_areas(&self) -> EFIMemoryAreaIter {
-        let self_ptr = self as *const EFIMemoryMapTag;
-        let start_area = (&self.descs[0]) as *const EFIMemoryDesc;
-        EFIMemoryAreaIter {
-            current_area: start_area as u64,
-            // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
-            last_area: (self_ptr as *const () as u64 + self.size as u64),
-            entry_size: self.desc_size,
-            phantom: PhantomData,
+        // If this ever fails, this needs to be refactored in a joint-effort
+        // with the uefi-rs project to have all corresponding typings.
+        assert_eq!(self.desc_version, EFIMemoryDesc::VERSION);
+
+        if self.desc_size as usize > mem::size_of::<EFIMemoryDesc>() {
+            log::debug!("desc_size larger than expected typing. We might miss a few fields.");
         }
+
+        EFIMemoryAreaIter::new(self)
     }
 }
 
@@ -330,30 +344,58 @@ impl TagTrait for EFIMemoryMapTag {
 
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= EFI_METADATA_SIZE);
-        let size = base_tag.size as usize - EFI_METADATA_SIZE;
-        assert_eq!(size % mem::size_of::<EFIMemoryDesc>(), 0);
-        size / mem::size_of::<EFIMemoryDesc>()
+        base_tag.size as usize - EFI_METADATA_SIZE
     }
 }
 
-/// An iterator over ALL EFI memory areas.
+/// An iterator over the EFI memory areas emitting [`EFIMemoryDesc`] items.
 #[derive(Clone, Debug)]
 pub struct EFIMemoryAreaIter<'a> {
-    current_area: u64,
-    last_area: u64,
-    entry_size: u32,
+    mmap_tag: &'a EFIMemoryMapTag,
+    i: usize,
+    entries: usize,
     phantom: PhantomData<&'a EFIMemoryDesc>,
+}
+
+impl<'a> EFIMemoryAreaIter<'a> {
+    fn new(mmap_tag: &'a EFIMemoryMapTag) -> Self {
+        let desc_size = mmap_tag.desc_size as usize;
+        let mmap_len = mmap_tag.memory_map.len();
+        assert_eq!(mmap_len % desc_size, 0, "memory map length must be a multiple of `desc_size` by definition. The MBI seems to be corrupt.");
+        Self {
+            mmap_tag,
+            i: 0,
+            entries: mmap_len / desc_size,
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<'a> Iterator for EFIMemoryAreaIter<'a> {
     type Item = &'a EFIMemoryDesc;
     fn next(&mut self) -> Option<&'a EFIMemoryDesc> {
-        if self.current_area > self.last_area {
-            None
-        } else {
-            let area = unsafe { &*(self.current_area as *const EFIMemoryDesc) };
-            self.current_area += self.entry_size as u64;
-            Some(area)
+        if self.i >= self.entries {
+            return None;
         }
+
+        let desc = unsafe {
+            self.mmap_tag
+                .memory_map
+                .as_ptr()
+                .add(self.i * self.mmap_tag.desc_size as usize)
+                .cast::<EFIMemoryDesc>()
+                .as_ref()
+                .unwrap()
+        };
+
+        self.i += 1;
+
+        Some(desc)
+    }
+}
+
+impl<'a> ExactSizeIterator for EFIMemoryAreaIter<'a> {
+    fn len(&self) -> usize {
+        self.entries
     }
 }
