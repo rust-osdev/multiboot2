@@ -3,6 +3,9 @@
 ## 0.20.1
 
 - fixed the handling of `EFIMemoryMapTag` and `EFIMemoryAreaIter`
+- **BREAKING** Fixed wrong creation of `EFIMemoryMapTag`.
+  `EFIMemoryMapTag::new` was replaced by `EFIMemoryMapTag::new_from_descs` and
+  `EFIMemoryMapTag::new_from_map`.
 
 ## 0.20.0 (2024-05-01)
 
