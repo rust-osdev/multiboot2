@@ -12,7 +12,6 @@ publish = false
 anyhow.workspace = true
 log.workspace = true
 good_memory_allocator.workspace = true
-multiboot = "0.8"
 multiboot2.workspace = true
 multiboot2-header.workspace = true
 util.workspace = true

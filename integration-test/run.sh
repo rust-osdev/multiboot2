@@ -44,11 +44,12 @@ function fn_build_rust_bins() {
     cargo build --release --verbose
     cd -
 
+    echo "Verifying multiboot2_chainloader ..."
     test -f $BINS_DIR/multiboot2_chainloader
     file --brief $BINS_DIR/multiboot2_chainloader | grep -q "ELF 32-bit LSB executable"
-    # For simplicity, the chainloader itself boots via Multiboot 1. Sufficient.
-    grub-file --is-x86-multiboot $BINS_DIR/multiboot2_chainloader
+    grub-file --is-x86-multiboot2 $BINS_DIR/multiboot2_chainloader
 
+    echo "Verifying multiboot2_payload ..."
     test -f $BINS_DIR/multiboot2_payload
     file --brief $BINS_DIR/multiboot2_payload | grep -q "ELF 32-bit LSB executable"
     grub-file --is-x86-multiboot2 $BINS_DIR/multiboot2_payload
@@ -155,7 +156,7 @@ function fn_test_loader() {
     fn_build_limine_iso
 
     fn_run_test_bios $TEST_DIR/image.iso
-    #fn_run_test_uefi $TEST_DIR/image.iso
+    fn_run_test_uefi $TEST_DIR/image.iso
 }
 
 fn_main

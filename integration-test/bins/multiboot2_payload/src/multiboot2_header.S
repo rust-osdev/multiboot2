@@ -1,4 +1,3 @@
-# Multiboot2 Header definition.
 # The assembly code uses the GNU Assembly (GAS) flavor with Intel noprefix
 # syntax.
 
