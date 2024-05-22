@@ -428,6 +428,8 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(feature = "builder")]
+    #[cfg_attr(miri, ignore)]
     fn construction_and_parsing() {
         let descs = [
             EFIMemoryDesc {
