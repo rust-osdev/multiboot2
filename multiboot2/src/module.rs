@@ -26,6 +26,8 @@ pub struct ModuleTag {
 impl ModuleTag {
     #[cfg(feature = "builder")]
     pub fn new(start: u32, end: u32, cmdline: &str) -> BoxedDst<Self> {
+        assert!(end > start, "must have a size");
+
         let mut cmdline_bytes: Vec<_> = cmdline.bytes().collect();
         if !cmdline_bytes.ends_with(&[0]) {
             // terminating null-byte
@@ -135,7 +137,7 @@ mod tests {
             &((TagType::Module.val()).to_le_bytes()),
             &size.to_le_bytes(),
             &0_u32.to_le_bytes(),
-            &0_u32.to_le_bytes(),
+            &1_u32.to_le_bytes(),
             MSG.as_bytes(),
             // Null Byte
             &[0],
@@ -161,15 +163,15 @@ mod tests {
     #[test]
     #[cfg(feature = "builder")]
     fn test_build_str() {
-        let tag = ModuleTag::new(0, 0, MSG);
+        let tag = ModuleTag::new(0, 1, MSG);
         let bytes = tag.as_bytes();
         assert_eq!(bytes, get_bytes());
         assert_eq!(tag.cmdline(), Ok(MSG));
 
         // test also some bigger message
-        let tag = ModuleTag::new(0, 0, "AbCdEfGhUjK YEAH");
+        let tag = ModuleTag::new(0, 1, "AbCdEfGhUjK YEAH");
         assert_eq!(tag.cmdline(), Ok("AbCdEfGhUjK YEAH"));
-        let tag = ModuleTag::new(0, 0, "AbCdEfGhUjK YEAH".repeat(42).as_str());
+        let tag = ModuleTag::new(0, 1, "AbCdEfGhUjK YEAH".repeat(42).as_str());
         assert_eq!(tag.cmdline(), Ok("AbCdEfGhUjK YEAH".repeat(42).as_str()));
     }
 }
