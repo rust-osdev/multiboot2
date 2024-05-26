@@ -373,10 +373,6 @@ impl EFIMemoryMapTag {
             0
         );
 
-        if self.desc_size as usize > mem::size_of::<EFIMemoryDesc>() {
-            log::debug!("desc_size larger than expected typing. We might miss a few fields.");
-        }
-
         EFIMemoryAreaIter::new(self)
     }
 }
