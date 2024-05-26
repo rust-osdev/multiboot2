@@ -23,6 +23,11 @@ QEMU_ARGS_BASE=(
 
 function fn_main() {
     git submodule update --init
+
+    cd /home/pschuster/dev/limine/
+    make -j 16 && make install
+    cd -
+
     fn_build_limine_hosttool
     fn_build_rust_bins
 
@@ -63,12 +68,12 @@ function fn_prepare_test_vol() {
 
     # copy limine artifacts
     mkdir -p $TEST_VOL/limine
-    cp limine-bootloader/limine-bios-cd.bin $TEST_VOL/limine
-    cp limine-bootloader/limine-bios.sys $TEST_VOL/limine
-    cp limine-bootloader/limine-uefi-cd.bin $TEST_VOL/limine
+    cp /home/pschuster/dev/limine/artifacts/share/limine/limine-bios-cd.bin $TEST_VOL/limine
+    cp /home/pschuster/dev/limine/artifacts/share/limine/limine-bios.sys $TEST_VOL/limine
+    cp /home/pschuster/dev/limine/artifacts/share/limine/limine-uefi-cd.bin $TEST_VOL/limine
 
     mkdir -p $TEST_VOL/EFI/BOOT
-    cp limine-bootloader/BOOTX64.EFI $TEST_VOL/EFI_BOOT
+    cp /home/pschuster/dev/limine/artifacts/share/limine/BOOTX64.EFI $TEST_VOL/EFI_BOOT
 }
 
 
@@ -82,7 +87,7 @@ function fn_build_limine_iso() {
             -efi-boot-part --efi-boot-image --protective-msdos-label \
             $TEST_VOL -o $TEST_DIR/image.iso 2>/dev/null
 
-    ./limine-bootloader/limine bios-install $TEST_DIR/image.iso 2>/dev/null
+    /home/pschuster/dev/limine/artifacts/bin/limine bios-install $TEST_DIR/image.iso 2>/dev/null
 }
 
 function fn_run_qemu() {
