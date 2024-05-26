@@ -284,7 +284,7 @@ impl AsBytes for EFIMemoryDesc {}
 
 /// EFI memory map tag. The embedded [`EFIMemoryDesc`]s follows the EFI
 /// specification.
-#[derive(ptr_meta::Pointee, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIMemoryMapTag {
     typ: TagTypeId,
@@ -374,6 +374,19 @@ impl EFIMemoryMapTag {
         );
 
         EFIMemoryAreaIter::new(self)
+    }
+}
+
+impl Debug for EFIMemoryMapTag {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("EFIMemoryMapTag")
+            .field("typ", &self.typ)
+            .field("size", &self.size)
+            .field("desc_size", &self.desc_size)
+            .field("buf", &self.memory_map.as_ptr())
+            .field("buf_len", &self.memory_map.len())
+            .field("entries", &self.memory_areas().len())
+            .finish()
     }
 }
 
