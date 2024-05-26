@@ -1,6 +1,7 @@
 //! Module for [`MemoryMapTag`], [`EFIMemoryMapTag`] and [`BasicMemoryInfoTag`]
 //! and corresponding helper types.
 
+pub use uefi_raw::table::boot::MemoryAttribute as EFIMemoryAttribute;
 pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
 pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
 
@@ -55,7 +56,10 @@ impl MemoryMapTag {
         self.entry_version
     }
 
-    /// Return the slice with all memory areas.
+    /// Return the slice of the provided [`MemoryArea`]s.
+    ///
+    /// Usually, this should already reflect the memory consumed by the
+    /// code running this.
     pub fn memory_areas(&self) -> &[MemoryArea] {
         // If this ever fails, we need to model this differently in this crate.
         assert_eq!(self.entry_size as usize, mem::size_of::<MemoryArea>());
@@ -74,7 +78,7 @@ impl TagTrait for MemoryMapTag {
     }
 }
 
-/// A memory area entry descriptor.
+/// A descriptor for an available or taken area of physical memory.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct MemoryArea {
@@ -278,15 +282,30 @@ const EFI_METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of:
 #[cfg(feature = "builder")]
 impl AsBytes for EFIMemoryDesc {}
 
-/// EFI memory map tag. The [`EFIMemoryDesc`] follows the EFI specification.
+/// EFI memory map tag. The embedded [`EFIMemoryDesc`]s follows the EFI
+/// specification.
 #[derive(ptr_meta::Pointee, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIMemoryMapTag {
     typ: TagTypeId,
     size: u32,
+    /// Most likely a little more than the size of a [`EFIMemoryDesc`].
+    /// This is always the reference, and `size_of` never.
+    /// See <https://github.com/tianocore/edk2/blob/7142e648416ff5d3eac6c6d607874805f5de0ca8/MdeModulePkg/Core/PiSmmCore/Page.c#L1059>.
     desc_size: u32,
+    /// Version of the tag. The spec leaves it open to extend the memory
+    /// descriptor in the future. However, this never happened so far.
+    /// At the moment, only version "1" is supported.
     desc_version: u32,
-    descs: [EFIMemoryDesc],
+    /// Contains the UEFI memory map.
+    ///
+    /// To follow the UEFI spec and to allow extendability for future UEFI
+    /// revisions, the length is a multiple of `desc_size` and not a multiple
+    /// of `size_of::<EfiMemoryDescriptor>()`.
+    ///
+    /// This tag is properly `align_of::<EFIMemoryDesc>` aligned, if the tag
+    /// itself is also 8 byte aligned, which every sane MBI guarantees.
+    memory_map: [u8],
 }
 
 impl EFIMemoryMapTag {
@@ -294,34 +313,71 @@ impl EFIMemoryMapTag {
     /// Create a new EFI memory map tag with the given memory descriptors.
     /// Version and size can't be set because you're passing a slice of
     /// EFIMemoryDescs, not the ones you might have gotten from the firmware.
-    pub fn new(descs: &[EFIMemoryDesc]) -> BoxedDst<Self> {
-        // update this when updating EFIMemoryDesc
-        const MEMORY_DESCRIPTOR_VERSION: u32 = 1;
-        let mut bytes = [
-            (mem::size_of::<EFIMemoryDesc>() as u32).to_le_bytes(),
-            MEMORY_DESCRIPTOR_VERSION.to_le_bytes(),
-        ]
-        .concat();
+    pub fn new_from_descs(descs: &[EFIMemoryDesc]) -> BoxedDst<Self> {
+        // TODO replace this EfiMemorydesc::uefi_desc_size() in the next uefi_raw
+        // release.
+
+        let size_base = mem::size_of::<EFIMemoryDesc>();
+        // Taken from https://github.com/tianocore/edk2/blob/7142e648416ff5d3eac6c6d607874805f5de0ca8/MdeModulePkg/Core/PiSmmCore/Page.c#L1059
+        let desc_size_diff = mem::size_of::<u64>() - size_base % mem::size_of::<u64>();
+        let desc_size = size_base + desc_size_diff;
+
+        assert!(desc_size >= size_base);
+
+        let mut efi_mmap = alloc::vec::Vec::with_capacity(descs.len() * desc_size);
         for desc in descs {
-            bytes.extend(desc.as_bytes());
+            efi_mmap.extend(desc.as_bytes());
+            // fill with zeroes
+            efi_mmap.extend([0].repeat(desc_size_diff));
         }
-        BoxedDst::new(bytes.as_slice())
+
+        Self::new_from_map(
+            desc_size as u32,
+            EFIMemoryDesc::VERSION,
+            efi_mmap.as_slice(),
+        )
     }
 
-    /// Return an iterator over ALL marked memory areas.
+    #[cfg(feature = "builder")]
+    /// Create a new EFI memory map tag from the given EFI memory map.
+    pub fn new_from_map(desc_size: u32, desc_version: u32, efi_mmap: &[u8]) -> BoxedDst<Self> {
+        assert!(desc_size > 0);
+        assert_eq!(efi_mmap.len() % desc_size as usize, 0);
+        assert_eq!(
+            efi_mmap
+                .as_ptr()
+                .align_offset(mem::align_of::<EFIMemoryDesc>()),
+            0
+        );
+        let bytes = [
+            &desc_size.to_le_bytes(),
+            &desc_version.to_le_bytes(),
+            efi_mmap,
+        ]
+        .concat();
+        BoxedDst::new(&bytes)
+    }
+
+    /// Returns an iterator over the provided memory areas.
     ///
-    /// This differs from `MemoryMapTag` as for UEFI, the OS needs some non-
-    /// available memory areas for tables and such.
+    /// Usually, this should already reflect the memory consumed by the
+    /// code running this.
     pub fn memory_areas(&self) -> EFIMemoryAreaIter {
-        let self_ptr = self as *const EFIMemoryMapTag;
-        let start_area = (&self.descs[0]) as *const EFIMemoryDesc;
-        EFIMemoryAreaIter {
-            current_area: start_area as u64,
-            // NOTE: `last_area` is only a bound, it doesn't necessarily point exactly to the last element
-            last_area: (self_ptr as *const () as u64 + self.size as u64),
-            entry_size: self.desc_size,
-            phantom: PhantomData,
+        // If this ever fails, this needs to be refactored in a joint-effort
+        // with the uefi-rs project to have all corresponding typings.
+        assert_eq!(self.desc_version, EFIMemoryDesc::VERSION);
+        assert_eq!(
+            self.memory_map
+                .as_ptr()
+                .align_offset(mem::align_of::<EFIMemoryDesc>()),
+            0
+        );
+
+        if self.desc_size as usize > mem::size_of::<EFIMemoryDesc>() {
+            log::debug!("desc_size larger than expected typing. We might miss a few fields.");
         }
+
+        EFIMemoryAreaIter::new(self)
     }
 }
 
@@ -330,30 +386,219 @@ impl TagTrait for EFIMemoryMapTag {
 
     fn dst_size(base_tag: &Tag) -> usize {
         assert!(base_tag.size as usize >= EFI_METADATA_SIZE);
-        let size = base_tag.size as usize - EFI_METADATA_SIZE;
-        assert_eq!(size % mem::size_of::<EFIMemoryDesc>(), 0);
-        size / mem::size_of::<EFIMemoryDesc>()
+        base_tag.size as usize - EFI_METADATA_SIZE
     }
 }
 
-/// An iterator over ALL EFI memory areas.
+/// An iterator over the EFI memory areas emitting [`EFIMemoryDesc`] items.
 #[derive(Clone, Debug)]
 pub struct EFIMemoryAreaIter<'a> {
-    current_area: u64,
-    last_area: u64,
-    entry_size: u32,
+    mmap_tag: &'a EFIMemoryMapTag,
+    i: usize,
+    entries: usize,
     phantom: PhantomData<&'a EFIMemoryDesc>,
+}
+
+impl<'a> EFIMemoryAreaIter<'a> {
+    fn new(mmap_tag: &'a EFIMemoryMapTag) -> Self {
+        let desc_size = mmap_tag.desc_size as usize;
+        let mmap_len = mmap_tag.memory_map.len();
+        assert_eq!(mmap_len % desc_size, 0, "memory map length must be a multiple of `desc_size` by definition. The MBI seems to be corrupt.");
+        Self {
+            mmap_tag,
+            i: 0,
+            entries: mmap_len / desc_size,
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<'a> Iterator for EFIMemoryAreaIter<'a> {
     type Item = &'a EFIMemoryDesc;
     fn next(&mut self) -> Option<&'a EFIMemoryDesc> {
-        if self.current_area > self.last_area {
-            None
-        } else {
-            let area = unsafe { &*(self.current_area as *const EFIMemoryDesc) };
-            self.current_area += self.entry_size as u64;
-            Some(area)
+        if self.i >= self.entries {
+            return None;
         }
+
+        let desc = unsafe {
+            self.mmap_tag
+                .memory_map
+                .as_ptr()
+                .add(self.i * self.mmap_tag.desc_size as usize)
+                .cast::<EFIMemoryDesc>()
+                .as_ref()
+                .unwrap()
+        };
+
+        self.i += 1;
+
+        Some(desc)
+    }
+}
+
+impl<'a> ExactSizeIterator for EFIMemoryAreaIter<'a> {
+    fn len(&self) -> usize {
+        self.entries
+    }
+}
+
+#[cfg(all(test, feature = "builder", not(miri)))]
+mod tests {
+    use super::*;
+    use std::mem::size_of;
+
+    #[test]
+    fn construction_and_parsing() {
+        let descs = [
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::CONVENTIONAL,
+                phys_start: 0x1000,
+                virt_start: 0x1000,
+                page_count: 1,
+                att: Default::default(),
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::LOADER_DATA,
+                phys_start: 0x2000,
+                virt_start: 0x2000,
+                page_count: 3,
+                att: Default::default(),
+            },
+        ];
+        let efi_mmap_tag = EFIMemoryMapTag::new_from_descs(&descs);
+
+        assert_eq!(efi_mmap_tag.desc_size, 48 /* 40 + 8 */);
+
+        let mut iter = efi_mmap_tag.memory_areas();
+
+        assert_eq!(iter.next(), Some(&descs[0]));
+        assert_eq!(iter.next(), Some(&descs[1]));
+
+        assert_eq!(iter.next(), None);
+    }
+
+    /// Tests the EFI memory map parsing using a real world efi memory map.
+    /// This is taken from the uefi-rs repository. See
+    /// <https://github.com/rust-osdev/uefi-rs/pull/1175> for more info.
+    #[test]
+    fn test_real_data() {
+        const DESC_SIZE: u32 = 48;
+        const DESC_VERSION: u32 = 1;
+        /// Sample with 10 entries of a real UEFI memory map extracted from our
+        /// UEFI test runner.
+        const MMAP_RAW: [u64; 60] = [
+            3, 0, 0, 1, 15, 0, 7, 4096, 0, 134, 15, 0, 4, 552960, 0, 1, 15, 0, 7, 557056, 0, 24,
+            15, 0, 7, 1048576, 0, 1792, 15, 0, 10, 8388608, 0, 8, 15, 0, 7, 8421376, 0, 3, 15, 0,
+            10, 8433664, 0, 1, 15, 0, 7, 8437760, 0, 4, 15, 0, 10, 8454144, 0, 240, 15, 0,
+        ];
+        let buf = MMAP_RAW;
+        let buf = unsafe {
+            core::slice::from_raw_parts(buf.as_ptr().cast::<u8>(), buf.len() * size_of::<u64>())
+        };
+        let tag = EFIMemoryMapTag::new_from_map(DESC_SIZE, DESC_VERSION, buf);
+        let entries = tag.memory_areas().copied().collect::<alloc::vec::Vec<_>>();
+        let expected = [
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::BOOT_SERVICES_CODE,
+                phys_start: 0x0,
+                virt_start: 0x0,
+                page_count: 0x1,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::CONVENTIONAL,
+                phys_start: 0x1000,
+                virt_start: 0x0,
+                page_count: 0x86,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::BOOT_SERVICES_DATA,
+                phys_start: 0x87000,
+                virt_start: 0x0,
+                page_count: 0x1,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::CONVENTIONAL,
+                phys_start: 0x88000,
+                virt_start: 0x0,
+                page_count: 0x18,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::CONVENTIONAL,
+                phys_start: 0x100000,
+                virt_start: 0x0,
+                page_count: 0x700,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::ACPI_NON_VOLATILE,
+                phys_start: 0x800000,
+                virt_start: 0x0,
+                page_count: 0x8,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::CONVENTIONAL,
+                phys_start: 0x808000,
+                virt_start: 0x0,
+                page_count: 0x3,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::ACPI_NON_VOLATILE,
+                phys_start: 0x80b000,
+                virt_start: 0x0,
+                page_count: 0x1,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::CONVENTIONAL,
+                phys_start: 0x80c000,
+                virt_start: 0x0,
+                page_count: 0x4,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::ACPI_NON_VOLATILE,
+                phys_start: 0x810000,
+                virt_start: 0x0,
+                page_count: 0xf0,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+        ];
+        assert_eq!(entries.as_slice(), &expected);
     }
 }

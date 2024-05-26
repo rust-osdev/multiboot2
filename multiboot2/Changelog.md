@@ -1,6 +1,12 @@
 # CHANGELOG for crate `multiboot2`
 
-## Unreleased
+## 0.20.1 (2024-05-26)
+
+- fixed the handling of `EFIMemoryMapTag` and `EFIMemoryAreaIter`
+- **BREAKING** Fixed wrong creation of `EFIMemoryMapTag`.
+  `EFIMemoryMapTag::new` was replaced by `EFIMemoryMapTag::new_from_descs` and
+  `EFIMemoryMapTag::new_from_map`.
+- `ModuleTag::new`'s `end` parameter now must be bigger than `start`.
 
 ## 0.20.0 (2024-05-01)
 

@@ -51,7 +51,7 @@ pub trait TagTrait: Pointee {
     /// Callers must be sure that the "size" field of the provided [`Tag`] is
     /// sane and the underlying memory valid. The implementation of this trait
     /// **must have** a correct [`Self::dst_size`] implementation.
-    unsafe fn from_base_tag<'a>(tag: &Tag) -> &'a Self {
+    unsafe fn from_base_tag(tag: &Tag) -> &Self {
         let ptr = core::ptr::addr_of!(*tag);
         let ptr = ptr_meta::from_raw_parts(ptr.cast(), Self::dst_size(tag));
         &*ptr
