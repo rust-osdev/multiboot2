@@ -302,6 +302,9 @@ pub struct EFIMemoryMapTag {
     /// To follow the UEFI spec and to allow extendability for future UEFI
     /// revisions, the length is a multiple of `desc_size` and not a multiple
     /// of `size_of::<EfiMemoryDescriptor>()`.
+    ///
+    /// This tag is properly `align_of::<EFIMemoryDesc>` aligned, if the tag
+    /// itself is also 8 byte aligned, which every sane MBI guarantees.
     memory_map: [u8],
 }
 
@@ -311,6 +314,9 @@ impl EFIMemoryMapTag {
     /// Version and size can't be set because you're passing a slice of
     /// EFIMemoryDescs, not the ones you might have gotten from the firmware.
     pub fn new_from_descs(descs: &[EFIMemoryDesc]) -> BoxedDst<Self> {
+        // TODO replace this EfiMemorydesc::uefi_desc_size() in the next uefi_raw
+        // release.
+
         let size_base = mem::size_of::<EFIMemoryDesc>();
         // Taken from https://github.com/tianocore/edk2/blob/7142e648416ff5d3eac6c6d607874805f5de0ca8/MdeModulePkg/Core/PiSmmCore/Page.c#L1059
         let desc_size_diff = mem::size_of::<u64>() - size_base % mem::size_of::<u64>();
@@ -337,6 +343,12 @@ impl EFIMemoryMapTag {
     pub fn new_from_map(desc_size: u32, desc_version: u32, efi_mmap: &[u8]) -> BoxedDst<Self> {
         assert!(desc_size > 0);
         assert_eq!(efi_mmap.len() % desc_size as usize, 0);
+        assert_eq!(
+            efi_mmap
+                .as_ptr()
+                .align_offset(mem::align_of::<EFIMemoryDesc>()),
+            0
+        );
         let bytes = [
             &desc_size.to_le_bytes(),
             &desc_version.to_le_bytes(),
@@ -354,6 +366,12 @@ impl EFIMemoryMapTag {
         // If this ever fails, this needs to be refactored in a joint-effort
         // with the uefi-rs project to have all corresponding typings.
         assert_eq!(self.desc_version, EFIMemoryDesc::VERSION);
+        assert_eq!(
+            self.memory_map
+                .as_ptr()
+                .align_offset(mem::align_of::<EFIMemoryDesc>()),
+            0
+        );
 
         if self.desc_size as usize > mem::size_of::<EFIMemoryDesc>() {
             log::debug!("desc_size larger than expected typing. We might miss a few fields.");
@@ -424,13 +442,12 @@ impl<'a> ExactSizeIterator for EFIMemoryAreaIter<'a> {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "builder", not(miri)))]
 mod tests {
     use super::*;
+    use std::mem::size_of;
 
     #[test]
-    #[cfg(feature = "builder")]
-    #[cfg_attr(miri, ignore)]
     fn construction_and_parsing() {
         let descs = [
             EFIMemoryDesc {
@@ -458,5 +475,130 @@ mod tests {
         assert_eq!(iter.next(), Some(&descs[1]));
 
         assert_eq!(iter.next(), None);
+    }
+
+    /// Tests the EFI memory map parsing using a real world efi memory map.
+    /// This is taken from the uefi-rs repository. See
+    /// <https://github.com/rust-osdev/uefi-rs/pull/1175> for more info.
+    #[test]
+    fn test_real_data() {
+        const DESC_SIZE: u32 = 48;
+        const DESC_VERSION: u32 = 1;
+        /// Sample with 10 entries of a real UEFI memory map extracted from our
+        /// UEFI test runner.
+        const MMAP_RAW: [u64; 60] = [
+            3, 0, 0, 1, 15, 0, 7, 4096, 0, 134, 15, 0, 4, 552960, 0, 1, 15, 0, 7, 557056, 0, 24,
+            15, 0, 7, 1048576, 0, 1792, 15, 0, 10, 8388608, 0, 8, 15, 0, 7, 8421376, 0, 3, 15, 0,
+            10, 8433664, 0, 1, 15, 0, 7, 8437760, 0, 4, 15, 0, 10, 8454144, 0, 240, 15, 0,
+        ];
+        let buf = MMAP_RAW;
+        let buf = unsafe {
+            core::slice::from_raw_parts(buf.as_ptr().cast::<u8>(), buf.len() * size_of::<u64>())
+        };
+        let tag = EFIMemoryMapTag::new_from_map(DESC_SIZE, DESC_VERSION, buf);
+        let entries = tag.memory_areas().copied().collect::<alloc::vec::Vec<_>>();
+        let expected = [
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::BOOT_SERVICES_CODE,
+                phys_start: 0x0,
+                virt_start: 0x0,
+                page_count: 0x1,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::CONVENTIONAL,
+                phys_start: 0x1000,
+                virt_start: 0x0,
+                page_count: 0x86,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::BOOT_SERVICES_DATA,
+                phys_start: 0x87000,
+                virt_start: 0x0,
+                page_count: 0x1,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::CONVENTIONAL,
+                phys_start: 0x88000,
+                virt_start: 0x0,
+                page_count: 0x18,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::CONVENTIONAL,
+                phys_start: 0x100000,
+                virt_start: 0x0,
+                page_count: 0x700,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::ACPI_NON_VOLATILE,
+                phys_start: 0x800000,
+                virt_start: 0x0,
+                page_count: 0x8,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::CONVENTIONAL,
+                phys_start: 0x808000,
+                virt_start: 0x0,
+                page_count: 0x3,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::ACPI_NON_VOLATILE,
+                phys_start: 0x80b000,
+                virt_start: 0x0,
+                page_count: 0x1,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::CONVENTIONAL,
+                phys_start: 0x80c000,
+                virt_start: 0x0,
+                page_count: 0x4,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+            EFIMemoryDesc {
+                ty: EFIMemoryAreaType::ACPI_NON_VOLATILE,
+                phys_start: 0x810000,
+                virt_start: 0x0,
+                page_count: 0xf0,
+                att: EFIMemoryAttribute::UNCACHEABLE
+                    | EFIMemoryAttribute::WRITE_COMBINE
+                    | EFIMemoryAttribute::WRITE_THROUGH
+                    | EFIMemoryAttribute::WRITE_BACK,
+            },
+        ];
+        assert_eq!(entries.as_slice(), &expected);
     }
 }
