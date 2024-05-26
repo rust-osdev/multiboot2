@@ -100,7 +100,7 @@ dependencies = [
 
 [[package]]
 name = "multiboot2"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "bitflags 2.5.0",
  "derive_more",
@@ -125,7 +125,7 @@ dependencies = [
  "elf_rs",
  "good_memory_allocator",
  "log",
- "multiboot2 0.20.1",
+ "multiboot2 0.20.2",
  "multiboot2-header",
  "util",
 ]
@@ -137,7 +137,7 @@ dependencies = [
  "anyhow",
  "good_memory_allocator",
  "log",
- "multiboot2 0.20.1",
+ "multiboot2 0.20.2",
  "util",
  "x86",
 ]
