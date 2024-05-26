@@ -1,5 +1,9 @@
 # CHANGELOG for crate `multiboot2`
 
+## 0.20.2 (2024-05-26)
+
+- fix Debug implementation of `EfiMemoryMapTag`
+
 ## 0.20.1 (2024-05-26)
 
 - fixed the handling of `EFIMemoryMapTag` and `EFIMemoryAreaIter`
