@@ -77,8 +77,8 @@ pub use end::EndTag;
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
 pub use image_load_addr::ImageLoadPhysAddrTag;
 pub use memory_map::{
-    BasicMemoryInfoTag, EFIMemoryAreaType, EFIMemoryDesc, EFIMemoryMapTag, MemoryArea,
-    MemoryAreaType, MemoryAreaTypeId, MemoryMapTag,
+    BasicMemoryInfoTag, EFIMemoryAreaType, EFIMemoryAttribute, EFIMemoryDesc, EFIMemoryMapTag,
+    MemoryArea, MemoryAreaType, MemoryAreaTypeId, MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use ptr_meta::Pointee;
