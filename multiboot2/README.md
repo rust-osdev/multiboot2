@@ -45,7 +45,7 @@ tag_, which is a tag of type `0` and size `8`.
 
 ## MSRV
 
-The MSRV is 1.70.0 stable.
+The MSRV is 1.75.0 stable.
 
 ## License & Contribution
 

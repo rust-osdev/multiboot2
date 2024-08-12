@@ -77,7 +77,7 @@ bytes of the ELF. See Multiboot2 specification.
 
 ## MSRV
 
-The MSRV is 1.70.0 stable.
+The MSRV is 1.75.0 stable.
 
 ## License & Contribution
 

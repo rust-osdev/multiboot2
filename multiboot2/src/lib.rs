@@ -33,7 +33,7 @@
 //! ```
 //!
 //! ## MSRV
-//! The MSRV is 1.70.0 stable.
+//! The MSRV is 1.75.0 stable.
 
 #[cfg(feature = "builder")]
 extern crate alloc;
@@ -112,15 +112,15 @@ pub const MAGIC: u32 = 0x36d76289;
 pub enum MbiLoadError {
     /// The address is invalid. Make sure that the address is 8-byte aligned,
     /// according to the spec.
-    #[display(fmt = "The address is invalid")]
+    #[display("The address is invalid")]
     IllegalAddress,
     /// The total size of the multiboot2 information structure must be not zero
     /// and a multiple of 8.
-    #[display(fmt = "The size of the MBI is unexpected")]
+    #[display("The size of the MBI is unexpected")]
     IllegalTotalSize(u32),
     /// Missing end tag. Each multiboot2 boot information requires to have an
     /// end tag.
-    #[display(fmt = "There is no end tag")]
+    #[display("There is no end tag")]
     NoEndTag,
 }
 

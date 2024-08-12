@@ -324,7 +324,7 @@ impl AsBytes for FramebufferColor {}
 
 /// Error when an unknown [`FramebufferTypeId`] is found.
 #[derive(Debug, Copy, Clone, Display, PartialEq, Eq)]
-#[display(fmt = "Unknown framebuffer type {}", _0)]
+#[display("Unknown framebuffer type {}", _0)]
 pub struct UnknownFramebufferType(u8);
 
 #[cfg(feature = "unstable")]

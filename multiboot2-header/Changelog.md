@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- updated dependencies
+- MSRV is 1.75
+
 ## 0.4.0 (2024-05-01)
 
 - added `EndHeaderTag::default()`
