@@ -18,3 +18,9 @@ multiboot2 = { path = "../../multiboot2", features = ["builder", "unstable"] }
 multiboot2-header = { path = "../../multiboot2-header", features = ["builder", "unstable"] }
 good_memory_allocator = "0.1"
 util = { path = "./util" }
+
+# This way, the "multiboot2" dependency in the multiboot2-header crate can be
+# referenced by version, while still the repository version is used
+# transparently during local development.
+[patch.crates-io]
+multiboot2 = { path = "../../multiboot2" }
