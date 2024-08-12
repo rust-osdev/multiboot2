@@ -1,5 +1,10 @@
 # CHANGELOG for crate `multiboot2`
 
+## Unreleased
+
+- updated dependencies
+- MSRV is 1.75
+
 ## 0.20.2 (2024-05-26)
 
 - fix Debug implementation of `EfiMemoryMapTag`
