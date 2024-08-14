@@ -1,7 +1,7 @@
 //! Module for [`ModuleTag`].
 
-use crate::tag::StringError;
-use crate::{Tag, TagIter, TagTrait, TagType, TagTypeId};
+use crate::tag::{StringError, TagIter};
+use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 #[cfg(feature = "builder")]
