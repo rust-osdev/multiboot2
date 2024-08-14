@@ -11,6 +11,10 @@ name: "Cargo workspace"
 # Run on every push (tag, branch) and pull_request
 on: [ pull_request, push, workflow_dispatch, merge_group ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 
