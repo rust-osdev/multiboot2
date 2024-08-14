@@ -424,8 +424,7 @@ impl<'a> BootInformation<'a> {
     /// special handling is required. This is reflected by code-comments.
     ///
     /// ```no_run
-    /// use std::str::Utf8Error;
-    /// use multiboot2::{BootInformation, BootInformationHeader, Tag, TagTrait, TagType, TagTypeId};
+    /// use multiboot2::{BootInformation, BootInformationHeader, StringError, Tag, TagTrait, TagType, TagTypeId};
     ///
     /// #[repr(C)]
     /// #[derive(multiboot2::Pointee)] // Only needed for DSTs.
@@ -449,7 +448,7 @@ impl<'a> BootInformation<'a> {
     /// }
     ///
     /// impl CustomTag {
-    ///     fn name(&self) -> Result<&str, Utf8Error> {
+    ///     fn name(&self) -> Result<&str, StringError> {
     ///         Tag::parse_slice_as_string(&self.name)
     ///     }
     /// }

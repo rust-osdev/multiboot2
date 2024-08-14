@@ -4,6 +4,7 @@
 
 - updated dependencies
 - MSRV is 1.75
+- doc fixes
 
 ## 0.20.2 (2024-05-26)
 

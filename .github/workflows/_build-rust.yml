@@ -94,19 +94,8 @@ jobs:
         run: |
           cargo doc --no-deps --document-private-items --features ${{ inputs.features }} --no-default-features
           cargo clippy --all-targets --features ${{ inputs.features }} --no-default-features
-      - name: Unit Test (UNIX)
-        if: inputs.do-test && runner.os != 'Windows'
-        run: |
-          curl -LsSf https://get.nexte.st/latest/linux | tar zxf -
-          chmod u+x cargo-nextest
-          ./cargo-nextest nextest run --features ${{ inputs.features }} --no-default-features
-      - name: Unit Test (Windows)
-        if: inputs.do-test && runner.os == 'Windows'
-        run: |
-          Invoke-WebRequest https://get.nexte.st/latest/windows -OutFile cargo-nextest.zip
-          Expand-Archive .\cargo-nextest.zip
-          cp .\cargo-nextest/cargo-nextest.exe .
-          .\cargo-nextest.exe nextest run --features ${{ inputs.features }} --no-default-features
+      - name: Unit Test
+        run: cargo test --verbose
       - name: Unit Test with Miri
         if: inputs.do-miri
         # "--tests" so that the doctests are skipped. Currently, the doctest
