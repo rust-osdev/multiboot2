@@ -46,7 +46,7 @@ pub struct BootInformationHeader {
 
 #[cfg(feature = "builder")]
 impl BootInformationHeader {
-    pub(crate) fn new(total_size: u32) -> Self {
+    pub(crate) const fn new(total_size: u32) -> Self {
         Self {
             total_size,
             _reserved: 0,
@@ -140,12 +140,14 @@ impl<'a> BootInformation<'a> {
     }
 
     /// Get the start address of the boot info.
+    #[must_use]
     pub fn start_address(&self) -> usize {
         self.as_ptr() as usize
     }
 
     /// Get the start address of the boot info as pointer.
-    pub fn as_ptr(&self) -> *const () {
+    #[must_use]
+    pub const fn as_ptr(&self) -> *const () {
         core::ptr::addr_of!(*self.0).cast()
     }
 
@@ -159,12 +161,14 @@ impl<'a> BootInformation<'a> {
     /// # let boot_info = unsafe { BootInformation::load(ptr).unwrap() };
     /// let end_addr = boot_info.start_address() + boot_info.total_size();
     /// ```
+    #[must_use]
     pub fn end_address(&self) -> usize {
         self.start_address() + self.total_size()
     }
 
     /// Get the total size of the boot info struct.
-    pub fn total_size(&self) -> usize {
+    #[must_use]
+    pub const fn total_size(&self) -> usize {
         self.0.header.total_size as usize
     }
 
@@ -177,11 +181,13 @@ impl<'a> BootInformation<'a> {
     }*/
 
     /// Search for the basic memory info tag.
+    #[must_use]
     pub fn basic_memory_info_tag(&self) -> Option<&BasicMemoryInfoTag> {
         self.get_tag::<BasicMemoryInfoTag>()
     }
 
     /// Search for the BootLoader name tag.
+    #[must_use]
     pub fn boot_loader_name_tag(&self) -> Option<&BootLoaderNameTag> {
         self.get_tag::<BootLoaderNameTag>()
     }
@@ -192,11 +198,13 @@ impl<'a> BootInformation<'a> {
     }*/
 
     /// Search for the Command line tag.
+    #[must_use]
     pub fn command_line_tag(&self) -> Option<&CommandLineTag> {
         self.get_tag::<CommandLineTag>()
     }
 
     /// Search for the EFI boot services not exited tag.
+    #[must_use]
     pub fn efi_bs_not_exited_tag(&self) -> Option<&EFIBootServicesNotExitedTag> {
         self.get_tag::<EFIBootServicesNotExitedTag>()
     }
@@ -205,34 +213,37 @@ impl<'a> BootInformation<'a> {
     /// Otherwise, if the [`TagType::EfiBs`] tag is present, this returns `None`
     /// as it is strictly recommended to get the memory map from the `uefi`
     /// services.
+    #[must_use]
     pub fn efi_memory_map_tag(&self) -> Option<&EFIMemoryMapTag> {
         // If the EFIBootServicesNotExited is present, then we should not use
         // the memory map, as it could still be in use.
-        match self.get_tag::<EFIBootServicesNotExitedTag>() {
-            Some(_tag) => {
-                log::debug!("The EFI memory map is present but the UEFI Boot Services Not Existed Tag is present. Returning None.");
-                None
-            }
-            None => self.get_tag::<EFIMemoryMapTag>(),
-        }
+        self.get_tag::<EFIBootServicesNotExitedTag>().map_or_else(
+            || self.get_tag::<EFIMemoryMapTag>(), |_tag| {
+                            log::debug!("The EFI memory map is present but the UEFI Boot Services Not Existed Tag is present. Returning None.");
+                             None
+                        })
     }
 
     /// Search for the EFI 32-bit SDT tag.
+    #[must_use]
     pub fn efi_sdt32_tag(&self) -> Option<&EFISdt32Tag> {
         self.get_tag::<EFISdt32Tag>()
     }
 
     /// Search for the EFI 64-bit SDT tag.
+    #[must_use]
     pub fn efi_sdt64_tag(&self) -> Option<&EFISdt64Tag> {
         self.get_tag::<EFISdt64Tag>()
     }
 
     /// Search for the EFI 32-bit image handle pointer tag.
+    #[must_use]
     pub fn efi_ih32_tag(&self) -> Option<&EFIImageHandle32Tag> {
         self.get_tag::<EFIImageHandle32Tag>()
     }
 
     /// Search for the EFI 64-bit image handle pointer tag.
+    #[must_use]
     pub fn efi_ih64_tag(&self) -> Option<&EFIImageHandle64Tag> {
         self.get_tag::<EFIImageHandle64Tag>()
     }
@@ -254,6 +265,7 @@ impl<'a> BootInformation<'a> {
     ///     }
     /// }
     /// ```
+    #[must_use]
     pub fn elf_sections(&self) -> Option<ElfSectionIter> {
         let tag = self.get_tag::<ElfSectionsTag>();
         tag.map(|t| {
@@ -264,6 +276,7 @@ impl<'a> BootInformation<'a> {
 
     /// Search for the VBE framebuffer tag. The result is `Some(Err(e))`, if the
     /// framebuffer type is unknown, while the framebuffer tag is present.
+    #[must_use]
     pub fn framebuffer_tag(&self) -> Option<Result<&FramebufferTag, UnknownFramebufferType>> {
         self.get_tag::<FramebufferTag>()
             .map(|tag| match tag.buffer_type() {
@@ -273,16 +286,19 @@ impl<'a> BootInformation<'a> {
     }
 
     /// Search for the Image Load Base Physical Address tag.
+    #[must_use]
     pub fn load_base_addr_tag(&self) -> Option<&ImageLoadPhysAddrTag> {
         self.get_tag::<ImageLoadPhysAddrTag>()
     }
 
     /// Search for the Memory map tag.
+    #[must_use]
     pub fn memory_map_tag(&self) -> Option<&MemoryMapTag> {
         self.get_tag::<MemoryMapTag>()
     }
 
     /// Get an iterator of all module tags.
+    #[must_use]
     pub fn module_tags(&self) -> ModuleIter {
         module::module_iter(self.tags())
     }
@@ -293,21 +309,25 @@ impl<'a> BootInformation<'a> {
     }*/
 
     /// Search for the (ACPI 1.0) RSDP tag.
+    #[must_use]
     pub fn rsdp_v1_tag(&self) -> Option<&RsdpV1Tag> {
         self.get_tag::<RsdpV1Tag>()
     }
 
     /// Search for the (ACPI 2.0 or later) RSDP tag.
+    #[must_use]
     pub fn rsdp_v2_tag(&self) -> Option<&RsdpV2Tag> {
         self.get_tag::<RsdpV2Tag>()
     }
 
     /// Search for the SMBIOS tag.
+    #[must_use]
     pub fn smbios_tag(&self) -> Option<&SmbiosTag> {
         self.get_tag::<SmbiosTag>()
     }
 
     /// Search for the VBE information tag.
+    #[must_use]
     pub fn vbe_info_tag(&self) -> Option<&VBEInfoTag> {
         self.get_tag::<VBEInfoTag>()
     }
@@ -367,6 +387,7 @@ impl<'a> BootInformation<'a> {
     ///     .unwrap();
     /// assert_eq!(tag.name(), Ok("name"));
     /// ```
+    #[must_use]
     pub fn get_tag<TagT: TagTrait + ?Sized + 'a>(&'a self) -> Option<&'a TagT> {
         self.tags()
             .find(|tag| tag.typ == TagT::ID)

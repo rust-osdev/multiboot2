@@ -20,6 +20,7 @@ pub struct EFISdt32Tag {
 
 impl EFISdt32Tag {
     /// Create a new tag to pass the EFI32 System Table pointer.
+    #[must_use]
     pub fn new(pointer: u32) -> Self {
         Self {
             header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
@@ -28,7 +29,8 @@ impl EFISdt32Tag {
     }
 
     /// The physical address of a i386 EFI system table.
-    pub fn sdt_address(&self) -> usize {
+    #[must_use]
+    pub const fn sdt_address(&self) -> usize {
         self.pointer as usize
     }
 }
@@ -49,6 +51,7 @@ pub struct EFISdt64Tag {
 
 impl EFISdt64Tag {
     /// Create a new tag to pass the EFI64 System Table pointer.
+    #[must_use]
     pub fn new(pointer: u64) -> Self {
         Self {
             header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
@@ -57,7 +60,8 @@ impl EFISdt64Tag {
     }
 
     /// The physical address of a x86_64 EFI system table.
-    pub fn sdt_address(&self) -> usize {
+    #[must_use]
+    pub const fn sdt_address(&self) -> usize {
         self.pointer as usize
     }
 }
@@ -79,6 +83,7 @@ pub struct EFIImageHandle32Tag {
 
 impl EFIImageHandle32Tag {
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(pointer: u32) -> Self {
         Self {
             header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
@@ -87,7 +92,8 @@ impl EFIImageHandle32Tag {
     }
 
     /// Returns the physical address of the EFI image handle.
-    pub fn image_handle(&self) -> usize {
+    #[must_use]
+    pub const fn image_handle(&self) -> usize {
         self.pointer as usize
     }
 }
@@ -109,6 +115,7 @@ pub struct EFIImageHandle64Tag {
 
 impl EFIImageHandle64Tag {
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(pointer: u64) -> Self {
         Self {
             header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
@@ -117,7 +124,8 @@ impl EFIImageHandle64Tag {
     }
 
     /// Returns the physical address of the EFI image handle.
-    pub fn image_handle(&self) -> usize {
+    #[must_use]
+    pub const fn image_handle(&self) -> usize {
         self.pointer as usize
     }
 }
@@ -137,6 +145,7 @@ pub struct EFIBootServicesNotExitedTag {
 
 impl EFIBootServicesNotExitedTag {
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }

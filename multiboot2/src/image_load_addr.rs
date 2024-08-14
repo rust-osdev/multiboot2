@@ -17,6 +17,7 @@ pub struct ImageLoadPhysAddrTag {
 
 impl ImageLoadPhysAddrTag {
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(load_base_addr: u32) -> Self {
         Self {
             header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
@@ -25,7 +26,8 @@ impl ImageLoadPhysAddrTag {
     }
 
     /// Returns the load base address.
-    pub fn load_base_addr(&self) -> u32 {
+    #[must_use]
+    pub const fn load_base_addr(&self) -> u32 {
         self.load_base_addr
     }
 }

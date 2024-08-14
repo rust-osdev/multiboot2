@@ -36,6 +36,7 @@ pub struct RsdpV1Tag {
 
 impl RsdpV1Tag {
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(
         signature: [u8; 8],
         checksum: u8,
@@ -56,11 +57,12 @@ impl RsdpV1Tag {
     /// The "RSD PTR " marker signature.
     ///
     /// This is originally a 8-byte C string (not null terminated!) that must contain "RSD PTR "
-    pub fn signature(&self) -> Result<&str, Utf8Error> {
+    pub const fn signature(&self) -> Result<&str, Utf8Error> {
         str::from_utf8(&self.signature)
     }
 
     /// Validation of the RSDPv1 checksum
+    #[must_use]
     pub fn checksum_is_valid(&self) -> bool {
         let bytes =
             unsafe { slice::from_raw_parts(self as *const _ as *const u8, RSDPV1_LENGTH + 8) };
@@ -71,17 +73,19 @@ impl RsdpV1Tag {
     }
 
     /// An OEM-supplied string that identifies the OEM.
-    pub fn oem_id(&self) -> Result<&str, Utf8Error> {
+    pub const fn oem_id(&self) -> Result<&str, Utf8Error> {
         str::from_utf8(&self.oem_id)
     }
 
     /// The revision of the ACPI.
-    pub fn revision(&self) -> u8 {
+    #[must_use]
+    pub const fn revision(&self) -> u8 {
         self.revision
     }
 
     /// The physical (I repeat: physical) address of the RSDT table.
-    pub fn rsdt_address(&self) -> usize {
+    #[must_use]
+    pub const fn rsdt_address(&self) -> usize {
         self.rsdt_address as usize
     }
 }
@@ -112,6 +116,7 @@ pub struct RsdpV2Tag {
 impl RsdpV2Tag {
     #[cfg(feature = "builder")]
     #[allow(clippy::too_many_arguments)]
+    #[must_use]
     pub fn new(
         signature: [u8; 8],
         checksum: u8,
@@ -139,11 +144,12 @@ impl RsdpV2Tag {
     /// The "RSD PTR " marker signature.
     ///
     /// This is originally a 8-byte C string (not null terminated!) that must contain "RSD PTR ".
-    pub fn signature(&self) -> Result<&str, Utf8Error> {
+    pub const fn signature(&self) -> Result<&str, Utf8Error> {
         str::from_utf8(&self.signature)
     }
 
     /// Validation of the RSDPv2 extended checksum
+    #[must_use]
     pub fn checksum_is_valid(&self) -> bool {
         let bytes = unsafe {
             slice::from_raw_parts(self as *const _ as *const u8, self.length as usize + 8)
@@ -155,24 +161,27 @@ impl RsdpV2Tag {
     }
 
     /// An OEM-supplied string that identifies the OEM.
-    pub fn oem_id(&self) -> Result<&str, Utf8Error> {
+    pub const fn oem_id(&self) -> Result<&str, Utf8Error> {
         str::from_utf8(&self.oem_id)
     }
 
     /// The revision of the ACPI.
-    pub fn revision(&self) -> u8 {
+    #[must_use]
+    pub const fn revision(&self) -> u8 {
         self.revision
     }
 
     /// Physical address of the XSDT table.
     ///
     /// On x86, this is truncated from 64-bit to 32-bit.
-    pub fn xsdt_address(&self) -> usize {
+    #[must_use]
+    pub const fn xsdt_address(&self) -> usize {
         self.xsdt_address as usize
     }
 
     /// This field is used to calculate the checksum of the entire table, including both checksum fields.
-    pub fn ext_checksum(&self) -> u8 {
+    #[must_use]
+    pub const fn ext_checksum(&self) -> u8 {
         self.ext_checksum
     }
 }

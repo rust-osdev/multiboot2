@@ -24,6 +24,7 @@ pub struct ModuleTag {
 
 impl ModuleTag {
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(start: u32, end: u32, cmdline: &str) -> BoxedDst<Self> {
         assert!(end > start, "must have a size");
 
@@ -53,17 +54,20 @@ impl ModuleTag {
     }
 
     /// Start address of the module.
-    pub fn start_address(&self) -> u32 {
+    #[must_use]
+    pub const fn start_address(&self) -> u32 {
         self.mod_start
     }
 
     /// End address of the module
-    pub fn end_address(&self) -> u32 {
+    #[must_use]
+    pub const fn end_address(&self) -> u32 {
         self.mod_end
     }
 
     /// The size of the module/the BLOB in memory.
-    pub fn module_size(&self) -> u32 {
+    #[must_use]
+    pub const fn module_size(&self) -> u32 {
         self.mod_end - self.mod_start
     }
 }
@@ -91,7 +95,7 @@ impl Debug for ModuleTag {
     }
 }
 
-pub fn module_iter(iter: TagIter) -> ModuleIter {
+pub const fn module_iter(iter: TagIter) -> ModuleIter {
     ModuleIter { iter }
 }
 
@@ -154,7 +158,7 @@ mod tests {
         let tag = get_bytes();
         let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };
         let tag = tag.cast_tag::<ModuleTag>();
-        assert_eq!({ tag.typ }, TagType::Module);
+        assert_eq!(tag.header.typ, TagType::Module);
         assert_eq!(tag.cmdline().expect("must be valid UTF-8"), MSG);
     }
 

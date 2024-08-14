@@ -20,6 +20,7 @@ pub struct BootLoaderNameTag {
 
 impl BootLoaderNameTag {
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(name: &str) -> BoxedDst<Self> {
         let mut bytes: Vec<_> = name.bytes().collect();
         if !bytes.ends_with(&[0]) {
@@ -100,7 +101,7 @@ mod tests {
         let tag = get_bytes();
         let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };
         let tag = tag.cast_tag::<BootLoaderNameTag>();
-        assert_eq!({ tag.typ }, TagType::BootLoaderName);
+        assert_eq!(tag.header.typ, TagType::BootLoaderName);
         assert_eq!(tag.name().expect("must be valid UTF-8"), MSG);
     }
 

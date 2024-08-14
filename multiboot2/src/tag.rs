@@ -28,8 +28,8 @@ impl Display for StringError {
 impl core::error::Error for StringError {
     fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
         match self {
-            StringError::MissingNul(e) => Some(e),
-            StringError::Utf8(e) => Some(e),
+            Self::MissingNul(e) => Some(e),
+            Self::Utf8(e) => Some(e),
         }
     }
 }
@@ -75,11 +75,13 @@ pub struct Tag {
 
 impl Tag {
     /// Returns the underlying type of the tag.
+    #[must_use]
     pub fn typ(&self) -> TagType {
         self.typ.into()
     }
 
     /// Casts the base tag to the specific tag type.
+    #[must_use]
     pub fn cast_tag<'a, T: TagTrait + ?Sized + 'a>(&'a self) -> &'a T {
         assert_eq!(self.typ, T::ID);
         // Safety: At this point, we trust that "self.size" and the size hint

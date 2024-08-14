@@ -144,7 +144,7 @@ mod tests {
 
     #[test]
     fn can_hold_tag_trait() {
-        fn consume<T: TagTrait + ?Sized>(_: &T) {}
+        const fn consume<T: TagTrait + ?Sized>(_: &T) {}
         let content = b"hallo\0";
 
         let tag = BoxedDst::<CustomTag>::new(content);

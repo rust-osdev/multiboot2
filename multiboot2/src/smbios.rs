@@ -23,6 +23,7 @@ pub struct SmbiosTag {
 
 impl SmbiosTag {
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(major: u8, minor: u8, tables: &[u8]) -> BoxedDst<Self> {
         let mut bytes = [major, minor, 0, 0, 0, 0, 0, 0].to_vec();
         bytes.extend(tables);

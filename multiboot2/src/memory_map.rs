@@ -36,6 +36,7 @@ pub struct MemoryMapTag {
 
 impl MemoryMapTag {
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(areas: &[MemoryArea]) -> BoxedDst<Self> {
         let entry_size: u32 = mem::size_of::<MemoryArea>().try_into().unwrap();
         let entry_version: u32 = 0;
@@ -47,12 +48,14 @@ impl MemoryMapTag {
     }
 
     /// Returns the entry size.
-    pub fn entry_size(&self) -> u32 {
+    #[must_use]
+    pub const fn entry_size(&self) -> u32 {
         self.entry_size
     }
 
     /// Returns the entry version.
-    pub fn entry_version(&self) -> u32 {
+    #[must_use]
+    pub const fn entry_version(&self) -> u32 {
         self.entry_version
     }
 
@@ -60,6 +63,7 @@ impl MemoryMapTag {
     ///
     /// Usually, this should already reflect the memory consumed by the
     /// code running this.
+    #[must_use]
     pub fn memory_areas(&self) -> &[MemoryArea] {
         // If this ever fails, we need to model this differently in this crate.
         assert_eq!(self.entry_size as usize, mem::size_of::<MemoryArea>());
@@ -100,22 +104,26 @@ impl MemoryArea {
     }
 
     /// The start address of the memory region.
-    pub fn start_address(&self) -> u64 {
+    #[must_use]
+    pub const fn start_address(&self) -> u64 {
         self.base_addr
     }
 
     /// The end address of the memory region.
-    pub fn end_address(&self) -> u64 {
+    #[must_use]
+    pub const fn end_address(&self) -> u64 {
         self.base_addr + self.length
     }
 
     /// The size, in bytes, of the memory region.
-    pub fn size(&self) -> u64 {
+    #[must_use]
+    pub const fn size(&self) -> u64 {
         self.length
     }
 
     /// The type of the memory region.
-    pub fn typ(&self) -> MemoryAreaTypeId {
+    #[must_use]
+    pub const fn typ(&self) -> MemoryAreaTypeId {
         self.typ
     }
 }
@@ -215,7 +223,7 @@ impl From<MemoryAreaType> for MemoryAreaTypeId {
 
 impl PartialEq<MemoryAreaType> for MemoryAreaTypeId {
     fn eq(&self, other: &MemoryAreaType) -> bool {
-        let val: MemoryAreaTypeId = (*other).into();
+        let val: Self = (*other).into();
         let val: u32 = val.0;
         self.0.eq(&val)
     }
@@ -252,6 +260,7 @@ pub struct BasicMemoryInfoTag {
 }
 
 impl BasicMemoryInfoTag {
+    #[must_use]
     pub fn new(memory_lower: u32, memory_upper: u32) -> Self {
         Self {
             header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
@@ -260,11 +269,13 @@ impl BasicMemoryInfoTag {
         }
     }
 
-    pub fn memory_lower(&self) -> u32 {
+    #[must_use]
+    pub const fn memory_lower(&self) -> u32 {
         self.memory_lower
     }
 
-    pub fn memory_upper(&self) -> u32 {
+    #[must_use]
+    pub const fn memory_upper(&self) -> u32 {
         self.memory_upper
     }
 }
@@ -310,6 +321,7 @@ impl EFIMemoryMapTag {
     /// Create a new EFI memory map tag with the given memory descriptors.
     /// Version and size can't be set because you're passing a slice of
     /// EFIMemoryDescs, not the ones you might have gotten from the firmware.
+    #[must_use]
     pub fn new_from_descs(descs: &[EFIMemoryDesc]) -> BoxedDst<Self> {
         // TODO replace this EfiMemorydesc::uefi_desc_size() in the next uefi_raw
         // release.
@@ -337,6 +349,7 @@ impl EFIMemoryMapTag {
 
     #[cfg(feature = "builder")]
     /// Create a new EFI memory map tag from the given EFI memory map.
+    #[must_use]
     pub fn new_from_map(desc_size: u32, desc_version: u32, efi_mmap: &[u8]) -> BoxedDst<Self> {
         assert!(desc_size > 0);
         assert_eq!(efi_mmap.len() % desc_size as usize, 0);
@@ -359,6 +372,7 @@ impl EFIMemoryMapTag {
     ///
     /// Usually, this should already reflect the memory consumed by the
     /// code running this.
+    #[must_use]
     pub fn memory_areas(&self) -> EFIMemoryAreaIter {
         // If this ever fails, this needs to be refactored in a joint-effort
         // with the uefi-rs project to have all corresponding typings.

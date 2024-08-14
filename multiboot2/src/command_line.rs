@@ -8,7 +8,7 @@ use core::str;
 #[cfg(feature = "builder")]
 use {crate::builder::BoxedDst, alloc::vec::Vec};
 
-pub(crate) const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
+pub const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
 
 /// This tag contains the command line string.
 ///
@@ -25,6 +25,7 @@ pub struct CommandLineTag {
 impl CommandLineTag {
     /// Create a new command line tag from the given string.
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(command_line: &str) -> BoxedDst<Self> {
         let mut bytes: Vec<_> = command_line.bytes().collect();
         if !bytes.ends_with(&[0]) {
@@ -107,7 +108,7 @@ mod tests {
         let tag = get_bytes();
         let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };
         let tag = tag.cast_tag::<CommandLineTag>();
-        assert_eq!({ tag.typ }, TagType::Cmdline);
+        assert_eq!(tag.header.typ, TagType::Cmdline);
         assert_eq!(tag.cmdline().expect("must be valid UTF-8"), MSG);
     }
 

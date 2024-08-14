@@ -17,8 +17,8 @@ struct Reader {
 }
 
 impl Reader {
-    fn new<T>(ptr: *const T) -> Reader {
-        Reader {
+    const fn new<T>(ptr: *const T) -> Self {
+        Self {
             ptr: ptr as *const u8,
             off: 0,
         }
@@ -85,6 +85,7 @@ pub struct FramebufferTag {
 
 impl FramebufferTag {
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(
         address: u64,
         pitch: u32,
@@ -107,27 +108,32 @@ impl FramebufferTag {
     /// This field is 64-bit wide but bootloader should set it under 4GiB if
     /// possible for compatibility with payloads which aren’t aware of PAE or
     /// amd64.
-    pub fn address(&self) -> u64 {
+    #[must_use]
+    pub const fn address(&self) -> u64 {
         self.address
     }
 
     /// Contains the pitch in bytes.
-    pub fn pitch(&self) -> u32 {
+    #[must_use]
+    pub const fn pitch(&self) -> u32 {
         self.pitch
     }
 
     /// Contains framebuffer width in pixels.
-    pub fn width(&self) -> u32 {
+    #[must_use]
+    pub const fn width(&self) -> u32 {
         self.width
     }
 
     /// Contains framebuffer height in pixels.
-    pub fn height(&self) -> u32 {
+    #[must_use]
+    pub const fn height(&self) -> u32 {
         self.height
     }
 
     /// Contains number of bits per pixel.
-    pub fn bpp(&self) -> u8 {
+    #[must_use]
+    pub const fn bpp(&self) -> u8 {
         self.bpp
     }
 

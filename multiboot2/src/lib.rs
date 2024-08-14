@@ -1,12 +1,20 @@
 #![no_std]
 #![cfg_attr(feature = "unstable", feature(error_in_core))]
-#![deny(missing_debug_implementations)]
 // --- BEGIN STYLE CHECKS ---
-// These checks are optional in CI for PRs, as discussed in
-// https://github.com/rust-osdev/multiboot2/pull/92
-#![deny(clippy::all)]
+#![deny(
+    clippy::all,
+    clippy::cargo,
+    clippy::nursery,
+    clippy::must_use_candidate,
+    // clippy::restriction,
+    // clippy::pedantic
+)]
+// now allow a few rules which are denied by the above statement
+// --> They are either ridiculous, not necessary, or we can't fix them.
+#![allow(clippy::multiple_crate_versions)]
+// #![deny(missing_docs)]
+#![deny(missing_debug_implementations)]
 #![deny(rustdoc::all)]
-#![allow(rustdoc::private_doc_tests)]
 // --- END STYLE CHECKS ---
 
 //! Library that assists parsing the Multiboot2 Information Structure (MBI) from
@@ -372,6 +380,7 @@ mod tests {
 
     #[test]
     #[cfg_attr(miri, ignore)]
+    #[allow(clippy::cognitive_complexity)]
     fn vbe_info_tag() {
         //Taken from GRUB2 running in QEMU.
         #[repr(C, align(8))]
@@ -813,6 +822,7 @@ mod tests {
     }
 
     /// Helper for [`grub2`].
+    #[allow(clippy::cognitive_complexity)]
     fn test_grub2_boot_info(
         bi: &BootInformation,
         addr: usize,
