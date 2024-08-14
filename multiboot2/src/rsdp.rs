@@ -12,7 +12,8 @@
 //! signature should be manually verified.
 //!
 
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::tag::TagHeader;
+use crate::{Tag, TagTrait, TagType};
 #[cfg(feature = "builder")]
 use core::mem::size_of;
 use core::slice;
@@ -25,8 +26,7 @@ const RSDPV1_LENGTH: usize = 20;
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct RsdpV1Tag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     signature: [u8; 8],
     checksum: u8,
     oem_id: [u8; 6],
@@ -44,8 +44,7 @@ impl RsdpV1Tag {
         rsdt_address: u32,
     ) -> Self {
         Self {
-            typ: Self::ID.into(),
-            size: size_of::<Self>().try_into().unwrap(),
+            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
             signature,
             checksum,
             oem_id,
@@ -97,8 +96,7 @@ impl TagTrait for RsdpV1Tag {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct RsdpV2Tag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     signature: [u8; 8],
     checksum: u8,
     oem_id: [u8; 6],
@@ -125,8 +123,7 @@ impl RsdpV2Tag {
         ext_checksum: u8,
     ) -> Self {
         Self {
-            typ: Self::ID.into(),
-            size: size_of::<Self>().try_into().unwrap(),
+            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
             signature,
             checksum,
             oem_id,

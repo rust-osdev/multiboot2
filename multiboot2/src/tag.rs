@@ -34,6 +34,29 @@ impl core::error::Error for StringError {
     }
 }
 
+/// The common header that all tags have in common. This type is ABI compatible.
+///
+/// Not to be confused with Multiboot header tags, which are something
+/// different.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(C)]
+pub struct TagHeader {
+    pub typ: TagTypeId, /* u32 */
+    pub size: u32,
+    // Followed by additional, tag specific fields.
+}
+
+impl TagHeader {
+    /// Creates a new header.
+    #[cfg(feature = "builder")]
+    pub fn new(typ: impl Into<TagTypeId>, size: u32) -> Self {
+        Self {
+            typ: typ.into(),
+            size,
+        }
+    }
+}
+
 /// Common base structure for all tags that can be passed via the Multiboot2
 /// Information Structure (MBI) to a Multiboot2 payload/program/kernel.
 ///

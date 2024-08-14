@@ -5,6 +5,7 @@ pub use uefi_raw::table::boot::MemoryAttribute as EFIMemoryAttribute;
 pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
 pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
 
+use crate::tag::TagHeader;
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
@@ -27,8 +28,7 @@ const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u3
 #[derive(ptr_meta::Pointee, Debug, PartialEq, Eq)]
 #[repr(C)]
 pub struct MemoryMapTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     entry_size: u32,
     entry_version: u32,
     areas: [MemoryArea],
@@ -246,8 +246,7 @@ impl PartialEq<MemoryAreaTypeId> for MemoryAreaType {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct BasicMemoryInfoTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     memory_lower: u32,
     memory_upper: u32,
 }
@@ -255,8 +254,7 @@ pub struct BasicMemoryInfoTag {
 impl BasicMemoryInfoTag {
     pub fn new(memory_lower: u32, memory_upper: u32) -> Self {
         Self {
-            typ: Self::ID.into(),
-            size: mem::size_of::<BasicMemoryInfoTag>().try_into().unwrap(),
+            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
             memory_lower,
             memory_upper,
         }
@@ -287,8 +285,7 @@ impl AsBytes for EFIMemoryDesc {}
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIMemoryMapTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     /// Most likely a little more than the size of a [`EFIMemoryDesc`].
     /// This is always the reference, and `size_of` never.
     /// See <https://github.com/tianocore/edk2/blob/7142e648416ff5d3eac6c6d607874805f5de0ca8/MdeModulePkg/Core/PiSmmCore/Page.c#L1059>.
@@ -380,8 +377,8 @@ impl EFIMemoryMapTag {
 impl Debug for EFIMemoryMapTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("EFIMemoryMapTag")
-            .field("typ", &self.typ)
-            .field("size", &self.size)
+            .field("typ", &self.header.typ)
+            .field("size", &self.header.size)
             .field("desc_size", &self.desc_size)
             .field("buf", &self.memory_map.as_ptr())
             .field("buf_len", &self.memory_map.len())

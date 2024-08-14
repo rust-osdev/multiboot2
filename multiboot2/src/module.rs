@@ -1,6 +1,6 @@
 //! Module for [`ModuleTag`].
 
-use crate::tag::{StringError, TagIter};
+use crate::tag::{StringError, TagHeader, TagIter};
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
@@ -15,8 +15,7 @@ const METADATA_SIZE: usize = size_of::<TagTypeId>() + 3 * size_of::<u32>();
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct ModuleTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     mod_start: u32,
     mod_end: u32,
     /// Null-terminated UTF-8 string
@@ -81,8 +80,8 @@ impl TagTrait for ModuleTag {
 impl Debug for ModuleTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("ModuleTag")
-            .field("type", &{ self.typ })
-            .field("size", &{ self.size })
+            .field("type", &self.header.typ)
+            .field("size", &self.header.size)
             // Trick to print as hex.
             .field("mod_start", &self.mod_start)
             .field("mod_end", &self.mod_end)

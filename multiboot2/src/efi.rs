@@ -6,7 +6,7 @@
 //! - [`EFIImageHandle64Tag`]
 //! - [`EFIBootServicesNotExitedTag`]
 
-use crate::TagTypeId;
+use crate::tag::TagHeader;
 use crate::{Tag, TagTrait, TagType};
 use core::mem::size_of;
 
@@ -14,8 +14,7 @@ use core::mem::size_of;
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFISdt32Tag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     pointer: u32,
 }
 
@@ -23,8 +22,7 @@ impl EFISdt32Tag {
     /// Create a new tag to pass the EFI32 System Table pointer.
     pub fn new(pointer: u32) -> Self {
         Self {
-            typ: Self::ID.into(),
-            size: size_of::<Self>().try_into().unwrap(),
+            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
             pointer,
         }
     }
@@ -45,8 +43,7 @@ impl TagTrait for EFISdt32Tag {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFISdt64Tag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     pointer: u64,
 }
 
@@ -54,8 +51,7 @@ impl EFISdt64Tag {
     /// Create a new tag to pass the EFI64 System Table pointer.
     pub fn new(pointer: u64) -> Self {
         Self {
-            typ: Self::ID.into(),
-            size: size_of::<Self>().try_into().unwrap(),
+            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
             pointer,
         }
     }
@@ -77,8 +73,7 @@ impl TagTrait for EFISdt64Tag {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIImageHandle32Tag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     pointer: u32,
 }
 
@@ -86,8 +81,7 @@ impl EFIImageHandle32Tag {
     #[cfg(feature = "builder")]
     pub fn new(pointer: u32) -> Self {
         Self {
-            typ: Self::ID.into(),
-            size: size_of::<Self>().try_into().unwrap(),
+            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
             pointer,
         }
     }
@@ -109,8 +103,7 @@ impl TagTrait for EFIImageHandle32Tag {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIImageHandle64Tag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     pointer: u64,
 }
 
@@ -118,8 +111,7 @@ impl EFIImageHandle64Tag {
     #[cfg(feature = "builder")]
     pub fn new(pointer: u64) -> Self {
         Self {
-            typ: Self::ID.into(),
-            size: size_of::<Self>().try_into().unwrap(),
+            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
             pointer,
         }
     }
@@ -140,8 +132,7 @@ impl TagTrait for EFIImageHandle64Tag {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIBootServicesNotExitedTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
 }
 
 impl EFIBootServicesNotExitedTag {
@@ -155,8 +146,7 @@ impl EFIBootServicesNotExitedTag {
 impl Default for EFIBootServicesNotExitedTag {
     fn default() -> Self {
         Self {
-            typ: TagType::EfiBs.into(),
-            size: core::mem::size_of::<Self>().try_into().unwrap(),
+            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
         }
     }
 }

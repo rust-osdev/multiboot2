@@ -1,8 +1,7 @@
 //! Module for [`CommandLineTag`].
 
+use crate::tag::{StringError, TagHeader};
 use crate::{Tag, TagTrait, TagType, TagTypeId};
-
-use crate::tag::StringError;
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str;
@@ -18,8 +17,7 @@ pub(crate) const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct CommandLineTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     /// Null-terminated UTF-8 string
     cmdline: [u8],
 }
@@ -63,8 +61,8 @@ impl CommandLineTag {
 impl Debug for CommandLineTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("CommandLineTag")
-            .field("typ", &{ self.typ })
-            .field("size", &{ self.size })
+            .field("typ", &self.header.typ)
+            .field("size", &self.header.size)
             .field("cmdline", &self.cmdline())
             .finish()
     }

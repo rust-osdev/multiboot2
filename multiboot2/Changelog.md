@@ -5,6 +5,8 @@
 - updated dependencies
 - MSRV is 1.75
 - doc fixes
+- Introduced new `TagHeader` type as replacement for the `Tag` type that will
+  be changed in the next step.
 
 ## 0.20.2 (2024-05-26)
 

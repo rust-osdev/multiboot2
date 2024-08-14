@@ -1,6 +1,7 @@
 //! Module for [`ImageLoadPhysAddrTag`].
 
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::tag::TagHeader;
+use crate::{Tag, TagTrait, TagType};
 #[cfg(feature = "builder")]
 use core::mem::size_of;
 
@@ -10,8 +11,7 @@ use core::mem::size_of;
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct ImageLoadPhysAddrTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     load_base_addr: u32,
 }
 
@@ -19,8 +19,7 @@ impl ImageLoadPhysAddrTag {
     #[cfg(feature = "builder")]
     pub fn new(load_base_addr: u32) -> Self {
         Self {
-            typ: Self::ID.into(),
-            size: size_of::<Self>().try_into().unwrap(),
+            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
             load_base_addr,
         }
     }

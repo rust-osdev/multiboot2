@@ -1,6 +1,6 @@
 //! Module for [`BootLoaderNameTag`].
 
-use crate::tag::StringError;
+use crate::tag::{StringError, TagHeader};
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
@@ -13,8 +13,7 @@ const METADATA_SIZE: usize = size_of::<TagTypeId>() + size_of::<u32>();
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct BootLoaderNameTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     /// Null-terminated UTF-8 string
     name: [u8],
 }
@@ -55,8 +54,8 @@ impl BootLoaderNameTag {
 impl Debug for BootLoaderNameTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("BootLoaderNameTag")
-            .field("typ", &{ self.typ })
-            .field("size", &{ self.size })
+            .field("typ", &self.header.typ)
+            .field("size", &self.header.size)
             .field("name", &self.name())
             .finish()
     }

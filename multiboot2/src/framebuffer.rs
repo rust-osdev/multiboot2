@@ -1,5 +1,6 @@
 //! Module for [`FramebufferTag`].
 
+use crate::tag::TagHeader;
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::Debug;
 use core::mem::size_of;
@@ -51,8 +52,7 @@ const METADATA_SIZE: usize = size_of::<TagTypeId>()
 #[derive(ptr_meta::Pointee, Eq)]
 #[repr(C)]
 pub struct FramebufferTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
 
     /// Contains framebuffer physical address.
     ///
@@ -185,13 +185,13 @@ impl TagTrait for FramebufferTag {
 impl Debug for FramebufferTag {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("FramebufferTag")
-            .field("typ", &{ self.typ })
-            .field("size", &{ self.size })
+            .field("typ", &self.header.typ)
+            .field("size", &self.header.size)
             .field("buffer_type", &self.buffer_type())
-            .field("address", &{ self.address })
-            .field("pitch", &{ self.pitch })
-            .field("width", &{ self.width })
-            .field("height", &{ self.height })
+            .field("address", &self.address)
+            .field("pitch", &self.pitch)
+            .field("width", &self.width)
+            .field("height", &self.height)
             .field("bpp", &self.bpp)
             .finish()
     }
@@ -199,15 +199,14 @@ impl Debug for FramebufferTag {
 
 impl PartialEq for FramebufferTag {
     fn eq(&self, other: &Self) -> bool {
-        ({ self.typ } == { other.typ }
-            && { self.size } == { other.size }
-            && { self.address } == { other.address }
-            && { self.pitch } == { other.pitch }
-            && { self.width } == { other.width }
-            && { self.height } == { other.height }
-            && { self.bpp } == { other.bpp }
-            && { self.type_no } == { other.type_no }
-            && self.buffer == other.buffer)
+        self.header == other.header
+            && self.address == { other.address }
+            && self.pitch == { other.pitch }
+            && self.width == { other.width }
+            && self.height == { other.height }
+            && self.bpp == { other.bpp }
+            && self.type_no == { other.type_no }
+            && self.buffer == other.buffer
     }
 }
 
