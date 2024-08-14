@@ -1,5 +1,5 @@
-use crate::{HeaderTagFlag, HeaderTagType};
-use core::mem::size_of;
+use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
+use core::mem;
 
 /// Specifies the preferred graphics mode. If this tag
 /// is present the bootloader assumes that the payload
@@ -8,41 +8,61 @@ use core::mem::size_of;
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct FramebufferHeaderTag {
-    typ: HeaderTagType,
-    flags: HeaderTagFlag,
-    size: u32,
+    header: HeaderTagHeader,
     width: u32,
     height: u32,
     depth: u32,
 }
 
 impl FramebufferHeaderTag {
+    /// Constructs a new tag.
+    #[must_use]
     pub const fn new(flags: HeaderTagFlag, width: u32, height: u32, depth: u32) -> Self {
-        FramebufferHeaderTag {
-            typ: HeaderTagType::Framebuffer,
+        let header = HeaderTagHeader::new(
+            HeaderTagType::Framebuffer,
             flags,
-            size: size_of::<Self>() as u32,
+            mem::size_of::<Self>() as u32,
+        );
+        Self {
+            header,
             width,
             height,
             depth,
         }
     }
 
+    /// Returns the [`HeaderTagType`].
+    #[must_use]
     pub const fn typ(&self) -> HeaderTagType {
-        self.typ
+        self.header.typ()
     }
+
+    /// Returns the [`HeaderTagFlag`]s.
+    #[must_use]
     pub const fn flags(&self) -> HeaderTagFlag {
-        self.flags
+        self.header.flags()
     }
+
+    /// Returns the size.
+    #[must_use]
     pub const fn size(&self) -> u32 {
-        self.size
+        self.header.size()
     }
+
+    /// Returns the width.
+    #[must_use]
     pub const fn width(&self) -> u32 {
         self.width
     }
+
+    /// Returns the height.
+    #[must_use]
     pub const fn height(&self) -> u32 {
         self.height
     }
+
+    /// Returns the depth.
+    #[must_use]
     pub const fn depth(&self) -> u32 {
         self.depth
     }
@@ -50,12 +70,12 @@ impl FramebufferHeaderTag {
 
 #[cfg(test)]
 mod tests {
-    use crate::FramebufferHeaderTag;
+    use super::*;
 
     #[test]
     fn test_assert_size() {
         assert_eq!(
-            core::mem::size_of::<FramebufferHeaderTag>(),
+            mem::size_of::<FramebufferHeaderTag>(),
             2 + 2 + 4 + 4 + 4 + 4
         );
     }

@@ -17,7 +17,7 @@ pub enum HeaderTagISA {
 
 /// Possible types for header tags of a Multiboot2 header. The names and values are taken
 /// from the example C code at the bottom of the Multiboot2 specification. This value
-/// stands in the `typ` property of [`crate::tags::HeaderTag`].
+/// stands in the `typ` property of [`HeaderTagHeader`].
 #[repr(u16)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HeaderTagType {
@@ -47,6 +47,7 @@ pub enum HeaderTagType {
 
 impl HeaderTagType {
     /// Returns the number of possible variants.
+    #[must_use]
     pub const fn count() -> u32 {
         11
     }
@@ -56,31 +57,46 @@ impl HeaderTagType {
 #[repr(u16)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HeaderTagFlag {
+    /// Bootloader must provide this tag. If this is not possible, the
+    /// bootloader will fail loading the kernel.
     Required = 0,
+    /// Bootloader should provide the tag if possible.
     Optional = 1,
 }
 
-/// Common properties for all header tags. Other tags may have additional fields
-/// that depend on the `typ` and the `size` field. All tags share the same beginning of the
-/// struct.
+/// The common header that all header tags share. Specific tags may have
+/// additional fields that depend on the `typ` and the `size` field.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
-pub struct HeaderTag {
+pub struct HeaderTagHeader {
+    typ: HeaderTagType, /* u16 */
     // u16 value
-    typ: HeaderTagType,
-    // u16 value
-    flags: HeaderTagFlag,
+    flags: HeaderTagFlag, /* u16 */
     size: u32,
-    // maybe additional fields (tag specific)
+    // Followed by optional additional tag specific fields.
 }
 
-impl HeaderTag {
+impl HeaderTagHeader {
+    /// Creates a new header.
+    #[must_use]
+    pub const fn new(typ: HeaderTagType, flags: HeaderTagFlag, size: u32) -> Self {
+        Self { typ, flags, size }
+    }
+
+    /// Returns the [`HeaderTagType`].
+    #[must_use]
     pub const fn typ(&self) -> HeaderTagType {
         self.typ
     }
+
+    /// Returns the [`HeaderTagFlag`]s.
+    #[must_use]
     pub const fn flags(&self) -> HeaderTagFlag {
         self.flags
     }
+
+    /// Returns the size.
+    #[must_use]
     pub const fn size(&self) -> u32 {
         self.size
     }
@@ -88,10 +104,10 @@ impl HeaderTag {
 
 #[cfg(test)]
 mod tests {
-    use crate::HeaderTag;
+    use crate::HeaderTagHeader;
 
     #[test]
     fn test_assert_size() {
-        assert_eq!(core::mem::size_of::<HeaderTag>(), 2 + 2 + 4);
+        assert_eq!(core::mem::size_of::<HeaderTagHeader>(), 2 + 2 + 4);
     }
 }

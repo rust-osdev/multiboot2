@@ -72,6 +72,8 @@ pub struct HeaderBuilder {
 }
 
 impl HeaderBuilder {
+    /// Creates a new builder.
+    #[must_use]
     pub const fn new(arch: HeaderTagISA) -> Self {
         Self {
             arch,
@@ -98,6 +100,7 @@ impl HeaderBuilder {
 
     /// Returns the expected length of the Multiboot2 header, when the
     /// [`Self::build`]-method gets called.
+    #[must_use]
     pub fn expected_len(&self) -> usize {
         let base_len = size_of::<Multiboot2BasicHeader>();
         // size_or_up_aligned not required, because basic header length is 16 and the
@@ -159,7 +162,8 @@ impl HeaderBuilder {
     }
 
     /// Constructs the bytes for a valid Multiboot2 header with the given properties.
-    pub fn build(mut self) -> HeaderBytes {
+    #[must_use]
+    pub fn build(self) -> HeaderBytes {
         const ALIGN: usize = 8;
 
         // PHASE 1/2: Prepare Vector
@@ -205,7 +209,7 @@ impl HeaderBuilder {
     }
 
     /// Helper method that adds all the tags to the given vector.
-    fn build_add_tags(&mut self, bytes: &mut Vec<u8>) {
+    fn build_add_tags(&self, bytes: &mut Vec<u8>) {
         Self::build_add_bytes(
             bytes,
             // important that we write the correct expected length into the header!
@@ -247,7 +251,10 @@ impl HeaderBuilder {
     }
 
     // clippy thinks this can be a const fn but the compiler denies it
-    #[allow(clippy::missing_const_for_fn)]
+    // #[allow(clippy::missing_const_for_fn)]
+    /// Adds information requests from the
+    /// [`InformationRequestHeaderTagBuilder`] to the builder.
+    #[must_use]
     pub fn information_request_tag(
         mut self,
         information_request_tag: InformationRequestHeaderTagBuilder,
@@ -255,38 +262,65 @@ impl HeaderBuilder {
         self.information_request_tag = Some(information_request_tag);
         self
     }
+
+    /// Adds a [`AddressHeaderTag`] to the builder.
+    #[must_use]
     pub const fn address_tag(mut self, address_tag: AddressHeaderTag) -> Self {
         self.address_tag = Some(address_tag);
         self
     }
+
+    /// Adds a [`EntryAddressHeaderTag`] to the builder.
+    #[must_use]
     pub const fn entry_tag(mut self, entry_tag: EntryAddressHeaderTag) -> Self {
         self.entry_tag = Some(entry_tag);
         self
     }
+
+    /// Adds a [`ConsoleHeaderTag`] to the builder.
+    #[must_use]
     pub const fn console_tag(mut self, console_tag: ConsoleHeaderTag) -> Self {
         self.console_tag = Some(console_tag);
         self
     }
+
+    /// Adds a [`FramebufferHeaderTag`] to the builder.
+    #[must_use]
     pub const fn framebuffer_tag(mut self, framebuffer_tag: FramebufferHeaderTag) -> Self {
         self.framebuffer_tag = Some(framebuffer_tag);
         self
     }
+
+    /// Adds a [`ModuleAlignHeaderTag`] to the builder.
+    #[must_use]
     pub const fn module_align_tag(mut self, module_align_tag: ModuleAlignHeaderTag) -> Self {
         self.module_align_tag = Some(module_align_tag);
         self
     }
+
+    /// Adds a [`EfiBootServiceHeaderTag`] to the builder.
+    #[must_use]
     pub const fn efi_bs_tag(mut self, efi_bs_tag: EfiBootServiceHeaderTag) -> Self {
         self.efi_bs_tag = Some(efi_bs_tag);
         self
     }
+
+    /// Adds a [`EntryEfi32HeaderTag`] to the builder.
+    #[must_use]
     pub const fn efi_32_tag(mut self, efi_32_tag: EntryEfi32HeaderTag) -> Self {
         self.efi_32_tag = Some(efi_32_tag);
         self
     }
+
+    /// Adds a [`EntryEfi64HeaderTag`] to the builder.
+    #[must_use]
     pub const fn efi_64_tag(mut self, efi_64_tag: EntryEfi64HeaderTag) -> Self {
         self.efi_64_tag = Some(efi_64_tag);
         self
     }
+
+    /// Adds a [`RelocatableHeaderTag`] to the builder.
+    #[must_use]
     pub const fn relocatable_tag(mut self, relocatable_tag: RelocatableHeaderTag) -> Self {
         self.relocatable_tag = Some(relocatable_tag);
         self

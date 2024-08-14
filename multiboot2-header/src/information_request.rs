@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, MbiTagType};
+use crate::{HeaderTagFlag, HeaderTagHeader, MbiTagType};
 use crate::{HeaderTagType, MbiTagTypeId};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
@@ -11,9 +11,7 @@ use multiboot2::TagType;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct InformationRequestHeaderTag<const N: usize> {
-    typ: HeaderTagType,
-    flags: HeaderTagFlag,
-    size: u32,
+    header: HeaderTagHeader,
     // Length is determined by size.
     // Must be parsed during runtime with unsafe pointer magic and the size field.
     requests: [MbiTagTypeId; N],
@@ -23,28 +21,38 @@ impl<const N: usize> InformationRequestHeaderTag<N> {
     /// Creates a new object. The size parameter is the value of the size property.
     /// It doesn't have to match with `N` necessarily, because during compile time we
     /// can't know the size of the tag in all runtime situations.
+    #[must_use]
     pub fn new(flags: HeaderTagFlag, requests: [MbiTagTypeId; N], size: Option<u32>) -> Self {
-        InformationRequestHeaderTag {
-            typ: HeaderTagType::InformationRequest,
+        let header = HeaderTagHeader::new(
+            HeaderTagType::InformationRequest,
             flags,
-            size: size.unwrap_or(size_of::<Self>() as u32),
-            requests,
-        }
+            size.unwrap_or(size_of::<Self>() as u32),
+        );
+        Self { header, requests }
     }
 
+    /// Returns the [`HeaderTagType`].
+    #[must_use]
     pub const fn typ(&self) -> HeaderTagType {
-        self.typ
+        self.header.typ()
     }
+
+    /// Returns the [`HeaderTagFlag`]s.
+    #[must_use]
     pub const fn flags(&self) -> HeaderTagFlag {
-        self.flags
+        self.header.flags()
     }
+
+    /// Returns the size.
+    #[must_use]
     pub const fn size(&self) -> u32 {
-        self.size
+        self.header.size()
     }
 
     /// Returns the requests as array. Only works if the number of requests
     /// is known at compile time. For safety and correctness during runtime,
     /// you should use `req_iter()`.
+    #[must_use]
     pub const fn requests(&self) -> [MbiTagTypeId; N] {
         // cheap to copy, otherwise difficult with lifetime
         self.requests
@@ -54,9 +62,10 @@ impl<const N: usize> InformationRequestHeaderTag<N> {
     /// from the `size`-property. This method is useful
     /// because this struct uses a const generic, but during runtime
     /// we don't know the value in almost any case.
+    #[must_use]
     pub const fn dynamic_requests_size(&self) -> u32 {
         let base_struct_size = size_of::<InformationRequestHeaderTag<0>>();
-        let size_diff = self.size - base_struct_size as u32;
+        let size_diff = self.size() - base_struct_size as u32;
         if size_diff > 0 {
             size_diff / size_of::<u32>() as u32
         } else {
@@ -65,10 +74,11 @@ impl<const N: usize> InformationRequestHeaderTag<N> {
     }
 
     /// Returns an [`InformationRequestHeaderTagIter`].
+    #[must_use]
     pub const fn req_iter(&self) -> InformationRequestHeaderTagIter {
         let base_struct_size = size_of::<InformationRequestHeaderTag<0>>();
         let count = self.dynamic_requests_size();
-        let base_ptr = self as *const InformationRequestHeaderTag<N>;
+        let base_ptr = self as *const Self;
         let base_ptr = base_ptr as *const u8;
         let base_ptr = unsafe { base_ptr.add(base_struct_size) };
         let base_ptr = base_ptr as *const MbiTagTypeId;
@@ -79,10 +89,10 @@ impl<const N: usize> InformationRequestHeaderTag<N> {
 impl<const N: usize> Debug for InformationRequestHeaderTag<N> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("InformationRequestHeaderTag")
-            .field("type", &{ self.typ })
-            .field("flags", &{ self.flags })
-            .field("size", &{ self.size })
-            .field("requests", &{ self.req_iter() })
+            .field("type", &self.typ())
+            .field("flags", &self.flags())
+            .field("size", &self.size())
+            .field("requests", &self.req_iter())
             .finish()
     }
 }

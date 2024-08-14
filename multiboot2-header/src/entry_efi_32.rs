@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, HeaderTagType};
+use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
@@ -12,31 +12,42 @@ use core::mem::size_of;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EntryEfi32HeaderTag {
-    typ: HeaderTagType,
-    flags: HeaderTagFlag,
-    size: u32,
+    header: HeaderTagHeader,
     entry_addr: u32,
 }
 
 impl EntryEfi32HeaderTag {
+    /// Constructs a new tag.
+    #[must_use]
     pub const fn new(flags: HeaderTagFlag, entry_addr: u32) -> Self {
-        EntryEfi32HeaderTag {
-            typ: HeaderTagType::EntryAddressEFI32,
+        let header = HeaderTagHeader::new(
+            HeaderTagType::EntryAddressEFI32,
             flags,
-            size: size_of::<Self>() as u32,
-            entry_addr,
-        }
+            size_of::<Self>() as u32,
+        );
+        Self { header, entry_addr }
     }
 
+    /// Returns the [`HeaderTagType`].
+    #[must_use]
     pub const fn typ(&self) -> HeaderTagType {
-        self.typ
+        self.header.typ()
     }
+
+    /// Returns the [`HeaderTagFlag`]s.
+    #[must_use]
     pub const fn flags(&self) -> HeaderTagFlag {
-        self.flags
+        self.header.flags()
     }
+
+    /// Returns the size.
+    #[must_use]
     pub const fn size(&self) -> u32 {
-        self.size
+        self.header.size()
     }
+
+    /// Returns the entry address.
+    #[must_use]
     pub const fn entry_addr(&self) -> u32 {
         self.entry_addr
     }
@@ -45,9 +56,9 @@ impl EntryEfi32HeaderTag {
 impl Debug for EntryEfi32HeaderTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("EntryEfi32HeaderTag")
-            .field("type", &{ self.typ })
-            .field("flags", &{ self.flags })
-            .field("size", &{ self.size })
+            .field("type", &self.typ())
+            .field("flags", &self.flags())
+            .field("size", &self.size())
             .field("entry_addr", &(self.entry_addr as *const u32))
             .finish()
     }

@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, HeaderTagType};
+use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::mem::size_of;
 
 /// Possible flags for [`ConsoleHeaderTag`].
@@ -16,31 +16,42 @@ pub enum ConsoleHeaderTagFlags {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct ConsoleHeaderTag {
-    typ: HeaderTagType,
-    flags: HeaderTagFlag,
-    size: u32,
+    header: HeaderTagHeader,
     console_flags: ConsoleHeaderTagFlags,
 }
 
 impl ConsoleHeaderTag {
+    /// Constructs a new tag.
+    #[must_use]
     pub const fn new(flags: HeaderTagFlag, console_flags: ConsoleHeaderTagFlags) -> Self {
-        ConsoleHeaderTag {
-            typ: HeaderTagType::ConsoleFlags,
-            flags,
-            size: size_of::<Self>() as u32,
+        let header =
+            HeaderTagHeader::new(HeaderTagType::ConsoleFlags, flags, size_of::<Self>() as u32);
+        Self {
+            header,
             console_flags,
         }
     }
 
+    /// Returns the [`HeaderTagType`].
+    #[must_use]
     pub const fn typ(&self) -> HeaderTagType {
-        self.typ
+        self.header.typ()
     }
+
+    /// Returns the [`HeaderTagFlag`]s.
+    #[must_use]
     pub const fn flags(&self) -> HeaderTagFlag {
-        self.flags
+        self.header.flags()
     }
+
+    /// Returns the size.
+    #[must_use]
     pub const fn size(&self) -> u32 {
-        self.size
+        self.header.size()
     }
+
+    /// Returns the [`ConsoleHeaderTagFlags`].
+    #[must_use]
     pub const fn console_flags(&self) -> ConsoleHeaderTagFlags {
         self.console_flags
     }

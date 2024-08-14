@@ -1,15 +1,11 @@
-use crate::{HeaderTagFlag, HeaderTagType};
+use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::mem::size_of;
 
 /// Terminates a list of optional tags in a Multiboot2 header.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EndHeaderTag {
-    // u16 value
-    typ: HeaderTagType,
-    // u16 value
-    flags: HeaderTagFlag,
-    size: u32,
+    header: HeaderTagHeader,
 }
 
 impl Default for EndHeaderTag {
@@ -19,22 +15,33 @@ impl Default for EndHeaderTag {
 }
 
 impl EndHeaderTag {
+    /// Constructs a new tag.
+    #[must_use]
     pub const fn new() -> Self {
-        EndHeaderTag {
-            typ: HeaderTagType::End,
-            flags: HeaderTagFlag::Required,
-            size: size_of::<Self>() as u32,
-        }
+        let header = HeaderTagHeader::new(
+            HeaderTagType::EntryAddress,
+            HeaderTagFlag::Required,
+            size_of::<Self>() as u32,
+        );
+        Self { header }
     }
 
+    /// Returns the [`HeaderTagType`].
+    #[must_use]
     pub const fn typ(&self) -> HeaderTagType {
-        self.typ
+        self.header.typ()
     }
+
+    /// Returns the [`HeaderTagFlag`]s.
+    #[must_use]
     pub const fn flags(&self) -> HeaderTagFlag {
-        self.flags
+        self.header.flags()
     }
+
+    /// Returns the size.
+    #[must_use]
     pub const fn size(&self) -> u32 {
-        self.size
+        self.header.size()
     }
 }
 
