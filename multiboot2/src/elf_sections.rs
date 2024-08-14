@@ -4,10 +4,10 @@
 use crate::builder::BoxedDst;
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
-use core::mem::size_of;
+use core::mem;
 use core::str::Utf8Error;
 
-const METADATA_SIZE: usize = size_of::<TagTypeId>() + 4 * size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 4 * mem::size_of::<u32>();
 
 /// This tag contains the section header table from an ELF binary.
 // The sections iterator is provided via the [`ElfSectionsTag::sections`]
@@ -26,6 +26,7 @@ pub struct ElfSectionsTag {
 impl ElfSectionsTag {
     /// Create a new ElfSectionsTag with the given data.
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(
         number_of_sections: u32,
         entry_size: u32,
@@ -43,7 +44,7 @@ impl ElfSectionsTag {
     }
 
     /// Get an iterator of loaded ELF sections.
-    pub(crate) fn sections(&self) -> ElfSectionIter {
+    pub(crate) const fn sections(&self) -> ElfSectionIter {
         let string_section_offset = (self.shndx * self.entry_size) as isize;
         let string_section_ptr =
             unsafe { self.first_section().offset(string_section_offset) as *const _ };
@@ -55,7 +56,7 @@ impl ElfSectionsTag {
         }
     }
 
-    fn first_section(&self) -> *const u8 {
+    const fn first_section(&self) -> *const u8 {
         &(self.sections[0]) as *const _
     }
 }
@@ -174,6 +175,7 @@ struct ElfSectionInner64 {
 
 impl ElfSection {
     /// Get the section type as a `ElfSectionType` enum variant.
+    #[must_use]
     pub fn section_type(&self) -> ElfSectionType {
         match self.get().typ() {
             0 => ElfSectionType::Unused,
@@ -201,6 +203,7 @@ impl ElfSection {
     }
 
     /// Get the "raw" section type as a `u32`
+    #[must_use]
     pub fn section_type_raw(&self) -> u32 {
         self.get().typ()
     }
@@ -224,6 +227,7 @@ impl ElfSection {
     }
 
     /// Get the physical start address of the section.
+    #[must_use]
     pub fn start_address(&self) -> u64 {
         self.get().addr()
     }
@@ -231,11 +235,13 @@ impl ElfSection {
     /// Get the physical end address of the section.
     ///
     /// This is the same as doing `section.start_address() + section.size()`
+    #[must_use]
     pub fn end_address(&self) -> u64 {
         self.get().addr() + self.get().size()
     }
 
     /// Get the section's size in bytes.
+    #[must_use]
     pub fn size(&self) -> u64 {
         self.get().size()
     }
@@ -246,16 +252,19 @@ impl ElfSection {
     /// modulo the value of `addrlign`. Currently, only 0 and positive
     /// integral powers of two are allowed. Values 0 and 1 mean the section has no
     /// alignment constraints.
+    #[must_use]
     pub fn addralign(&self) -> u64 {
         self.get().addralign()
     }
 
     /// Get the section's flags.
+    #[must_use]
     pub fn flags(&self) -> ElfSectionFlags {
         ElfSectionFlags::from_bits_truncate(self.get().flags())
     }
 
     /// Check if the `ALLOCATED` flag is set in the section flags.
+    #[must_use]
     pub fn is_allocated(&self) -> bool {
         self.flags().contains(ElfSectionFlags::ALLOCATED)
     }

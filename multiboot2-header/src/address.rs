@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, HeaderTagType};
+use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::mem::size_of;
 
 /// This information does not need to be provided if the kernel image is in ELF
@@ -8,9 +8,7 @@ use core::mem::size_of;
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct AddressHeaderTag {
-    typ: HeaderTagType,
-    flags: HeaderTagFlag,
-    size: u32,
+    header: HeaderTagHeader,
     /// Contains the address corresponding to the beginning of the Multiboot2 header — the physical memory location at which the magic value is supposed to be loaded. This field serves to synchronize the mapping between OS image offsets and physical memory addresses.
     header_addr: u32,
     /// Contains the physical address of the beginning of the text segment. The offset in the OS image file at which to start loading is defined by the offset at which the header was found, minus (header_addr - load_addr). load_addr must be less than or equal to header_addr.
@@ -24,6 +22,8 @@ pub struct AddressHeaderTag {
 }
 
 impl AddressHeaderTag {
+    /// Constructs a new tag.
+    #[must_use]
     pub const fn new(
         flags: HeaderTagFlag,
         header_addr: u32,
@@ -31,10 +31,9 @@ impl AddressHeaderTag {
         load_end_addr: u32,
         bss_end_addr: u32,
     ) -> Self {
-        AddressHeaderTag {
-            typ: HeaderTagType::Address,
-            flags,
-            size: size_of::<Self>() as u32,
+        let header = HeaderTagHeader::new(HeaderTagType::Address, flags, size_of::<Self>() as u32);
+        Self {
+            header,
             header_addr,
             load_addr,
             load_end_addr,
@@ -42,24 +41,44 @@ impl AddressHeaderTag {
         }
     }
 
+    /// Returns the [`HeaderTagType`].
+    #[must_use]
     pub const fn typ(&self) -> HeaderTagType {
-        self.typ
+        self.header.typ()
     }
+
+    /// Returns the [`HeaderTagFlag`]s.
+    #[must_use]
     pub const fn flags(&self) -> HeaderTagFlag {
-        self.flags
+        self.header.flags()
     }
+
+    /// Returns the size.
+    #[must_use]
     pub const fn size(&self) -> u32 {
-        self.size
+        self.header.size()
     }
+
+    /// Returns the header address.
+    #[must_use]
     pub const fn header_addr(&self) -> u32 {
         self.header_addr
     }
+
+    /// Returns the load begin address.
+    #[must_use]
     pub const fn load_addr(&self) -> u32 {
         self.load_addr
     }
+
+    /// Returns the load end address.
+    #[must_use]
     pub const fn load_end_addr(&self) -> u32 {
         self.load_end_addr
     }
+
+    /// Returns the bss end address.
+    #[must_use]
     pub const fn bss_end_addr(&self) -> u32 {
         self.bss_end_addr
     }

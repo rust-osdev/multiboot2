@@ -2,8 +2,14 @@
 
 ## Unreleased
 
+- **Breaking** All functions that returns something useful are now `#[must_use]`
+- **Breaking** More public fields in tags were replaced by public getters, such
+  as `SmbiosTag::major()`
 - updated dependencies
 - MSRV is 1.75
+- documentation enhancements
+- Introduced new `TagHeader` type as replacement for the `Tag` type that will
+  be changed in the next step.
 
 ## 0.20.2 (2024-05-26)
 

@@ -2,31 +2,51 @@
 
 #[cfg(feature = "builder")]
 use crate::builder::BoxedDst;
+use crate::tag::TagHeader;
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::Debug;
+use core::mem;
 
-const METADATA_SIZE: usize = core::mem::size_of::<TagTypeId>()
-    + core::mem::size_of::<u32>()
-    + core::mem::size_of::<u8>() * 8;
+const METADATA_SIZE: usize =
+    mem::size_of::<TagTypeId>() + mem::size_of::<u32>() + mem::size_of::<u8>() * 8;
 
 /// This tag contains a copy of SMBIOS tables as well as their version.
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct SmbiosTag {
-    typ: TagTypeId,
-    size: u32,
-    pub major: u8,
-    pub minor: u8,
+    header: TagHeader,
+    major: u8,
+    minor: u8,
     _reserved: [u8; 6],
-    pub tables: [u8],
+    tables: [u8],
 }
 
 impl SmbiosTag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(major: u8, minor: u8, tables: &[u8]) -> BoxedDst<Self> {
         let mut bytes = [major, minor, 0, 0, 0, 0, 0, 0].to_vec();
         bytes.extend(tables);
         BoxedDst::new(&bytes)
+    }
+
+    /// Returns the major number.
+    #[must_use]
+    pub const fn major(&self) -> u8 {
+        self.major
+    }
+
+    /// Returns the major number.
+    #[must_use]
+    pub const fn minor(&self) -> u8 {
+        self.minor
+    }
+
+    /// Returns the raw tables.
+    #[must_use]
+    pub const fn tables(&self) -> &[u8] {
+        &self.tables
     }
 }
 
@@ -42,10 +62,10 @@ impl TagTrait for SmbiosTag {
 impl Debug for SmbiosTag {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("BootLoaderNameTag")
-            .field("typ", &{ self.typ })
-            .field("size", &{ self.size })
-            .field("major", &{ self.major })
-            .field("minor", &{ self.minor })
+            .field("typ", &self.header.typ)
+            .field("size", &self.header.size)
+            .field("major", &self.major)
+            .field("minor", &self.minor)
             .finish()
     }
 }
@@ -76,7 +96,7 @@ mod tests {
         let tag = get_bytes();
         let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };
         let tag = tag.cast_tag::<SmbiosTag>();
-        assert_eq!({ tag.typ }, TagType::Smbios);
+        assert_eq!(tag.header.typ, TagType::Smbios);
         assert_eq!(tag.major, 3);
         assert_eq!(tag.minor, 0);
         assert_eq!(tag.tables, [0xabu8; 24]);

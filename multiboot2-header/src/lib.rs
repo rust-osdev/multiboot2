@@ -38,10 +38,22 @@
 
 #![no_std]
 #![cfg_attr(feature = "unstable", feature(error_in_core))]
-#![deny(rustdoc::all)]
-#![deny(clippy::all)]
-#![deny(clippy::missing_const_for_fn)]
+// --- BEGIN STYLE CHECKS ---
+#![deny(
+    clippy::all,
+    clippy::cargo,
+    clippy::nursery,
+    clippy::must_use_candidate,
+    // clippy::restriction,
+    // clippy::pedantic
+)]
+// now allow a few rules which are denied by the above statement
+// --> They are either ridiculous, not necessary, or we can't fix them.
+#![allow(clippy::multiple_crate_versions)]
+#![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
+#![deny(rustdoc::all)]
+// --- END STYLE CHECKS ---
 
 #[cfg(feature = "builder")]
 extern crate alloc;

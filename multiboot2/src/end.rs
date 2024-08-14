@@ -6,8 +6,8 @@ use crate::{Tag, TagTrait, TagType, TagTypeId};
 #[repr(C)]
 #[derive(Debug)]
 pub struct EndTag {
-    pub typ: TagTypeId,
-    pub size: u32,
+    typ: TagTypeId,
+    size: u32,
 }
 
 impl Default for EndTag {

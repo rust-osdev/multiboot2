@@ -2,8 +2,9 @@
 
 ## Unreleased
 
+- **Breaking** All functions that returns something useful are now `#[must_use]`
 - updated dependencies
-- MSRV is 1.75
+- documentation enhancements
 
 ## 0.4.0 (2024-05-01)
 

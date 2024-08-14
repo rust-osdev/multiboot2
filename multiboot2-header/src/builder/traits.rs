@@ -11,7 +11,7 @@ use core::mem::size_of;
 /// Trait for all tags that helps to create a byte array from the tag.
 /// Useful in builders to construct a byte vector that
 /// represents the Multiboot2 header with all its tags.
-pub(crate) trait StructAsBytes: Sized {
+pub trait StructAsBytes: Sized {
     /// Returns the size in bytes of the struct, as known during compile
     /// time. This doesn't use read the "size" field of tags.
     fn byte_size(&self) -> usize {

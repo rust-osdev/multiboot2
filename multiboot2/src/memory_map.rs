@@ -5,6 +5,7 @@ pub use uefi_raw::table::boot::MemoryAttribute as EFIMemoryAttribute;
 pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
 pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
 
+use crate::tag::TagHeader;
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
@@ -27,15 +28,16 @@ const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u3
 #[derive(ptr_meta::Pointee, Debug, PartialEq, Eq)]
 #[repr(C)]
 pub struct MemoryMapTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     entry_size: u32,
     entry_version: u32,
     areas: [MemoryArea],
 }
 
 impl MemoryMapTag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(areas: &[MemoryArea]) -> BoxedDst<Self> {
         let entry_size: u32 = mem::size_of::<MemoryArea>().try_into().unwrap();
         let entry_version: u32 = 0;
@@ -47,12 +49,14 @@ impl MemoryMapTag {
     }
 
     /// Returns the entry size.
-    pub fn entry_size(&self) -> u32 {
+    #[must_use]
+    pub const fn entry_size(&self) -> u32 {
         self.entry_size
     }
 
     /// Returns the entry version.
-    pub fn entry_version(&self) -> u32 {
+    #[must_use]
+    pub const fn entry_version(&self) -> u32 {
         self.entry_version
     }
 
@@ -60,6 +64,7 @@ impl MemoryMapTag {
     ///
     /// Usually, this should already reflect the memory consumed by the
     /// code running this.
+    #[must_use]
     pub fn memory_areas(&self) -> &[MemoryArea] {
         // If this ever fails, we need to model this differently in this crate.
         assert_eq!(self.entry_size as usize, mem::size_of::<MemoryArea>());
@@ -100,22 +105,26 @@ impl MemoryArea {
     }
 
     /// The start address of the memory region.
-    pub fn start_address(&self) -> u64 {
+    #[must_use]
+    pub const fn start_address(&self) -> u64 {
         self.base_addr
     }
 
     /// The end address of the memory region.
-    pub fn end_address(&self) -> u64 {
+    #[must_use]
+    pub const fn end_address(&self) -> u64 {
         self.base_addr + self.length
     }
 
     /// The size, in bytes, of the memory region.
-    pub fn size(&self) -> u64 {
+    #[must_use]
+    pub const fn size(&self) -> u64 {
         self.length
     }
 
     /// The type of the memory region.
-    pub fn typ(&self) -> MemoryAreaTypeId {
+    #[must_use]
+    pub const fn typ(&self) -> MemoryAreaTypeId {
         self.typ
     }
 }
@@ -215,7 +224,7 @@ impl From<MemoryAreaType> for MemoryAreaTypeId {
 
 impl PartialEq<MemoryAreaType> for MemoryAreaTypeId {
     fn eq(&self, other: &MemoryAreaType) -> bool {
-        let val: MemoryAreaTypeId = (*other).into();
+        let val: Self = (*other).into();
         let val: u32 = val.0;
         self.0.eq(&val)
     }
@@ -246,27 +255,31 @@ impl PartialEq<MemoryAreaTypeId> for MemoryAreaType {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct BasicMemoryInfoTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     memory_lower: u32,
     memory_upper: u32,
 }
 
 impl BasicMemoryInfoTag {
+    /// Constructs a new tag.
+    #[must_use]
     pub fn new(memory_lower: u32, memory_upper: u32) -> Self {
         Self {
-            typ: Self::ID.into(),
-            size: mem::size_of::<BasicMemoryInfoTag>().try_into().unwrap(),
+            header: TagHeader::new(Self::ID, mem::size_of::<Self>().try_into().unwrap()),
             memory_lower,
             memory_upper,
         }
     }
 
-    pub fn memory_lower(&self) -> u32 {
+    #[must_use]
+    /// Returns the lower memory bound.
+    pub const fn memory_lower(&self) -> u32 {
         self.memory_lower
     }
 
-    pub fn memory_upper(&self) -> u32 {
+    #[must_use]
+    /// Returns the upper memory bound.
+    pub const fn memory_upper(&self) -> u32 {
         self.memory_upper
     }
 }
@@ -287,8 +300,7 @@ impl AsBytes for EFIMemoryDesc {}
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct EFIMemoryMapTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     /// Most likely a little more than the size of a [`EFIMemoryDesc`].
     /// This is always the reference, and `size_of` never.
     /// See <https://github.com/tianocore/edk2/blob/7142e648416ff5d3eac6c6d607874805f5de0ca8/MdeModulePkg/Core/PiSmmCore/Page.c#L1059>.
@@ -309,10 +321,11 @@ pub struct EFIMemoryMapTag {
 }
 
 impl EFIMemoryMapTag {
-    #[cfg(feature = "builder")]
     /// Create a new EFI memory map tag with the given memory descriptors.
     /// Version and size can't be set because you're passing a slice of
     /// EFIMemoryDescs, not the ones you might have gotten from the firmware.
+    #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new_from_descs(descs: &[EFIMemoryDesc]) -> BoxedDst<Self> {
         // TODO replace this EfiMemorydesc::uefi_desc_size() in the next uefi_raw
         // release.
@@ -338,8 +351,9 @@ impl EFIMemoryMapTag {
         )
     }
 
-    #[cfg(feature = "builder")]
     /// Create a new EFI memory map tag from the given EFI memory map.
+    #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new_from_map(desc_size: u32, desc_version: u32, efi_mmap: &[u8]) -> BoxedDst<Self> {
         assert!(desc_size > 0);
         assert_eq!(efi_mmap.len() % desc_size as usize, 0);
@@ -362,6 +376,7 @@ impl EFIMemoryMapTag {
     ///
     /// Usually, this should already reflect the memory consumed by the
     /// code running this.
+    #[must_use]
     pub fn memory_areas(&self) -> EFIMemoryAreaIter {
         // If this ever fails, this needs to be refactored in a joint-effort
         // with the uefi-rs project to have all corresponding typings.
@@ -380,8 +395,8 @@ impl EFIMemoryMapTag {
 impl Debug for EFIMemoryMapTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("EFIMemoryMapTag")
-            .field("typ", &self.typ)
-            .field("size", &self.size)
+            .field("typ", &self.header.typ)
+            .field("size", &self.header.size)
             .field("desc_size", &self.desc_size)
             .field("buf", &self.memory_map.as_ptr())
             .field("buf_len", &self.memory_map.len())

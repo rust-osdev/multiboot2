@@ -1,8 +1,8 @@
 use crate::{
     AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EndHeaderTag,
     EntryAddressHeaderTag, EntryEfi32HeaderTag, EntryEfi64HeaderTag, FramebufferHeaderTag,
-    HeaderTag, HeaderTagISA, HeaderTagType, InformationRequestHeaderTag, ModuleAlignHeaderTag,
-    RelocatableHeaderTag,
+    HeaderTagHeader, HeaderTagISA, HeaderTagType, InformationRequestHeaderTag,
+    ModuleAlignHeaderTag, RelocatableHeaderTag,
 };
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
@@ -103,89 +103,106 @@ impl<'a> Multiboot2Header<'a> {
     }
 
     /// Wrapper around [`Multiboot2BasicHeader::verify_checksum`].
+    #[must_use]
     pub const fn verify_checksum(&self) -> bool {
         self.0.verify_checksum()
     }
     /// Wrapper around [`Multiboot2BasicHeader::header_magic`].
+    #[must_use]
     pub const fn header_magic(&self) -> u32 {
         self.0.header_magic()
     }
     /// Wrapper around [`Multiboot2BasicHeader::arch`].
+    #[must_use]
     pub const fn arch(&self) -> HeaderTagISA {
         self.0.arch()
     }
     /// Wrapper around [`Multiboot2BasicHeader::length`].
+    #[must_use]
     pub const fn length(&self) -> u32 {
         self.0.length()
     }
     /// Wrapper around [`Multiboot2BasicHeader::checksum`].
+    #[must_use]
     pub const fn checksum(&self) -> u32 {
         self.0.checksum()
     }
     /// Wrapper around [`Multiboot2BasicHeader::tag_iter`].
+    #[must_use]
     pub fn iter(&self) -> Multiboot2HeaderTagIter {
         self.0.tag_iter()
     }
     /// Wrapper around [`Multiboot2BasicHeader::calc_checksum`].
+    #[must_use]
     pub const fn calc_checksum(magic: u32, arch: HeaderTagISA, length: u32) -> u32 {
         Multiboot2BasicHeader::calc_checksum(magic, arch, length)
     }
 
     /// Search for the address header tag.
+    #[must_use]
     pub fn address_tag(&self) -> Option<&AddressHeaderTag> {
         self.get_tag(HeaderTagType::Address)
-            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const AddressHeaderTag) })
+            .map(|tag| unsafe { &*(tag as *const HeaderTagHeader as *const AddressHeaderTag) })
     }
 
     /// Search for the entry address header tag.
+    #[must_use]
     pub fn entry_address_tag(&self) -> Option<&EntryAddressHeaderTag> {
         self.get_tag(HeaderTagType::EntryAddress)
-            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const EntryAddressHeaderTag) })
+            .map(|tag| unsafe { &*(tag as *const HeaderTagHeader as *const EntryAddressHeaderTag) })
     }
 
     /// Search for the EFI32 entry address header tag.
+    #[must_use]
     pub fn entry_address_efi32_tag(&self) -> Option<&EntryEfi32HeaderTag> {
         self.get_tag(HeaderTagType::EntryAddressEFI32)
-            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const EntryEfi32HeaderTag) })
+            .map(|tag| unsafe { &*(tag as *const HeaderTagHeader as *const EntryEfi32HeaderTag) })
     }
 
     /// Search for the EFI64 entry address header tag.
+    #[must_use]
     pub fn entry_address_efi64_tag(&self) -> Option<&EntryEfi64HeaderTag> {
         self.get_tag(HeaderTagType::EntryAddressEFI64)
-            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const EntryEfi64HeaderTag) })
+            .map(|tag| unsafe { &*(tag as *const HeaderTagHeader as *const EntryEfi64HeaderTag) })
     }
 
     /// Search for the console flags header tag.
+    #[must_use]
     pub fn console_flags_tag(&self) -> Option<&ConsoleHeaderTag> {
         self.get_tag(HeaderTagType::ConsoleFlags)
-            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const ConsoleHeaderTag) })
+            .map(|tag| unsafe { &*(tag as *const HeaderTagHeader as *const ConsoleHeaderTag) })
     }
 
     /// Search for the framebuffer header tag.
+    #[must_use]
     pub fn framebuffer_tag(&self) -> Option<&FramebufferHeaderTag> {
         self.get_tag(HeaderTagType::Framebuffer)
-            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const FramebufferHeaderTag) })
+            .map(|tag| unsafe { &*(tag as *const HeaderTagHeader as *const FramebufferHeaderTag) })
     }
 
     /// Search for the module align header tag.
+    #[must_use]
     pub fn module_align_tag(&self) -> Option<&ModuleAlignHeaderTag> {
         self.get_tag(HeaderTagType::ModuleAlign)
-            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const ModuleAlignHeaderTag) })
+            .map(|tag| unsafe { &*(tag as *const HeaderTagHeader as *const ModuleAlignHeaderTag) })
     }
 
     /// Search for the EFI Boot Services header tag.
+    #[must_use]
     pub fn efi_boot_services_tag(&self) -> Option<&EfiBootServiceHeaderTag> {
-        self.get_tag(HeaderTagType::EfiBS)
-            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const EfiBootServiceHeaderTag) })
+        self.get_tag(HeaderTagType::EfiBS).map(|tag| unsafe {
+            &*(tag as *const HeaderTagHeader as *const EfiBootServiceHeaderTag)
+        })
     }
 
     /// Search for the EFI32 entry address header tag.
+    #[must_use]
     pub fn relocatable_tag(&self) -> Option<&RelocatableHeaderTag> {
         self.get_tag(HeaderTagType::Relocatable)
-            .map(|tag| unsafe { &*(tag as *const HeaderTag as *const RelocatableHeaderTag) })
+            .map(|tag| unsafe { &*(tag as *const HeaderTagHeader as *const RelocatableHeaderTag) })
     }
 
-    fn get_tag(&self, typ: HeaderTagType) -> Option<&HeaderTag> {
+    fn get_tag(&self, typ: HeaderTagType) -> Option<&HeaderTagHeader> {
         self.iter()
             .map(|tag| unsafe { tag.as_ref() }.unwrap())
             .find(|tag| tag.typ() == typ)
@@ -229,7 +246,7 @@ impl Multiboot2BasicHeader {
     pub(crate) const fn new(arch: HeaderTagISA, length: u32) -> Self {
         let magic = MAGIC;
         let checksum = Self::calc_checksum(magic, arch, length);
-        Multiboot2BasicHeader {
+        Self {
             header_magic: magic,
             arch,
             length,
@@ -238,25 +255,38 @@ impl Multiboot2BasicHeader {
     }
 
     /// Verifies that a Multiboot2 header is valid.
+    #[must_use]
     pub const fn verify_checksum(&self) -> bool {
         let check = Self::calc_checksum(self.header_magic, self.arch, self.length);
         check == self.checksum
     }
 
     /// Calculates the checksum as described in the spec.
+    #[must_use]
     pub const fn calc_checksum(magic: u32, arch: HeaderTagISA, length: u32) -> u32 {
         (0x100000000 - magic as u64 - arch as u64 - length as u64) as u32
     }
 
+    /// Returns the header magic.
+    #[must_use]
     pub const fn header_magic(&self) -> u32 {
         self.header_magic
     }
+
+    /// Returns the [`HeaderTagISA`].
+    #[must_use]
     pub const fn arch(&self) -> HeaderTagISA {
         self.arch
     }
+
+    /// Returns the length.
+    #[must_use]
     pub const fn length(&self) -> u32 {
         self.length
     }
+
+    /// Returns the checksum.
+    #[must_use]
     pub const fn checksum(&self) -> u32 {
         self.checksum
     }
@@ -265,12 +295,13 @@ impl Multiboot2BasicHeader {
     ///
     /// # Panics
     /// See doc of [`Multiboot2HeaderTagIter`].
+    #[must_use]
     pub fn tag_iter(&self) -> Multiboot2HeaderTagIter {
-        let base_hdr_size = size_of::<Multiboot2BasicHeader>();
+        let base_hdr_size = size_of::<Self>();
         if base_hdr_size == self.length as usize {
             panic!("No end tag!");
         }
-        let tag_base_addr = self as *const Multiboot2BasicHeader;
+        let tag_base_addr = self as *const Self;
         // cast to u8 so that the offset in bytes works correctly
         let tag_base_addr = tag_base_addr as *const u8;
         // tag_base_addr should now point behind the "static" members
@@ -278,7 +309,7 @@ impl Multiboot2BasicHeader {
         // align pointer to 8 byte according to spec
         let tag_base_addr = unsafe { tag_base_addr.add(tag_base_addr.align_offset(8)) };
         // cast back
-        let tag_base_addr = tag_base_addr as *const HeaderTag;
+        let tag_base_addr = tag_base_addr as *const HeaderTagHeader;
         let tags_len = self.length as usize - base_hdr_size;
         Multiboot2HeaderTagIter::new(tag_base_addr, tags_len as u32)
     }
@@ -307,7 +338,7 @@ impl Debug for Multiboot2BasicHeader {
 #[derive(Clone)]
 pub struct Multiboot2HeaderTagIter {
     /// 8-byte aligned base address
-    base: *const HeaderTag,
+    base: *const HeaderTagHeader,
     /// Offset in bytes from the base address.
     /// Always <= than size.
     n: u32,
@@ -324,11 +355,11 @@ pub struct Multiboot2HeaderTagIter {
 }
 
 impl Multiboot2HeaderTagIter {
-    fn new(base: *const HeaderTag, size: u32) -> Self {
+    fn new(base: *const HeaderTagHeader, size: u32) -> Self {
         // transform to byte pointer => offset works properly
         let base = base as *const u8;
         let base = unsafe { base.add(base.align_offset(8)) };
-        let base = base as *const HeaderTag;
+        let base = base as *const HeaderTagHeader;
         Self {
             base,
             n: 0,
@@ -340,7 +371,7 @@ impl Multiboot2HeaderTagIter {
 }
 
 impl Iterator for Multiboot2HeaderTagIter {
-    type Item = *const HeaderTag;
+    type Item = *const HeaderTagHeader;
 
     fn next(&mut self) -> Option<Self::Item> {
         // no more bytes left to check; length reached
@@ -351,7 +382,7 @@ impl Iterator for Multiboot2HeaderTagIter {
         // transform to byte ptr => offset works correctly
         let ptr = self.base as *const u8;
         let ptr = unsafe { ptr.add(self.n as usize) };
-        let ptr = ptr as *const HeaderTag;
+        let ptr = ptr as *const HeaderTagHeader;
         assert_eq!(ptr as usize % 8, 0, "must be 8-byte aligned");
         let tag = unsafe { &*ptr };
         assert!(

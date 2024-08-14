@@ -1,4 +1,4 @@
-use crate::{HeaderTagFlag, HeaderTagType};
+use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
@@ -22,9 +22,7 @@ pub enum RelocatableHeaderTagPreference {
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct RelocatableHeaderTag {
-    typ: HeaderTagType,
-    flags: HeaderTagFlag,
-    size: u32,
+    header: HeaderTagHeader,
     /// Lowest possible physical address at which image should be loaded. The bootloader cannot load any part of image below this address
     min_addr: u32,
     /// Highest possible physical address at which loaded image should end. The bootloader cannot load any part of image above this address.
@@ -35,6 +33,8 @@ pub struct RelocatableHeaderTag {
 }
 
 impl RelocatableHeaderTag {
+    /// Constructs a new tag.
+    #[must_use]
     pub const fn new(
         flags: HeaderTagFlag,
         min_addr: u32,
@@ -42,10 +42,10 @@ impl RelocatableHeaderTag {
         align: u32,
         preference: RelocatableHeaderTagPreference,
     ) -> Self {
-        RelocatableHeaderTag {
-            typ: HeaderTagType::Relocatable,
-            flags,
-            size: size_of::<Self>() as u32,
+        let header =
+            HeaderTagHeader::new(HeaderTagType::Relocatable, flags, size_of::<Self>() as u32);
+        Self {
+            header,
             min_addr,
             max_addr,
             align,
@@ -53,24 +53,44 @@ impl RelocatableHeaderTag {
         }
     }
 
+    /// Returns the [`HeaderTagType`].
+    #[must_use]
     pub const fn typ(&self) -> HeaderTagType {
-        self.typ
+        self.header.typ()
     }
+
+    /// Returns the [`HeaderTagFlag`]s.
+    #[must_use]
     pub const fn flags(&self) -> HeaderTagFlag {
-        self.flags
+        self.header.flags()
     }
+
+    /// Returns the size.
+    #[must_use]
     pub const fn size(&self) -> u32 {
-        self.size
+        self.header.size()
     }
+
+    /// Return the minimum address.
+    #[must_use]
     pub const fn min_addr(&self) -> u32 {
         self.min_addr
     }
+
+    /// Return the maximum address.
+    #[must_use]
     pub const fn max_addr(&self) -> u32 {
         self.max_addr
     }
+
+    /// Return the alignment.
+    #[must_use]
     pub const fn align(&self) -> u32 {
         self.align
     }
+
+    /// Return the preference.
+    #[must_use]
     pub const fn preference(&self) -> RelocatableHeaderTagPreference {
         self.preference
     }
@@ -79,9 +99,9 @@ impl RelocatableHeaderTag {
 impl Debug for RelocatableHeaderTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("RelocatableHeaderTag")
-            .field("type", &{ self.typ })
-            .field("flags", &{ self.flags })
-            .field("size", &{ self.size })
+            .field("type", &self.typ())
+            .field("flags", &self.flags())
+            .field("size", &self.size())
             // trick to print this as hexadecimal pointer
             .field("min_addr", &(self.min_addr as *const u32))
             .field("max_addr", &(self.max_addr as *const u32))

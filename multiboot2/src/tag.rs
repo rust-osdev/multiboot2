@@ -28,8 +28,32 @@ impl Display for StringError {
 impl core::error::Error for StringError {
     fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
         match self {
-            StringError::MissingNul(e) => Some(e),
-            StringError::Utf8(e) => Some(e),
+            Self::MissingNul(e) => Some(e),
+            Self::Utf8(e) => Some(e),
+        }
+    }
+}
+
+/// The common header that all tags have in common. This type is ABI compatible.
+///
+/// Not to be confused with Multiboot header tags, which are something
+/// different.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(C)]
+pub struct TagHeader {
+    /// The ABI-compatible [`TagType`].
+    pub typ: TagTypeId, /* u32 */
+    /// The total size of the tag including the header.
+    pub size: u32,
+    // Followed by optional additional tag specific fields.
+}
+
+impl TagHeader {
+    /// Creates a new header.
+    pub fn new(typ: impl Into<TagTypeId>, size: u32) -> Self {
+        Self {
+            typ: typ.into(),
+            size,
         }
     }
 }
@@ -44,6 +68,7 @@ impl core::error::Error for StringError {
 /// different.
 #[derive(Clone, Copy)]
 #[repr(C)]
+#[allow(missing_docs)] // type will be removed soon anyway in its form
 pub struct Tag {
     pub typ: TagTypeId, // u32
     pub size: u32,
@@ -52,11 +77,13 @@ pub struct Tag {
 
 impl Tag {
     /// Returns the underlying type of the tag.
+    #[must_use]
     pub fn typ(&self) -> TagType {
         self.typ.into()
     }
 
     /// Casts the base tag to the specific tag type.
+    #[must_use]
     pub fn cast_tag<'a, T: TagTrait + ?Sized + 'a>(&'a self) -> &'a T {
         assert_eq!(self.typ, T::ID);
         // Safety: At this point, we trust that "self.size" and the size hint

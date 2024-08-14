@@ -1,8 +1,9 @@
 //! Module for [`FramebufferTag`].
 
+use crate::tag::TagHeader;
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::Debug;
-use core::mem::size_of;
+use core::mem;
 use core::slice;
 use derive_more::Display;
 #[cfg(feature = "builder")]
@@ -16,8 +17,8 @@ struct Reader {
 }
 
 impl Reader {
-    fn new<T>(ptr: *const T) -> Reader {
-        Reader {
+    const fn new<T>(ptr: *const T) -> Self {
+        Self {
             ptr: ptr as *const u8,
             off: 0,
         }
@@ -41,18 +42,17 @@ impl Reader {
     }
 }
 
-const METADATA_SIZE: usize = size_of::<TagTypeId>()
-    + 4 * size_of::<u32>()
-    + size_of::<u64>()
-    + size_of::<u16>()
-    + 2 * size_of::<u8>();
+const METADATA_SIZE: usize = mem::size_of::<TagTypeId>()
+    + 4 * mem::size_of::<u32>()
+    + mem::size_of::<u64>()
+    + mem::size_of::<u16>()
+    + 2 * mem::size_of::<u8>();
 
 /// The VBE Framebuffer information tag.
 #[derive(ptr_meta::Pointee, Eq)]
 #[repr(C)]
 pub struct FramebufferTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
 
     /// Contains framebuffer physical address.
     ///
@@ -84,7 +84,9 @@ pub struct FramebufferTag {
 }
 
 impl FramebufferTag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(
         address: u64,
         pitch: u32,
@@ -107,27 +109,32 @@ impl FramebufferTag {
     /// This field is 64-bit wide but bootloader should set it under 4GiB if
     /// possible for compatibility with payloads which aren’t aware of PAE or
     /// amd64.
-    pub fn address(&self) -> u64 {
+    #[must_use]
+    pub const fn address(&self) -> u64 {
         self.address
     }
 
     /// Contains the pitch in bytes.
-    pub fn pitch(&self) -> u32 {
+    #[must_use]
+    pub const fn pitch(&self) -> u32 {
         self.pitch
     }
 
     /// Contains framebuffer width in pixels.
-    pub fn width(&self) -> u32 {
+    #[must_use]
+    pub const fn width(&self) -> u32 {
         self.width
     }
 
     /// Contains framebuffer height in pixels.
-    pub fn height(&self) -> u32 {
+    #[must_use]
+    pub const fn height(&self) -> u32 {
         self.height
     }
 
     /// Contains number of bits per pixel.
-    pub fn bpp(&self) -> u8 {
+    #[must_use]
+    pub const fn bpp(&self) -> u8 {
         self.bpp
     }
 
@@ -185,13 +192,13 @@ impl TagTrait for FramebufferTag {
 impl Debug for FramebufferTag {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("FramebufferTag")
-            .field("typ", &{ self.typ })
-            .field("size", &{ self.size })
+            .field("typ", &self.header.typ)
+            .field("size", &self.header.size)
             .field("buffer_type", &self.buffer_type())
-            .field("address", &{ self.address })
-            .field("pitch", &{ self.pitch })
-            .field("width", &{ self.width })
-            .field("height", &{ self.height })
+            .field("address", &self.address)
+            .field("pitch", &self.pitch)
+            .field("width", &self.width)
+            .field("height", &self.height)
             .field("bpp", &self.bpp)
             .finish()
     }
@@ -199,15 +206,14 @@ impl Debug for FramebufferTag {
 
 impl PartialEq for FramebufferTag {
     fn eq(&self, other: &Self) -> bool {
-        ({ self.typ } == { other.typ }
-            && { self.size } == { other.size }
-            && { self.address } == { other.address }
-            && { self.pitch } == { other.pitch }
-            && { self.width } == { other.width }
-            && { self.height } == { other.height }
-            && { self.bpp } == { other.bpp }
-            && { self.type_no } == { other.type_no }
-            && self.buffer == other.buffer)
+        self.header == other.header
+            && self.address == { other.address }
+            && self.pitch == { other.pitch }
+            && self.width == { other.width }
+            && self.height == { other.height }
+            && self.bpp == { other.bpp }
+            && self.type_no == { other.type_no }
+            && self.buffer == other.buffer
     }
 }
 
@@ -337,6 +343,6 @@ mod tests {
     // Compile time test
     #[test]
     fn test_size() {
-        assert_eq!(size_of::<FramebufferColor>(), 3)
+        assert_eq!(mem::size_of::<FramebufferColor>(), 3)
     }
 }

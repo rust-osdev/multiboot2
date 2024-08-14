@@ -1,13 +1,13 @@
 //! Module for [`ModuleTag`].
 
-use crate::tag::StringError;
-use crate::{Tag, TagIter, TagTrait, TagType, TagTypeId};
+use crate::tag::{StringError, TagHeader, TagIter};
+use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
-use core::mem::size_of;
+use core::mem;
 #[cfg(feature = "builder")]
 use {crate::builder::BoxedDst, alloc::vec::Vec};
 
-const METADATA_SIZE: usize = size_of::<TagTypeId>() + 3 * size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
 
 /// The module tag can occur multiple times and specifies passed boot modules
 /// (blobs in memory). The tag itself doesn't include the blog, but references
@@ -15,8 +15,7 @@ const METADATA_SIZE: usize = size_of::<TagTypeId>() + 3 * size_of::<u32>();
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct ModuleTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     mod_start: u32,
     mod_end: u32,
     /// Null-terminated UTF-8 string
@@ -24,7 +23,9 @@ pub struct ModuleTag {
 }
 
 impl ModuleTag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(start: u32, end: u32, cmdline: &str) -> BoxedDst<Self> {
         assert!(end > start, "must have a size");
 
@@ -54,17 +55,20 @@ impl ModuleTag {
     }
 
     /// Start address of the module.
-    pub fn start_address(&self) -> u32 {
+    #[must_use]
+    pub const fn start_address(&self) -> u32 {
         self.mod_start
     }
 
     /// End address of the module
-    pub fn end_address(&self) -> u32 {
+    #[must_use]
+    pub const fn end_address(&self) -> u32 {
         self.mod_end
     }
 
     /// The size of the module/the BLOB in memory.
-    pub fn module_size(&self) -> u32 {
+    #[must_use]
+    pub const fn module_size(&self) -> u32 {
         self.mod_end - self.mod_start
     }
 }
@@ -81,8 +85,8 @@ impl TagTrait for ModuleTag {
 impl Debug for ModuleTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("ModuleTag")
-            .field("type", &{ self.typ })
-            .field("size", &{ self.size })
+            .field("type", &self.header.typ)
+            .field("size", &self.header.size)
             // Trick to print as hex.
             .field("mod_start", &self.mod_start)
             .field("mod_end", &self.mod_end)
@@ -92,7 +96,7 @@ impl Debug for ModuleTag {
     }
 }
 
-pub fn module_iter(iter: TagIter) -> ModuleIter {
+pub const fn module_iter(iter: TagIter) -> ModuleIter {
     ModuleIter { iter }
 }
 
@@ -155,7 +159,7 @@ mod tests {
         let tag = get_bytes();
         let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };
         let tag = tag.cast_tag::<ModuleTag>();
-        assert_eq!({ tag.typ }, TagType::Module);
+        assert_eq!(tag.header.typ, TagType::Module);
         assert_eq!(tag.cmdline().expect("must be valid UTF-8"), MSG);
     }
 

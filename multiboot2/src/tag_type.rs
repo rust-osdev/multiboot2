@@ -17,7 +17,8 @@ pub struct TagTypeId(u32);
 
 impl TagTypeId {
     /// Constructor.
-    pub fn new(val: u32) -> Self {
+    #[must_use]
+    pub const fn new(val: u32) -> Self {
         Self(val)
     }
 }
@@ -135,6 +136,7 @@ pub enum TagType {
 
 impl TagType {
     /// Convenient wrapper to get the underlying `u32` representation of the tag.
+    #[must_use]
     pub fn val(&self) -> u32 {
         u32::from(*self)
     }
@@ -161,29 +163,29 @@ mod primitive_conversion_impls {
     impl From<u32> for TagType {
         fn from(value: u32) -> Self {
             match value {
-                0 => TagType::End,
-                1 => TagType::Cmdline,
-                2 => TagType::BootLoaderName,
-                3 => TagType::Module,
-                4 => TagType::BasicMeminfo,
-                5 => TagType::Bootdev,
-                6 => TagType::Mmap,
-                7 => TagType::Vbe,
-                8 => TagType::Framebuffer,
-                9 => TagType::ElfSections,
-                10 => TagType::Apm,
-                11 => TagType::Efi32,
-                12 => TagType::Efi64,
-                13 => TagType::Smbios,
-                14 => TagType::AcpiV1,
-                15 => TagType::AcpiV2,
-                16 => TagType::Network,
-                17 => TagType::EfiMmap,
-                18 => TagType::EfiBs,
-                19 => TagType::Efi32Ih,
-                20 => TagType::Efi64Ih,
-                21 => TagType::LoadBaseAddr,
-                c => TagType::Custom(c),
+                0 => Self::End,
+                1 => Self::Cmdline,
+                2 => Self::BootLoaderName,
+                3 => Self::Module,
+                4 => Self::BasicMeminfo,
+                5 => Self::Bootdev,
+                6 => Self::Mmap,
+                7 => Self::Vbe,
+                8 => Self::Framebuffer,
+                9 => Self::ElfSections,
+                10 => Self::Apm,
+                11 => Self::Efi32,
+                12 => Self::Efi64,
+                13 => Self::Smbios,
+                14 => Self::AcpiV1,
+                15 => Self::AcpiV2,
+                16 => Self::Network,
+                17 => Self::EfiMmap,
+                18 => Self::EfiBs,
+                19 => Self::Efi32Ih,
+                20 => Self::Efi64Ih,
+                21 => Self::LoadBaseAddr,
+                c => Self::Custom(c),
             }
         }
     }
@@ -226,14 +228,14 @@ mod intermediate_conversion_impls {
     impl From<TagTypeId> for TagType {
         fn from(value: TagTypeId) -> Self {
             let value = u32::from(value);
-            TagType::from(value)
+            Self::from(value)
         }
     }
 
     impl From<TagType> for TagTypeId {
         fn from(value: TagType) -> Self {
             let value = u32::from(value);
-            TagTypeId::from(value)
+            Self::from(value)
         }
     }
 }

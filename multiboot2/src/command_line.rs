@@ -1,15 +1,14 @@
 //! Module for [`CommandLineTag`].
 
+use crate::tag::{StringError, TagHeader};
 use crate::{Tag, TagTrait, TagType, TagTypeId};
-
-use crate::tag::StringError;
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str;
 #[cfg(feature = "builder")]
 use {crate::builder::BoxedDst, alloc::vec::Vec};
 
-pub(crate) const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
 
 /// This tag contains the command line string.
 ///
@@ -18,8 +17,7 @@ pub(crate) const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct CommandLineTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     /// Null-terminated UTF-8 string
     cmdline: [u8],
 }
@@ -27,6 +25,7 @@ pub struct CommandLineTag {
 impl CommandLineTag {
     /// Create a new command line tag from the given string.
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(command_line: &str) -> BoxedDst<Self> {
         let mut bytes: Vec<_> = command_line.bytes().collect();
         if !bytes.ends_with(&[0]) {
@@ -63,8 +62,8 @@ impl CommandLineTag {
 impl Debug for CommandLineTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("CommandLineTag")
-            .field("typ", &{ self.typ })
-            .field("size", &{ self.size })
+            .field("typ", &self.header.typ)
+            .field("size", &self.header.size)
             .field("cmdline", &self.cmdline())
             .finish()
     }
@@ -109,7 +108,7 @@ mod tests {
         let tag = get_bytes();
         let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };
         let tag = tag.cast_tag::<CommandLineTag>();
-        assert_eq!({ tag.typ }, TagType::Cmdline);
+        assert_eq!(tag.header.typ, TagType::Cmdline);
         assert_eq!(tag.cmdline().expect("must be valid UTF-8"), MSG);
     }
 

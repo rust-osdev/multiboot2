@@ -1,26 +1,27 @@
 //! Module for [`BootLoaderNameTag`].
 
-use crate::tag::StringError;
+use crate::tag::{StringError, TagHeader};
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
-use core::mem::size_of;
+use core::mem;
 #[cfg(feature = "builder")]
 use {crate::builder::BoxedDst, alloc::vec::Vec};
 
-const METADATA_SIZE: usize = size_of::<TagTypeId>() + size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
 
 /// The bootloader name tag.
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct BootLoaderNameTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
     /// Null-terminated UTF-8 string
     name: [u8],
 }
 
 impl BootLoaderNameTag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
+    #[must_use]
     pub fn new(name: &str) -> BoxedDst<Self> {
         let mut bytes: Vec<_> = name.bytes().collect();
         if !bytes.ends_with(&[0]) {
@@ -28,6 +29,18 @@ impl BootLoaderNameTag {
             bytes.push(0);
         }
         BoxedDst::new(&bytes)
+    }
+
+    /// Returns the underlying [`TagType`].
+    #[must_use]
+    pub fn typ(&self) -> TagType {
+        self.header.typ.into()
+    }
+
+    /// Returns the underlying tag size.
+    #[must_use]
+    pub const fn size(&self) -> usize {
+        self.header.size as usize
     }
 
     /// Reads the name of the bootloader that is booting the kernel as Rust
@@ -55,8 +68,8 @@ impl BootLoaderNameTag {
 impl Debug for BootLoaderNameTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("BootLoaderNameTag")
-            .field("typ", &{ self.typ })
-            .field("size", &{ self.size })
+            .field("typ", &self.header.typ)
+            .field("size", &self.header.size)
             .field("name", &self.name())
             .finish()
     }
@@ -101,7 +114,7 @@ mod tests {
         let tag = get_bytes();
         let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };
         let tag = tag.cast_tag::<BootLoaderNameTag>();
-        assert_eq!({ tag.typ }, TagType::BootLoaderName);
+        assert_eq!(tag.header.typ, TagType::BootLoaderName);
         assert_eq!(tag.name().expect("must be valid UTF-8"), MSG);
     }
 
