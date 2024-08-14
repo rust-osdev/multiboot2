@@ -5,10 +5,10 @@ use crate::builder::BoxedDst;
 use crate::tag::TagHeader;
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::Debug;
+use core::mem;
 
-const METADATA_SIZE: usize = core::mem::size_of::<TagTypeId>()
-    + core::mem::size_of::<u32>()
-    + core::mem::size_of::<u8>() * 8;
+const METADATA_SIZE: usize =
+    mem::size_of::<TagTypeId>() + mem::size_of::<u32>() + mem::size_of::<u8>() * 8;
 
 /// This tag contains a copy of SMBIOS tables as well as their version.
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]

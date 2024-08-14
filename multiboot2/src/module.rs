@@ -3,11 +3,11 @@
 use crate::tag::{StringError, TagHeader, TagIter};
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
-use core::mem::size_of;
+use core::mem;
 #[cfg(feature = "builder")]
 use {crate::builder::BoxedDst, alloc::vec::Vec};
 
-const METADATA_SIZE: usize = size_of::<TagTypeId>() + 3 * size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
 
 /// The module tag can occur multiple times and specifies passed boot modules
 /// (blobs in memory). The tag itself doesn't include the blog, but references

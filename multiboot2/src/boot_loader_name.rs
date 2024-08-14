@@ -3,11 +3,11 @@
 use crate::tag::{StringError, TagHeader};
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
-use core::mem::size_of;
+use core::mem;
 #[cfg(feature = "builder")]
 use {crate::builder::BoxedDst, alloc::vec::Vec};
 
-const METADATA_SIZE: usize = size_of::<TagTypeId>() + size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
 
 /// The bootloader name tag.
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]

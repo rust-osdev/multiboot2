@@ -4,10 +4,10 @@
 use crate::builder::BoxedDst;
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
-use core::mem::size_of;
+use core::mem;
 use core::str::Utf8Error;
 
-const METADATA_SIZE: usize = size_of::<TagTypeId>() + 4 * size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 4 * mem::size_of::<u32>();
 
 /// This tag contains the section header table from an ELF binary.
 // The sections iterator is provided via the [`ElfSectionsTag::sections`]

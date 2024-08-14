@@ -8,7 +8,7 @@ use core::str;
 #[cfg(feature = "builder")]
 use {crate::builder::BoxedDst, alloc::vec::Vec};
 
-pub const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
 
 /// This tag contains the command line string.
 ///

@@ -3,7 +3,7 @@
 use crate::tag::TagHeader;
 use crate::{Tag, TagTrait, TagType, TagTypeId};
 use core::fmt::Debug;
-use core::mem::size_of;
+use core::mem;
 use core::slice;
 use derive_more::Display;
 #[cfg(feature = "builder")]
@@ -42,11 +42,11 @@ impl Reader {
     }
 }
 
-const METADATA_SIZE: usize = size_of::<TagTypeId>()
-    + 4 * size_of::<u32>()
-    + size_of::<u64>()
-    + size_of::<u16>()
-    + 2 * size_of::<u8>();
+const METADATA_SIZE: usize = mem::size_of::<TagTypeId>()
+    + 4 * mem::size_of::<u32>()
+    + mem::size_of::<u64>()
+    + mem::size_of::<u16>()
+    + 2 * mem::size_of::<u8>();
 
 /// The VBE Framebuffer information tag.
 #[derive(ptr_meta::Pointee, Eq)]
@@ -343,6 +343,6 @@ mod tests {
     // Compile time test
     #[test]
     fn test_size() {
-        assert_eq!(size_of::<FramebufferColor>(), 3)
+        assert_eq!(mem::size_of::<FramebufferColor>(), 3)
     }
 }
