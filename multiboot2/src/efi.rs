@@ -82,6 +82,7 @@ pub struct EFIImageHandle32Tag {
 }
 
 impl EFIImageHandle32Tag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(pointer: u32) -> Self {
@@ -114,6 +115,7 @@ pub struct EFIImageHandle64Tag {
 }
 
 impl EFIImageHandle64Tag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(pointer: u64) -> Self {
@@ -144,6 +146,7 @@ pub struct EFIBootServicesNotExitedTag {
 }
 
 impl EFIBootServicesNotExitedTag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new() -> Self {

@@ -15,19 +15,38 @@ const METADATA_SIZE: usize = core::mem::size_of::<TagTypeId>()
 #[repr(C)]
 pub struct SmbiosTag {
     header: TagHeader,
-    pub major: u8,
-    pub minor: u8,
+    major: u8,
+    minor: u8,
     _reserved: [u8; 6],
-    pub tables: [u8],
+    tables: [u8],
 }
 
 impl SmbiosTag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(major: u8, minor: u8, tables: &[u8]) -> BoxedDst<Self> {
         let mut bytes = [major, minor, 0, 0, 0, 0, 0, 0].to_vec();
         bytes.extend(tables);
         BoxedDst::new(&bytes)
+    }
+
+    /// Returns the major number.
+    #[must_use]
+    pub const fn major(&self) -> u8 {
+        self.major
+    }
+
+    /// Returns the major number.
+    #[must_use]
+    pub const fn minor(&self) -> u8 {
+        self.minor
+    }
+
+    /// Returns the raw tables.
+    #[must_use]
+    pub const fn tables(&self) -> &[u8] {
+        &self.tables
     }
 }
 

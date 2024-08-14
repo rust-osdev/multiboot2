@@ -41,14 +41,15 @@ impl core::error::Error for StringError {
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[repr(C)]
 pub struct TagHeader {
+    /// The ABI-compatible [`TagType`].
     pub typ: TagTypeId, /* u32 */
+    /// The total size of the tag including the header.
     pub size: u32,
-    // Followed by additional, tag specific fields.
+    // Followed by optional additional tag specific fields.
 }
 
 impl TagHeader {
     /// Creates a new header.
-    #[cfg(feature = "builder")]
     pub fn new(typ: impl Into<TagTypeId>, size: u32) -> Self {
         Self {
             typ: typ.into(),
@@ -67,6 +68,7 @@ impl TagHeader {
 /// different.
 #[derive(Clone, Copy)]
 #[repr(C)]
+#[allow(missing_docs)] // type will be removed soon anyway in its form
 pub struct Tag {
     pub typ: TagTypeId, // u32
     pub size: u32,

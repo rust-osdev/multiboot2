@@ -16,6 +16,7 @@ pub struct ImageLoadPhysAddrTag {
 }
 
 impl ImageLoadPhysAddrTag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(load_base_addr: u32) -> Self {

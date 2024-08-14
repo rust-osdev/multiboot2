@@ -35,6 +35,7 @@ pub struct RsdpV1Tag {
 }
 
 impl RsdpV1Tag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(
@@ -114,6 +115,7 @@ pub struct RsdpV2Tag {
 }
 
 impl RsdpV2Tag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[allow(clippy::too_many_arguments)]
     #[must_use]

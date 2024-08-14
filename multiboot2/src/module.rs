@@ -23,6 +23,7 @@ pub struct ModuleTag {
 }
 
 impl ModuleTag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(start: u32, end: u32, cmdline: &str) -> BoxedDst<Self> {

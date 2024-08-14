@@ -35,6 +35,7 @@ pub struct MemoryMapTag {
 }
 
 impl MemoryMapTag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(areas: &[MemoryArea]) -> BoxedDst<Self> {
@@ -260,21 +261,24 @@ pub struct BasicMemoryInfoTag {
 }
 
 impl BasicMemoryInfoTag {
+    /// Constructs a new tag.
     #[must_use]
     pub fn new(memory_lower: u32, memory_upper: u32) -> Self {
         Self {
-            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
+            header: TagHeader::new(Self::ID, mem::size_of::<Self>().try_into().unwrap()),
             memory_lower,
             memory_upper,
         }
     }
 
     #[must_use]
+    /// Returns the lower memory bound.
     pub const fn memory_lower(&self) -> u32 {
         self.memory_lower
     }
 
     #[must_use]
+    /// Returns the upper memory bound.
     pub const fn memory_upper(&self) -> u32 {
         self.memory_upper
     }
@@ -317,10 +321,10 @@ pub struct EFIMemoryMapTag {
 }
 
 impl EFIMemoryMapTag {
-    #[cfg(feature = "builder")]
     /// Create a new EFI memory map tag with the given memory descriptors.
     /// Version and size can't be set because you're passing a slice of
     /// EFIMemoryDescs, not the ones you might have gotten from the firmware.
+    #[cfg(feature = "builder")]
     #[must_use]
     pub fn new_from_descs(descs: &[EFIMemoryDesc]) -> BoxedDst<Self> {
         // TODO replace this EfiMemorydesc::uefi_desc_size() in the next uefi_raw
@@ -347,8 +351,8 @@ impl EFIMemoryMapTag {
         )
     }
 
-    #[cfg(feature = "builder")]
     /// Create a new EFI memory map tag from the given EFI memory map.
+    #[cfg(feature = "builder")]
     #[must_use]
     pub fn new_from_map(desc_size: u32, desc_version: u32, efi_mmap: &[u8]) -> BoxedDst<Self> {
         assert!(desc_size > 0);

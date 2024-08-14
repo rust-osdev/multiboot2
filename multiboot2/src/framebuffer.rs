@@ -84,6 +84,7 @@ pub struct FramebufferTag {
 }
 
 impl FramebufferTag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(

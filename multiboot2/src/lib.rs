@@ -12,7 +12,7 @@
 // now allow a few rules which are denied by the above statement
 // --> They are either ridiculous, not necessary, or we can't fix them.
 #![allow(clippy::multiple_crate_versions)]
-// #![deny(missing_docs)]
+#![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
 #![deny(rustdoc::all)]
 // --- END STYLE CHECKS ---

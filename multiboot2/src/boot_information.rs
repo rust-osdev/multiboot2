@@ -3,7 +3,7 @@
 #[cfg(feature = "builder")]
 use crate::builder::AsBytes;
 use crate::framebuffer::UnknownFramebufferType;
-use crate::tag::TagIter;
+use crate::tag::{TagHeader, TagIter};
 use crate::{
     module, BasicMemoryInfoTag, BootLoaderNameTag, CommandLineTag, EFIBootServicesNotExitedTag,
     EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag, EFISdt32Tag, EFISdt64Tag,
@@ -11,6 +11,8 @@ use crate::{
     ModuleIter, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, VBEInfoTag,
 };
 use core::fmt;
+use core::mem;
+use core::ptr;
 use derive_more::Display;
 
 /// Error type that describes errors while loading/parsing a multiboot2 information structure
@@ -39,18 +41,24 @@ impl core::error::Error for MbiLoadError {}
 #[repr(C)]
 pub struct BootInformationHeader {
     // size is multiple of 8
-    pub total_size: u32,
+    total_size: u32,
     _reserved: u32,
     // Followed by the boot information tags.
 }
 
-#[cfg(feature = "builder")]
 impl BootInformationHeader {
+    #[cfg(feature = "builder")]
     pub(crate) const fn new(total_size: u32) -> Self {
         Self {
             total_size,
             _reserved: 0,
         }
+    }
+
+    /// Returns the total size of the structure.
+    #[must_use]
+    pub const fn total_size(&self) -> u32 {
+        self.total_size
     }
 }
 
@@ -70,18 +78,18 @@ impl BootInformationInner {
     /// Checks if the MBI has a valid end tag by checking the end of the mbi's
     /// bytes.
     fn has_valid_end_tag(&self) -> bool {
-        let end_tag_prototype = EndTag::default();
-
-        let self_ptr = unsafe { self.tags.as_ptr().sub(size_of::<BootInformationHeader>()) };
+        let self_ptr = ptr::addr_of!(*self);
 
         let end_tag_ptr = unsafe {
             self_ptr
+                .cast::<u8>()
                 .add(self.header.total_size as usize)
-                .sub(size_of::<EndTag>())
+                .sub(mem::size_of::<EndTag>())
+                .cast::<TagHeader>()
         };
-        let end_tag = unsafe { &*(end_tag_ptr as *const EndTag) };
+        let end_tag = unsafe { &*end_tag_ptr };
 
-        end_tag.typ == end_tag_prototype.typ && end_tag.size == end_tag_prototype.size
+        end_tag.typ == EndTag::ID && end_tag.size as usize == mem::size_of::<EndTag>()
     }
 }
 
@@ -127,7 +135,7 @@ impl<'a> BootInformation<'a> {
             return Err(MbiLoadError::IllegalTotalSize(mbi.total_size));
         }
 
-        let slice_size = mbi.total_size as usize - size_of::<BootInformationHeader>();
+        let slice_size = mbi.total_size as usize - mem::size_of::<BootInformationHeader>();
         // mbi: reference to full mbi
         let mbi = ptr_meta::from_raw_parts::<BootInformationInner>(ptr.cast(), slice_size);
         let mbi = &*mbi;

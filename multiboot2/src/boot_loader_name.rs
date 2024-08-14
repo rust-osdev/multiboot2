@@ -19,6 +19,7 @@ pub struct BootLoaderNameTag {
 }
 
 impl BootLoaderNameTag {
+    /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(name: &str) -> BoxedDst<Self> {
@@ -28,6 +29,18 @@ impl BootLoaderNameTag {
             bytes.push(0);
         }
         BoxedDst::new(&bytes)
+    }
+
+    /// Returns the underlying [`TagType`].
+    #[must_use]
+    pub fn typ(&self) -> TagType {
+        self.header.typ.into()
+    }
+
+    /// Returns the underlying tag size.
+    #[must_use]
+    pub const fn size(&self) -> usize {
+        self.header.size as usize
     }
 
     /// Reads the name of the bootloader that is booting the kernel as Rust
