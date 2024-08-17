@@ -25,9 +25,8 @@ impl SmbiosTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(major: u8, minor: u8, tables: &[u8]) -> Box<Self> {
-        let mut bytes = [major, minor, 0, 0, 0, 0, 0, 0].to_vec();
-        bytes.extend(tables);
-        new_boxed(&bytes)
+        let reserved = [0, 0, 0, 0, 0, 0];
+        new_boxed(&[&[major, minor], &reserved, tables])
     }
 
     /// Returns the major number.

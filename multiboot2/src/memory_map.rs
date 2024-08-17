@@ -11,7 +11,7 @@ use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use core::mem;
 #[cfg(feature = "builder")]
-use {crate::builder::AsBytes, crate::new_boxed, alloc::boxed::Box};
+use {crate::new_boxed, alloc::boxed::Box, core::slice};
 
 const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u32>();
 
@@ -39,13 +39,14 @@ impl MemoryMapTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(areas: &[MemoryArea]) -> Box<Self> {
-        let entry_size: u32 = mem::size_of::<MemoryArea>().try_into().unwrap();
-        let entry_version: u32 = 0;
-        let mut bytes = [entry_size.to_le_bytes(), entry_version.to_le_bytes()].concat();
-        for area in areas {
-            bytes.extend(area.as_bytes());
-        }
-        new_boxed(bytes.as_slice())
+        let entry_size = mem::size_of::<MemoryArea>().to_ne_bytes();
+        let entry_version = 0_u32.to_ne_bytes();
+        let areas = {
+            let ptr = areas.as_ptr().cast::<u8>();
+            let len = areas.len() * size_of::<MemoryArea>();
+            unsafe { slice::from_raw_parts(ptr, len) }
+        };
+        new_boxed(&[&entry_size, &entry_version, areas])
     }
 
     /// Returns the entry size.
@@ -138,9 +139,6 @@ impl Debug for MemoryArea {
             .finish()
     }
 }
-
-#[cfg(feature = "builder")]
-impl AsBytes for MemoryArea {}
 
 /// ABI-friendly version of [`MemoryAreaType`].
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -292,9 +290,6 @@ impl TagTrait for BasicMemoryInfoTag {
 
 const EFI_METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
 
-#[cfg(feature = "builder")]
-impl AsBytes for EFIMemoryDesc {}
-
 /// EFI memory map tag. The embedded [`EFIMemoryDesc`]s follows the EFI
 /// specification.
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -322,32 +317,19 @@ pub struct EFIMemoryMapTag {
 
 impl EFIMemoryMapTag {
     /// Create a new EFI memory map tag with the given memory descriptors.
-    /// Version and size can't be set because you're passing a slice of
-    /// EFIMemoryDescs, not the ones you might have gotten from the firmware.
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new_from_descs(descs: &[EFIMemoryDesc]) -> Box<Self> {
-        // TODO replace this EfiMemorydesc::uefi_desc_size() in the next uefi_raw
-        // release.
-
-        let size_base = mem::size_of::<EFIMemoryDesc>();
-        // Taken from https://github.com/tianocore/edk2/blob/7142e648416ff5d3eac6c6d607874805f5de0ca8/MdeModulePkg/Core/PiSmmCore/Page.c#L1059
-        let desc_size_diff = mem::size_of::<u64>() - size_base % mem::size_of::<u64>();
-        let desc_size = size_base + desc_size_diff;
-
-        assert!(desc_size >= size_base);
-
-        let mut efi_mmap = alloc::vec::Vec::with_capacity(descs.len() * desc_size);
-        for desc in descs {
-            efi_mmap.extend(desc.as_bytes());
-            // fill with zeroes
-            efi_mmap.extend([0].repeat(desc_size_diff));
-        }
+        let efi_mmap = {
+            let ptr = descs.as_ptr().cast::<u8>();
+            let len = descs.len() * size_of::<EFIMemoryDesc>();
+            unsafe { slice::from_raw_parts(ptr, len) }
+        };
 
         Self::new_from_map(
-            desc_size as u32,
+            mem::size_of::<EFIMemoryDesc>() as u32,
             EFIMemoryDesc::VERSION,
-            efi_mmap.as_slice(),
+            efi_mmap,
         )
     }
 
@@ -355,21 +337,10 @@ impl EFIMemoryMapTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new_from_map(desc_size: u32, desc_version: u32, efi_mmap: &[u8]) -> Box<Self> {
-        assert!(desc_size > 0);
-        assert_eq!(efi_mmap.len() % desc_size as usize, 0);
-        assert_eq!(
-            efi_mmap
-                .as_ptr()
-                .align_offset(mem::align_of::<EFIMemoryDesc>()),
-            0
-        );
-        let bytes = [
-            &desc_size.to_le_bytes(),
-            &desc_version.to_le_bytes(),
-            efi_mmap,
-        ]
-        .concat();
-        new_boxed(&bytes)
+        assert_ne!(desc_size, 0);
+        let desc_size = desc_size.to_ne_bytes();
+        let desc_version = desc_version.to_ne_bytes();
+        new_boxed(&[&desc_size, &desc_version, efi_mmap])
     }
 
     /// Returns an iterator over the provided memory areas.
@@ -490,8 +461,6 @@ mod tests {
             },
         ];
         let efi_mmap_tag = EFIMemoryMapTag::new_from_descs(&descs);
-
-        assert_eq!(efi_mmap_tag.desc_size, 48 /* 40 + 8 */);
 
         let mut iter = efi_mmap_tag.memory_areas();
 

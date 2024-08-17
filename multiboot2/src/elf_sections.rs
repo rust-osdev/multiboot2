@@ -27,14 +27,10 @@ impl ElfSectionsTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(number_of_sections: u32, entry_size: u32, shndx: u32, sections: &[u8]) -> Box<Self> {
-        let mut bytes = [
-            number_of_sections.to_le_bytes(),
-            entry_size.to_le_bytes(),
-            shndx.to_le_bytes(),
-        ]
-        .concat();
-        bytes.extend_from_slice(sections);
-        new_boxed(&bytes)
+        let number_of_sections = number_of_sections.to_ne_bytes();
+        let entry_size = entry_size.to_ne_bytes();
+        let shndx = shndx.to_ne_bytes();
+        new_boxed(&[&number_of_sections, &entry_size, &shndx, sections])
     }
 
     /// Get an iterator of loaded ELF sections.

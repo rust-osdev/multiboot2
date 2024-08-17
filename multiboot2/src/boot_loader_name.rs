@@ -2,10 +2,10 @@
 
 use crate::tag::TagHeader;
 use crate::{new_boxed, parse_slice_as_string, StringError, TagTrait, TagType};
+#[cfg(feature = "builder")]
+use alloc::boxed::Box;
 use core::fmt::{Debug, Formatter};
 use core::mem;
-#[cfg(feature = "builder")]
-use {alloc::boxed::Box, alloc::vec::Vec};
 
 const METADATA_SIZE: usize = mem::size_of::<TagHeader>();
 
@@ -23,12 +23,12 @@ impl BootLoaderNameTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(name: &str) -> Box<Self> {
-        let mut bytes: Vec<_> = name.bytes().collect();
-        if !bytes.ends_with(&[0]) {
-            // terminating null-byte
-            bytes.push(0);
+        let bytes = name.as_bytes();
+        if bytes.ends_with(&[0]) {
+            new_boxed(&[bytes])
+        } else {
+            new_boxed(&[bytes, &[0]])
         }
-        new_boxed(&bytes)
     }
 
     /// Returns the underlying [`TagType`].

@@ -95,13 +95,13 @@ impl FramebufferTag {
         bpp: u8,
         buffer_type: FramebufferType,
     ) -> Box<Self> {
-        let mut bytes: Vec<u8> = address.to_le_bytes().into();
-        bytes.extend(pitch.to_le_bytes());
-        bytes.extend(width.to_le_bytes());
-        bytes.extend(height.to_le_bytes());
-        bytes.extend(bpp.to_le_bytes());
-        bytes.extend(buffer_type.to_bytes());
-        new_boxed(&bytes)
+        let address = address.to_ne_bytes();
+        let pitch = pitch.to_ne_bytes();
+        let width = width.to_ne_bytes();
+        let height = height.to_ne_bytes();
+        let bpp = bpp.to_ne_bytes();
+        let buffer_type = buffer_type.to_bytes();
+        new_boxed(&[&address, &pitch, &width, &height, &bpp, &buffer_type])
     }
 
     /// Contains framebuffer physical address.
@@ -145,6 +145,7 @@ impl FramebufferTag {
         match typ {
             FramebufferTypeId::Indexed => {
                 let num_colors = reader.read_u32();
+                // TODO static cast looks like UB?
                 let palette = unsafe {
                     slice::from_raw_parts(
                         reader.current_address() as *const FramebufferColor,
@@ -274,23 +275,23 @@ impl<'a> FramebufferType<'a> {
         let mut v = Vec::new();
         match self {
             FramebufferType::Indexed { palette } => {
-                v.extend(0u8.to_le_bytes()); // type
-                v.extend(0u16.to_le_bytes()); // reserved
-                v.extend((palette.len() as u32).to_le_bytes());
+                v.extend(0u8.to_ne_bytes()); // type
+                v.extend(0u16.to_ne_bytes()); // reserved
+                v.extend((palette.len() as u32).to_ne_bytes());
                 for color in palette.iter() {
                     v.extend(color.as_bytes());
                 }
             }
             FramebufferType::RGB { red, green, blue } => {
-                v.extend(1u8.to_le_bytes()); // type
-                v.extend(0u16.to_le_bytes()); // reserved
+                v.extend(1u8.to_ne_bytes()); // type
+                v.extend(0u16.to_ne_bytes()); // reserved
                 v.extend(red.as_bytes());
                 v.extend(green.as_bytes());
                 v.extend(blue.as_bytes());
             }
             FramebufferType::Text => {
-                v.extend(2u8.to_le_bytes()); // type
-                v.extend(0u16.to_le_bytes()); // reserved
+                v.extend(2u8.to_ne_bytes()); // type
+                v.extend(0u16.to_ne_bytes()); // reserved
             }
         }
         v

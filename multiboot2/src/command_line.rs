@@ -27,12 +27,12 @@ impl CommandLineTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(command_line: &str) -> Box<Self> {
-        let mut bytes: Vec<_> = command_line.bytes().collect();
-        if !bytes.ends_with(&[0]) {
-            // terminating null-byte
-            bytes.push(0);
+        let bytes = command_line.as_bytes();
+        if bytes.ends_with(&[0]) {
+            new_boxed(&[bytes])
+        } else {
+            new_boxed(&[bytes, &[0]])
         }
-        new_boxed(&bytes)
     }
 
     /// Reads the command line of the kernel as Rust string slice without

@@ -41,11 +41,17 @@ impl core::error::Error for StringError {
 /// constructor and box the result.
 ///
 /// # Parameters
-/// - `additional_bytes`: All bytes apart from the default [`TagHeader`] that
-///                       are included into the tag.
+/// - `additional_bytes_slices`: Array of byte slices that should be included
+///   without additional padding in-between. You don't need to add the bytes
+///   for [`TagHeader`], but only additional ones.
 #[cfg(feature = "alloc")]
-pub fn new_boxed<T: TagTrait + ?Sized>(additional_bytes: &[u8]) -> Box<T> {
-    let size = size_of::<TagHeader>() + additional_bytes.iter().len();
+pub fn new_boxed<T: TagTrait + ?Sized>(additional_bytes_slices: &[&[u8]]) -> Box<T> {
+    let additional_size = additional_bytes_slices
+        .iter()
+        .map(|b| b.len())
+        .sum::<usize>();
+
+    let size = size_of::<TagHeader>() + additional_size;
     let alloc_size = increase_to_alignment(size);
     let layout = Layout::from_size_align(alloc_size, ALIGNMENT).unwrap();
     let heap_ptr = unsafe { alloc::alloc::alloc(layout) };
@@ -55,9 +61,16 @@ pub fn new_boxed<T: TagTrait + ?Sized>(additional_bytes: &[u8]) -> Box<T> {
         heap_ptr.cast::<u32>().write(T::ID.val());
         heap_ptr.cast::<u32>().add(1).write(size as u32);
     }
-    unsafe {
-        let ptr = heap_ptr.add(size_of::<TagHeader>());
-        ptr::copy_nonoverlapping(additional_bytes.as_ptr(), ptr, additional_bytes.len());
+
+    let mut write_offset = size_of::<TagHeader>();
+    for &bytes in additional_bytes_slices {
+        unsafe {
+            let len = bytes.len();
+            let src = bytes.as_ptr();
+            let dst = heap_ptr.add(write_offset);
+            ptr::copy_nonoverlapping(src, dst, len);
+            write_offset += len;
+        }
     }
 
     let header = unsafe { heap_ptr.cast::<TagHeader>().as_ref() }.unwrap();
@@ -128,10 +141,16 @@ mod tests {
 
     #[test]
     fn test_new_boxed() {
-        let tag = new_boxed::<GenericTag>(&[0, 1, 2, 3]);
+        let tag = new_boxed::<GenericTag>(&[&[0, 1, 2, 3]]);
         assert_eq!(tag.header().typ, GenericTag::ID);
-        {}
-        let tag = new_boxed::<CommandLineTag>("hello\0".as_bytes());
+        assert_eq!(tag.payload(), &[0, 1, 2, 3]);
+
+        // Test that bytes are added consecutively without gaps.
+        let tag = new_boxed::<GenericTag>(&[&[0], &[1], &[2, 3]]);
+        assert_eq!(tag.header().typ, GenericTag::ID);
+        assert_eq!(tag.payload(), &[0, 1, 2, 3]);
+
+        let tag = new_boxed::<CommandLineTag>(&["hello\0".as_bytes()]);
         assert_eq!(tag.cmdline(), Ok("hello"));
     }
 }
