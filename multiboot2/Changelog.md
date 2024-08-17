@@ -9,8 +9,8 @@
 This release contains a massive refactoring of various internals. Now, **all
 unit tests pass Miri**, thus we removed lots of undefined behaviour and
 increased the memory safety! 🎉 Only a small part of these internal refactorings
-leak to the public interface. If you don't provide external custom tags, you
-should be fine.
+leak to the public interface. If you don't use external custom tags, you
+should be fine from any refactorings.
 
 Please note that **all previous releases** must be considered unsafe, as they
 contain UB. However, it is never clear how UB results in immediate incorrect
