@@ -100,7 +100,7 @@ pub use smbios::SmbiosTag;
 pub use tag::TagHeader;
 pub use tag_trait::TagTrait;
 pub use tag_type::{TagType, TagTypeId};
-pub use util::{parse_slice_as_string, StringError};
+pub use util::{new_boxed, parse_slice_as_string, StringError};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,

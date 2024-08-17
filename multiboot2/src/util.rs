@@ -1,9 +1,13 @@
 //! Various utilities.
 
-use crate::ALIGNMENT;
+use crate::tag::GenericTag;
+use crate::{TagHeader, TagTrait, TagType, ALIGNMENT};
 use core::fmt;
 use core::fmt::{Display, Formatter};
 use core::str::Utf8Error;
+use core::{ptr, slice};
+#[cfg(feature = "builder")]
+use {alloc::alloc::Layout, alloc::boxed::Box};
 
 /// Error type describing failures when parsing the string from a tag.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -31,6 +35,38 @@ impl core::error::Error for StringError {
     }
 }
 
+/// Creates a new tag implementing [`TagTrait`] on the heap. This works for
+/// sized and unsized tags. However, it only makes sense to use this for tags
+/// that are DSTs (unsized), as for the sized ones, you can call a regular
+/// constructor and box the result.
+///
+/// # Parameters
+/// - `additional_bytes`: All bytes apart from the default [`TagHeader`] that
+///                       are included into the tag.
+#[cfg(feature = "alloc")]
+pub fn new_boxed<T: TagTrait + ?Sized>(additional_bytes: &[u8]) -> Box<T> {
+    let size = size_of::<TagHeader>() + additional_bytes.iter().len();
+    let alloc_size = increase_to_alignment(size);
+    let layout = Layout::from_size_align(alloc_size, ALIGNMENT).unwrap();
+    let heap_ptr = unsafe { alloc::alloc::alloc(layout) };
+    assert!(!heap_ptr.is_null());
+
+    unsafe {
+        heap_ptr.cast::<u32>().write(T::ID.val());
+        heap_ptr.cast::<u32>().add(1).write(size as u32);
+    }
+    unsafe {
+        let ptr = heap_ptr.add(size_of::<TagHeader>());
+        ptr::copy_nonoverlapping(additional_bytes.as_ptr(), ptr, additional_bytes.len());
+    }
+
+    let header = unsafe { heap_ptr.cast::<TagHeader>().as_ref() }.unwrap();
+
+    let ptr = ptr_meta::from_raw_parts_mut(heap_ptr.cast(), T::dst_len(header));
+
+    unsafe { Box::from_raw(ptr) }
+}
+
 /// Parses the provided byte sequence as Multiboot string, which maps to a
 /// [`str`].
 pub fn parse_slice_as_string(bytes: &[u8]) -> Result<&str, StringError> {
@@ -52,6 +88,8 @@ pub const fn increase_to_alignment(size: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tag::GenericTag;
+    use crate::CommandLineTag;
 
     #[test]
     fn test_parse_slice_as_string() {
@@ -86,5 +124,14 @@ mod tests {
         assert_eq!(increase_to_alignment(7), 8);
         assert_eq!(increase_to_alignment(8), 8);
         assert_eq!(increase_to_alignment(9), 16);
+    }
+
+    #[test]
+    fn test_new_boxed() {
+        let tag = new_boxed::<GenericTag>(&[0, 1, 2, 3]);
+        assert_eq!(tag.header().typ, GenericTag::ID);
+        {}
+        let tag = new_boxed::<CommandLineTag>("hello\0".as_bytes());
+        assert_eq!(tag.cmdline(), Ok("hello"));
     }
 }
