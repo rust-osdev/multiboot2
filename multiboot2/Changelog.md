@@ -17,8 +17,6 @@ contain UB. However, it is never clear how UB results in immediate incorrect
 behaviour and it _might_ work. **Nevertheless, please migrate to the latest
 release and you'll be fine!**
 
-All previous releases on crates.io have been yanked.
-
 - **Breaking:** All functions that returns something useful are
   now `#[must_use]`
 - **Breaking:** More public fields in tags were replaced by public getters, such

@@ -3,6 +3,7 @@
 ## Unreleased
 
 - **Breaking** All functions that returns something useful are now `#[must_use]`
+- Updated to latest `multiboot2` dependency
 
 ## 0.4.0 (2024-05-01)
 
