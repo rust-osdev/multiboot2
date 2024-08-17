@@ -121,6 +121,12 @@ mod tests {
         assert_eq!(bytes, &get_bytes()[..tag.size()]);
         assert_eq!(tag.name(), Ok("hello"));
 
+        // With terminating null.
+        let tag = BootLoaderNameTag::new("hello\0");
+        let bytes = tag.as_bytes();
+        assert_eq!(bytes, &get_bytes()[..tag.size()]);
+        assert_eq!(tag.name(), Ok("hello"));
+
         // test also some bigger message
         let tag = BootLoaderNameTag::new("AbCdEfGhUjK YEAH");
         assert_eq!(tag.name(), Ok("AbCdEfGhUjK YEAH"));

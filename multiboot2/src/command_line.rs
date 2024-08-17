@@ -115,6 +115,12 @@ mod tests {
         assert_eq!(bytes, &get_bytes()[..tag.size()]);
         assert_eq!(tag.cmdline(), Ok("hello"));
 
+        // With terminating null.
+        let tag = CommandLineTag::new("hello\0");
+        let bytes = tag.as_bytes();
+        assert_eq!(bytes, &get_bytes()[..tag.size()]);
+        assert_eq!(tag.cmdline(), Ok("hello"));
+
         // test also some bigger message
         let tag = CommandLineTag::new("AbCdEfGhUjK YEAH");
         assert_eq!(tag.cmdline(), Ok("AbCdEfGhUjK YEAH"));

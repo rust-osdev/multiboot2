@@ -166,6 +166,12 @@ mod tests {
         assert_eq!(bytes, &get_bytes()[..tag.size()]);
         assert_eq!(tag.cmdline(), Ok("hello"));
 
+        // With terminating null.
+        let tag = ModuleTag::new(0xff00, 0xffff, "hello\0");
+        let bytes = tag.as_bytes();
+        assert_eq!(bytes, &get_bytes()[..tag.size()]);
+        assert_eq!(tag.cmdline(), Ok("hello"));
+
         // test also some bigger message
         let tag = ModuleTag::new(0, 1, "AbCdEfGhUjK YEAH");
         assert_eq!(tag.cmdline(), Ok("AbCdEfGhUjK YEAH"));
