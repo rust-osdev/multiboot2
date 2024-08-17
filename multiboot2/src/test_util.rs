@@ -82,6 +82,6 @@ mod tests {
                 0, 0,
             ]
         );
-        let _a = TagBytesRef::try_from(&bytes[..]).unwrap();
+        let _a = TagBytesRef::try_from(bytes.borrow()).unwrap();
     }
 }

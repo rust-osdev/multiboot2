@@ -236,6 +236,7 @@ impl<'a> Iterator for TagIter<'a> {
 mod tests {
     use super::*;
     use crate::test_util::AlignedBytes;
+    use core::borrow::Borrow;
     use core::mem;
 
     #[test]
@@ -248,7 +249,7 @@ mod tests {
             0x13, 0x37, 0x13, 0x37,
         ]);
 
-        let bytes = TagBytesRef::try_from(&bytes[..]).unwrap();
+        let bytes = TagBytesRef::try_from(bytes.borrow()).unwrap();
         let tag = GenericTag::ref_from(bytes);
         assert_eq!(tag.header.typ, 0xffff_ffff);
         assert_eq!(tag.header.size, 16);
@@ -277,7 +278,7 @@ mod tests {
             0xef, 0xbe, 0xad, 0xde, /* field b: 0x1337_1337 */
             0x37, 0x13, 0x37, 0x13,
         ]);
-        let bytes = TagBytesRef::try_from(&bytes[..]).unwrap();
+        let bytes = TagBytesRef::try_from(bytes.borrow()).unwrap();
         let tag = GenericTag::ref_from(bytes);
         let custom_tag = tag.cast::<CustomTag>();
 
@@ -313,7 +314,7 @@ mod tests {
             0x37, 0x13, 0x37, 0x13,
         ]);
 
-        let bytes = TagBytesRef::try_from(&bytes[..]).unwrap();
+        let bytes = TagBytesRef::try_from(bytes.borrow()).unwrap();
         let tag = GenericTag::ref_from(bytes);
         let custom_tag = tag.cast::<CustomDstTag>();
 
@@ -369,7 +370,7 @@ mod tests {
                 0, 0, 0, 0, 0, 0
             ],
         );
-        let bytes = TagBytesRef::try_from(&bytes[..]).unwrap();
+        let bytes = TagBytesRef::try_from(bytes.borrow()).unwrap();
         let tag = GenericTag::ref_from(bytes);
         assert_eq!(tag.header.typ, TagType::Cmdline);
         assert_eq!(tag.header.size, 8 + 10);
@@ -391,7 +392,7 @@ mod tests {
                 0, 0, 0, 0, 0, 0
             ],
         );
-        let bytes = TagBytesRef::try_from(&bytes[..]).unwrap();
+        let bytes = TagBytesRef::try_from(bytes.borrow()).unwrap();
         let tag = GenericTag::ref_from(bytes);
 
         // Main objective here is also that this test passes Miri.
@@ -419,7 +420,7 @@ mod tests {
                 8, 0, 0, 0,
             ],
         );
-        let mut iter = TagIter::new(&bytes[..]);
+        let mut iter = TagIter::new(bytes.borrow());
         let first = iter.next().unwrap();
         assert_eq!(first.header.typ, TagType::Custom(0xff));
         assert_eq!(first.header.size, 8);

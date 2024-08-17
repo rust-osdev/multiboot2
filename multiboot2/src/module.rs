@@ -130,6 +130,7 @@ mod tests {
     use super::*;
     use crate::tag::{GenericTag, TagBytesRef};
     use crate::test_util::AlignedBytes;
+    use core::borrow::Borrow;
 
     #[rustfmt::skip]
     fn get_bytes() -> AlignedBytes<24> {
@@ -150,7 +151,7 @@ mod tests {
     #[test]
     fn test_parse_str() {
         let bytes = get_bytes();
-        let bytes = TagBytesRef::try_from(&bytes[..]).unwrap();
+        let bytes = TagBytesRef::try_from(bytes.borrow()).unwrap();
         let tag = GenericTag::ref_from(bytes);
         let tag = tag.cast::<ModuleTag>();
         assert_eq!(tag.header.typ, TagType::Module);
