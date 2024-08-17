@@ -2,16 +2,34 @@
 
 ## Unreleased
 
-- **Breaking** All functions that returns something useful are now `#[must_use]`
-- **Breaking** More public fields in tags were replaced by public getters, such
+## 0.21.0 (2024-08-17)
+
+This release contains a massive refactoring of various internals. Now, **all
+unit tests pass Miri**, thus we removed lots of undefined behaviour and
+increased the memory safety! 🎉 Only a small part of these internal refactorings
+leak to the public interface. If you don't provide external custom tags, you
+should be fine.
+
+Please note that **all previous releases** must be considered unsafe, as they
+contain UB. However, it is never clear how UB results in immediate incorrect
+behaviour and it _might_ work. **Nevertheless, please migrate to the latest
+release and you'll be fine!**
+
+- **Breaking:** All functions that returns something useful are
+  now `#[must_use]`
+- **Breaking:** More public fields in tags were replaced by public getters, such
   as `SmbiosTag::major()`
-- **BREAKING:** `multiboot2::{StringError};` -> \
-  `multiboot2::util::{StringError};`
-- updated dependencies
-- MSRV is 1.75
+- **Breaking:** Methods of `InformationBuilder` to add tags now consume
+  references instead of owned values
+- **Breaking:** The `BoxedDst` has been removed in favor of a normal Rust `Box`.
+  This only affects you if you use the `builder` feature.
+- **Breaking:** MSRV is 1.75
+- **Breaking:** Introduced new `TagHeader` type as replacement for the `Tag`
+  type that will be changed in the next step. `Tag` has been renamed to an
+  internal-only `GenericTag` type.
+- Added missing `InformationBuilder::vbe_info_tag`
 - documentation enhancements
-- Introduced new `TagHeader` type as replacement for the `Tag` type that will
-  be changed in the next step.
+- updated dependencies
 
 ## 0.20.2 (2024-05-26)
 
