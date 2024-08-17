@@ -1,11 +1,11 @@
 //! Module for [`BootLoaderNameTag`].
 
 use crate::tag::TagHeader;
-use crate::{parse_slice_as_string, StringError, TagTrait, TagType};
+use crate::{new_boxed, parse_slice_as_string, StringError, TagTrait, TagType};
 use core::fmt::{Debug, Formatter};
 use core::mem;
 #[cfg(feature = "builder")]
-use {crate::builder::BoxedDst, alloc::vec::Vec};
+use {alloc::boxed::Box, alloc::vec::Vec};
 
 const METADATA_SIZE: usize = mem::size_of::<TagHeader>();
 
@@ -22,13 +22,13 @@ impl BootLoaderNameTag {
     /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new(name: &str) -> BoxedDst<Self> {
+    pub fn new(name: &str) -> Box<Self> {
         let mut bytes: Vec<_> = name.bytes().collect();
         if !bytes.ends_with(&[0]) {
             // terminating null-byte
             bytes.push(0);
         }
-        BoxedDst::new(&bytes)
+        new_boxed(&bytes)
     }
 
     /// Returns the underlying [`TagType`].
@@ -94,7 +94,7 @@ mod tests {
     fn get_bytes() -> AlignedBytes<16> {
         AlignedBytes::new([
             TagType::BootLoaderName.val() as u8, 0, 0, 0,
-            15, 0, 0, 0,
+            14, 0, 0, 0,
             b'h', b'e', b'l', b'l', b'o', b'\0',
             /* padding */
             0, 0
@@ -115,11 +115,10 @@ mod tests {
     /// Test to generate a tag from a given string.
     #[test]
     #[cfg(feature = "builder")]
-    #[ignore]
     fn test_build_str() {
         let tag = BootLoaderNameTag::new("hello");
         let bytes = tag.as_bytes();
-        assert_eq!(bytes, &get_bytes()[..]);
+        assert_eq!(bytes, &get_bytes()[..tag.size()]);
         assert_eq!(tag.name(), Ok("hello"));
 
         // test also some bigger message

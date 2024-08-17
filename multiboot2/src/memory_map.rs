@@ -11,7 +11,7 @@ use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use core::mem;
 #[cfg(feature = "builder")]
-use {crate::builder::AsBytes, crate::builder::BoxedDst};
+use {crate::builder::AsBytes, crate::new_boxed, alloc::boxed::Box};
 
 const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u32>();
 
@@ -38,14 +38,14 @@ impl MemoryMapTag {
     /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new(areas: &[MemoryArea]) -> BoxedDst<Self> {
+    pub fn new(areas: &[MemoryArea]) -> Box<Self> {
         let entry_size: u32 = mem::size_of::<MemoryArea>().try_into().unwrap();
         let entry_version: u32 = 0;
         let mut bytes = [entry_size.to_le_bytes(), entry_version.to_le_bytes()].concat();
         for area in areas {
             bytes.extend(area.as_bytes());
         }
-        BoxedDst::new(bytes.as_slice())
+        new_boxed(bytes.as_slice())
     }
 
     /// Returns the entry size.
@@ -326,7 +326,7 @@ impl EFIMemoryMapTag {
     /// EFIMemoryDescs, not the ones you might have gotten from the firmware.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new_from_descs(descs: &[EFIMemoryDesc]) -> BoxedDst<Self> {
+    pub fn new_from_descs(descs: &[EFIMemoryDesc]) -> Box<Self> {
         // TODO replace this EfiMemorydesc::uefi_desc_size() in the next uefi_raw
         // release.
 
@@ -354,7 +354,7 @@ impl EFIMemoryMapTag {
     /// Create a new EFI memory map tag from the given EFI memory map.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new_from_map(desc_size: u32, desc_version: u32, efi_mmap: &[u8]) -> BoxedDst<Self> {
+    pub fn new_from_map(desc_size: u32, desc_version: u32, efi_mmap: &[u8]) -> Box<Self> {
         assert!(desc_size > 0);
         assert_eq!(efi_mmap.len() % desc_size as usize, 0);
         assert_eq!(
@@ -369,7 +369,7 @@ impl EFIMemoryMapTag {
             efi_mmap,
         ]
         .concat();
-        BoxedDst::new(&bytes)
+        new_boxed(&bytes)
     }
 
     /// Returns an iterator over the provided memory areas.
@@ -466,7 +466,7 @@ impl<'a> ExactSizeIterator for EFIMemoryAreaIter<'a> {
     }
 }
 
-#[cfg(all(test, feature = "builder", not(miri)))]
+#[cfg(all(test, feature = "builder"))]
 mod tests {
     use super::*;
     use std::mem::size_of;

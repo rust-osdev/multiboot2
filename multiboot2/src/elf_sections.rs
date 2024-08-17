@@ -1,11 +1,11 @@
 //! Module for [`ElfSectionsTag`].
 
-#[cfg(feature = "builder")]
-use crate::builder::BoxedDst;
 use crate::{TagHeader, TagTrait, TagType};
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str::Utf8Error;
+#[cfg(feature = "builder")]
+use {crate::new_boxed, alloc::boxed::Box};
 
 const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 3 * mem::size_of::<u32>();
 
@@ -26,12 +26,7 @@ impl ElfSectionsTag {
     /// Create a new ElfSectionsTag with the given data.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new(
-        number_of_sections: u32,
-        entry_size: u32,
-        shndx: u32,
-        sections: &[u8],
-    ) -> BoxedDst<Self> {
+    pub fn new(number_of_sections: u32, entry_size: u32, shndx: u32, sections: &[u8]) -> Box<Self> {
         let mut bytes = [
             number_of_sections.to_le_bytes(),
             entry_size.to_le_bytes(),
@@ -39,7 +34,7 @@ impl ElfSectionsTag {
         ]
         .concat();
         bytes.extend_from_slice(sections);
-        BoxedDst::new(&bytes)
+        new_boxed(&bytes)
     }
 
     /// Get an iterator of loaded ELF sections.

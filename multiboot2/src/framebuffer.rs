@@ -7,7 +7,7 @@ use core::mem;
 use core::slice;
 use derive_more::Display;
 #[cfg(feature = "builder")]
-use {crate::builder::AsBytes, crate::builder::BoxedDst, alloc::vec::Vec};
+use {crate::builder::AsBytes, crate::new_boxed, alloc::boxed::Box, alloc::vec::Vec};
 
 /// Helper struct to read bytes from a raw pointer and increase the pointer
 /// automatically.
@@ -94,14 +94,14 @@ impl FramebufferTag {
         height: u32,
         bpp: u8,
         buffer_type: FramebufferType,
-    ) -> BoxedDst<Self> {
+    ) -> Box<Self> {
         let mut bytes: Vec<u8> = address.to_le_bytes().into();
         bytes.extend(pitch.to_le_bytes());
         bytes.extend(width.to_le_bytes());
         bytes.extend(height.to_le_bytes());
         bytes.extend(bpp.to_le_bytes());
         bytes.extend(buffer_type.to_bytes());
-        BoxedDst::new(&bytes)
+        new_boxed(&bytes)
     }
 
     /// Contains framebuffer physical address.

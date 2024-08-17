@@ -298,6 +298,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn framebuffer_tag_indexed() {
         // indexed mode test:
         // this is synthetic, as I can't get QEMU
@@ -1056,10 +1057,7 @@ mod tests {
         assert_eq!(desc.phys_start, 0x100000);
         assert_eq!(desc.page_count, 4);
         assert_eq!(desc.ty, EFIMemoryAreaType::CONVENTIONAL);
-        // test that the EFI memory map is not detected if the boot services
-        // are not exited.
-        struct Bytes2([u8; 80]);
-        let bytes2: Bytes2 = Bytes2([
+        let bytes2 = AlignedBytes([
             80, 0, 0, 0, // size
             0, 0, 0, 0, // reserved
             17, 0, 0, 0, // EFI memory map type
@@ -1081,7 +1079,7 @@ mod tests {
             0, 0, 0, 0, // end tag type.
             8, 0, 0, 0, // end tag size.
         ]);
-        let bi = unsafe { BootInformation::load(bytes2.0.as_ptr().cast()) };
+        let bi = unsafe { BootInformation::load(bytes2.as_ptr().cast()) };
         let bi = bi.unwrap();
         let efi_mmap = bi.efi_memory_map_tag();
         assert!(efi_mmap.is_none());

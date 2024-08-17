@@ -6,7 +6,7 @@ use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str;
 #[cfg(feature = "builder")]
-use {crate::builder::BoxedDst, alloc::vec::Vec};
+use {crate::new_boxed, alloc::boxed::Box, alloc::vec::Vec};
 
 const METADATA_SIZE: usize = mem::size_of::<TagHeader>();
 
@@ -26,13 +26,13 @@ impl CommandLineTag {
     /// Create a new command line tag from the given string.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new(command_line: &str) -> BoxedDst<Self> {
+    pub fn new(command_line: &str) -> Box<Self> {
         let mut bytes: Vec<_> = command_line.bytes().collect();
         if !bytes.ends_with(&[0]) {
             // terminating null-byte
             bytes.push(0);
         }
-        BoxedDst::new(&bytes)
+        new_boxed(&bytes)
     }
 
     /// Reads the command line of the kernel as Rust string slice without
@@ -109,11 +109,10 @@ mod tests {
     /// Test to generate a tag from a given string.
     #[test]
     #[cfg(feature = "builder")]
-    #[ignore]
     fn test_build_str() {
         let tag = CommandLineTag::new("hello");
         let bytes = tag.as_bytes();
-        assert_eq!(bytes, &get_bytes()[..]);
+        assert_eq!(bytes, &get_bytes()[..tag.size()]);
         assert_eq!(tag.cmdline(), Ok("hello"));
 
         // test also some bigger message

@@ -1,11 +1,11 @@
 //! Module for [`SmbiosTag`].
 
-#[cfg(feature = "builder")]
-use crate::builder::BoxedDst;
 use crate::tag::TagHeader;
 use crate::{TagTrait, TagType};
 use core::fmt::Debug;
 use core::mem;
+#[cfg(feature = "builder")]
+use {crate::new_boxed, alloc::boxed::Box};
 
 const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + mem::size_of::<u8>() * 8;
 
@@ -24,10 +24,10 @@ impl SmbiosTag {
     /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new(major: u8, minor: u8, tables: &[u8]) -> BoxedDst<Self> {
+    pub fn new(major: u8, minor: u8, tables: &[u8]) -> Box<Self> {
         let mut bytes = [major, minor, 0, 0, 0, 0, 0, 0].to_vec();
         bytes.extend(tables);
-        BoxedDst::new(&bytes)
+        new_boxed(&bytes)
     }
 
     /// Returns the major number.
@@ -109,10 +109,9 @@ mod tests {
     /// Test to generate a tag.
     #[test]
     #[cfg(feature = "builder")]
-    #[ignore]
     fn test_build() {
         let tag = SmbiosTag::new(7, 42, &[0, 1, 2, 3, 4, 5, 6, 7, 8]);
         let bytes = tag.as_bytes();
-        assert_eq!(bytes, &get_bytes()[..]);
+        assert_eq!(bytes, &get_bytes()[..tag.size()]);
     }
 }

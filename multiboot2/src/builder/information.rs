@@ -1,12 +1,13 @@
 //! Exports item [`InformationBuilder`].
-use crate::builder::{AsBytes, BoxedDst};
+use crate::builder::AsBytes;
 use crate::util::increase_to_alignment;
 use crate::{
     BasicMemoryInfoTag, BootInformationHeader, BootLoaderNameTag, CommandLineTag,
     EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
     EFISdt32Tag, EFISdt64Tag, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag,
-    MemoryMapTag, ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, TagType,
+    MemoryMapTag, ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, TagType, ALIGNMENT,
 };
+use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::fmt::{Display, Formatter};
 use core::mem::size_of;
@@ -115,8 +116,6 @@ impl InformationBuilder {
     /// Constructs the bytes for a valid Multiboot2 information with the given properties.
     #[must_use]
     pub fn build(self) -> BootInformationBytes {
-        const ALIGN: usize = 8;
-
         // PHASE 1/2: Prepare Vector
 
         // We allocate more than necessary so that we can ensure an correct
@@ -134,7 +133,7 @@ impl InformationBuilder {
         // Unfortunately, it is not possible to reliably test this in a unit
         // test as long as the allocator_api feature is not stable.
         // Due to my manual testing, however, it works.
-        let offset = bytes.as_ptr().align_offset(ALIGN);
+        let offset = bytes.as_ptr().align_offset(ALIGNMENT);
         bytes.extend([0].repeat(offset));
 
         // -----------------------------------------------
@@ -182,6 +181,8 @@ impl InformationBuilder {
             .0
             .iter()
             .map(|(typ, _)| *typ)
+            // TODO make a type for tag_is_allowed_multiple_times so that we can
+            // link to it in the doc.
             .any(|typ| typ == T::ID && !Self::tag_is_allowed_multiple_times(typ));
 
         if is_redundant_tag {
@@ -205,13 +206,13 @@ impl InformationBuilder {
 
     /// Adds a 'bootloader name' tag (represented by [`BootLoaderNameTag`]) to the builder.
     #[must_use]
-    pub fn bootloader_name_tag(self, tag: BoxedDst<BootLoaderNameTag>) -> Self {
+    pub fn bootloader_name_tag(self, tag: Box<BootLoaderNameTag>) -> Self {
         self.add_tag(&*tag).unwrap()
     }
 
     /// Adds a 'command line' tag (represented by [`CommandLineTag`]) to the builder.
     #[must_use]
-    pub fn command_line_tag(self, tag: BoxedDst<CommandLineTag>) -> Self {
+    pub fn command_line_tag(self, tag: Box<CommandLineTag>) -> Self {
         self.add_tag(&*tag).unwrap()
     }
 
@@ -247,19 +248,19 @@ impl InformationBuilder {
 
     /// Adds a 'EFI Memory map' tag (represented by [`EFIMemoryMapTag`]) to the builder.
     #[must_use]
-    pub fn efi_memory_map_tag(self, tag: BoxedDst<EFIMemoryMapTag>) -> Self {
+    pub fn efi_memory_map_tag(self, tag: Box<EFIMemoryMapTag>) -> Self {
         self.add_tag(&*tag).unwrap()
     }
 
     /// Adds a 'ELF-Symbols' tag (represented by [`ElfSectionsTag`]) to the builder.
     #[must_use]
-    pub fn elf_sections_tag(self, tag: BoxedDst<ElfSectionsTag>) -> Self {
+    pub fn elf_sections_tag(self, tag: Box<ElfSectionsTag>) -> Self {
         self.add_tag(&*tag).unwrap()
     }
 
     /// Adds a 'Framebuffer info' tag (represented by [`FramebufferTag`]) to the builder.
     #[must_use]
-    pub fn framebuffer_tag(self, tag: BoxedDst<FramebufferTag>) -> Self {
+    pub fn framebuffer_tag(self, tag: Box<FramebufferTag>) -> Self {
         self.add_tag(&*tag).unwrap()
     }
 
@@ -271,14 +272,14 @@ impl InformationBuilder {
 
     /// Adds a (*none EFI*) 'memory map' tag (represented by [`MemoryMapTag`]) to the builder.
     #[must_use]
-    pub fn memory_map_tag(self, tag: BoxedDst<MemoryMapTag>) -> Self {
+    pub fn memory_map_tag(self, tag: Box<MemoryMapTag>) -> Self {
         self.add_tag(&*tag).unwrap()
     }
 
     /// Adds a 'Modules' tag (represented by [`ModuleTag`]) to the builder.
     /// This tag can occur multiple times in boot information.
     #[must_use]
-    pub fn add_module_tag(self, tag: BoxedDst<ModuleTag>) -> Self {
+    pub fn add_module_tag(self, tag: Box<ModuleTag>) -> Self {
         self.add_tag(&*tag).unwrap()
     }
 
@@ -296,7 +297,7 @@ impl InformationBuilder {
 
     /// Adds a 'SMBIOS tables' tag (represented by [`SmbiosTag`]) to the builder.
     #[must_use]
-    pub fn smbios_tag(self, tag: BoxedDst<SmbiosTag>) -> Self {
+    pub fn smbios_tag(self, tag: Box<SmbiosTag>) -> Self {
         self.add_tag(&*tag).unwrap()
     }
 
@@ -309,7 +310,6 @@ impl InformationBuilder {
 }
 
 #[cfg(test)]
-#[cfg(not(miri))]
 mod tests {
     use crate::builder::information::InformationBuilder;
     use crate::{BasicMemoryInfoTag, BootInformation, CommandLineTag, ModuleTag};
@@ -353,7 +353,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn test_builder() {
         // Step 1/2: Build MBI
         let mb2i_data = create_builder().build();
