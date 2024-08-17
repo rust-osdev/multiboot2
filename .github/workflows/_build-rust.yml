@@ -98,8 +98,9 @@ jobs:
         run: cargo test --verbose
       - name: Unit Test with Miri
         if: inputs.do-miri
-        # "--tests" so that the doctests are skipped. Currently, the doctest
-        # in miri fails.
         run: |
           rustup component add miri
-          cargo miri test --tests
+          # Run with stack-borrow model
+          cargo miri test
+          # Run with tree-borrow model
+          MIRIFLAGS=-Zmiri-tree-borrows cargo +nightly miri test
