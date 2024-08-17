@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+-
+
 ## 0.21.0 (2024-08-17)
 
 This release contains a massive refactoring of various internals. Now, **all
@@ -14,6 +16,8 @@ Please note that **all previous releases** must be considered unsafe, as they
 contain UB. However, it is never clear how UB results in immediate incorrect
 behaviour and it _might_ work. **Nevertheless, please migrate to the latest
 release and you'll be fine!**
+
+All previous releases on crates.io have been yanked.
 
 - **Breaking:** All functions that returns something useful are
   now `#[must_use]`
