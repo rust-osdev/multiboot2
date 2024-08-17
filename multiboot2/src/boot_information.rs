@@ -8,7 +8,7 @@ use crate::{
     module, BasicMemoryInfoTag, BootLoaderNameTag, CommandLineTag, EFIBootServicesNotExitedTag,
     EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag, EFISdt32Tag, EFISdt64Tag,
     ElfSectionIter, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag, MemoryMapTag,
-    ModuleIter, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, VBEInfoTag,
+    ModuleIter, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, TagType, VBEInfoTag,
 };
 use core::fmt;
 use core::mem;
@@ -221,6 +221,8 @@ impl<'a> BootInformation<'a> {
     /// Otherwise, if the [`TagType::EfiBs`] tag is present, this returns `None`
     /// as it is strictly recommended to get the memory map from the `uefi`
     /// services.
+    ///
+    /// [`TagType::EfiBs`]: crate::TagType::EfiBs
     #[must_use]
     pub fn efi_memory_map_tag(&self) -> Option<&EFIMemoryMapTag> {
         // If the EFIBootServicesNotExited is present, then we should not use

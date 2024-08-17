@@ -7,10 +7,10 @@ use core::hash::Hash;
 
 /// Serialized form of [`TagType`] that matches the binary representation
 /// (`u32`). The abstraction corresponds to the `typ`/`type` field of a
-/// Multiboot2 [`Tag`]. This type can easily be created from or converted to
+/// Multiboot2 [`TagHeader`]. This type can easily be created from or converted to
 /// [`TagType`].
 ///
-/// [`Tag`]: crate::Tag
+/// [`TagHeader`]: crate::TagHeader
 #[repr(transparent)]
 #[derive(Copy, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct TagTypeId(u32);

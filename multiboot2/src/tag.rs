@@ -17,10 +17,11 @@ use core::ops::Deref;
 use core::ptr;
 
 /// The common header that all tags have in common. This type is ABI compatible.
-/// It is the sized counterpart of [`GenericTag`].
 ///
 /// Not to be confused with Multiboot header tags, which are something
 /// different.
+///
+/// It is the sized counterpart of `GenericTag`, an internal type.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[repr(C, align(8))] // Alignment also propagates to all tag types using this.
 pub struct TagHeader {
