@@ -1,42 +1,86 @@
 //! Module for [`VBEInfoTag`].
 
-use crate::{TagHeader, TagTrait, TagType, TagTypeId};
+use crate::{TagHeader, TagTrait, TagType};
 use core::fmt;
+use core::mem;
 
 /// This tag contains VBE metadata, VBE controller information returned by the
 /// VBE Function 00h and VBE mode information returned by the VBE Function 01h.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, align(8))]
 pub struct VBEInfoTag {
-    typ: TagTypeId,
-    length: u32,
+    header: TagHeader,
+    mode: u16,
+    interface_segment: u16,
+    interface_offset: u16,
+    interface_length: u16,
+    control_info: VBEControlInfo,
+    mode_info: VBEModeInfo,
+}
+
+impl VBEInfoTag {
+    /// Constructs a new tag.
+    #[cfg(feature = "builder")]
+    #[must_use]
+    pub fn new(
+        mode: u16,
+        interface_segment: u16,
+        interface_offset: u16,
+        interface_length: u16,
+        control_info: VBEControlInfo,
+        mode_info: VBEModeInfo,
+    ) -> Self {
+        Self {
+            header: TagHeader::new(Self::ID, mem::size_of::<Self>().try_into().unwrap()),
+            mode,
+            interface_segment,
+            interface_offset,
+            interface_length,
+            control_info,
+            mode_info,
+        }
+    }
 
     /// Indicates current video mode in the format specified in VBE 3.0.
-    pub mode: u16,
+    #[must_use]
+    pub const fn mode(&self) -> u16 {
+        self.mode
+    }
 
-    /// Contain the segment of the table of a protected mode interface defined in VBE 2.0+.
+    /// Returns the segment of the table of a protected mode interface defined in VBE 2.0+.
     ///
     /// If the information for a protected mode interface is not available
     /// this field is set to zero.
-    pub interface_segment: u16,
-
-    /// Contain the segment offset of the table of a protected mode interface defined in VBE 2.0+.
+    #[must_use]
+    pub const fn interface_segment(&self) -> u16 {
+        self.interface_segment
+    }
+    /// Returns the segment offset of the table of a protected mode interface defined in VBE 2.0+.
     ///
     /// If the information for a protected mode interface is not available
     /// this field is set to zero.
-    pub interface_offset: u16,
-
-    /// Contain the segment length of the table of a protected mode interface defined in VBE 2.0+.
+    #[must_use]
+    pub const fn interface_offset(&self) -> u16 {
+        self.interface_offset
+    }
+    /// Returns the segment length of the table of a protected mode interface defined in VBE 2.0+.
     ///
     /// If the information for a protected mode interface is not available
     /// this field is set to zero.
-    pub interface_length: u16,
-
-    /// Contains VBE controller information returned by the VBE Function `00h`.
-    pub control_info: VBEControlInfo,
-
-    /// Contains VBE mode information returned by the VBE Function `01h`.
-    pub mode_info: VBEModeInfo,
+    #[must_use]
+    pub const fn interface_length(&self) -> u16 {
+        self.interface_length
+    }
+    /// Returns VBE controller information returned by the VBE Function `00h`.
+    #[must_use]
+    pub const fn control_info(&self) -> VBEControlInfo {
+        self.control_info
+    }
+    /// Returns VBE mode information returned by the VBE Function `01h`.
+    #[must_use]
+    pub const fn mode_info(&self) -> VBEModeInfo {
+        self.mode_info
+    }
 }
 
 impl TagTrait for VBEInfoTag {

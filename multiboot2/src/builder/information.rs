@@ -5,7 +5,8 @@ use crate::{
     BasicMemoryInfoTag, BootInformationHeader, BootLoaderNameTag, CommandLineTag,
     EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
     EFISdt32Tag, EFISdt64Tag, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag,
-    MemoryMapTag, ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, TagType, ALIGNMENT,
+    MemoryMapTag, ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, TagType, VBEInfoTag,
+    ALIGNMENT,
 };
 use alloc::vec::Vec;
 use core::fmt::{Display, Formatter};
@@ -300,6 +301,13 @@ impl InformationBuilder {
         self.add_tag(tag).unwrap()
     }
 
+    /// Adds a 'VBE Info' tag (represented by [`VBEInfoTag`]) to the builder.
+    #[must_use]
+    pub fn vbe_info_tag(self, tag: &VBEInfoTag) -> Self {
+        self.add_tag(tag).unwrap()
+    }
+
+    #[must_use]
     const fn tag_is_allowed_multiple_times(tag_type: TagType) -> bool {
         matches!(
             tag_type,

@@ -8,7 +8,7 @@ use crate::{
     module, BasicMemoryInfoTag, BootLoaderNameTag, CommandLineTag, EFIBootServicesNotExitedTag,
     EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag, EFISdt32Tag, EFISdt64Tag,
     ElfSectionIter, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag, MemoryMapTag,
-    ModuleIter, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, TagType, VBEInfoTag,
+    ModuleIter, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, VBEInfoTag,
 };
 use core::fmt;
 use core::mem;
@@ -279,8 +279,8 @@ impl<'a> BootInformation<'a> {
     pub fn elf_sections(&self) -> Option<ElfSectionIter> {
         let tag = self.get_tag::<ElfSectionsTag>();
         tag.map(|t| {
-            assert!((t.entry_size * t.shndx) <= t.size() as u32);
-            t.sections()
+            assert!((t.entry_size() * t.shndx()) <= t.size() as u32);
+            t.sections_iter()
         })
     }
 
@@ -397,6 +397,8 @@ impl<'a> BootInformation<'a> {
     ///     .unwrap();
     /// assert_eq!(tag.name(), Ok("name"));
     /// ```
+    ///
+    /// [`TagType`]: crate::TagType
     #[must_use]
     pub fn get_tag<TagT: TagTrait + ?Sized + 'a>(&'a self) -> Option<&'a TagT> {
         self.tags()

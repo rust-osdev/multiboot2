@@ -1,11 +1,11 @@
 //! Module for [`BootLoaderNameTag`].
 
 use crate::tag::TagHeader;
-use crate::{new_boxed, parse_slice_as_string, StringError, TagTrait, TagType};
-#[cfg(feature = "builder")]
-use alloc::boxed::Box;
+use crate::{parse_slice_as_string, StringError, TagTrait, TagType};
 use core::fmt::{Debug, Formatter};
 use core::mem;
+#[cfg(feature = "builder")]
+use {crate::new_boxed, alloc::boxed::Box};
 
 const METADATA_SIZE: usize = mem::size_of::<TagHeader>();
 

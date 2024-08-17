@@ -18,8 +18,8 @@ const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 3 * mem::size_of::<u3
 pub struct ElfSectionsTag {
     header: TagHeader,
     number_of_sections: u32,
-    pub(crate) entry_size: u32,
-    pub(crate) shndx: u32, // string table
+    entry_size: u32,
+    shndx: u32,
     sections: [u8],
 }
 
@@ -35,7 +35,8 @@ impl ElfSectionsTag {
     }
 
     /// Get an iterator of loaded ELF sections.
-    pub(crate) const fn sections(&self) -> ElfSectionIter {
+    #[must_use]
+    pub(crate) const fn sections_iter(&self) -> ElfSectionIter {
         let string_section_offset = (self.shndx * self.entry_size) as isize;
         let string_section_ptr =
             unsafe { self.sections.as_ptr().offset(string_section_offset) as *const _ };
@@ -46,6 +47,24 @@ impl ElfSectionsTag {
             string_section: string_section_ptr,
             _phantom_data: PhantomData,
         }
+    }
+
+    /// Returns the amount of sections.
+    #[must_use]
+    pub const fn number_of_sections(&self) -> u32 {
+        self.number_of_sections
+    }
+
+    /// Returns the size of each entry.
+    #[must_use]
+    pub const fn entry_size(&self) -> u32 {
+        self.entry_size
+    }
+
+    /// Returns the index of the section header string table.
+    #[must_use]
+    pub const fn shndx(&self) -> u32 {
+        self.shndx
     }
 }
 
@@ -66,7 +85,7 @@ impl Debug for ElfSectionsTag {
             .field("number_of_sections", &self.number_of_sections)
             .field("entry_size", &self.entry_size)
             .field("shndx", &self.shndx)
-            .field("sections", &self.sections())
+            .field("sections", &self.sections_iter())
             .finish()
     }
 }
