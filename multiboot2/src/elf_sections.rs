@@ -2,6 +2,7 @@
 
 use crate::{TagHeader, TagTrait, TagType};
 use core::fmt::{Debug, Formatter};
+use core::marker::{PhantomData, PhantomPinned};
 use core::mem;
 use core::str::Utf8Error;
 #[cfg(feature = "builder")]
@@ -34,20 +35,17 @@ impl ElfSectionsTag {
     }
 
     /// Get an iterator of loaded ELF sections.
-    pub(crate) const fn sections(&self) -> ElfSectionIter {
+    pub(crate) fn sections(&self) -> ElfSectionIter {
         let string_section_offset = (self.shndx * self.entry_size) as isize;
         let string_section_ptr =
-            unsafe { self.first_section().offset(string_section_offset) as *const _ };
+            unsafe { self.sections.as_ptr().offset(string_section_offset) as *const _ };
         ElfSectionIter {
-            current_section: self.first_section(),
+            current_section: self.sections.as_ptr(),
             remaining_sections: self.number_of_sections,
             entry_size: self.entry_size,
             string_section: string_section_ptr,
+            _phantom_data: PhantomData::default(),
         }
-    }
-
-    const fn first_section(&self) -> *const u8 {
-        &(self.sections[0]) as *const _
     }
 }
 
@@ -75,23 +73,24 @@ impl Debug for ElfSectionsTag {
 
 /// An iterator over some ELF sections.
 #[derive(Clone)]
-/// TODO make this memory safe with lifetime capture.
-pub struct ElfSectionIter {
+pub struct ElfSectionIter<'a> {
     current_section: *const u8,
     remaining_sections: u32,
     entry_size: u32,
     string_section: *const u8,
+    _phantom_data: PhantomData<&'a ()>,
 }
 
-impl Iterator for ElfSectionIter {
-    type Item = ElfSection;
+impl<'a> Iterator for ElfSectionIter<'a> {
+    type Item = ElfSection<'a>;
 
-    fn next(&mut self) -> Option<ElfSection> {
+    fn next(&mut self) -> Option<ElfSection<'a>> {
         while self.remaining_sections != 0 {
             let section = ElfSection {
                 inner: self.current_section,
                 string_section: self.string_section,
                 entry_size: self.entry_size,
+                _phantom: PhantomData::default(),
             };
 
             self.current_section = unsafe { self.current_section.offset(self.entry_size as isize) };
@@ -105,7 +104,7 @@ impl Iterator for ElfSectionIter {
     }
 }
 
-impl Debug for ElfSectionIter {
+impl<'a> Debug for ElfSectionIter<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         let mut debug = f.debug_list();
         self.clone().for_each(|ref e| {
@@ -115,23 +114,13 @@ impl Debug for ElfSectionIter {
     }
 }
 
-impl Default for ElfSectionIter {
-    fn default() -> Self {
-        Self {
-            current_section: core::ptr::null(),
-            remaining_sections: 0,
-            entry_size: 0,
-            string_section: core::ptr::null(),
-        }
-    }
-}
-
 /// A single generic ELF Section.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ElfSection {
+pub struct ElfSection<'a> {
     inner: *const u8,
     string_section: *const u8,
     entry_size: u32,
+    _phantom: PhantomData<&'a ()>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -164,7 +153,7 @@ struct ElfSectionInner64 {
     entry_size: u64,
 }
 
-impl ElfSection {
+impl<'a> ElfSection<'a> {
     /// Get the section type as a `ElfSectionType` enum variant.
     #[must_use]
     pub fn section_type(&self) -> ElfSectionType {

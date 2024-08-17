@@ -440,7 +440,7 @@ impl fmt::Debug for BootInformation<'_> {
             if elf_sections_tag_entries_count > ELF_SECTIONS_LIMIT {
                 debug.field("elf_sections (count)", &elf_sections_tag_entries_count);
             } else {
-                debug.field("elf_sections", &self.elf_sections().unwrap_or_default());
+                debug.field("elf_sections", &self.elf_sections());
             }
         }
 

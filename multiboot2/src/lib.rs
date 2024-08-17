@@ -537,8 +537,6 @@ mod tests {
     /// Tests to parse a MBI that was statically extracted from a test run with
     /// GRUB as bootloader.
     #[test]
-    // TODO fix Miri
-    #[cfg_attr(miri, ignore)]
     fn grub2() {
         let mut bytes = AlignedBytes([
             192, 3, 0, 0, // total_size
@@ -944,8 +942,6 @@ mod tests {
     }
 
     #[test]
-    // TODO fix Miri
-    #[cfg_attr(miri, ignore)]
     fn elf_sections() {
         let mut bytes = AlignedBytes([
             168, 0, 0, 0, // total_size
