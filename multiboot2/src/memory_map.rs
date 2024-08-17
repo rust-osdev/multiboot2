@@ -6,14 +6,14 @@ pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
 pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
 
 use crate::tag::TagHeader;
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::{TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use core::mem;
 #[cfg(feature = "builder")]
 use {crate::builder::AsBytes, crate::builder::BoxedDst};
 
-const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u32>();
 
 /// This tag provides an initial host memory map (legacy boot, not UEFI).
 ///
@@ -75,9 +75,9 @@ impl MemoryMapTag {
 impl TagTrait for MemoryMapTag {
     const ID: TagType = TagType::Mmap;
 
-    fn dst_size(base_tag: &Tag) -> usize {
-        assert!(base_tag.size as usize >= METADATA_SIZE);
-        let size = base_tag.size as usize - METADATA_SIZE;
+    fn dst_len(header: &TagHeader) -> usize {
+        assert!(header.size as usize >= METADATA_SIZE);
+        let size = header.size as usize - METADATA_SIZE;
         assert_eq!(size % mem::size_of::<MemoryArea>(), 0);
         size / mem::size_of::<MemoryArea>()
     }
@@ -287,7 +287,7 @@ impl BasicMemoryInfoTag {
 impl TagTrait for BasicMemoryInfoTag {
     const ID: TagType = TagType::BasicMeminfo;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 const EFI_METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
@@ -408,9 +408,9 @@ impl Debug for EFIMemoryMapTag {
 impl TagTrait for EFIMemoryMapTag {
     const ID: TagType = TagType::EfiMmap;
 
-    fn dst_size(base_tag: &Tag) -> usize {
-        assert!(base_tag.size as usize >= EFI_METADATA_SIZE);
-        base_tag.size as usize - EFI_METADATA_SIZE
+    fn dst_len(header: &TagHeader) -> usize {
+        assert!(header.size as usize >= EFI_METADATA_SIZE);
+        header.size as usize - EFI_METADATA_SIZE
     }
 }
 

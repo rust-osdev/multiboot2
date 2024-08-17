@@ -2,12 +2,12 @@
 
 #[cfg(feature = "builder")]
 use crate::builder::BoxedDst;
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::{TagHeader, TagTrait, TagType};
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str::Utf8Error;
 
-const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 4 * mem::size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 3 * mem::size_of::<u32>();
 
 /// This tag contains the section header table from an ELF binary.
 // The sections iterator is provided via the [`ElfSectionsTag::sections`]
@@ -15,8 +15,7 @@ const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 4 * mem::size_of::<u3
 #[derive(ptr_meta::Pointee, PartialEq, Eq)]
 #[repr(C)]
 pub struct ElfSectionsTag {
-    typ: TagTypeId,
-    pub(crate) size: u32,
+    header: TagHeader,
     number_of_sections: u32,
     pub(crate) entry_size: u32,
     pub(crate) shndx: u32, // string table
@@ -64,20 +63,20 @@ impl ElfSectionsTag {
 impl TagTrait for ElfSectionsTag {
     const ID: TagType = TagType::ElfSections;
 
-    fn dst_size(base_tag: &Tag) -> usize {
-        assert!(base_tag.size as usize >= METADATA_SIZE);
-        base_tag.size as usize - METADATA_SIZE
+    fn dst_len(header: &TagHeader) -> usize {
+        assert!(header.size as usize >= METADATA_SIZE);
+        header.size as usize - METADATA_SIZE
     }
 }
 
 impl Debug for ElfSectionsTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("ElfSectionsTag")
-            .field("typ", &{ self.typ })
-            .field("size", &{ self.size })
-            .field("number_of_sections", &{ self.number_of_sections })
-            .field("entry_size", &{ self.entry_size })
-            .field("shndx", &{ self.shndx })
+            .field("typ", &self.header.typ)
+            .field("size", &self.header.size)
+            .field("number_of_sections", &self.number_of_sections)
+            .field("entry_size", &self.entry_size)
+            .field("shndx", &self.shndx)
             .field("sections", &self.sections())
             .finish()
     }
@@ -85,6 +84,7 @@ impl Debug for ElfSectionsTag {
 
 /// An iterator over some ELF sections.
 #[derive(Clone)]
+/// TODO make this memory safe with lifetime capture.
 pub struct ElfSectionIter {
     current_section: *const u8,
     remaining_sections: u32,

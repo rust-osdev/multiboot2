@@ -1,6 +1,6 @@
 //! Module for [`EndTag`].
 
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::{TagHeader, TagTrait, TagType, TagTypeId};
 
 /// The end tag ends the information struct.
 #[repr(C)]
@@ -22,7 +22,7 @@ impl Default for EndTag {
 impl TagTrait for EndTag {
     const ID: TagType = TagType::End;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 #[cfg(test)]

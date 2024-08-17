@@ -1,7 +1,7 @@
 //! Module for [`FramebufferTag`].
 
 use crate::tag::TagHeader;
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::{TagTrait, TagType, TagTypeId};
 use core::fmt::Debug;
 use core::mem;
 use core::slice;
@@ -183,9 +183,9 @@ impl FramebufferTag {
 impl TagTrait for FramebufferTag {
     const ID: TagType = TagType::Framebuffer;
 
-    fn dst_size(base_tag: &Tag) -> usize {
-        assert!(base_tag.size as usize >= METADATA_SIZE);
-        base_tag.size as usize - METADATA_SIZE
+    fn dst_len(header: &TagHeader) -> usize {
+        assert!(header.size as usize >= METADATA_SIZE);
+        header.size as usize - METADATA_SIZE
     }
 }
 

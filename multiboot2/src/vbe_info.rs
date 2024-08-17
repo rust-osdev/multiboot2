@@ -1,6 +1,6 @@
 //! Module for [`VBEInfoTag`].
 
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::{TagHeader, TagTrait, TagType, TagTypeId};
 use core::fmt;
 
 /// This tag contains VBE metadata, VBE controller information returned by the
@@ -42,7 +42,7 @@ pub struct VBEInfoTag {
 impl TagTrait for VBEInfoTag {
     const ID: TagType = TagType::Vbe;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 /// VBE controller information.

@@ -13,7 +13,7 @@
 //!
 
 use crate::tag::TagHeader;
-use crate::{Tag, TagTrait, TagType};
+use crate::{TagTrait, TagType};
 #[cfg(feature = "builder")]
 use core::mem::size_of;
 use core::slice;
@@ -94,7 +94,7 @@ impl RsdpV1Tag {
 impl TagTrait for RsdpV1Tag {
     const ID: TagType = TagType::AcpiV1;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 /// This tag contains a copy of RSDP as defined per ACPI 2.0 or later specification.
@@ -191,5 +191,5 @@ impl RsdpV2Tag {
 impl TagTrait for RsdpV2Tag {
     const ID: TagType = TagType::AcpiV2;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }

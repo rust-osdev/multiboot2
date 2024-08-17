@@ -5,6 +5,8 @@
 - **Breaking** All functions that returns something useful are now `#[must_use]`
 - **Breaking** More public fields in tags were replaced by public getters, such
   as `SmbiosTag::major()`
+- **BREAKING:** `multiboot2::{StringError};` -> \
+  `multiboot2::util::{StringError};`
 - updated dependencies
 - MSRV is 1.75
 - documentation enhancements

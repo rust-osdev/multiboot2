@@ -1,13 +1,13 @@
 //! Module for [`ModuleTag`].
 
-use crate::tag::{StringError, TagHeader, TagIter};
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::tag::{TagHeader, TagIter};
+use crate::{parse_slice_as_string, StringError, TagTrait, TagType};
 use core::fmt::{Debug, Formatter};
 use core::mem;
 #[cfg(feature = "builder")]
 use {crate::builder::BoxedDst, alloc::vec::Vec};
 
-const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u32>();
 
 /// The module tag can occur multiple times and specifies passed boot modules
 /// (blobs in memory). The tag itself doesn't include the blog, but references
@@ -51,7 +51,7 @@ impl ModuleTag {
     ///
     /// If the function returns `Err` then perhaps the memory is invalid.
     pub fn cmdline(&self) -> Result<&str, StringError> {
-        Tag::parse_slice_as_string(&self.cmdline)
+        parse_slice_as_string(&self.cmdline)
     }
 
     /// Start address of the module.
@@ -76,9 +76,9 @@ impl ModuleTag {
 impl TagTrait for ModuleTag {
     const ID: TagType = TagType::Module;
 
-    fn dst_size(base_tag: &Tag) -> usize {
-        assert!(base_tag.size as usize >= METADATA_SIZE);
-        base_tag.size as usize - METADATA_SIZE
+    fn dst_len(header: &TagHeader) -> usize {
+        assert!(header.size as usize >= METADATA_SIZE);
+        header.size as usize - METADATA_SIZE
     }
 }
 
@@ -111,8 +111,8 @@ impl<'a> Iterator for ModuleIter<'a> {
 
     fn next(&mut self) -> Option<&'a ModuleTag> {
         self.iter
-            .find(|tag| tag.typ == TagType::Module)
-            .map(|tag| tag.cast_tag())
+            .find(|tag| tag.header().typ == TagType::Module)
+            .map(|tag| tag.cast())
     }
 }
 
@@ -128,49 +128,45 @@ impl<'a> Debug for ModuleIter<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ModuleTag, Tag, TagTrait, TagType};
+    use super::*;
+    use crate::tag::{GenericTag, TagBytesRef};
+    use crate::test_util::AlignedBytes;
 
-    const MSG: &str = "hello";
-
-    /// Returns the tag structure in bytes in little endian format.
-    fn get_bytes() -> std::vec::Vec<u8> {
-        // size is: 4 bytes for tag + 4 bytes for size + length of null-terminated string
-        //          4 bytes mod_start + 4 bytes mod_end
-        let size = (4 + 4 + 4 + 4 + MSG.as_bytes().len() + 1) as u32;
-        [
-            &((TagType::Module.val()).to_le_bytes()),
-            &size.to_le_bytes(),
-            &0_u32.to_le_bytes(),
-            &1_u32.to_le_bytes(),
-            MSG.as_bytes(),
-            // Null Byte
-            &[0],
-        ]
-        .iter()
-        .flat_map(|bytes| bytes.iter())
-        .copied()
-        .collect()
+    #[rustfmt::skip]
+    fn get_bytes() -> AlignedBytes<24> {
+        AlignedBytes::new([
+            TagType::Module.val() as u8, 0, 0, 0,
+            22, 0, 0, 0,
+            /* mod start */
+            0x00, 0xff, 0, 0,
+            /* mod end */
+            0xff, 0xff, 0, 0,
+            b'h', b'e', b'l', b'l', b'o', b'\0',
+            /* padding */
+            0, 0,
+        ])
     }
 
     /// Tests to parse a string with a terminating null byte from the tag (as the spec defines).
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn test_parse_str() {
-        let tag = get_bytes();
-        let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };
-        let tag = tag.cast_tag::<ModuleTag>();
+        let bytes = get_bytes();
+        let bytes = TagBytesRef::try_from(&bytes[..]).unwrap();
+        let tag = GenericTag::ref_from(bytes);
+        let tag = tag.cast::<ModuleTag>();
         assert_eq!(tag.header.typ, TagType::Module);
-        assert_eq!(tag.cmdline().expect("must be valid UTF-8"), MSG);
+        assert_eq!(tag.cmdline(), Ok("hello"));
     }
 
     /// Test to generate a tag from a given string.
     #[test]
     #[cfg(feature = "builder")]
+    #[ignore]
     fn test_build_str() {
-        let tag = ModuleTag::new(0, 1, MSG);
+        let tag = ModuleTag::new(0xff00, 0xffff, "hello");
         let bytes = tag.as_bytes();
-        assert_eq!(bytes, get_bytes());
-        assert_eq!(tag.cmdline(), Ok(MSG));
+        assert_eq!(bytes, &get_bytes()[..]);
+        assert_eq!(tag.cmdline(), Ok("hello"));
 
         // test also some bigger message
         let tag = ModuleTag::new(0, 1, "AbCdEfGhUjK YEAH");

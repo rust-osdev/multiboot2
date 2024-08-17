@@ -7,7 +7,7 @@
 //! - [`EFIBootServicesNotExitedTag`]
 
 use crate::tag::TagHeader;
-use crate::{Tag, TagTrait, TagType};
+use crate::{TagTrait, TagType};
 use core::mem::size_of;
 
 /// EFI system table in 32 bit mode tag.
@@ -38,7 +38,7 @@ impl EFISdt32Tag {
 impl TagTrait for EFISdt32Tag {
     const ID: TagType = TagType::Efi32;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 /// EFI system table in 64 bit mode tag.
@@ -69,7 +69,7 @@ impl EFISdt64Tag {
 impl TagTrait for EFISdt64Tag {
     const ID: TagType = TagType::Efi64;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 /// Tag that contains the pointer to the boot loader's UEFI image handle
@@ -102,7 +102,7 @@ impl EFIImageHandle32Tag {
 impl TagTrait for EFIImageHandle32Tag {
     const ID: TagType = TagType::Efi32Ih;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 /// Tag that contains the pointer to the boot loader's UEFI image handle
@@ -135,7 +135,7 @@ impl EFIImageHandle64Tag {
 impl TagTrait for EFIImageHandle64Tag {
     const ID: TagType = TagType::Efi64Ih;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 /// EFI ExitBootServices was not called tag.
@@ -166,7 +166,7 @@ impl Default for EFIBootServicesNotExitedTag {
 impl TagTrait for EFIBootServicesNotExitedTag {
     const ID: TagType = TagType::EfiBs;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 #[cfg(all(test, feature = "builder"))]

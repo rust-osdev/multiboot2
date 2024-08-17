@@ -1,5 +1,6 @@
 //! Exports item [`InformationBuilder`].
 use crate::builder::{AsBytes, BoxedDst};
+use crate::util::increase_to_alignment;
 use crate::{
     BasicMemoryInfoTag, BootInformationHeader, BootLoaderNameTag, CommandLineTag,
     EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
@@ -78,12 +79,6 @@ impl InformationBuilder {
         Self(Vec::new())
     }
 
-    /// Returns the provided number or the next multiple of 8. This is helpful
-    /// to ensure that the following tag starts at a 8-byte aligned boundary.
-    const fn size_or_up_aligned(size: usize) -> usize {
-        (size + 7) & !7
-    }
-
     /// Returns the expected length of the boot information, when the
     /// [`Self::build`]-method is called. This function assumes that the begin
     /// of the boot information is 8-byte aligned and automatically adds padding
@@ -92,10 +87,8 @@ impl InformationBuilder {
     pub fn expected_len(&self) -> usize {
         let tag_size_iter = self.0.iter().map(|(_, bytes)| bytes.len());
 
-        let payload_tags_size = tag_size_iter.fold(0, |acc, tag_size| {
-            // size_or_up_aligned: make sure next tag is 8-byte aligned
-            acc + Self::size_or_up_aligned(tag_size)
-        });
+        let payload_tags_size =
+            tag_size_iter.fold(0, |acc, tag_size| acc + increase_to_alignment(tag_size));
 
         size_of::<BootInformationHeader>() + payload_tags_size + size_of::<EndTag>()
     }
@@ -112,7 +105,7 @@ impl InformationBuilder {
 
         if tag_type != TagType::End {
             let size = tag_serialized.len();
-            let size_to_8_align = Self::size_or_up_aligned(size);
+            let size_to_8_align = increase_to_alignment(size);
             let size_to_8_align_diff = size_to_8_align - size;
             // fill zeroes so that next data block is 8-byte aligned
             dest_buf.extend([0].repeat(size_to_8_align_diff));
@@ -316,6 +309,7 @@ impl InformationBuilder {
 }
 
 #[cfg(test)]
+#[cfg(not(miri))]
 mod tests {
     use crate::builder::information::InformationBuilder;
     use crate::{BasicMemoryInfoTag, BootInformation, CommandLineTag, ModuleTag};
@@ -347,14 +341,6 @@ mod tests {
         println!("expected_len: {} bytes", builder.expected_len());
 
         builder
-    }
-
-    #[test]
-    fn test_size_or_up_aligned() {
-        assert_eq!(0, InformationBuilder::size_or_up_aligned(0));
-        assert_eq!(8, InformationBuilder::size_or_up_aligned(1));
-        assert_eq!(8, InformationBuilder::size_or_up_aligned(8));
-        assert_eq!(16, InformationBuilder::size_or_up_aligned(9));
     }
 
     /// Test of the `build` method in isolation specifically for miri to check

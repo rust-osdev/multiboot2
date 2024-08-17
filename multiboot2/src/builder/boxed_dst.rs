@@ -1,6 +1,7 @@
 //! Module for [`BoxedDst`].
 
-use crate::{Tag, TagTrait, TagTypeId};
+use crate::util::increase_to_alignment;
+use crate::{TagHeader, TagTrait, TagTypeId};
 use alloc::alloc::alloc;
 use core::alloc::Layout;
 use core::marker::PhantomData;
@@ -40,14 +41,10 @@ impl<T: TagTrait<Metadata = usize> + ?Sized> BoxedDst<T> {
 
         let tag_size = size_of::<TagTypeId>() + size_of::<u32>() + content.len();
 
-        // By using miri, I could figure out that there often are problems where
-        // miri thinks an allocation is smaller then necessary. Most probably
-        // due to not packed structs. Using packed structs however
-        // (especially with DSTs), is a crazy ass pain and unusable :/ Therefore,
-        // the best solution I can think of is to allocate a few byte more than
-        // necessary. I think that during runtime, everything works fine and
-        // that no memory issues are present.
-        let alloc_size = (tag_size + 7) & !7; // align to next 8 byte boundary
+        // The size of [the allocation for] a value is always a multiple of its
+        // alignment.
+        // https://doc.rust-lang.org/reference/type-layout.html
+        let alloc_size = increase_to_alignment(tag_size);
         let layout = Layout::from_size_align(alloc_size, ALIGN).unwrap();
         let ptr = unsafe { alloc(layout) };
         assert!(!ptr.is_null());
@@ -70,8 +67,8 @@ impl<T: TagTrait<Metadata = usize> + ?Sized> BoxedDst<T> {
             }
         }
 
-        let base_tag = unsafe { &*ptr.cast::<Tag>() };
-        let raw: *mut T = ptr_meta::from_raw_parts_mut(ptr.cast(), T::dst_size(base_tag));
+        let base_tag = unsafe { &*ptr.cast::<TagHeader>() };
+        let raw: *mut T = ptr_meta::from_raw_parts_mut(ptr.cast(), T::dst_len(base_tag));
 
         Self {
             ptr: NonNull::new(raw).unwrap(),
@@ -101,10 +98,12 @@ impl<T: ?Sized + PartialEq> PartialEq for BoxedDst<T> {
 }
 
 #[cfg(test)]
+#[cfg(not(miri))]
 mod tests {
     use super::*;
-    use crate::tag::StringError;
-    use crate::TagType;
+    use crate::test_util::AlignedBytes;
+    use crate::{parse_slice_as_string, StringError, TagHeader, TagType};
+    use core::borrow::Borrow;
 
     const METADATA_SIZE: usize = 8;
 
@@ -118,25 +117,24 @@ mod tests {
 
     impl CustomTag {
         fn string(&self) -> Result<&str, StringError> {
-            Tag::parse_slice_as_string(&self.string)
+            parse_slice_as_string(&self.string)
         }
     }
 
     impl TagTrait for CustomTag {
         const ID: TagType = TagType::Custom(0x1337);
 
-        fn dst_size(base_tag: &Tag) -> usize {
-            assert!(base_tag.size as usize >= METADATA_SIZE);
-            base_tag.size as usize - METADATA_SIZE
+        fn dst_len(header: &TagHeader) -> usize {
+            assert!(header.size as usize >= METADATA_SIZE);
+            header.size as usize - METADATA_SIZE
         }
     }
 
     #[test]
     fn test_boxed_dst_tag() {
-        let content = b"hallo\0";
+        let content = AlignedBytes::new(*b"hallo\0");
         let content_rust_str = "hallo";
-
-        let tag = BoxedDst::<CustomTag>::new(content);
+        let tag = BoxedDst::<CustomTag>::new(content.borrow());
         assert_eq!(tag.typ, CustomTag::ID);
         assert_eq!(tag.size as usize, METADATA_SIZE + content.len());
         assert_eq!(tag.string(), Ok(content_rust_str));
@@ -145,12 +143,9 @@ mod tests {
     #[test]
     fn can_hold_tag_trait() {
         const fn consume<T: TagTrait + ?Sized>(_: &T) {}
-        let content = b"hallo\0";
-
-        let tag = BoxedDst::<CustomTag>::new(content);
+        let content = AlignedBytes::new(*b"hallo\0");
+        let tag = BoxedDst::<CustomTag>::new(content.borrow());
         consume(tag.deref());
         consume(&*tag);
-        // Compiler not smart enough?
-        // consume(&tag);
     }
 }
