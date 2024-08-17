@@ -1,17 +1,17 @@
 //! Module for [`BootLoaderNameTag`].
 
-use crate::tag::{StringError, TagHeader};
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::tag::TagHeader;
+use crate::{parse_slice_as_string, StringError, TagTrait, TagType};
 use core::fmt::{Debug, Formatter};
 use core::mem;
 #[cfg(feature = "builder")]
-use {crate::builder::BoxedDst, alloc::vec::Vec};
+use {crate::new_boxed, alloc::boxed::Box};
 
-const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagHeader>();
 
 /// The bootloader name tag.
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct BootLoaderNameTag {
     header: TagHeader,
     /// Null-terminated UTF-8 string
@@ -22,13 +22,13 @@ impl BootLoaderNameTag {
     /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new(name: &str) -> BoxedDst<Self> {
-        let mut bytes: Vec<_> = name.bytes().collect();
-        if !bytes.ends_with(&[0]) {
-            // terminating null-byte
-            bytes.push(0);
+    pub fn new(name: &str) -> Box<Self> {
+        let bytes = name.as_bytes();
+        if bytes.ends_with(&[0]) {
+            new_boxed(&[bytes])
+        } else {
+            new_boxed(&[bytes, &[0]])
         }
-        BoxedDst::new(&bytes)
     }
 
     /// Returns the underlying [`TagType`].
@@ -61,7 +61,7 @@ impl BootLoaderNameTag {
     /// }
     /// ```
     pub fn name(&self) -> Result<&str, StringError> {
-        Tag::parse_slice_as_string(&self.name)
+        parse_slice_as_string(&self.name)
     }
 }
 
@@ -78,54 +78,55 @@ impl Debug for BootLoaderNameTag {
 impl TagTrait for BootLoaderNameTag {
     const ID: TagType = TagType::BootLoaderName;
 
-    fn dst_size(base_tag: &Tag) -> usize {
-        assert!(base_tag.size as usize >= METADATA_SIZE);
-        base_tag.size as usize - METADATA_SIZE
+    fn dst_len(header: &TagHeader) -> usize {
+        assert!(header.size as usize >= METADATA_SIZE);
+        header.size as usize - METADATA_SIZE
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{BootLoaderNameTag, Tag, TagTrait, TagType};
+    use super::*;
+    use crate::tag::{GenericTag, TagBytesRef};
+    use crate::test_util::AlignedBytes;
+    use core::borrow::Borrow;
 
-    const MSG: &str = "hello";
-
-    /// Returns the tag structure in bytes in little endian format.
-    fn get_bytes() -> std::vec::Vec<u8> {
-        // size is: 4 bytes for tag + 4 bytes for size + length of null-terminated string
-        let size = (4 + 4 + MSG.as_bytes().len() + 1) as u32;
-        [
-            &((TagType::BootLoaderName.val()).to_le_bytes()),
-            &size.to_le_bytes(),
-            MSG.as_bytes(),
-            // Null Byte
-            &[0],
-        ]
-        .iter()
-        .flat_map(|bytes| bytes.iter())
-        .copied()
-        .collect()
+    #[rustfmt::skip]
+    fn get_bytes() -> AlignedBytes<16> {
+        AlignedBytes::new([
+            TagType::BootLoaderName.val() as u8, 0, 0, 0,
+            14, 0, 0, 0,
+            b'h', b'e', b'l', b'l', b'o', b'\0',
+            /* padding */
+            0, 0
+        ])
     }
 
     /// Tests to parse a string with a terminating null byte from the tag (as the spec defines).
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn test_parse_str() {
-        let tag = get_bytes();
-        let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };
-        let tag = tag.cast_tag::<BootLoaderNameTag>();
+        let bytes = get_bytes();
+        let bytes = TagBytesRef::try_from(bytes.borrow()).unwrap();
+        let tag = GenericTag::ref_from(bytes);
+        let tag = tag.cast::<BootLoaderNameTag>();
         assert_eq!(tag.header.typ, TagType::BootLoaderName);
-        assert_eq!(tag.name().expect("must be valid UTF-8"), MSG);
+        assert_eq!(tag.name(), Ok("hello"));
     }
 
     /// Test to generate a tag from a given string.
     #[test]
     #[cfg(feature = "builder")]
     fn test_build_str() {
-        let tag = BootLoaderNameTag::new(MSG);
+        let tag = BootLoaderNameTag::new("hello");
         let bytes = tag.as_bytes();
-        assert_eq!(bytes, get_bytes());
-        assert_eq!(tag.name(), Ok(MSG));
+        assert_eq!(bytes, &get_bytes()[..tag.size()]);
+        assert_eq!(tag.name(), Ok("hello"));
+
+        // With terminating null.
+        let tag = BootLoaderNameTag::new("hello\0");
+        let bytes = tag.as_bytes();
+        assert_eq!(bytes, &get_bytes()[..tag.size()]);
+        assert_eq!(tag.name(), Ok("hello"));
 
         // test also some bigger message
         let tag = BootLoaderNameTag::new("AbCdEfGhUjK YEAH");

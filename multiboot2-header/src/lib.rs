@@ -34,7 +34,7 @@
 //!
 //! ## MSRV
 //!
-//! The MSRV is 1.75.0 stable.
+//! The MSRV is 1.70.0 stable.
 
 #![no_std]
 #![cfg_attr(feature = "unstable", feature(error_in_core))]

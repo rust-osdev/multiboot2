@@ -255,6 +255,7 @@ impl HeaderBuilder {
     /// Adds information requests from the
     /// [`InformationRequestHeaderTagBuilder`] to the builder.
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // only in Rust 1.70 necessary
     pub fn information_request_tag(
         mut self,
         information_request_tag: InformationRequestHeaderTagBuilder,

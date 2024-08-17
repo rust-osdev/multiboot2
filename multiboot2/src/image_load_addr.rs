@@ -1,7 +1,7 @@
 //! Module for [`ImageLoadPhysAddrTag`].
 
 use crate::tag::TagHeader;
-use crate::{Tag, TagTrait, TagType};
+use crate::{TagTrait, TagType};
 #[cfg(feature = "builder")]
 use core::mem::size_of;
 
@@ -9,7 +9,7 @@ use core::mem::size_of;
 /// binary was relocated, for example if the relocatable header tag was
 /// specified.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct ImageLoadPhysAddrTag {
     header: TagHeader,
     load_base_addr: u32,
@@ -36,7 +36,7 @@ impl ImageLoadPhysAddrTag {
 impl TagTrait for ImageLoadPhysAddrTag {
     const ID: TagType = TagType::LoadBaseAddr;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 #[cfg(all(test, feature = "builder"))]

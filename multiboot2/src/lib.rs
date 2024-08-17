@@ -41,7 +41,7 @@
 //! ```
 //!
 //! ## MSRV
-//! The MSRV is 1.75.0 stable.
+//! The MSRV is 1.70.0 stable.
 
 #[cfg(feature = "builder")]
 extern crate alloc;
@@ -56,6 +56,8 @@ extern crate bitflags;
 
 #[cfg(feature = "builder")]
 pub mod builder;
+#[cfg(test)]
+pub(crate) mod test_util;
 
 mod boot_information;
 mod boot_loader_name;
@@ -72,6 +74,7 @@ mod smbios;
 mod tag;
 mod tag_trait;
 mod tag_type;
+pub(crate) mod util;
 mod vbe_info;
 
 pub use boot_information::{BootInformation, BootInformationHeader, MbiLoadError};
@@ -94,9 +97,12 @@ pub use module::{ModuleIter, ModuleTag};
 pub use ptr_meta::Pointee;
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
 pub use smbios::SmbiosTag;
-pub use tag::{StringError, Tag};
+pub use tag::TagHeader;
 pub use tag_trait::TagTrait;
 pub use tag_type::{TagType, TagTypeId};
+#[cfg(feature = "alloc")]
+pub use util::new_boxed;
+pub use util::{parse_slice_as_string, StringError};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
@@ -107,22 +113,22 @@ pub use vbe_info::{
 /// machine state.
 pub const MAGIC: u32 = 0x36d76289;
 
+/// The required alignment for tags and the boot information.
+pub const ALIGNMENT: usize = 8;
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::memory_map::MemoryAreaType;
-    use crate::tag::StringError;
+    use crate::test_util::AlignedBytes;
 
     /// Compile time test to check if the boot information is Send and Sync.
     /// This test is relevant to give library users flexebility in passing the
     /// struct around.
     #[test]
+    #[allow(clippy::missing_const_for_fn)] // only in Rust 1.70 necessary
     fn boot_information_is_send_and_sync() {
         fn accept<T: Send + Sync>(_: T) {}
-
-        #[repr(C, align(8))]
-        struct Bytes([u8; 16]);
-        let bytes: Bytes = Bytes([
+        let bytes = AlignedBytes([
             16, 0, 0, 0, // total_size
             0, 0, 0, 0, // reserved
             0, 0, 0, 0, // end tag type
@@ -138,9 +144,7 @@ mod tests {
 
     #[test]
     fn no_tags() {
-        #[repr(C, align(8))]
-        struct Bytes([u8; 16]);
-        let bytes: Bytes = Bytes([
+        let bytes = AlignedBytes([
             16, 0, 0, 0, // total_size
             0, 0, 0, 0, // reserved
             0, 0, 0, 0, // end tag type
@@ -163,9 +167,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn invalid_total_size() {
-        #[repr(C, align(8))]
-        struct Bytes([u8; 15]);
-        let bytes: Bytes = Bytes([
+        let bytes = AlignedBytes([
             15, 0, 0, 0, // total_size
             0, 0, 0, 0, // reserved
             0, 0, 0, 0, // end tag type
@@ -188,9 +190,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn invalid_end_tag() {
-        #[repr(C, align(8))]
-        struct Bytes([u8; 16]);
-        let bytes: Bytes = Bytes([
+        let bytes = AlignedBytes([
             16, 0, 0, 0, // total_size
             0, 0, 0, 0, // reserved
             0, 0, 0, 0, // end tag type
@@ -211,11 +211,8 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn name_tag() {
-        #[repr(C, align(8))]
-        struct Bytes([u8; 32]);
-        let bytes: Bytes = Bytes([
+        let bytes = AlignedBytes([
             32, 0, 0, 0, // total_size
             0, 0, 0, 0, // reserved
             2, 0, 0, 0, // boot loader name tag type
@@ -246,14 +243,11 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn framebuffer_tag_rgb() {
         // direct RGB mode test:
         // taken from GRUB2 running in QEMU at
         // 1280x720 with 32bpp in BGRA format.
-        #[repr(C, align(8))]
-        struct Bytes([u8; 56]);
-        let bytes: Bytes = Bytes([
+        let bytes = AlignedBytes([
             56, 0, 0, 0, // total size
             0, 0, 0, 0, // reserved
             8, 0, 0, 0, // framebuffer tag type
@@ -312,9 +306,7 @@ mod tests {
         // indexed mode test:
         // this is synthetic, as I can't get QEMU
         // to run in indexed color mode.
-        #[repr(C, align(8))]
-        struct Bytes([u8; 64]);
-        let bytes: Bytes = Bytes([
+        let bytes = AlignedBytes([
             64, 0, 0, 0, // total size
             0, 0, 0, 0, // reserved
             8, 0, 0, 0, // framebuffer tag type
@@ -379,13 +371,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
     #[allow(clippy::cognitive_complexity)]
     fn vbe_info_tag() {
         //Taken from GRUB2 running in QEMU.
-        #[repr(C, align(8))]
-        struct Bytes([u8; 800]);
-        let bytes = Bytes([
+        let bytes = AlignedBytes([
             32, 3, 0, 0, // Total size.
             0, 0, 0, 0, // Reserved
             7, 0, 0, 0, // Tag type.
@@ -460,83 +449,83 @@ mod tests {
         let vbe = bi.vbe_info_tag().unwrap();
         use vbe_info::*;
 
-        assert_eq!({ vbe.mode }, 16762);
-        assert_eq!({ vbe.interface_segment }, 65535);
-        assert_eq!({ vbe.interface_offset }, 24576);
-        assert_eq!({ vbe.interface_length }, 79);
-        assert_eq!({ vbe.control_info.signature }, [86, 69, 83, 65]);
-        assert_eq!({ vbe.control_info.version }, 768);
-        assert_eq!({ vbe.control_info.oem_string_ptr }, 3221247964);
+        assert_eq!({ vbe.mode() }, 16762);
+        assert_eq!({ vbe.interface_segment() }, 65535);
+        assert_eq!({ vbe.interface_offset() }, 24576);
+        assert_eq!({ vbe.interface_length() }, 79);
+        assert_eq!({ vbe.control_info().signature }, [86, 69, 83, 65]);
+        assert_eq!({ vbe.control_info().version }, 768);
+        assert_eq!({ vbe.control_info().oem_string_ptr }, 3221247964);
         assert_eq!(
-            { vbe.control_info.capabilities },
+            { vbe.control_info().capabilities },
             VBECapabilities::SWITCHABLE_DAC
         );
-        assert_eq!({ vbe.control_info.mode_list_ptr }, 1610645538);
-        assert_eq!({ vbe.control_info.total_memory }, 256);
-        assert_eq!({ vbe.control_info.oem_software_revision }, 0);
-        assert_eq!({ vbe.control_info.oem_vendor_name_ptr }, 3221247984);
-        assert_eq!({ vbe.control_info.oem_product_name_ptr }, 3221248003);
-        assert_eq!({ vbe.control_info.oem_product_revision_ptr }, 3221248023);
-        assert!({ vbe.mode_info.mode_attributes }.contains(
+        assert_eq!({ vbe.control_info().mode_list_ptr }, 1610645538);
+        assert_eq!({ vbe.control_info().total_memory }, 256);
+        assert_eq!({ vbe.control_info().oem_software_revision }, 0);
+        assert_eq!({ vbe.control_info().oem_vendor_name_ptr }, 3221247984);
+        assert_eq!({ vbe.control_info().oem_product_name_ptr }, 3221248003);
+        assert_eq!({ vbe.control_info().oem_product_revision_ptr }, 3221248023);
+        assert!({ vbe.mode_info().mode_attributes }.contains(
             VBEModeAttributes::SUPPORTED
                 | VBEModeAttributes::COLOR
                 | VBEModeAttributes::GRAPHICS
                 | VBEModeAttributes::NOT_VGA_COMPATIBLE
                 | VBEModeAttributes::LINEAR_FRAMEBUFFER
         ));
-        assert!(vbe.mode_info.window_a_attributes.contains(
+        assert!(vbe.mode_info().window_a_attributes.contains(
             VBEWindowAttributes::RELOCATABLE
                 | VBEWindowAttributes::READABLE
                 | VBEWindowAttributes::WRITEABLE
         ));
-        assert_eq!({ vbe.mode_info.window_granularity }, 64);
-        assert_eq!({ vbe.mode_info.window_size }, 64);
-        assert_eq!({ vbe.mode_info.window_a_segment }, 40960);
-        assert_eq!({ vbe.mode_info.window_function_ptr }, 3221247162);
-        assert_eq!({ vbe.mode_info.pitch }, 5120);
-        assert_eq!({ vbe.mode_info.resolution }, (1280, 800));
-        assert_eq!(vbe.mode_info.character_size, (8, 16));
-        assert_eq!(vbe.mode_info.number_of_planes, 1);
-        assert_eq!(vbe.mode_info.bpp, 32);
-        assert_eq!(vbe.mode_info.number_of_banks, 1);
-        assert_eq!(vbe.mode_info.memory_model, VBEMemoryModel::DirectColor);
-        assert_eq!(vbe.mode_info.bank_size, 0);
-        assert_eq!(vbe.mode_info.number_of_image_pages, 3);
+        assert_eq!({ vbe.mode_info().window_granularity }, 64);
+        assert_eq!({ vbe.mode_info().window_size }, 64);
+        assert_eq!({ vbe.mode_info().window_a_segment }, 40960);
+        assert_eq!({ vbe.mode_info().window_function_ptr }, 3221247162);
+        assert_eq!({ vbe.mode_info().pitch }, 5120);
+        assert_eq!({ vbe.mode_info().resolution }, (1280, 800));
+        assert_eq!(vbe.mode_info().character_size, (8, 16));
+        assert_eq!(vbe.mode_info().number_of_planes, 1);
+        assert_eq!(vbe.mode_info().bpp, 32);
+        assert_eq!(vbe.mode_info().number_of_banks, 1);
+        assert_eq!(vbe.mode_info().memory_model, VBEMemoryModel::DirectColor);
+        assert_eq!(vbe.mode_info().bank_size, 0);
+        assert_eq!(vbe.mode_info().number_of_image_pages, 3);
         assert_eq!(
-            vbe.mode_info.red_field,
+            vbe.mode_info().red_field,
             VBEField {
                 position: 16,
                 size: 8,
             }
         );
         assert_eq!(
-            vbe.mode_info.green_field,
+            vbe.mode_info().green_field,
             VBEField {
                 position: 8,
                 size: 8,
             }
         );
         assert_eq!(
-            vbe.mode_info.blue_field,
+            vbe.mode_info().blue_field,
             VBEField {
                 position: 0,
                 size: 8,
             }
         );
         assert_eq!(
-            vbe.mode_info.reserved_field,
+            vbe.mode_info().reserved_field,
             VBEField {
                 position: 24,
                 size: 8,
             }
         );
         assert_eq!(
-            vbe.mode_info.direct_color_attributes,
+            vbe.mode_info().direct_color_attributes,
             VBEDirectColorAttributes::RESERVED_USABLE
         );
-        assert_eq!({ vbe.mode_info.framebuffer_base_ptr }, 4244635648);
-        assert_eq!({ vbe.mode_info.offscreen_memory_offset }, 0);
-        assert_eq!({ vbe.mode_info.offscreen_memory_size }, 0);
+        assert_eq!({ vbe.mode_info().framebuffer_base_ptr }, 4244635648);
+        assert_eq!({ vbe.mode_info().offscreen_memory_offset }, 0);
+        assert_eq!({ vbe.mode_info().offscreen_memory_size }, 0);
     }
 
     #[test]
@@ -551,11 +540,8 @@ mod tests {
     /// Tests to parse a MBI that was statically extracted from a test run with
     /// GRUB as bootloader.
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn grub2() {
-        #[repr(C, align(8))]
-        struct Bytes([u8; 960]);
-        let mut bytes: Bytes = Bytes([
+        let mut bytes = AlignedBytes([
             192, 3, 0, 0, // total_size
             0, 0, 0, 0, // reserved
             1, 0, 0, 0, // boot command tag type
@@ -959,15 +945,12 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn elf_sections() {
-        #[repr(C, align(8))]
-        struct Bytes([u8; 168]);
-        let mut bytes: Bytes = Bytes([
+        let mut bytes = AlignedBytes([
             168, 0, 0, 0, // total_size
             0, 0, 0, 0, // reserved
             9, 0, 0, 0, // elf symbols tag type
-            20, 2, 0, 0, // elf symbols tag size
+            148, 0, 0, 0, // elf symbols tag size
             2, 0, 0, 0, // elf symbols num
             64, 0, 0, 0, // elf symbols entsize
             1, 0, 0, 0, // elf symbols shndx
@@ -1036,12 +1019,9 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn efi_memory_map() {
-        #[repr(C, align(8))]
-        struct Bytes([u8; 80]);
         // test that the EFI memory map is detected.
-        let bytes: Bytes = Bytes([
+        let bytes = AlignedBytes([
             80, 0, 0, 0, // size
             0, 0, 0, 0, // reserved
             17, 0, 0, 0, // EFI memory map type
@@ -1076,10 +1056,7 @@ mod tests {
         assert_eq!(desc.phys_start, 0x100000);
         assert_eq!(desc.page_count, 4);
         assert_eq!(desc.ty, EFIMemoryAreaType::CONVENTIONAL);
-        // test that the EFI memory map is not detected if the boot services
-        // are not exited.
-        struct Bytes2([u8; 80]);
-        let bytes2: Bytes2 = Bytes2([
+        let bytes2 = AlignedBytes([
             80, 0, 0, 0, // size
             0, 0, 0, 0, // reserved
             17, 0, 0, 0, // EFI memory map type
@@ -1101,7 +1078,7 @@ mod tests {
             0, 0, 0, 0, // end tag type.
             8, 0, 0, 0, // end tag size.
         ]);
-        let bi = unsafe { BootInformation::load(bytes2.0.as_ptr().cast()) };
+        let bi = unsafe { BootInformation::load(bytes2.as_ptr().cast()) };
         let bi = bi.unwrap();
         let efi_mmap = bi.efi_memory_map_tag();
         assert!(efi_mmap.is_none());
@@ -1117,7 +1094,6 @@ mod tests {
 
     /// Example for a custom tag.
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn get_custom_tag_from_mbi() {
         #[repr(C, align(8))]
         struct CustomTag {
@@ -1129,13 +1105,10 @@ mod tests {
         impl TagTrait for CustomTag {
             const ID: TagType = TagType::Custom(0x1337);
 
-            fn dst_size(_base_tag: &Tag) {}
+            fn dst_len(_tag_header: &TagHeader) {}
         }
-
-        #[repr(C, align(8))]
-        struct AlignedBytes([u8; 32]);
         // Raw bytes of a MBI that only contains the custom tag.
-        let bytes: AlignedBytes = AlignedBytes([
+        let bytes = AlignedBytes([
             32,
             0,
             0,
@@ -1183,7 +1156,6 @@ mod tests {
 
     /// Example for a custom DST tag.
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn get_custom_dst_tag_from_mbi() {
         #[repr(C)]
         #[derive(crate::Pointee)]
@@ -1195,25 +1167,22 @@ mod tests {
 
         impl CustomTag {
             fn name(&self) -> Result<&str, StringError> {
-                Tag::parse_slice_as_string(&self.name)
+                parse_slice_as_string(&self.name)
             }
         }
 
         impl TagTrait for CustomTag {
             const ID: TagType = TagType::Custom(0x1337);
 
-            fn dst_size(base_tag: &Tag) -> usize {
+            fn dst_len(header: &TagHeader) -> usize {
                 // The size of the sized portion of the command line tag.
                 let tag_base_size = 8;
-                assert!(base_tag.size >= 8);
-                base_tag.size as usize - tag_base_size
+                assert!(header.size >= 8);
+                header.size as usize - tag_base_size
             }
         }
-
-        #[repr(C, align(8))]
-        struct AlignedBytes([u8; 32]);
         // Raw bytes of a MBI that only contains the custom tag.
-        let bytes: AlignedBytes = AlignedBytes([
+        let bytes = AlignedBytes([
             32,
             0,
             0,
@@ -1261,11 +1230,8 @@ mod tests {
 
     /// Tests that `get_tag` can consume multiple types that implement `Into<TagTypeId>`
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn get_tag_into_variants() {
-        #[repr(C, align(8))]
-        struct Bytes([u8; 32]);
-        let bytes: Bytes = Bytes([
+        let bytes = AlignedBytes([
             32,
             0,
             0,

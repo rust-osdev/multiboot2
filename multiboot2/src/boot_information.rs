@@ -21,15 +21,15 @@ use derive_more::Display;
 pub enum MbiLoadError {
     /// The address is invalid. Make sure that the address is 8-byte aligned,
     /// according to the spec.
-    #[display("The address is invalid")]
+    #[display(fmt = "The address is invalid")]
     IllegalAddress,
     /// The total size of the multiboot2 information structure must be not zero
     /// and a multiple of 8.
-    #[display("The size of the MBI is unexpected")]
+    #[display(fmt = "The size of the MBI is unexpected")]
     IllegalTotalSize(u32),
     /// Missing end tag. Each multiboot2 boot information requires to have an
     /// end tag.
-    #[display("There is no end tag")]
+    #[display(fmt = "There is no end tag")]
     NoEndTag,
 }
 
@@ -38,7 +38,7 @@ impl core::error::Error for MbiLoadError {}
 
 /// The basic header of a [`BootInformation`] as sized Rust type.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct BootInformationHeader {
     // size is multiple of 8
     total_size: u32,
@@ -68,7 +68,7 @@ impl AsBytes for BootInformationHeader {}
 /// This type holds the whole data of the MBI. This helps to better satisfy miri
 /// when it checks for memory issues.
 #[derive(ptr_meta::Pointee)]
-#[repr(C)]
+#[repr(C, align(8))]
 struct BootInformationInner {
     header: BootInformationHeader,
     tags: [u8],
@@ -221,6 +221,8 @@ impl<'a> BootInformation<'a> {
     /// Otherwise, if the [`TagType::EfiBs`] tag is present, this returns `None`
     /// as it is strictly recommended to get the memory map from the `uefi`
     /// services.
+    ///
+    /// [`TagType::EfiBs`]: crate::TagType::EfiBs
     #[must_use]
     pub fn efi_memory_map_tag(&self) -> Option<&EFIMemoryMapTag> {
         // If the EFIBootServicesNotExited is present, then we should not use
@@ -277,8 +279,8 @@ impl<'a> BootInformation<'a> {
     pub fn elf_sections(&self) -> Option<ElfSectionIter> {
         let tag = self.get_tag::<ElfSectionsTag>();
         tag.map(|t| {
-            assert!((t.entry_size * t.shndx) <= t.size);
-            t.sections()
+            assert!((t.entry_size() * t.shndx()) <= t.size() as u32);
+            t.sections_iter()
         })
     }
 
@@ -359,7 +361,7 @@ impl<'a> BootInformation<'a> {
     /// special handling is required. This is reflected by code-comments.
     ///
     /// ```no_run
-    /// use multiboot2::{BootInformation, BootInformationHeader, StringError, Tag, TagTrait, TagType, TagTypeId};
+    /// use multiboot2::{BootInformation, BootInformationHeader, parse_slice_as_string, StringError, TagHeader, TagTrait, TagType, TagTypeId};
     ///
     /// #[repr(C)]
     /// #[derive(multiboot2::Pointee)] // Only needed for DSTs.
@@ -374,17 +376,17 @@ impl<'a> BootInformation<'a> {
     /// impl TagTrait for CustomTag {
     ///     const ID: TagType = TagType::Custom(0x1337);
     ///
-    ///     fn dst_size(base_tag: &Tag) -> usize {
+    ///     fn dst_len(header: &TagHeader) -> usize {
     ///         // The size of the sized portion of the custom tag.
     ///         let tag_base_size = 8; // id + size is 8 byte in size
-    ///         assert!(base_tag.size >= 8);
-    ///         base_tag.size as usize - tag_base_size
+    ///         assert!(header.size >= 8);
+    ///         header.size as usize - tag_base_size
     ///     }
     /// }
     ///
     /// impl CustomTag {
     ///     fn name(&self) -> Result<&str, StringError> {
-    ///         Tag::parse_slice_as_string(&self.name)
+    ///         parse_slice_as_string(&self.name)
     ///     }
     /// }
     /// let mbi_ptr = 0xdeadbeef as *const BootInformationHeader;
@@ -395,11 +397,13 @@ impl<'a> BootInformation<'a> {
     ///     .unwrap();
     /// assert_eq!(tag.name(), Ok("name"));
     /// ```
+    ///
+    /// [`TagType`]: crate::TagType
     #[must_use]
     pub fn get_tag<TagT: TagTrait + ?Sized + 'a>(&'a self) -> Option<&'a TagT> {
         self.tags()
-            .find(|tag| tag.typ == TagT::ID)
-            .map(|tag| tag.cast_tag::<TagT>())
+            .find(|tag| tag.header().typ == TagT::ID)
+            .map(|tag| tag.cast::<TagT>())
     }
 
     /// Returns an iterator over all tags.
@@ -440,7 +444,7 @@ impl fmt::Debug for BootInformation<'_> {
             if elf_sections_tag_entries_count > ELF_SECTIONS_LIMIT {
                 debug.field("elf_sections (count)", &elf_sections_tag_entries_count);
             } else {
-                debug.field("elf_sections", &self.elf_sections().unwrap_or_default());
+                debug.field("elf_sections", &self.elf_sections());
             }
         }
 

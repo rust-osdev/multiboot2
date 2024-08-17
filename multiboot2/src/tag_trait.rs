@@ -1,10 +1,11 @@
 //! Module for [`TagTrait`].
 
-use crate::{Tag, TagType};
+use crate::tag::TagHeader;
+use crate::TagType;
 use ptr_meta::Pointee;
 
 /// A trait to abstract over all sized and unsized tags (DSTs). For sized tags,
-/// this trait does not much. For DSTs, a [`TagTrait::dst_size`] implementation
+/// this trait does not much. For DSTs, a [`TagTrait::dst_len`] implementation
 /// must be provided, which returns the right size hint for the dynamically
 /// sized portion of the struct.
 ///
@@ -22,12 +23,12 @@ pub trait TagTrait: Pointee {
     ///
     /// For sized tags, this just returns `()`. For DSTs, this returns an
     /// `usize`.
-    fn dst_size(base_tag: &Tag) -> Self::Metadata;
+    fn dst_len(header: &TagHeader) -> Self::Metadata;
 
     /// Returns the tag as the common base tag structure.
-    fn as_base_tag(&self) -> &Tag {
+    fn as_base_tag(&self) -> &TagHeader {
         let ptr = core::ptr::addr_of!(*self);
-        unsafe { &*ptr.cast::<Tag>() }
+        unsafe { &*ptr.cast::<TagHeader>() }
     }
 
     /// Returns the total size of the tag. The depends on the `size` field of
@@ -42,19 +43,5 @@ pub trait TagTrait: Pointee {
     fn as_bytes(&self) -> &[u8] {
         let ptr = core::ptr::addr_of!(*self);
         unsafe { core::slice::from_raw_parts(ptr.cast(), self.size()) }
-    }
-
-    /// Creates a reference to a (dynamically sized) tag type in a safe way.
-    /// DST tags need to implement a proper [`Self::dst_size`] implementation.
-    ///
-    /// # Safety
-    /// Callers must be sure that the "size" field of the provided [`Tag`] is
-    /// sane and the underlying memory valid. The implementation of this trait
-    /// **must have** a correct [`Self::dst_size`] implementation.
-    #[must_use]
-    unsafe fn from_base_tag(tag: &Tag) -> &Self {
-        let ptr = core::ptr::addr_of!(*tag);
-        let ptr = ptr_meta::from_raw_parts(ptr.cast(), Self::dst_size(tag));
-        &*ptr
     }
 }

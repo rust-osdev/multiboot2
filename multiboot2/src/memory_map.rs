@@ -6,14 +6,14 @@ pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
 pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
 
 use crate::tag::TagHeader;
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::{TagTrait, TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use core::mem;
 #[cfg(feature = "builder")]
-use {crate::builder::AsBytes, crate::builder::BoxedDst};
+use {crate::new_boxed, alloc::boxed::Box, core::slice};
 
-const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u32>();
 
 /// This tag provides an initial host memory map (legacy boot, not UEFI).
 ///
@@ -26,7 +26,7 @@ const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u3
 /// boot services are enabled and available for the loaded image (The EFI boot
 /// services tag may exist in the Multiboot2 boot information structure).
 #[derive(ptr_meta::Pointee, Debug, PartialEq, Eq)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct MemoryMapTag {
     header: TagHeader,
     entry_size: u32,
@@ -38,14 +38,15 @@ impl MemoryMapTag {
     /// Constructs a new tag.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new(areas: &[MemoryArea]) -> BoxedDst<Self> {
-        let entry_size: u32 = mem::size_of::<MemoryArea>().try_into().unwrap();
-        let entry_version: u32 = 0;
-        let mut bytes = [entry_size.to_le_bytes(), entry_version.to_le_bytes()].concat();
-        for area in areas {
-            bytes.extend(area.as_bytes());
-        }
-        BoxedDst::new(bytes.as_slice())
+    pub fn new(areas: &[MemoryArea]) -> Box<Self> {
+        let entry_size = mem::size_of::<MemoryArea>().to_ne_bytes();
+        let entry_version = 0_u32.to_ne_bytes();
+        let areas = {
+            let ptr = areas.as_ptr().cast::<u8>();
+            let len = mem::size_of_val(areas);
+            unsafe { slice::from_raw_parts(ptr, len) }
+        };
+        new_boxed(&[&entry_size, &entry_version, areas])
     }
 
     /// Returns the entry size.
@@ -75,9 +76,9 @@ impl MemoryMapTag {
 impl TagTrait for MemoryMapTag {
     const ID: TagType = TagType::Mmap;
 
-    fn dst_size(base_tag: &Tag) -> usize {
-        assert!(base_tag.size as usize >= METADATA_SIZE);
-        let size = base_tag.size as usize - METADATA_SIZE;
+    fn dst_len(header: &TagHeader) -> usize {
+        assert!(header.size as usize >= METADATA_SIZE);
+        let size = header.size as usize - METADATA_SIZE;
         assert_eq!(size % mem::size_of::<MemoryArea>(), 0);
         size / mem::size_of::<MemoryArea>()
     }
@@ -138,9 +139,6 @@ impl Debug for MemoryArea {
             .finish()
     }
 }
-
-#[cfg(feature = "builder")]
-impl AsBytes for MemoryArea {}
 
 /// ABI-friendly version of [`MemoryAreaType`].
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -287,13 +285,10 @@ impl BasicMemoryInfoTag {
 impl TagTrait for BasicMemoryInfoTag {
     const ID: TagType = TagType::BasicMeminfo;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 const EFI_METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
-
-#[cfg(feature = "builder")]
-impl AsBytes for EFIMemoryDesc {}
 
 /// EFI memory map tag. The embedded [`EFIMemoryDesc`]s follows the EFI
 /// specification.
@@ -322,54 +317,30 @@ pub struct EFIMemoryMapTag {
 
 impl EFIMemoryMapTag {
     /// Create a new EFI memory map tag with the given memory descriptors.
-    /// Version and size can't be set because you're passing a slice of
-    /// EFIMemoryDescs, not the ones you might have gotten from the firmware.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new_from_descs(descs: &[EFIMemoryDesc]) -> BoxedDst<Self> {
-        // TODO replace this EfiMemorydesc::uefi_desc_size() in the next uefi_raw
-        // release.
-
-        let size_base = mem::size_of::<EFIMemoryDesc>();
-        // Taken from https://github.com/tianocore/edk2/blob/7142e648416ff5d3eac6c6d607874805f5de0ca8/MdeModulePkg/Core/PiSmmCore/Page.c#L1059
-        let desc_size_diff = mem::size_of::<u64>() - size_base % mem::size_of::<u64>();
-        let desc_size = size_base + desc_size_diff;
-
-        assert!(desc_size >= size_base);
-
-        let mut efi_mmap = alloc::vec::Vec::with_capacity(descs.len() * desc_size);
-        for desc in descs {
-            efi_mmap.extend(desc.as_bytes());
-            // fill with zeroes
-            efi_mmap.extend([0].repeat(desc_size_diff));
-        }
+    pub fn new_from_descs(descs: &[EFIMemoryDesc]) -> Box<Self> {
+        let efi_mmap = {
+            let ptr = descs.as_ptr().cast::<u8>();
+            let len = mem::size_of_val(descs);
+            unsafe { slice::from_raw_parts(ptr, len) }
+        };
 
         Self::new_from_map(
-            desc_size as u32,
+            mem::size_of::<EFIMemoryDesc>() as u32,
             EFIMemoryDesc::VERSION,
-            efi_mmap.as_slice(),
+            efi_mmap,
         )
     }
 
     /// Create a new EFI memory map tag from the given EFI memory map.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new_from_map(desc_size: u32, desc_version: u32, efi_mmap: &[u8]) -> BoxedDst<Self> {
-        assert!(desc_size > 0);
-        assert_eq!(efi_mmap.len() % desc_size as usize, 0);
-        assert_eq!(
-            efi_mmap
-                .as_ptr()
-                .align_offset(mem::align_of::<EFIMemoryDesc>()),
-            0
-        );
-        let bytes = [
-            &desc_size.to_le_bytes(),
-            &desc_version.to_le_bytes(),
-            efi_mmap,
-        ]
-        .concat();
-        BoxedDst::new(&bytes)
+    pub fn new_from_map(desc_size: u32, desc_version: u32, efi_mmap: &[u8]) -> Box<Self> {
+        assert_ne!(desc_size, 0);
+        let desc_size = desc_size.to_ne_bytes();
+        let desc_version = desc_version.to_ne_bytes();
+        new_boxed(&[&desc_size, &desc_version, efi_mmap])
     }
 
     /// Returns an iterator over the provided memory areas.
@@ -408,9 +379,9 @@ impl Debug for EFIMemoryMapTag {
 impl TagTrait for EFIMemoryMapTag {
     const ID: TagType = TagType::EfiMmap;
 
-    fn dst_size(base_tag: &Tag) -> usize {
-        assert!(base_tag.size as usize >= EFI_METADATA_SIZE);
-        base_tag.size as usize - EFI_METADATA_SIZE
+    fn dst_len(header: &TagHeader) -> usize {
+        assert!(header.size as usize >= EFI_METADATA_SIZE);
+        header.size as usize - EFI_METADATA_SIZE
     }
 }
 
@@ -466,7 +437,7 @@ impl<'a> ExactSizeIterator for EFIMemoryAreaIter<'a> {
     }
 }
 
-#[cfg(all(test, feature = "builder", not(miri)))]
+#[cfg(all(test, feature = "builder"))]
 mod tests {
     use super::*;
     use std::mem::size_of;
@@ -490,8 +461,6 @@ mod tests {
             },
         ];
         let efi_mmap_tag = EFIMemoryMapTag::new_from_descs(&descs);
-
-        assert_eq!(efi_mmap_tag.desc_size, 48 /* 40 + 8 */);
 
         let mut iter = efi_mmap_tag.memory_areas();
 

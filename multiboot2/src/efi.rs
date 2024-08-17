@@ -7,12 +7,12 @@
 //! - [`EFIBootServicesNotExitedTag`]
 
 use crate::tag::TagHeader;
-use crate::{Tag, TagTrait, TagType};
+use crate::{TagTrait, TagType};
 use core::mem::size_of;
 
 /// EFI system table in 32 bit mode tag.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct EFISdt32Tag {
     header: TagHeader,
     pointer: u32,
@@ -38,12 +38,12 @@ impl EFISdt32Tag {
 impl TagTrait for EFISdt32Tag {
     const ID: TagType = TagType::Efi32;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 /// EFI system table in 64 bit mode tag.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct EFISdt64Tag {
     header: TagHeader,
     pointer: u64,
@@ -69,13 +69,13 @@ impl EFISdt64Tag {
 impl TagTrait for EFISdt64Tag {
     const ID: TagType = TagType::Efi64;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 /// Tag that contains the pointer to the boot loader's UEFI image handle
 /// (32-bit).
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct EFIImageHandle32Tag {
     header: TagHeader,
     pointer: u32,
@@ -102,13 +102,13 @@ impl EFIImageHandle32Tag {
 impl TagTrait for EFIImageHandle32Tag {
     const ID: TagType = TagType::Efi32Ih;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 /// Tag that contains the pointer to the boot loader's UEFI image handle
 /// (64-bit).
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct EFIImageHandle64Tag {
     header: TagHeader,
     pointer: u64,
@@ -135,12 +135,13 @@ impl EFIImageHandle64Tag {
 impl TagTrait for EFIImageHandle64Tag {
     const ID: TagType = TagType::Efi64Ih;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
-/// EFI ExitBootServices was not called tag.
+/// EFI ExitBootServices was not called tag. This tag has no payload and is
+/// just a marker.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct EFIBootServicesNotExitedTag {
     header: TagHeader,
 }
@@ -166,7 +167,7 @@ impl Default for EFIBootServicesNotExitedTag {
 impl TagTrait for EFIBootServicesNotExitedTag {
     const ID: TagType = TagType::EfiBs;
 
-    fn dst_size(_base_tag: &Tag) {}
+    fn dst_len(_: &TagHeader) {}
 }
 
 #[cfg(all(test, feature = "builder"))]

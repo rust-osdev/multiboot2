@@ -44,15 +44,15 @@ pub fn load_module(mut modules: multiboot::information::ModuleIter) -> ! {
 
     // build MBI
     let mbi = multiboot2::builder::InformationBuilder::new()
-        .bootloader_name_tag(BootLoaderNameTag::new("mb2_integrationtest_chainloader"))
-        .command_line_tag(CommandLineTag::new("chainloaded YEAH"))
+        .bootloader_name_tag(&BootLoaderNameTag::new("mb2_integrationtest_chainloader"))
+        .command_line_tag(&CommandLineTag::new("chainloaded YEAH"))
         // random non-sense memory map
-        .memory_map_tag(MemoryMapTag::new(&[MemoryArea::new(
+        .memory_map_tag(&MemoryMapTag::new(&[MemoryArea::new(
             0,
             0xffffffff,
             MemoryAreaType::Reserved,
         )]))
-        .add_module_tag(ModuleTag::new(
+        .add_module_tag(&ModuleTag::new(
             elf_mod.start as u32,
             elf_mod.end as u32,
             elf_mod.string.unwrap(),

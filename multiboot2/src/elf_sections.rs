@@ -1,25 +1,25 @@
 //! Module for [`ElfSectionsTag`].
 
-#[cfg(feature = "builder")]
-use crate::builder::BoxedDst;
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::{TagHeader, TagTrait, TagType};
 use core::fmt::{Debug, Formatter};
+use core::marker::PhantomData;
 use core::mem;
 use core::str::Utf8Error;
+#[cfg(feature = "builder")]
+use {crate::new_boxed, alloc::boxed::Box};
 
-const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 4 * mem::size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 3 * mem::size_of::<u32>();
 
 /// This tag contains the section header table from an ELF binary.
 // The sections iterator is provided via the [`ElfSectionsTag::sections`]
 // method.
 #[derive(ptr_meta::Pointee, PartialEq, Eq)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct ElfSectionsTag {
-    typ: TagTypeId,
-    pub(crate) size: u32,
+    header: TagHeader,
     number_of_sections: u32,
-    pub(crate) entry_size: u32,
-    pub(crate) shndx: u32, // string table
+    entry_size: u32,
+    shndx: u32,
     sections: [u8],
 }
 
@@ -27,80 +27,89 @@ impl ElfSectionsTag {
     /// Create a new ElfSectionsTag with the given data.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new(
-        number_of_sections: u32,
-        entry_size: u32,
-        shndx: u32,
-        sections: &[u8],
-    ) -> BoxedDst<Self> {
-        let mut bytes = [
-            number_of_sections.to_le_bytes(),
-            entry_size.to_le_bytes(),
-            shndx.to_le_bytes(),
-        ]
-        .concat();
-        bytes.extend_from_slice(sections);
-        BoxedDst::new(&bytes)
+    pub fn new(number_of_sections: u32, entry_size: u32, shndx: u32, sections: &[u8]) -> Box<Self> {
+        let number_of_sections = number_of_sections.to_ne_bytes();
+        let entry_size = entry_size.to_ne_bytes();
+        let shndx = shndx.to_ne_bytes();
+        new_boxed(&[&number_of_sections, &entry_size, &shndx, sections])
     }
 
     /// Get an iterator of loaded ELF sections.
-    pub(crate) const fn sections(&self) -> ElfSectionIter {
+    #[must_use]
+    pub(crate) const fn sections_iter(&self) -> ElfSectionIter {
         let string_section_offset = (self.shndx * self.entry_size) as isize;
         let string_section_ptr =
-            unsafe { self.first_section().offset(string_section_offset) as *const _ };
+            unsafe { self.sections.as_ptr().offset(string_section_offset) as *const _ };
         ElfSectionIter {
-            current_section: self.first_section(),
+            current_section: self.sections.as_ptr(),
             remaining_sections: self.number_of_sections,
             entry_size: self.entry_size,
             string_section: string_section_ptr,
+            _phantom_data: PhantomData,
         }
     }
 
-    const fn first_section(&self) -> *const u8 {
-        &(self.sections[0]) as *const _
+    /// Returns the amount of sections.
+    #[must_use]
+    pub const fn number_of_sections(&self) -> u32 {
+        self.number_of_sections
+    }
+
+    /// Returns the size of each entry.
+    #[must_use]
+    pub const fn entry_size(&self) -> u32 {
+        self.entry_size
+    }
+
+    /// Returns the index of the section header string table.
+    #[must_use]
+    pub const fn shndx(&self) -> u32 {
+        self.shndx
     }
 }
 
 impl TagTrait for ElfSectionsTag {
     const ID: TagType = TagType::ElfSections;
 
-    fn dst_size(base_tag: &Tag) -> usize {
-        assert!(base_tag.size as usize >= METADATA_SIZE);
-        base_tag.size as usize - METADATA_SIZE
+    fn dst_len(header: &TagHeader) -> usize {
+        assert!(header.size as usize >= METADATA_SIZE);
+        header.size as usize - METADATA_SIZE
     }
 }
 
 impl Debug for ElfSectionsTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("ElfSectionsTag")
-            .field("typ", &{ self.typ })
-            .field("size", &{ self.size })
-            .field("number_of_sections", &{ self.number_of_sections })
-            .field("entry_size", &{ self.entry_size })
-            .field("shndx", &{ self.shndx })
-            .field("sections", &self.sections())
+            .field("typ", &self.header.typ)
+            .field("size", &self.header.size)
+            .field("number_of_sections", &self.number_of_sections)
+            .field("entry_size", &self.entry_size)
+            .field("shndx", &self.shndx)
+            .field("sections", &self.sections_iter())
             .finish()
     }
 }
 
 /// An iterator over some ELF sections.
 #[derive(Clone)]
-pub struct ElfSectionIter {
+pub struct ElfSectionIter<'a> {
     current_section: *const u8,
     remaining_sections: u32,
     entry_size: u32,
     string_section: *const u8,
+    _phantom_data: PhantomData<&'a ()>,
 }
 
-impl Iterator for ElfSectionIter {
-    type Item = ElfSection;
+impl<'a> Iterator for ElfSectionIter<'a> {
+    type Item = ElfSection<'a>;
 
-    fn next(&mut self) -> Option<ElfSection> {
+    fn next(&mut self) -> Option<ElfSection<'a>> {
         while self.remaining_sections != 0 {
             let section = ElfSection {
                 inner: self.current_section,
                 string_section: self.string_section,
                 entry_size: self.entry_size,
+                _phantom: PhantomData,
             };
 
             self.current_section = unsafe { self.current_section.offset(self.entry_size as isize) };
@@ -114,7 +123,7 @@ impl Iterator for ElfSectionIter {
     }
 }
 
-impl Debug for ElfSectionIter {
+impl<'a> Debug for ElfSectionIter<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         let mut debug = f.debug_list();
         self.clone().for_each(|ref e| {
@@ -124,23 +133,13 @@ impl Debug for ElfSectionIter {
     }
 }
 
-impl Default for ElfSectionIter {
-    fn default() -> Self {
-        Self {
-            current_section: core::ptr::null(),
-            remaining_sections: 0,
-            entry_size: 0,
-            string_section: core::ptr::null(),
-        }
-    }
-}
-
 /// A single generic ELF Section.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ElfSection {
+pub struct ElfSection<'a> {
     inner: *const u8,
     string_section: *const u8,
     entry_size: u32,
+    _phantom: PhantomData<&'a ()>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -173,7 +172,7 @@ struct ElfSectionInner64 {
     entry_size: u64,
 }
 
-impl ElfSection {
+impl<'a> ElfSection<'a> {
     /// Get the section type as a `ElfSectionType` enum variant.
     #[must_use]
     pub fn section_type(&self) -> ElfSectionType {

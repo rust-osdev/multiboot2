@@ -1,21 +1,21 @@
 //! Module for [`CommandLineTag`].
 
-use crate::tag::{StringError, TagHeader};
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::tag::TagHeader;
+use crate::{parse_slice_as_string, StringError, TagTrait, TagType};
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str;
 #[cfg(feature = "builder")]
-use {crate::builder::BoxedDst, alloc::vec::Vec};
+use {crate::new_boxed, alloc::boxed::Box};
 
-const METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + mem::size_of::<u32>();
+const METADATA_SIZE: usize = mem::size_of::<TagHeader>();
 
 /// This tag contains the command line string.
 ///
 /// The string is a normal C-style UTF-8 zero-terminated string that can be
 /// obtained via the `command_line` method.
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct CommandLineTag {
     header: TagHeader,
     /// Null-terminated UTF-8 string
@@ -26,13 +26,13 @@ impl CommandLineTag {
     /// Create a new command line tag from the given string.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new(command_line: &str) -> BoxedDst<Self> {
-        let mut bytes: Vec<_> = command_line.bytes().collect();
-        if !bytes.ends_with(&[0]) {
-            // terminating null-byte
-            bytes.push(0);
+    pub fn new(command_line: &str) -> Box<Self> {
+        let bytes = command_line.as_bytes();
+        if bytes.ends_with(&[0]) {
+            new_boxed(&[bytes])
+        } else {
+            new_boxed(&[bytes, &[0]])
         }
-        BoxedDst::new(&bytes)
     }
 
     /// Reads the command line of the kernel as Rust string slice without
@@ -55,7 +55,7 @@ impl CommandLineTag {
     /// }
     /// ```
     pub fn cmdline(&self) -> Result<&str, StringError> {
-        Tag::parse_slice_as_string(&self.cmdline)
+        parse_slice_as_string(&self.cmdline)
     }
 }
 
@@ -72,54 +72,55 @@ impl Debug for CommandLineTag {
 impl TagTrait for CommandLineTag {
     const ID: TagType = TagType::Cmdline;
 
-    fn dst_size(base_tag: &Tag) -> usize {
-        assert!(base_tag.size as usize >= METADATA_SIZE);
-        base_tag.size as usize - METADATA_SIZE
+    fn dst_len(header: &TagHeader) -> usize {
+        assert!(header.size as usize >= METADATA_SIZE);
+        header.size as usize - METADATA_SIZE
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tag::{GenericTag, TagBytesRef};
+    use crate::test_util::AlignedBytes;
+    use core::borrow::Borrow;
 
-    const MSG: &str = "hello";
-
-    /// Returns the tag structure in bytes in little endian format.
-    fn get_bytes() -> std::vec::Vec<u8> {
-        // size is: 4 bytes for tag + 4 bytes for size + length of null-terminated string
-        let size = (4 + 4 + MSG.as_bytes().len() + 1) as u32;
-        [
-            &((TagType::Cmdline.val()).to_le_bytes()),
-            &size.to_le_bytes(),
-            MSG.as_bytes(),
-            // Null Byte
-            &[0],
-        ]
-        .iter()
-        .flat_map(|bytes| bytes.iter())
-        .copied()
-        .collect()
+    #[rustfmt::skip]
+    fn get_bytes() -> AlignedBytes<16> {
+        AlignedBytes::new([
+            TagType::Cmdline.val() as u8, 0, 0, 0,
+            14, 0, 0, 0,
+            b'h', b'e', b'l', b'l', b'o',  b'\0',
+            /* padding */
+            0, 0
+        ])
     }
 
     /// Tests to parse a string with a terminating null byte from the tag (as the spec defines).
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn test_parse_str() {
-        let tag = get_bytes();
-        let tag = unsafe { &*tag.as_ptr().cast::<Tag>() };
-        let tag = tag.cast_tag::<CommandLineTag>();
+        let bytes = get_bytes();
+        let bytes = TagBytesRef::try_from(bytes.borrow()).unwrap();
+        let tag = GenericTag::ref_from(bytes);
+        let tag = tag.cast::<CommandLineTag>();
         assert_eq!(tag.header.typ, TagType::Cmdline);
-        assert_eq!(tag.cmdline().expect("must be valid UTF-8"), MSG);
+        assert_eq!(tag.cmdline(), Ok("hello"));
     }
 
     /// Test to generate a tag from a given string.
     #[test]
     #[cfg(feature = "builder")]
     fn test_build_str() {
-        let tag = CommandLineTag::new(MSG);
+        let tag = CommandLineTag::new("hello");
         let bytes = tag.as_bytes();
-        assert_eq!(bytes, get_bytes());
-        assert_eq!(tag.cmdline(), Ok(MSG));
+        assert_eq!(bytes, &get_bytes()[..tag.size()]);
+        assert_eq!(tag.cmdline(), Ok("hello"));
+
+        // With terminating null.
+        let tag = CommandLineTag::new("hello\0");
+        let bytes = tag.as_bytes();
+        assert_eq!(bytes, &get_bytes()[..tag.size()]);
+        assert_eq!(tag.cmdline(), Ok("hello"));
 
         // test also some bigger message
         let tag = CommandLineTag::new("AbCdEfGhUjK YEAH");

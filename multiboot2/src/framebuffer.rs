@@ -1,13 +1,13 @@
 //! Module for [`FramebufferTag`].
 
 use crate::tag::TagHeader;
-use crate::{Tag, TagTrait, TagType, TagTypeId};
+use crate::{TagTrait, TagType, TagTypeId};
 use core::fmt::Debug;
 use core::mem;
 use core::slice;
 use derive_more::Display;
 #[cfg(feature = "builder")]
-use {crate::builder::AsBytes, crate::builder::BoxedDst, alloc::vec::Vec};
+use {crate::builder::AsBytes, crate::new_boxed, alloc::boxed::Box, alloc::vec::Vec};
 
 /// Helper struct to read bytes from a raw pointer and increase the pointer
 /// automatically.
@@ -50,7 +50,7 @@ const METADATA_SIZE: usize = mem::size_of::<TagTypeId>()
 
 /// The VBE Framebuffer information tag.
 #[derive(ptr_meta::Pointee, Eq)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct FramebufferTag {
     header: TagHeader,
 
@@ -94,14 +94,14 @@ impl FramebufferTag {
         height: u32,
         bpp: u8,
         buffer_type: FramebufferType,
-    ) -> BoxedDst<Self> {
-        let mut bytes: Vec<u8> = address.to_le_bytes().into();
-        bytes.extend(pitch.to_le_bytes());
-        bytes.extend(width.to_le_bytes());
-        bytes.extend(height.to_le_bytes());
-        bytes.extend(bpp.to_le_bytes());
-        bytes.extend(buffer_type.to_bytes());
-        BoxedDst::new(&bytes)
+    ) -> Box<Self> {
+        let address = address.to_ne_bytes();
+        let pitch = pitch.to_ne_bytes();
+        let width = width.to_ne_bytes();
+        let height = height.to_ne_bytes();
+        let bpp = bpp.to_ne_bytes();
+        let buffer_type = buffer_type.to_bytes();
+        new_boxed(&[&address, &pitch, &width, &height, &bpp, &buffer_type])
     }
 
     /// Contains framebuffer physical address.
@@ -145,6 +145,7 @@ impl FramebufferTag {
         match typ {
             FramebufferTypeId::Indexed => {
                 let num_colors = reader.read_u32();
+                // TODO static cast looks like UB?
                 let palette = unsafe {
                     slice::from_raw_parts(
                         reader.current_address() as *const FramebufferColor,
@@ -183,9 +184,9 @@ impl FramebufferTag {
 impl TagTrait for FramebufferTag {
     const ID: TagType = TagType::Framebuffer;
 
-    fn dst_size(base_tag: &Tag) -> usize {
-        assert!(base_tag.size as usize >= METADATA_SIZE);
-        base_tag.size as usize - METADATA_SIZE
+    fn dst_len(header: &TagHeader) -> usize {
+        assert!(header.size as usize >= METADATA_SIZE);
+        header.size as usize - METADATA_SIZE
     }
 }
 
@@ -274,23 +275,23 @@ impl<'a> FramebufferType<'a> {
         let mut v = Vec::new();
         match self {
             FramebufferType::Indexed { palette } => {
-                v.extend(0u8.to_le_bytes()); // type
-                v.extend(0u16.to_le_bytes()); // reserved
-                v.extend((palette.len() as u32).to_le_bytes());
+                v.extend(0u8.to_ne_bytes()); // type
+                v.extend(0u16.to_ne_bytes()); // reserved
+                v.extend((palette.len() as u32).to_ne_bytes());
                 for color in palette.iter() {
                     v.extend(color.as_bytes());
                 }
             }
             FramebufferType::RGB { red, green, blue } => {
-                v.extend(1u8.to_le_bytes()); // type
-                v.extend(0u16.to_le_bytes()); // reserved
+                v.extend(1u8.to_ne_bytes()); // type
+                v.extend(0u16.to_ne_bytes()); // reserved
                 v.extend(red.as_bytes());
                 v.extend(green.as_bytes());
                 v.extend(blue.as_bytes());
             }
             FramebufferType::Text => {
-                v.extend(2u8.to_le_bytes()); // type
-                v.extend(0u16.to_le_bytes()); // reserved
+                v.extend(2u8.to_ne_bytes()); // type
+                v.extend(0u16.to_ne_bytes()); // reserved
             }
         }
         v
@@ -330,7 +331,7 @@ impl AsBytes for FramebufferColor {}
 
 /// Error when an unknown [`FramebufferTypeId`] is found.
 #[derive(Debug, Copy, Clone, Display, PartialEq, Eq)]
-#[display("Unknown framebuffer type {}", _0)]
+#[display(fmt = "Unknown framebuffer type {}", _0)]
 pub struct UnknownFramebufferType(u8);
 
 #[cfg(feature = "unstable")]
