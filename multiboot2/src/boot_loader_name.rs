@@ -11,7 +11,7 @@ const METADATA_SIZE: usize = mem::size_of::<TagHeader>();
 
 /// The bootloader name tag.
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct BootLoaderNameTag {
     header: TagHeader,
     /// Null-terminated UTF-8 string

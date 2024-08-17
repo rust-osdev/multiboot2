@@ -13,7 +13,7 @@ const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 3 * mem::size_of::<u3
 // The sections iterator is provided via the [`ElfSectionsTag::sections`]
 // method.
 #[derive(ptr_meta::Pointee, PartialEq, Eq)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct ElfSectionsTag {
     header: TagHeader,
     number_of_sections: u32,

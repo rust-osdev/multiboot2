@@ -50,7 +50,7 @@ const METADATA_SIZE: usize = mem::size_of::<TagTypeId>()
 
 /// The VBE Framebuffer information tag.
 #[derive(ptr_meta::Pointee, Eq)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct FramebufferTag {
     header: TagHeader,
 

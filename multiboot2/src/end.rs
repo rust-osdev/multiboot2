@@ -3,8 +3,8 @@
 use crate::{TagHeader, TagTrait, TagType, TagTypeId};
 
 /// The end tag ends the information struct.
-#[repr(C)]
 #[derive(Debug)]
+#[repr(C, align(8))]
 pub struct EndTag {
     typ: TagTypeId,
     size: u32,

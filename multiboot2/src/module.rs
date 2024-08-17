@@ -13,7 +13,7 @@ const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u3
 /// (blobs in memory). The tag itself doesn't include the blog, but references
 /// its location.
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct ModuleTag {
     header: TagHeader,
     mod_start: u32,

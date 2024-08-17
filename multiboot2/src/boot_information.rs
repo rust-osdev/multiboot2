@@ -38,7 +38,7 @@ impl core::error::Error for MbiLoadError {}
 
 /// The basic header of a [`BootInformation`] as sized Rust type.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct BootInformationHeader {
     // size is multiple of 8
     total_size: u32,
@@ -68,7 +68,7 @@ impl AsBytes for BootInformationHeader {}
 /// This type holds the whole data of the MBI. This helps to better satisfy miri
 /// when it checks for memory issues.
 #[derive(ptr_meta::Pointee)]
-#[repr(C)]
+#[repr(C, align(8))]
 struct BootInformationInner {
     header: BootInformationHeader,
     tags: [u8],

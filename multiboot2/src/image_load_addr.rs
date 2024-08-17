@@ -9,7 +9,7 @@ use core::mem::size_of;
 /// binary was relocated, for example if the relocatable header tag was
 /// specified.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct ImageLoadPhysAddrTag {
     header: TagHeader,
     load_base_addr: u32,

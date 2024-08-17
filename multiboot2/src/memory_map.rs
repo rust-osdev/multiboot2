@@ -26,7 +26,7 @@ const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u3
 /// boot services are enabled and available for the loaded image (The EFI boot
 /// services tag may exist in the Multiboot2 boot information structure).
 #[derive(ptr_meta::Pointee, Debug, PartialEq, Eq)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct MemoryMapTag {
     header: TagHeader,
     entry_size: u32,
