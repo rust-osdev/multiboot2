@@ -7,7 +7,6 @@ use crate::{
     EFISdt32Tag, EFISdt64Tag, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag,
     MemoryMapTag, ModuleTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, TagType, ALIGNMENT,
 };
-use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::fmt::{Display, Formatter};
 use core::mem::size_of;
@@ -200,32 +199,32 @@ impl InformationBuilder {
 
     /// Adds a 'basic memory information' tag (represented by [`BasicMemoryInfoTag`]) to the builder.
     #[must_use]
-    pub fn basic_memory_info_tag(self, tag: BasicMemoryInfoTag) -> Self {
-        self.add_tag(&tag).unwrap()
+    pub fn basic_memory_info_tag(self, tag: &BasicMemoryInfoTag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'bootloader name' tag (represented by [`BootLoaderNameTag`]) to the builder.
     #[must_use]
-    pub fn bootloader_name_tag(self, tag: Box<BootLoaderNameTag>) -> Self {
-        self.add_tag(&*tag).unwrap()
+    pub fn bootloader_name_tag(self, tag: &BootLoaderNameTag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'command line' tag (represented by [`CommandLineTag`]) to the builder.
     #[must_use]
-    pub fn command_line_tag(self, tag: Box<CommandLineTag>) -> Self {
-        self.add_tag(&*tag).unwrap()
+    pub fn command_line_tag(self, tag: &CommandLineTag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'EFI 32-bit system table pointer' tag (represented by [`EFISdt32Tag`]) to the builder.
     #[must_use]
-    pub fn efisdt32_tag(self, tag: EFISdt32Tag) -> Self {
-        self.add_tag(&tag).unwrap()
+    pub fn efisdt32_tag(self, tag: &EFISdt32Tag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'EFI 64-bit system table pointer' tag (represented by [`EFISdt64Tag`]) to the builder.
     #[must_use]
-    pub fn efisdt64_tag(self, tag: EFISdt64Tag) -> Self {
-        self.add_tag(&tag).unwrap()
+    pub fn efisdt64_tag(self, tag: &EFISdt64Tag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'EFI boot services not terminated' tag (represented by [`EFIBootServicesNotExitedTag`]) to the builder.
@@ -236,69 +235,69 @@ impl InformationBuilder {
 
     /// Adds a 'EFI 32-bit image handle pointer' tag (represented by [`EFIImageHandle32Tag`]) to the builder.
     #[must_use]
-    pub fn efi_image_handle32(self, tag: EFIImageHandle32Tag) -> Self {
-        self.add_tag(&tag).unwrap()
+    pub fn efi_image_handle32(self, tag: &EFIImageHandle32Tag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'EFI 64-bit image handle pointer' tag (represented by [`EFIImageHandle64Tag`]) to the builder.
     #[must_use]
-    pub fn efi_image_handle64(self, tag: EFIImageHandle64Tag) -> Self {
-        self.add_tag(&tag).unwrap()
+    pub fn efi_image_handle64(self, tag: &EFIImageHandle64Tag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'EFI Memory map' tag (represented by [`EFIMemoryMapTag`]) to the builder.
     #[must_use]
-    pub fn efi_memory_map_tag(self, tag: Box<EFIMemoryMapTag>) -> Self {
-        self.add_tag(&*tag).unwrap()
+    pub fn efi_memory_map_tag(self, tag: &EFIMemoryMapTag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'ELF-Symbols' tag (represented by [`ElfSectionsTag`]) to the builder.
     #[must_use]
-    pub fn elf_sections_tag(self, tag: Box<ElfSectionsTag>) -> Self {
-        self.add_tag(&*tag).unwrap()
+    pub fn elf_sections_tag(self, tag: &ElfSectionsTag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'Framebuffer info' tag (represented by [`FramebufferTag`]) to the builder.
     #[must_use]
-    pub fn framebuffer_tag(self, tag: Box<FramebufferTag>) -> Self {
-        self.add_tag(&*tag).unwrap()
+    pub fn framebuffer_tag(self, tag: &FramebufferTag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'Image load base physical address' tag (represented by [`ImageLoadPhysAddrTag`]) to the builder.
     #[must_use]
-    pub fn image_load_addr(self, tag: ImageLoadPhysAddrTag) -> Self {
-        self.add_tag(&tag).unwrap()
+    pub fn image_load_addr(self, tag: &ImageLoadPhysAddrTag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a (*none EFI*) 'memory map' tag (represented by [`MemoryMapTag`]) to the builder.
     #[must_use]
-    pub fn memory_map_tag(self, tag: Box<MemoryMapTag>) -> Self {
-        self.add_tag(&*tag).unwrap()
+    pub fn memory_map_tag(self, tag: &MemoryMapTag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'Modules' tag (represented by [`ModuleTag`]) to the builder.
     /// This tag can occur multiple times in boot information.
     #[must_use]
-    pub fn add_module_tag(self, tag: Box<ModuleTag>) -> Self {
-        self.add_tag(&*tag).unwrap()
+    pub fn add_module_tag(self, tag: &ModuleTag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'ACPI old RSDP' tag (represented by [`RsdpV1Tag`]) to the builder.
     #[must_use]
-    pub fn rsdp_v1_tag(self, tag: RsdpV1Tag) -> Self {
-        self.add_tag(&tag).unwrap()
+    pub fn rsdp_v1_tag(self, tag: &RsdpV1Tag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'ACPI new RSDP' tag (represented by [`RsdpV2Tag`]) to the builder.
     #[must_use]
-    pub fn rsdp_v2_tag(self, tag: RsdpV2Tag) -> Self {
-        self.add_tag(&tag).unwrap()
+    pub fn rsdp_v2_tag(self, tag: &RsdpV2Tag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     /// Adds a 'SMBIOS tables' tag (represented by [`SmbiosTag`]) to the builder.
     #[must_use]
-    pub fn smbios_tag(self, tag: Box<SmbiosTag>) -> Self {
-        self.add_tag(&*tag).unwrap()
+    pub fn smbios_tag(self, tag: &SmbiosTag) -> Self {
+        self.add_tag(tag).unwrap()
     }
 
     const fn tag_is_allowed_multiple_times(tag_type: TagType) -> bool {
@@ -322,18 +321,18 @@ mod tests {
         assert_eq!(builder.expected_len(), expected_len);
 
         // the most simple tag
-        builder = builder.basic_memory_info_tag(BasicMemoryInfoTag::new(640, 7 * 1024));
+        builder = builder.basic_memory_info_tag(&BasicMemoryInfoTag::new(640, 7 * 1024));
         expected_len += 16;
         assert_eq!(builder.expected_len(), expected_len);
         // a tag that has a dynamic size
-        builder = builder.command_line_tag(CommandLineTag::new("test"));
+        builder = builder.command_line_tag(&CommandLineTag::new("test"));
         expected_len += 8 + 5 + 3; // padding
         assert_eq!(builder.expected_len(), expected_len);
         // many modules
-        builder = builder.add_module_tag(ModuleTag::new(0, 1234, "module1"));
+        builder = builder.add_module_tag(&ModuleTag::new(0, 1234, "module1"));
         expected_len += 16 + 8;
         assert_eq!(builder.expected_len(), expected_len);
-        builder = builder.add_module_tag(ModuleTag::new(5678, 6789, "module2"));
+        builder = builder.add_module_tag(&ModuleTag::new(5678, 6789, "module2"));
         expected_len += 16 + 8;
         assert_eq!(builder.expected_len(), expected_len);
 

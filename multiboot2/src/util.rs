@@ -1,11 +1,14 @@
 //! Various utilities.
 
-use crate::tag::GenericTag;
-use crate::{TagHeader, TagTrait, TagType, ALIGNMENT};
+use crate::ALIGNMENT;
 use core::fmt;
 use core::fmt::{Display, Formatter};
 use core::str::Utf8Error;
-use core::{ptr, slice};
+#[cfg(feature = "alloc")]
+use {
+    crate::{TagHeader, TagTrait},
+    core::{mem, ptr},
+};
 #[cfg(feature = "builder")]
 use {alloc::alloc::Layout, alloc::boxed::Box};
 
@@ -45,13 +48,14 @@ impl core::error::Error for StringError {
 ///   without additional padding in-between. You don't need to add the bytes
 ///   for [`TagHeader`], but only additional ones.
 #[cfg(feature = "alloc")]
+#[must_use]
 pub fn new_boxed<T: TagTrait + ?Sized>(additional_bytes_slices: &[&[u8]]) -> Box<T> {
     let additional_size = additional_bytes_slices
         .iter()
         .map(|b| b.len())
         .sum::<usize>();
 
-    let size = size_of::<TagHeader>() + additional_size;
+    let size = mem::size_of::<TagHeader>() + additional_size;
     let alloc_size = increase_to_alignment(size);
     let layout = Layout::from_size_align(alloc_size, ALIGNMENT).unwrap();
     let heap_ptr = unsafe { alloc::alloc::alloc(layout) };
@@ -62,7 +66,7 @@ pub fn new_boxed<T: TagTrait + ?Sized>(additional_bytes_slices: &[&[u8]]) -> Box
         heap_ptr.cast::<u32>().add(1).write(size as u32);
     }
 
-    let mut write_offset = size_of::<TagHeader>();
+    let mut write_offset = mem::size_of::<TagHeader>();
     for &bytes in additional_bytes_slices {
         unsafe {
             let len = bytes.len();
@@ -101,8 +105,8 @@ pub const fn increase_to_alignment(size: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tag::GenericTag;
-    use crate::CommandLineTag;
+    #[cfg(feature = "alloc")]
+    use {crate::tag::GenericTag, crate::CommandLineTag};
 
     #[test]
     fn test_parse_slice_as_string() {
@@ -140,6 +144,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn test_new_boxed() {
         let tag = new_boxed::<GenericTag>(&[&[0, 1, 2, 3]]);
         assert_eq!(tag.header().typ, GenericTag::ID);
@@ -150,7 +155,7 @@ mod tests {
         assert_eq!(tag.header().typ, GenericTag::ID);
         assert_eq!(tag.payload(), &[0, 1, 2, 3]);
 
-        let tag = new_boxed::<CommandLineTag>(&["hello\0".as_bytes()]);
+        let tag = new_boxed::<CommandLineTag>(&[b"hello\0"]);
         assert_eq!(tag.cmdline(), Ok("hello"));
     }
 }

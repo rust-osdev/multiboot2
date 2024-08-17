@@ -5,7 +5,7 @@ use crate::{parse_slice_as_string, StringError, TagTrait, TagType};
 use core::fmt::{Debug, Formatter};
 use core::mem;
 #[cfg(feature = "builder")]
-use {crate::new_boxed, alloc::boxed::Box, alloc::vec::Vec};
+use {crate::new_boxed, alloc::boxed::Box};
 
 const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u32>();
 

@@ -6,7 +6,7 @@ use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str;
 #[cfg(feature = "builder")]
-use {crate::new_boxed, alloc::boxed::Box, alloc::vec::Vec};
+use {crate::new_boxed, alloc::boxed::Box};
 
 const METADATA_SIZE: usize = mem::size_of::<TagHeader>();
 

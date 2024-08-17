@@ -57,7 +57,7 @@ impl TagHeader {
 ///   is [`ALIGNMENT`]-aligned
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[repr(transparent)]
-pub(crate) struct TagBytesRef<'a>(&'a [u8]);
+pub struct TagBytesRef<'a>(&'a [u8]);
 
 impl<'a> TryFrom<&'a [u8]> for TagBytesRef<'a> {
     type Error = MemoryError;
@@ -124,18 +124,16 @@ impl GenericTag {
         let dst_len = Self::dst_len(header);
         assert_eq!(header.size as usize, Self::BASE_SIZE + dst_len);
 
-        let generic_tag: *const GenericTag =
-            ptr_meta::from_raw_parts(bytes.as_ptr().cast(), dst_len);
-        let generic_tag = unsafe { &*generic_tag };
-
-        generic_tag
+        let generic_tag: *const Self = ptr_meta::from_raw_parts(bytes.as_ptr().cast(), dst_len);
+        unsafe { &*generic_tag }
     }
 
-    pub fn header(&self) -> &TagHeader {
+    pub const fn header(&self) -> &TagHeader {
         &self.header
     }
 
-    pub fn payload(&self) -> &[u8] {
+    #[cfg(all(test, feature = "builder"))]
+    pub const fn payload(&self) -> &[u8] {
         &self.payload
     }
 
@@ -346,7 +344,7 @@ mod tests {
         // Guaranteed wrong alignment
         let unaligned_slice = &slice[3..];
         assert_eq!(
-            TagBytesRef::try_from(&unaligned_slice[..]),
+            TagBytesRef::try_from(unaligned_slice),
             Err(MemoryError::WrongAlignment)
         );
 

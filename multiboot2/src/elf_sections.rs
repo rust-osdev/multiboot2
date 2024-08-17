@@ -2,7 +2,7 @@
 
 use crate::{TagHeader, TagTrait, TagType};
 use core::fmt::{Debug, Formatter};
-use core::marker::{PhantomData, PhantomPinned};
+use core::marker::PhantomData;
 use core::mem;
 use core::str::Utf8Error;
 #[cfg(feature = "builder")]
@@ -35,7 +35,7 @@ impl ElfSectionsTag {
     }
 
     /// Get an iterator of loaded ELF sections.
-    pub(crate) fn sections(&self) -> ElfSectionIter {
+    pub(crate) const fn sections(&self) -> ElfSectionIter {
         let string_section_offset = (self.shndx * self.entry_size) as isize;
         let string_section_ptr =
             unsafe { self.sections.as_ptr().offset(string_section_offset) as *const _ };
@@ -44,7 +44,7 @@ impl ElfSectionsTag {
             remaining_sections: self.number_of_sections,
             entry_size: self.entry_size,
             string_section: string_section_ptr,
-            _phantom_data: PhantomData::default(),
+            _phantom_data: PhantomData,
         }
     }
 }
@@ -90,7 +90,7 @@ impl<'a> Iterator for ElfSectionIter<'a> {
                 inner: self.current_section,
                 string_section: self.string_section,
                 entry_size: self.entry_size,
-                _phantom: PhantomData::default(),
+                _phantom: PhantomData,
             };
 
             self.current_section = unsafe { self.current_section.offset(self.entry_size as isize) };

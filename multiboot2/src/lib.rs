@@ -12,7 +12,7 @@
 // now allow a few rules which are denied by the above statement
 // --> They are either ridiculous, not necessary, or we can't fix them.
 #![allow(clippy::multiple_crate_versions)]
-// #![deny(missing_docs)]
+#![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
 #![deny(rustdoc::all)]
 // --- END STYLE CHECKS ---
@@ -100,7 +100,9 @@ pub use smbios::SmbiosTag;
 pub use tag::TagHeader;
 pub use tag_trait::TagTrait;
 pub use tag_type::{TagType, TagTypeId};
-pub use util::{new_boxed, parse_slice_as_string, StringError};
+#[cfg(feature = "alloc")]
+pub use util::new_boxed;
+pub use util::{parse_slice_as_string, StringError};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,

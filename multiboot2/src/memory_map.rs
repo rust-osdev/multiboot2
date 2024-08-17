@@ -43,7 +43,7 @@ impl MemoryMapTag {
         let entry_version = 0_u32.to_ne_bytes();
         let areas = {
             let ptr = areas.as_ptr().cast::<u8>();
-            let len = areas.len() * size_of::<MemoryArea>();
+            let len = mem::size_of_val(areas);
             unsafe { slice::from_raw_parts(ptr, len) }
         };
         new_boxed(&[&entry_size, &entry_version, areas])
@@ -322,7 +322,7 @@ impl EFIMemoryMapTag {
     pub fn new_from_descs(descs: &[EFIMemoryDesc]) -> Box<Self> {
         let efi_mmap = {
             let ptr = descs.as_ptr().cast::<u8>();
-            let len = descs.len() * size_of::<EFIMemoryDesc>();
+            let len = mem::size_of_val(descs);
             unsafe { slice::from_raw_parts(ptr, len) }
         };
 

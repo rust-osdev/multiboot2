@@ -9,7 +9,7 @@ use core::ops::Deref;
 /// information or just the bytes for simple tags, in a manual and raw approach.
 #[cfg(test)]
 #[repr(C, align(8))]
-pub(crate) struct AlignedBytes<const N: usize>(pub [u8; N]);
+pub struct AlignedBytes<const N: usize>(pub [u8; N]);
 
 impl<const N: usize> AlignedBytes<N> {
     pub const fn new(bytes: [u8; N]) -> Self {
