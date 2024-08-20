@@ -37,6 +37,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "multiboot2-common"
+version = "0.1.0"
+
+[[package]]
 name = "multiboot2-header"
 version = "0.4.0"
 dependencies = [

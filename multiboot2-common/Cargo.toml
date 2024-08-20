@@ -1,0 +1,34 @@
+[package]
+name = "multiboot2-common"
+description = """
+
+"""
+version = "0.1.0"
+authors = [
+    "Philipp Schuster <phip1611@gmail.com>"
+]
+license = "MIT/Apache-2.0"
+edition = "2021"
+categories = [
+    "no-std",
+    "parsing",
+]
+keywords = [
+    "Multiboot2",
+    "kernel",
+    "boot",
+    "bootloader",
+]
+readme = "README.md"
+homepage = "https://github.com/rust-osdev/multiboot2"
+repository = "https://github.com/rust-osdev/multiboot2"
+documentation = "https://docs.rs/multiboot2-common"
+#rust-version = "1.70"
+
+[features]
+
+
+[dependencies]
+
+[package.metadata.docs.rs]
+all-features = true

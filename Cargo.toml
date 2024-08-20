@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "multiboot2",
+    "multiboot2-common",
     "multiboot2-header",
 ]
 exclude = [
