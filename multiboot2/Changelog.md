@@ -1,5 +1,9 @@
 # CHANGELOG for crate `multiboot2`
 
+## v0.22.1 (2024-08-20)
+
+Minor documentation fixes.
+
 ## v0.22.0 (2024-08-20)
 
 This release contains another major refactoring of the internals, guaranteeing

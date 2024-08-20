@@ -44,7 +44,7 @@ unstable = []
 derive_more.workspace = true
 log.workspace = true
 ptr_meta.workspace = true
-multiboot2 = { version = "0.22.0", default-features = false }
+multiboot2 = { version = "0.22.1", default-features = false }
 multiboot2-common = "0.1.1"
 
 [package.metadata.docs.rs]

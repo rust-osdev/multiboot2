@@ -96,7 +96,7 @@ dependencies = [
 
 [[package]]
 name = "multiboot2"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "bitflags 2.6.0",
  "derive_more",

@@ -1,12 +1,12 @@
 [package]
 name = "multiboot2"
 description = """
-Convenient and safe parsing of Multiboot2 Information Structures (MBI) and its
-corresponding tags. Usable in `no_std` environments, such as a kernel. An
-optional builder feature also allows the construction of the corresponding
-structures.
+Convenient and safe parsing of Multiboot2 Boot Information (MBI)
+structures and the contained information tags. Usable in `no_std` environments,
+such as a kernel. An optional builder feature also allows the construction of
+the corresponding structures.
 """
-version = "0.22.0"
+version = "0.22.1"
 authors = [
     "Philipp Oppermann <dev@phil-opp.com>",
     "Calvin Lee <cyrus296@gmail.com>",

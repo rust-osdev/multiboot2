@@ -3,10 +3,10 @@
 [![crates.io](https://img.shields.io/crates/v/multiboot2.svg)](https://crates.io/crates/multiboot2)
 [![docs](https://docs.rs/multiboot2/badge.svg)](https://docs.rs/multiboot2/)
 
-Convenient and safe parsing of Multiboot2 Information Structures (MBI) and its
-corresponding tags. Usable in `no_std` environments, such as a kernel. An
-optional builder feature also allows the construction of the corresponding
-structures.
+Convenient and safe parsing of Multiboot2 Boot Information (MBI)
+structures and the contained information tags. Usable in `no_std` environments,
+such as a kernel. An optional builder feature also allows the construction of
+the corresponding structures.
 
 It follows the Multiboot 2.0 specification
 at https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html and the
