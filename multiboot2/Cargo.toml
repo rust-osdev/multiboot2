@@ -6,7 +6,7 @@ Multiboot2-compliant bootloaders, such as GRUB. It supports all tags from the
 specification including full support for the sections of ELF files. This library
 is `no_std` and can be used in a Multiboot2-kernel.
 """
-version = "0.21.0"
+version = "0.22.0"
 authors = [
     "Philipp Oppermann <dev@phil-opp.com>",
     "Calvin Lee <cyrus296@gmail.com>",

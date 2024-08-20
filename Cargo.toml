@@ -13,9 +13,11 @@ exclude = [
 bitflags = "2.6.0"
 derive_more = { version = "~0.99.18", default-features = false, features = ["display"] }
 log = { version = "~0.4", default-features = false }
+ptr_meta = { version = "~0.2", default-features = false }
 
-# This way, the "multiboot2" dependency in the multiboot2-header crate can be
-# referenced by version, while still the repository version is used
-# transparently during local development.
+# This way, the corresponding crate dependency can be normalley referenced by
+# version, while still the repository version is used transparently during local
+# development.
 [patch.crates-io]
 multiboot2 = { path = "multiboot2" }
+multiboot2-common = { path = "multiboot2-common" }

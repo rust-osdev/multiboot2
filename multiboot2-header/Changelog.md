@@ -1,8 +1,18 @@
 # CHANGELOG for crate `multiboot2-header`
 
-## Unreleased
+## v0.5.0
+
+This release contains a major refactoring of the internals, guaranteeing
+even more sanity checks for correct behaviour and lack of UB. In this release,
+the `Builder` was rewritten and lots of corresponding UB in certain
+corer-cases removed. Further, the builder's API was streamlined.
+
+If you are interested in the internals of the major refactorings recently taken
+place, please head to the documentation of `multiboot2-common`.
 
 - **Breaking** All functions that returns something useful are now `#[must_use]`
+- **Breaking** The builder type is now just called `Builder`. This needs the
+  `builder` feature.
 - Updated to latest `multiboot2` dependency
 
 ## 0.4.0 (2024-05-01)
