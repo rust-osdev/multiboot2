@@ -1,12 +1,13 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
-use core::mem::size_of;
+use core::mem;
+use multiboot2_common::{MaybeDynSized, Tag};
 
 /// Specifies the physical address to which the boot loader should jump in
 /// order to start running the operating system. Not needed for ELF files.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct EntryAddressHeaderTag {
     header: HeaderTagHeader,
     entry_addr: u32,
@@ -17,7 +18,7 @@ impl EntryAddressHeaderTag {
     #[must_use]
     pub const fn new(flags: HeaderTagFlag, entry_addr: u32) -> Self {
         let header =
-            HeaderTagHeader::new(HeaderTagType::EntryAddress, flags, size_of::<Self>() as u32);
+            HeaderTagHeader::new(HeaderTagType::EntryAddress, flags, Self::BASE_SIZE as u32);
         Self { header, entry_addr }
     }
 
@@ -57,12 +58,15 @@ impl Debug for EntryAddressHeaderTag {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::EntryAddressHeaderTag;
+impl MaybeDynSized for EntryAddressHeaderTag {
+    type Header = HeaderTagHeader;
 
-    #[test]
-    fn test_assert_size() {
-        assert_eq!(core::mem::size_of::<EntryAddressHeaderTag>(), 2 + 2 + 4 + 4);
-    }
+    const BASE_SIZE: usize = mem::size_of::<HeaderTagHeader>() + mem::size_of::<u32>();
+
+    fn dst_len(_header: &Self::Header) -> Self::Metadata {}
+}
+
+impl Tag for EntryAddressHeaderTag {
+    type IDType = HeaderTagType;
+    const ID: HeaderTagType = HeaderTagType::EntryAddress;
 }

@@ -41,7 +41,10 @@ unstable = []
 
 [dependencies]
 derive_more.workspace = true
+log.workspace = true
+ptr_meta.workspace = true
 multiboot2 = { version = "0.21.0", default-features = false }
+multiboot2-common = "0.1.0"
 
 [package.metadata.docs.rs]
 all-features = true

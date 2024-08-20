@@ -1,12 +1,13 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::mem;
+use multiboot2_common::{MaybeDynSized, Tag};
 
 /// Specifies the preferred graphics mode. If this tag
 /// is present the bootloader assumes that the payload
 /// has framebuffer support. Note: This is only a
 /// recommended mode. Only relevant on legacy BIOS.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct FramebufferHeaderTag {
     header: HeaderTagHeader,
     width: u32,
@@ -18,11 +19,8 @@ impl FramebufferHeaderTag {
     /// Constructs a new tag.
     #[must_use]
     pub const fn new(flags: HeaderTagFlag, width: u32, height: u32, depth: u32) -> Self {
-        let header = HeaderTagHeader::new(
-            HeaderTagType::Framebuffer,
-            flags,
-            mem::size_of::<Self>() as u32,
-        );
+        let header =
+            HeaderTagHeader::new(HeaderTagType::Framebuffer, flags, Self::BASE_SIZE as u32);
         Self {
             header,
             width,
@@ -68,15 +66,15 @@ impl FramebufferHeaderTag {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl MaybeDynSized for FramebufferHeaderTag {
+    type Header = HeaderTagHeader;
 
-    #[test]
-    fn test_assert_size() {
-        assert_eq!(
-            mem::size_of::<FramebufferHeaderTag>(),
-            2 + 2 + 4 + 4 + 4 + 4
-        );
-    }
+    const BASE_SIZE: usize = mem::size_of::<HeaderTagHeader>() + 3 * mem::size_of::<u32>();
+
+    fn dst_len(_header: &Self::Header) -> Self::Metadata {}
+}
+
+impl Tag for FramebufferHeaderTag {
+    type IDType = HeaderTagType;
+    const ID: HeaderTagType = HeaderTagType::Framebuffer;
 }

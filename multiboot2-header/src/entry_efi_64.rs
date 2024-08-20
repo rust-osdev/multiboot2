@@ -1,7 +1,8 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
-use core::mem::size_of;
+use core::mem;
+use multiboot2_common::{MaybeDynSized, Tag};
 
 /// This tag is taken into account only on EFI amd64 platforms when Multiboot2 image header
 /// contains EFI boot services tag. Then entry point specified in ELF header and the entry address
@@ -10,7 +11,7 @@ use core::mem::size_of;
 /// Technically, this is equivalent to the [`crate::EntryAddressHeaderTag`] but with a different
 /// [`crate::HeaderTagType`].
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct EntryEfi64HeaderTag {
     header: HeaderTagHeader,
     entry_addr: u32,
@@ -23,7 +24,7 @@ impl EntryEfi64HeaderTag {
         let header = HeaderTagHeader::new(
             HeaderTagType::EntryAddressEFI64,
             flags,
-            size_of::<Self>() as u32,
+            Self::BASE_SIZE as u32,
         );
         Self { header, entry_addr }
     }
@@ -64,12 +65,15 @@ impl Debug for EntryEfi64HeaderTag {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::EntryEfi64HeaderTag;
+impl MaybeDynSized for EntryEfi64HeaderTag {
+    type Header = HeaderTagHeader;
 
-    #[test]
-    fn test_assert_size() {
-        assert_eq!(core::mem::size_of::<EntryEfi64HeaderTag>(), 2 + 2 + 4 + 4);
-    }
+    const BASE_SIZE: usize = mem::size_of::<HeaderTagHeader>() + mem::size_of::<u32>();
+
+    fn dst_len(_header: &Self::Header) -> Self::Metadata {}
+}
+
+impl Tag for EntryEfi64HeaderTag {
+    type IDType = HeaderTagType;
+    const ID: HeaderTagType = HeaderTagType::EntryAddressEFI64;
 }
