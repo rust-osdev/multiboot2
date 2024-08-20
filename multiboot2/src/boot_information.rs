@@ -1,35 +1,26 @@
 //! Module for [`BootInformation`].
 
-#[cfg(feature = "builder")]
-use crate::builder::AsBytes;
 use crate::framebuffer::UnknownFramebufferType;
-use crate::tag::{TagHeader, TagIter};
+use crate::tag::TagHeader;
 use crate::{
     module, BasicMemoryInfoTag, BootLoaderNameTag, CommandLineTag, EFIBootServicesNotExitedTag,
     EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag, EFISdt32Tag, EFISdt64Tag,
     ElfSectionIter, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag, MemoryMapTag,
-    ModuleIter, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagTrait, VBEInfoTag,
+    ModuleIter, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagIter, TagType, VBEInfoTag,
 };
 use core::fmt;
 use core::mem;
-use core::ptr;
+use core::ptr::NonNull;
 use derive_more::Display;
+use multiboot2_common::{DynSizedStructure, Header, MaybeDynSized, MemoryError, Tag};
 
 /// Error type that describes errors while loading/parsing a multiboot2 information structure
 /// from a given address.
 #[derive(Display, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum MbiLoadError {
-    /// The address is invalid. Make sure that the address is 8-byte aligned,
-    /// according to the spec.
-    #[display(fmt = "The address is invalid")]
-    IllegalAddress,
-    /// The total size of the multiboot2 information structure must be not zero
-    /// and a multiple of 8.
-    #[display(fmt = "The size of the MBI is unexpected")]
-    IllegalTotalSize(u32),
-    /// Missing end tag. Each multiboot2 boot information requires to have an
-    /// end tag.
-    #[display(fmt = "There is no end tag")]
+    /// See [`MemoryError`].
+    Memory(MemoryError),
+    /// Missing mandatory end tag.
     NoEndTag,
 }
 
@@ -62,40 +53,19 @@ impl BootInformationHeader {
     }
 }
 
-#[cfg(feature = "builder")]
-impl AsBytes for BootInformationHeader {}
+impl Header for BootInformationHeader {
+    fn payload_len(&self) -> usize {
+        self.total_size as usize - mem::size_of::<Self>()
+    }
 
-/// This type holds the whole data of the MBI. This helps to better satisfy miri
-/// when it checks for memory issues.
-#[derive(ptr_meta::Pointee)]
-#[repr(C, align(8))]
-struct BootInformationInner {
-    header: BootInformationHeader,
-    tags: [u8],
-}
-
-impl BootInformationInner {
-    /// Checks if the MBI has a valid end tag by checking the end of the mbi's
-    /// bytes.
-    fn has_valid_end_tag(&self) -> bool {
-        let self_ptr = ptr::addr_of!(*self);
-
-        let end_tag_ptr = unsafe {
-            self_ptr
-                .cast::<u8>()
-                .add(self.header.total_size as usize)
-                .sub(mem::size_of::<EndTag>())
-                .cast::<TagHeader>()
-        };
-        let end_tag = unsafe { &*end_tag_ptr };
-
-        end_tag.typ == EndTag::ID && end_tag.size as usize == mem::size_of::<EndTag>()
+    fn set_size(&mut self, total_size: usize) {
+        self.total_size = total_size as u32;
     }
 }
 
 /// A Multiboot 2 Boot Information (MBI) accessor.
 #[repr(transparent)]
-pub struct BootInformation<'a>(&'a BootInformationInner);
+pub struct BootInformation<'a>(&'a DynSizedStructure<BootInformationHeader>);
 
 impl<'a> BootInformation<'a> {
     /// Loads the [`BootInformation`] from a pointer. The pointer must be valid
@@ -115,36 +85,38 @@ impl<'a> BootInformation<'a> {
     /// ```
     ///
     /// ## Safety
-    /// * `ptr` must be valid for reading. Otherwise this function might cause
+    /// * `ptr` must be valid for reading. Otherwise, this function might cause
     ///   invalid machine state or crash your binary (kernel). This can be the
     ///   case in environments with standard environment (segfault), but also in
     ///   boot environments, such as UEFI.
     /// * The memory at `ptr` must not be modified after calling `load` or the
     ///   program may observe unsynchronized mutation.
     pub unsafe fn load(ptr: *const BootInformationHeader) -> Result<Self, MbiLoadError> {
-        // null or not aligned
-        if ptr.is_null() || ptr.align_offset(8) != 0 {
-            return Err(MbiLoadError::IllegalAddress);
-        }
+        let ptr = NonNull::new(ptr.cast_mut()).ok_or(MbiLoadError::Memory(MemoryError::Null))?;
+        let inner = DynSizedStructure::ref_from_ptr(ptr).map_err(MbiLoadError::Memory)?;
 
-        // mbi: reference to basic header
-        let mbi = &*ptr;
-
-        // Check if total size is not 0 and a multiple of 8.
-        if mbi.total_size == 0 || mbi.total_size & 0b111 != 0 {
-            return Err(MbiLoadError::IllegalTotalSize(mbi.total_size));
-        }
-
-        let slice_size = mbi.total_size as usize - mem::size_of::<BootInformationHeader>();
-        // mbi: reference to full mbi
-        let mbi = ptr_meta::from_raw_parts::<BootInformationInner>(ptr.cast(), slice_size);
-        let mbi = &*mbi;
-
-        if !mbi.has_valid_end_tag() {
+        let this = Self(inner);
+        if !this.has_valid_end_tag() {
             return Err(MbiLoadError::NoEndTag);
         }
+        Ok(this)
+    }
 
-        Ok(Self(mbi))
+    /// Checks if the MBI has a valid end tag by checking the end of the mbi's
+    /// bytes.
+    fn has_valid_end_tag(&self) -> bool {
+        let header = self.0.header();
+        let end_tag_ptr = unsafe {
+            self.0
+                .payload()
+                .as_ptr()
+                .add(header.payload_len())
+                .sub(mem::size_of::<EndTag>())
+                .cast::<TagHeader>()
+        };
+        let end_tag = unsafe { &*end_tag_ptr };
+
+        end_tag.typ == EndTag::ID && end_tag.size as usize == mem::size_of::<EndTag>()
     }
 
     /// Get the start address of the boot info.
@@ -177,7 +149,7 @@ impl<'a> BootInformation<'a> {
     /// Get the total size of the boot info struct.
     #[must_use]
     pub const fn total_size(&self) -> usize {
-        self.0.header.total_size as usize
+        self.0.header().total_size as usize
     }
 
     // ######################################################
@@ -279,7 +251,7 @@ impl<'a> BootInformation<'a> {
     pub fn elf_sections(&self) -> Option<ElfSectionIter> {
         let tag = self.get_tag::<ElfSectionsTag>();
         tag.map(|t| {
-            assert!((t.entry_size() * t.shndx()) <= t.size() as u32);
+            assert!((t.entry_size() * t.shndx()) <= t.header().size);
             t.sections_iter()
         })
     }
@@ -289,10 +261,12 @@ impl<'a> BootInformation<'a> {
     #[must_use]
     pub fn framebuffer_tag(&self) -> Option<Result<&FramebufferTag, UnknownFramebufferType>> {
         self.get_tag::<FramebufferTag>()
-            .map(|tag| match tag.buffer_type() {
-                Ok(_) => Ok(tag),
-                Err(e) => Err(e),
-            })
+            // TODO temporarily. Someone needs to fix the framebuffer thingy.
+            .map(Ok)
+        /*.map(|tag| match tag.buffer_type() {
+            Ok(_) => Ok(tag),
+            Err(e) => Err(e),
+        })*/
     }
 
     /// Search for the Image Load Base Physical Address tag.
@@ -361,27 +335,17 @@ impl<'a> BootInformation<'a> {
     /// special handling is required. This is reflected by code-comments.
     ///
     /// ```no_run
-    /// use multiboot2::{BootInformation, BootInformationHeader, parse_slice_as_string, StringError, TagHeader, TagTrait, TagType, TagTypeId};
+    /// use std::mem;
+    /// use multiboot2::{BootInformation, BootInformationHeader, parse_slice_as_string, StringError, TagHeader, TagType, TagTypeId};    ///
+    /// use multiboot2_common::{MaybeDynSized, Tag};
     ///
     /// #[repr(C)]
     /// #[derive(multiboot2::Pointee)] // Only needed for DSTs.
     /// struct CustomTag {
-    ///     tag: TagTypeId,
-    ///     size: u32,
-    ///     // begin of inline string
+    ///     header: TagHeader,
+    ///     some_other_prop: u32,
+    ///     // Begin of C string, for example.
     ///     name: [u8],
-    /// }
-    ///
-    /// // This implementation is only necessary for tags that are DSTs.
-    /// impl TagTrait for CustomTag {
-    ///     const ID: TagType = TagType::Custom(0x1337);
-    ///
-    ///     fn dst_len(header: &TagHeader) -> usize {
-    ///         // The size of the sized portion of the custom tag.
-    ///         let tag_base_size = 8; // id + size is 8 byte in size
-    ///         assert!(header.size >= 8);
-    ///         header.size as usize - tag_base_size
-    ///     }
     /// }
     ///
     /// impl CustomTag {
@@ -389,6 +353,26 @@ impl<'a> BootInformation<'a> {
     ///         parse_slice_as_string(&self.name)
     ///     }
     /// }
+    ///
+    /// // Give the library hints how big this tag is.
+    /// impl MaybeDynSized for CustomTag {
+    ///     type Header = TagHeader;
+    ///     const BASE_SIZE: usize = mem::size_of::<TagHeader>() + mem::size_of::<u32>();
+    ///
+    ///     // This differs for DSTs and normal structs. See function
+    ///     // documentation.
+    ///     fn dst_len(header: &TagHeader) -> usize {
+    ///         assert!(header.size >= Self::BASE_SIZE as u32);
+    ///         header.size as usize - Self::BASE_SIZE
+    ///     }
+    /// }
+    ///
+    /// // Make the Tag identifiable.
+    /// impl Tag for CustomTag {
+    ///     type IDType = TagType;
+    ///     const ID: TagType = TagType::Custom(0x1337);
+    /// }
+    ///
     /// let mbi_ptr = 0xdeadbeef as *const BootInformationHeader;
     /// let mbi = unsafe { BootInformation::load(mbi_ptr).unwrap() };
     ///
@@ -400,15 +384,17 @@ impl<'a> BootInformation<'a> {
     ///
     /// [`TagType`]: crate::TagType
     #[must_use]
-    pub fn get_tag<TagT: TagTrait + ?Sized + 'a>(&'a self) -> Option<&'a TagT> {
+    pub fn get_tag<T: Tag<IDType = TagType, Header = TagHeader> + ?Sized + 'a>(
+        &'a self,
+    ) -> Option<&'a T> {
         self.tags()
-            .find(|tag| tag.header().typ == TagT::ID)
-            .map(|tag| tag.cast::<TagT>())
+            .find(|tag| tag.header().typ == T::ID)
+            .map(|tag| tag.cast::<T>())
     }
 
     /// Returns an iterator over all tags.
-    fn tags(&self) -> TagIter {
-        TagIter::new(&self.0.tags)
+    pub(crate) fn tags(&self) -> TagIter {
+        TagIter::new(self.0.payload())
     }
 }
 

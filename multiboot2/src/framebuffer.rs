@@ -1,14 +1,18 @@
 //! Module for [`FramebufferTag`].
 
 use crate::tag::TagHeader;
-use crate::{TagTrait, TagType, TagTypeId};
+use crate::TagType;
 use core::fmt::Debug;
 use core::mem;
 use core::slice;
 use derive_more::Display;
+use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
-use {crate::builder::AsBytes, crate::new_boxed, alloc::boxed::Box, alloc::vec::Vec};
+use {alloc::boxed::Box, multiboot2_common::new_boxed};
 
+/// TODO this memory reader is unsafe and causes UB, according to Miri.
+/// We need to replace it.
+///
 /// Helper struct to read bytes from a raw pointer and increase the pointer
 /// automatically.
 struct Reader {
@@ -42,12 +46,6 @@ impl Reader {
     }
 }
 
-const METADATA_SIZE: usize = mem::size_of::<TagTypeId>()
-    + 4 * mem::size_of::<u32>()
-    + mem::size_of::<u64>()
-    + mem::size_of::<u16>()
-    + 2 * mem::size_of::<u8>();
-
 /// The VBE Framebuffer information tag.
 #[derive(ptr_meta::Pointee, Eq)]
 #[repr(C, align(8))]
@@ -80,6 +78,8 @@ pub struct FramebufferTag {
     // Reading the GRUB2 source code reveals it is in fact a u16.
     _reserved: u16,
 
+    // TODO This situation is currently not properly typed. Someone needs to
+    // look into it.
     buffer: [u8],
 }
 
@@ -93,15 +93,26 @@ impl FramebufferTag {
         width: u32,
         height: u32,
         bpp: u8,
-        buffer_type: FramebufferType,
+        buffer_type: FramebufferTypeId,
     ) -> Box<Self> {
+        let header = TagHeader::new(Self::ID, 0);
         let address = address.to_ne_bytes();
         let pitch = pitch.to_ne_bytes();
         let width = width.to_ne_bytes();
         let height = height.to_ne_bytes();
-        let bpp = bpp.to_ne_bytes();
-        let buffer_type = buffer_type.to_bytes();
-        new_boxed(&[&address, &pitch, &width, &height, &bpp, &buffer_type])
+        let padding = [0; 2];
+        new_boxed(
+            header,
+            &[
+                &address,
+                &pitch,
+                &width,
+                &height,
+                &[bpp],
+                &[buffer_type as u8],
+                &padding,
+            ],
+        )
     }
 
     /// Contains framebuffer physical address.
@@ -138,8 +149,14 @@ impl FramebufferTag {
         self.bpp
     }
 
+    /// TODO unsafe. Someone needs to fix this. This causes UB according to Miri.
+    ///  Dont forget to reenable all test usages once fixed.
+    ///
     /// The type of framebuffer, one of: `Indexed`, `RGB` or `Text`.
-    pub fn buffer_type(&self) -> Result<FramebufferType, UnknownFramebufferType> {
+    ///
+    /// # Safety
+    /// This function needs refactoring. This was never safe, since the beginning.
+    pub unsafe fn buffer_type(&self) -> Result<FramebufferType, UnknownFramebufferType> {
         let mut reader = Reader::new(self.buffer.as_ptr());
         let typ = FramebufferTypeId::try_from(self.type_no)?;
         match typ {
@@ -181,13 +198,25 @@ impl FramebufferTag {
     }
 }
 
-impl TagTrait for FramebufferTag {
-    const ID: TagType = TagType::Framebuffer;
+impl MaybeDynSized for FramebufferTag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = mem::size_of::<TagHeader>()
+        + mem::size_of::<u64>()
+        + 3 * mem::size_of::<u32>()
+        + 2 * mem::size_of::<u8>()
+        + mem::size_of::<u16>();
 
     fn dst_len(header: &TagHeader) -> usize {
-        assert!(header.size as usize >= METADATA_SIZE);
-        header.size as usize - METADATA_SIZE
+        assert!(header.size as usize >= Self::BASE_SIZE);
+        header.size as usize - Self::BASE_SIZE
     }
+}
+
+impl Tag for FramebufferTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::Framebuffer;
 }
 
 impl Debug for FramebufferTag {
@@ -195,7 +224,8 @@ impl Debug for FramebufferTag {
         f.debug_struct("FramebufferTag")
             .field("typ", &self.header.typ)
             .field("size", &self.header.size)
-            .field("buffer_type", &self.buffer_type())
+            // TODO unsafe. Fix in a follow-up commit
+            //.field("buffer_type", &self.buffer_type())
             .field("address", &self.address)
             .field("pitch", &self.pitch)
             .field("width", &self.width)
@@ -222,7 +252,7 @@ impl PartialEq for FramebufferTag {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 #[allow(clippy::upper_case_acronyms)]
-enum FramebufferTypeId {
+pub enum FramebufferTypeId {
     Indexed = 0,
     RGB = 1,
     Text = 2,
@@ -238,6 +268,16 @@ impl TryFrom<u8> for FramebufferTypeId {
             1 => Ok(Self::RGB),
             2 => Ok(Self::Text),
             val => Err(UnknownFramebufferType(val)),
+        }
+    }
+}
+
+impl From<FramebufferType<'_>> for FramebufferTypeId {
+    fn from(value: FramebufferType) -> Self {
+        match value {
+            FramebufferType::Indexed { .. } => Self::Indexed,
+            FramebufferType::RGB { .. } => Self::RGB,
+            FramebufferType::Text => Self::Text,
         }
     }
 }
@@ -269,35 +309,6 @@ pub enum FramebufferType<'a> {
     Text,
 }
 
-#[cfg(feature = "builder")]
-impl<'a> FramebufferType<'a> {
-    fn to_bytes(&self) -> Vec<u8> {
-        let mut v = Vec::new();
-        match self {
-            FramebufferType::Indexed { palette } => {
-                v.extend(0u8.to_ne_bytes()); // type
-                v.extend(0u16.to_ne_bytes()); // reserved
-                v.extend((palette.len() as u32).to_ne_bytes());
-                for color in palette.iter() {
-                    v.extend(color.as_bytes());
-                }
-            }
-            FramebufferType::RGB { red, green, blue } => {
-                v.extend(1u8.to_ne_bytes()); // type
-                v.extend(0u16.to_ne_bytes()); // reserved
-                v.extend(red.as_bytes());
-                v.extend(green.as_bytes());
-                v.extend(blue.as_bytes());
-            }
-            FramebufferType::Text => {
-                v.extend(2u8.to_ne_bytes()); // type
-                v.extend(0u16.to_ne_bytes()); // reserved
-            }
-        }
-        v
-    }
-}
-
 /// An RGB color type field.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
@@ -308,9 +319,6 @@ pub struct FramebufferField {
     /// Color mask size.
     pub size: u8,
 }
-
-#[cfg(feature = "builder")]
-impl AsBytes for FramebufferField {}
 
 /// A framebuffer color descriptor in the palette.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -325,9 +333,6 @@ pub struct FramebufferColor {
     /// The Blue component of the color.
     pub blue: u8,
 }
-
-#[cfg(feature = "builder")]
-impl AsBytes for FramebufferColor {}
 
 /// Error when an unknown [`FramebufferTypeId`] is found.
 #[derive(Debug, Copy, Clone, Display, PartialEq, Eq)]
@@ -345,5 +350,12 @@ mod tests {
     #[test]
     fn test_size() {
         assert_eq!(mem::size_of::<FramebufferColor>(), 3)
+    }
+
+    #[test]
+    #[cfg(feature = "builder")]
+    fn create_new() {
+        let tag = FramebufferTag::new(0x1000, 1, 1024, 1024, 8, FramebufferTypeId::Indexed);
+        dbg!(tag);
     }
 }

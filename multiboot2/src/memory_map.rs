@@ -6,14 +6,13 @@ pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
 pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
 
 use crate::tag::TagHeader;
-use crate::{TagTrait, TagType, TagTypeId};
+use crate::{TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use core::mem;
+use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
-use {crate::new_boxed, alloc::boxed::Box, core::slice};
-
-const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u32>();
+use {alloc::boxed::Box, core::slice, multiboot2_common::new_boxed};
 
 /// This tag provides an initial host memory map (legacy boot, not UEFI).
 ///
@@ -39,14 +38,15 @@ impl MemoryMapTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(areas: &[MemoryArea]) -> Box<Self> {
-        let entry_size = mem::size_of::<MemoryArea>().to_ne_bytes();
+        let header = TagHeader::new(Self::ID, 0);
+        let entry_size = (mem::size_of::<MemoryArea>() as u32).to_ne_bytes();
         let entry_version = 0_u32.to_ne_bytes();
         let areas = {
             let ptr = areas.as_ptr().cast::<u8>();
             let len = mem::size_of_val(areas);
             unsafe { slice::from_raw_parts(ptr, len) }
         };
-        new_boxed(&[&entry_size, &entry_version, areas])
+        new_boxed(header, &[&entry_size, &entry_version, areas])
     }
 
     /// Returns the entry size.
@@ -73,15 +73,23 @@ impl MemoryMapTag {
     }
 }
 
-impl TagTrait for MemoryMapTag {
-    const ID: TagType = TagType::Mmap;
+impl MaybeDynSized for MemoryMapTag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u32>();
 
     fn dst_len(header: &TagHeader) -> usize {
-        assert!(header.size as usize >= METADATA_SIZE);
-        let size = header.size as usize - METADATA_SIZE;
+        assert!(header.size as usize >= Self::BASE_SIZE);
+        let size = header.size as usize - Self::BASE_SIZE;
         assert_eq!(size % mem::size_of::<MemoryArea>(), 0);
         size / mem::size_of::<MemoryArea>()
     }
+}
+
+impl Tag for MemoryMapTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::Mmap;
 }
 
 /// A descriptor for an available or taken area of physical memory.
@@ -282,13 +290,19 @@ impl BasicMemoryInfoTag {
     }
 }
 
-impl TagTrait for BasicMemoryInfoTag {
-    const ID: TagType = TagType::BasicMeminfo;
+impl MaybeDynSized for BasicMemoryInfoTag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = mem::size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
 }
 
-const EFI_METADATA_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
+impl Tag for BasicMemoryInfoTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::BasicMeminfo;
+}
 
 /// EFI memory map tag. The embedded [`EFIMemoryDesc`]s follows the EFI
 /// specification.
@@ -337,10 +351,11 @@ impl EFIMemoryMapTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new_from_map(desc_size: u32, desc_version: u32, efi_mmap: &[u8]) -> Box<Self> {
+        let header = TagHeader::new(Self::ID, 0);
         assert_ne!(desc_size, 0);
         let desc_size = desc_size.to_ne_bytes();
         let desc_version = desc_version.to_ne_bytes();
-        new_boxed(&[&desc_size, &desc_version, efi_mmap])
+        new_boxed(header, &[&desc_size, &desc_version, efi_mmap])
     }
 
     /// Returns an iterator over the provided memory areas.
@@ -376,13 +391,21 @@ impl Debug for EFIMemoryMapTag {
     }
 }
 
-impl TagTrait for EFIMemoryMapTag {
-    const ID: TagType = TagType::EfiMmap;
+impl MaybeDynSized for EFIMemoryMapTag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
 
     fn dst_len(header: &TagHeader) -> usize {
-        assert!(header.size as usize >= EFI_METADATA_SIZE);
-        header.size as usize - EFI_METADATA_SIZE
+        assert!(header.size as usize >= Self::BASE_SIZE);
+        header.size as usize - Self::BASE_SIZE
     }
+}
+
+impl Tag for EFIMemoryMapTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::EfiMmap;
 }
 
 /// An iterator over the EFI memory areas emitting [`EFIMemoryDesc`] items.
@@ -443,7 +466,17 @@ mod tests {
     use std::mem::size_of;
 
     #[test]
-    fn construction_and_parsing() {
+    fn test_create_old_mmap() {
+        let _mmap = MemoryMapTag::new(&[]);
+        let mmap = MemoryMapTag::new(&[
+            MemoryArea::new(0x1000, 0x2000, MemoryAreaType::Available),
+            MemoryArea::new(0x2000, 0x3000, MemoryAreaType::Available),
+        ]);
+        dbg!(mmap);
+    }
+
+    #[test]
+    fn efi_construct_and_parse() {
         let descs = [
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::CONVENTIONAL,
@@ -474,7 +507,7 @@ mod tests {
     /// This is taken from the uefi-rs repository. See
     /// <https://github.com/rust-osdev/uefi-rs/pull/1175> for more info.
     #[test]
-    fn test_real_data() {
+    fn efi_test_real_data() {
         const DESC_SIZE: u32 = 48;
         const DESC_VERSION: u32 = 1;
         /// Sample with 10 entries of a real UEFI memory map extracted from our

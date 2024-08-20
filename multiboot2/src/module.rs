@@ -1,13 +1,12 @@
 //! Module for [`ModuleTag`].
 
-use crate::tag::{TagHeader, TagIter};
-use crate::{parse_slice_as_string, StringError, TagTrait, TagType};
+use crate::tag::TagHeader;
+use crate::{parse_slice_as_string, StringError, TagIter, TagType};
 use core::fmt::{Debug, Formatter};
 use core::mem;
+use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
-use {crate::new_boxed, alloc::boxed::Box};
-
-const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u32>();
+use {alloc::boxed::Box, multiboot2_common::new_boxed};
 
 /// The module tag can occur multiple times and specifies passed boot modules
 /// (blobs in memory). The tag itself doesn't include the blog, but references
@@ -27,6 +26,7 @@ impl ModuleTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(start: u32, end: u32, cmdline: &str) -> Box<Self> {
+        let header = TagHeader::new(Self::ID, 0);
         assert!(end > start, "must have a size");
 
         let start = start.to_ne_bytes();
@@ -34,9 +34,9 @@ impl ModuleTag {
         let cmdline = cmdline.as_bytes();
 
         if cmdline.ends_with(&[0]) {
-            new_boxed(&[&start, &end, cmdline])
+            new_boxed(header, &[&start, &end, cmdline])
         } else {
-            new_boxed(&[&start, &end, cmdline, &[0]])
+            new_boxed(header, &[&start, &end, cmdline, &[0]])
         }
     }
 
@@ -72,13 +72,21 @@ impl ModuleTag {
     }
 }
 
-impl TagTrait for ModuleTag {
-    const ID: TagType = TagType::Module;
+impl MaybeDynSized for ModuleTag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u32>();
 
     fn dst_len(header: &TagHeader) -> usize {
-        assert!(header.size as usize >= METADATA_SIZE);
-        header.size as usize - METADATA_SIZE
+        assert!(header.size as usize >= Self::BASE_SIZE);
+        header.size as usize - Self::BASE_SIZE
     }
+}
+
+impl Tag for ModuleTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::Module;
 }
 
 impl Debug for ModuleTag {
@@ -128,9 +136,9 @@ impl<'a> Debug for ModuleIter<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tag::{GenericTag, TagBytesRef};
-    use crate::test_util::AlignedBytes;
+    use crate::GenericInfoTag;
     use core::borrow::Borrow;
+    use multiboot2_common::test_utils::AlignedBytes;
 
     #[rustfmt::skip]
     fn get_bytes() -> AlignedBytes<24> {
@@ -151,8 +159,7 @@ mod tests {
     #[test]
     fn test_parse_str() {
         let bytes = get_bytes();
-        let bytes = TagBytesRef::try_from(bytes.borrow()).unwrap();
-        let tag = GenericTag::ref_from(bytes);
+        let tag = GenericInfoTag::ref_from_slice(bytes.borrow()).unwrap();
         let tag = tag.cast::<ModuleTag>();
         assert_eq!(tag.header.typ, TagType::Module);
         assert_eq!(tag.cmdline(), Ok("hello"));
@@ -163,14 +170,16 @@ mod tests {
     #[cfg(feature = "builder")]
     fn test_build_str() {
         let tag = ModuleTag::new(0xff00, 0xffff, "hello");
-        let bytes = tag.as_bytes();
-        assert_eq!(bytes, &get_bytes()[..tag.size()]);
+        let bytes = tag.as_bytes().as_ref();
+        let bytes = &bytes[..tag.header.size as usize];
+        assert_eq!(bytes, &get_bytes()[..tag.header().size as usize]);
         assert_eq!(tag.cmdline(), Ok("hello"));
 
         // With terminating null.
         let tag = ModuleTag::new(0xff00, 0xffff, "hello\0");
-        let bytes = tag.as_bytes();
-        assert_eq!(bytes, &get_bytes()[..tag.size()]);
+        let bytes = tag.as_bytes().as_ref();
+        let bytes = &bytes[..tag.header.size as usize];
+        assert_eq!(bytes, &get_bytes()[..tag.header().size as usize]);
         assert_eq!(tag.cmdline(), Ok("hello"));
 
         // test also some bigger message

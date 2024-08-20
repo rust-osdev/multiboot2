@@ -1,6 +1,8 @@
 //! Module for [`EndTag`].
 
-use crate::{TagHeader, TagTrait, TagType, TagTypeId};
+use crate::{TagHeader, TagType, TagTypeId};
+use core::mem;
+use multiboot2_common::{MaybeDynSized, Tag};
 
 /// The end tag ends the information struct.
 #[derive(Debug)]
@@ -19,10 +21,18 @@ impl Default for EndTag {
     }
 }
 
-impl TagTrait for EndTag {
-    const ID: TagType = TagType::End;
+impl MaybeDynSized for EndTag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = mem::size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
+}
+
+impl Tag for EndTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::End;
 }
 
 #[cfg(test)]
