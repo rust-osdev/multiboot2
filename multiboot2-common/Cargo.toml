@@ -26,9 +26,15 @@ documentation = "https://docs.rs/multiboot2-common"
 #rust-version = "1.70"
 
 [features]
+default = ["builder"]
+alloc = []
+builder = ["alloc"]
+unstable = []
 
 
 [dependencies]
+derive_more.workspace = true
+ptr_meta.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
