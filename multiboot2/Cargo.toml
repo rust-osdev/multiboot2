@@ -46,7 +46,7 @@ bitflags.workspace = true
 derive_more.workspace = true
 log.workspace = true
 ptr_meta.workspace = true
-multiboot2-common = { version = "0.1.0", default-features = false }
+multiboot2-common = { version = "0.1.1", default-features = false }
 
 # We only use a very basic type definition from this crate. To prevent MSRV
 # bumps from uefi-raw, I restrict this here. Upstream users are likely to have
