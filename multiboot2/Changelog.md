@@ -18,6 +18,8 @@ place, please head to the documentation of `multiboot2-common`.
 - **Breaking:** The trait `TagTrait` was removed and was replaced by a new `Tag`
   trait coming from `multiboot2-common`. This only affects you if you provide
   custom tag types for the library.
+- **Breaking:** The error type returned by `BootInformation::load` has been
+  changed.
 
 **General Note on Safety and UB (TL;DR: Crate is Safe)**
 

@@ -4,10 +4,12 @@ use crate::{
     HeaderTagType, InformationRequestHeaderTag, ModuleAlignHeaderTag, RelocatableHeaderTag,
     TagIter,
 };
+#[cfg(feature = "unstable")]
+use core::error::Error;
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 use core::ptr::NonNull;
-use multiboot2_common::{DynSizedStructure, Header, Tag, ALIGNMENT};
+use multiboot2_common::{DynSizedStructure, Header, MemoryError, Tag, ALIGNMENT};
 
 /// Magic value for a [`Multiboot2Header`], as defined by the spec.
 pub const MAGIC: u32 = 0xe85250d6;
@@ -35,8 +37,8 @@ impl<'a> Multiboot2Header<'a> {
     /// This function may produce undefined behaviour, if the provided `addr` is not a valid
     /// Multiboot2 header pointer.
     pub unsafe fn load(ptr: *const Multiboot2BasicHeader) -> Result<Self, LoadError> {
-        let ptr = NonNull::new(ptr.cast_mut()).ok_or(LoadError::InvalidAddress)?;
-        let inner = DynSizedStructure::ref_from_ptr(ptr).map_err(|_e| LoadError::TooSmall)?;
+        let ptr = NonNull::new(ptr.cast_mut()).ok_or(LoadError::Memory(MemoryError::Null))?;
+        let inner = DynSizedStructure::ref_from_ptr(ptr).map_err(LoadError::Memory)?;
         let this = Self(inner);
 
         let header = this.0.header();
@@ -58,7 +60,7 @@ impl<'a> Multiboot2Header<'a> {
     /// If there is no header, it returns `None`.
     pub fn find_header(buffer: &[u8]) -> Result<Option<(&[u8], u32)>, LoadError> {
         if buffer.as_ptr().align_offset(ALIGNMENT) != 0 {
-            return Err(LoadError::InvalidAddress);
+            return Err(LoadError::Memory(MemoryError::WrongAlignment));
         }
 
         let mut windows = buffer[0..8192].windows(4);
@@ -70,7 +72,7 @@ impl<'a> Multiboot2Header<'a> {
                 if idx % 8 == 0 {
                     idx
                 } else {
-                    return Err(LoadError::InvalidAddress);
+                    return Err(LoadError::Memory(MemoryError::WrongAlignment));
                 }
             }
             None => return Ok(None),
@@ -87,7 +89,7 @@ impl<'a> Multiboot2Header<'a> {
         let header_length: usize = u32::from_le_bytes(
             windows
                 .next()
-                .ok_or(LoadError::TooSmall)?
+                .ok_or(LoadError::Memory(MemoryError::MissingPadding))?
                 .try_into()
                 .unwrap(), // 4 bytes are a u32
         )
@@ -221,22 +223,28 @@ impl Debug for Multiboot2Header<'_> {
     }
 }
 
-/// Errors that can occur when parsing a header from a slice.
-/// See [`Multiboot2Header::find_header`].
+/// Errors that occur when a chunk of memory can't be parsed as
+/// [`Multiboot2Header`].
 #[derive(Copy, Clone, Debug, derive_more::Display, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum LoadError {
-    /// The checksum does not match the data.
+    /// The provided checksum does not match the expected value.
     ChecksumMismatch,
-    /// The header is not properly 64-bit aligned (or a null pointer).
-    InvalidAddress,
     /// The header does not contain the correct magic number.
     MagicNotFound,
-    /// The header is truncated.
-    TooSmall,
+    /// The provided memory can't be parsed as [`Multiboot2Header`].
+    /// See [`MemoryError`].
+    Memory(MemoryError),
 }
 
 #[cfg(feature = "unstable")]
-impl core::error::Error for LoadError {}
+impl Error for LoadError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Memory(inner) => Some(inner),
+            _ => None,
+        }
+    }
+}
 
 /// The "basic" Multiboot2 header. This means only the properties, that are known during
 /// compile time. All other information are derived during runtime from the size property.

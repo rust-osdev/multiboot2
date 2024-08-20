@@ -84,7 +84,7 @@ mod vbe_info;
 
 pub use multiboot2_common::{DynSizedStructure, MaybeDynSized, Tag};
 
-pub use boot_information::{BootInformation, BootInformationHeader, MbiLoadError};
+pub use boot_information::{BootInformation, BootInformationHeader, LoadError};
 pub use boot_loader_name::BootLoaderNameTag;
 #[cfg(feature = "builder")]
 pub use builder::Builder;
@@ -1098,7 +1098,7 @@ mod tests {
     /// This test succeeds if it compiles.
     fn mbi_load_error_implements_error() {
         fn consumer<E: core::error::Error>(_e: E) {}
-        consumer(MbiLoadError::IllegalAddress)
+        consumer(LoadError::NoEndTag)
     }
 
     /// Example for a custom tag.

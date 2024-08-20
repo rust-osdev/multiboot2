@@ -225,7 +225,7 @@ impl<H: Header> DynSizedStructure<H> {
         let hdr = unsafe { &*ptr };
 
         if hdr.payload_len() > bytes.len() {
-            return Err(MemoryError::InvalidHeaderSize);
+            return Err(MemoryError::InvalidReportedTotalSize);
         }
 
         // At this point we know that the memory slice fulfills the base
@@ -308,14 +308,14 @@ pub enum MemoryError {
     WrongAlignment,
     /// The memory must cover at least the length of the sized structure header
     /// type.
-    MinLengthNotSatisfied,
+    ShorterThanHeader,
     /// The buffer misses the terminating padding to the next alignment
     /// boundary. The padding is relevant to satisfy Rustc/Miri, but also the
     /// spec mandates that the padding is added.
     MissingPadding,
     /// The size-property has an illegal value that can't be fulfilled with the
     /// given bytes.
-    InvalidHeaderSize,
+    InvalidReportedTotalSize,
 }
 
 #[cfg(feature = "unstable")]

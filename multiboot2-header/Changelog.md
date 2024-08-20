@@ -13,6 +13,8 @@ place, please head to the documentation of `multiboot2-common`.
 - **Breaking** All functions that returns something useful are now `#[must_use]`
 - **Breaking** The builder type is now just called `Builder`. This needs the
   `builder` feature.
+- **Breaking:** The error type returned by `Multiboot2Header::load` has been
+  changed.
 - Updated to latest `multiboot2` dependency
 
 ## 0.4.0 (2024-05-01)

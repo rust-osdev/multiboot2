@@ -22,7 +22,7 @@ impl<'a, H: Header> TryFrom<&'a [u8]> for BytesRef<'a, H> {
 
     fn try_from(bytes: &'a [u8]) -> Result<Self, Self::Error> {
         if bytes.len() < mem::size_of::<H>() {
-            return Err(MemoryError::MinLengthNotSatisfied);
+            return Err(MemoryError::ShorterThanHeader);
         }
         // Doesn't work as expected: if align_of_val(&value[0]) < ALIGNMENT {
         if bytes.as_ptr().align_offset(ALIGNMENT) != 0 {
@@ -57,13 +57,13 @@ mod tests {
         let empty: &[u8] = &[];
         assert_eq!(
             BytesRef::<'_, DummyTestHeader>::try_from(empty),
-            Err(MemoryError::MinLengthNotSatisfied)
+            Err(MemoryError::ShorterThanHeader)
         );
 
         let slice = &[0_u8, 1, 2, 3, 4, 5, 6];
         assert_eq!(
             BytesRef::<'_, DummyTestHeader>::try_from(&slice[..]),
-            Err(MemoryError::MinLengthNotSatisfied)
+            Err(MemoryError::ShorterThanHeader)
         );
 
         let slice = AlignedBytes([0_u8, 1, 2, 3, 4, 5, 6, 7, 0, 0, 0]);
