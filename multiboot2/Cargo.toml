@@ -1,10 +1,10 @@
 [package]
 name = "multiboot2"
 description = """
-Library that assists parsing the Multiboot2 Information Structure (MBI) from
-Multiboot2-compliant bootloaders, such as GRUB. It supports all tags from the
-specification including full support for the sections of ELF files. This library
-is `no_std` and can be used in a Multiboot2-kernel.
+Convenient and safe parsing of Multiboot2 Information Structures (MBI) and its
+corresponding tags. Usable in `no_std` environments, such as a kernel. An
+optional builder feature also allows the construction of the corresponding
+structures.
 """
 version = "0.22.0"
 authors = [
