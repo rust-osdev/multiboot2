@@ -1,6 +1,6 @@
 # CHANGELOG for crate `multiboot2-header`
 
-## v0.5.0
+## v0.5.0 (2024-05-20)
 
 This release contains a major refactoring of the internals, guaranteeing
 even more sanity checks for correct behaviour and lack of UB. In this release,
