@@ -280,8 +280,9 @@ impl Builder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::framebuffer::FramebufferTypeId;
-    use crate::{BootInformation, MemoryArea, MemoryAreaType, VBEControlInfo, VBEModeInfo};
+    use crate::{
+        BootInformation, FramebufferType, MemoryArea, MemoryAreaType, VBEControlInfo, VBEModeInfo,
+    };
     use uefi_raw::table::boot::MemoryDescriptor;
 
     #[test]
@@ -312,7 +313,7 @@ mod tests {
                 756,
                 1024,
                 8,
-                FramebufferTypeId::Text,
+                FramebufferType::Text,
             ))
             .elf_sections(ElfSectionsTag::new(0, 32, 0, &[]))
             .efi32(EFISdt32Tag::new(0x1000))

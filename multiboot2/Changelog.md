@@ -2,7 +2,30 @@
 
 ## Unreleased
 
--
+If you are interested in the internals of the major refactorings recently taken
+place, please head to the documentation of `multiboot2-common`.
+
+- **Breaking:** The builder type is now just called `Builder`. This needs the
+  `builder` feature.
+- **Breaking:** The framebuffer tag was refactored and several bugs, memory
+- issues, and UB were fixed. It is now safe to use this, but some existing
+  usages might break and need to be slightly adapted.
+- **Breaking:** The trait `TagTrait` was removed and was replaced by a new `Tag`
+  trait coming from `multiboot2-common`. This only affects you if you provide
+  custom tag types for the library.
+
+**General Note on Safety and UB (TL;DR: Crate is Safe)**
+
+The major refactorings of release `0.21` and `0.22` were an incredible step
+forward in code quality and memory safety. We have a comprehensive test coverage
+and all tests are passed by Miri. It might be that by using fuzzing, more
+corner and niche cases where UB can occur get uncovered. However, for every-day
+usage with sane bootloaders that do not intentionally create malformed tags, you
+are now absolutely good to go.
+
+Sorry for all the UB that silently slept insight many parts of the code base.
+This is a community project that has grown over the years. But now, the code
+base is in excellent shape!
 
 ## 0.21.0 (2024-08-17)
 

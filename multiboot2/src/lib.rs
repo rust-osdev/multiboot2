@@ -285,7 +285,7 @@ mod tests {
         assert_eq!(fbi.width(), 1280);
         assert_eq!(fbi.height(), 720);
         assert_eq!(fbi.bpp(), 32);
-        /*assert_eq!(
+        assert_eq!(
             fbi.buffer_type().unwrap(),
             FramebufferType::RGB {
                 red: FramebufferField {
@@ -301,15 +301,15 @@ mod tests {
                     size: 8,
                 },
             }
-        );*/
+        );
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn framebuffer_tag_indexed() {
         // indexed mode test:
         // this is synthetic, as I can't get QEMU
         // to run in indexed color mode.
+        #[rustfmt::skip]
         let bytes = AlignedBytes([
             64, 0, 0, 0, // total size
             0, 0, 0, 0, // reserved
@@ -320,10 +320,16 @@ mod tests {
             0, 20, 0, 0, // framebuffer pitch
             0, 5, 0, 0, // framebuffer width
             208, 2, 0, 0, // framebuffer height
-            32, 0, 0, 0, // framebuffer bpp, type, reserved word
-            4, 0, 0, 0, // framebuffer palette length
-            255, 0, 0, 0, // framebuffer palette
-            255, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, // end tag type
+            32, // framebuffer bpp
+            0, // framebuffer type
+            0, 0, // reserved word
+            4, 0, // framebuffer palette length
+            255, 0, 0, // framebuffer palette: 1/3
+            0, 255, 0, // framebuffer palette: 2/3
+            0, 0, 255, // framebuffer palette: 3/3
+            3, 7, 73, // framebuffer palette: 4/4
+            0, 0, // padding  for 8-byte alignment
+            0, 0, 0, 0, // end tag type
             8, 0, 0, 0, // end tag size
         ]);
         let ptr = bytes.0.as_ptr();
@@ -343,7 +349,7 @@ mod tests {
         assert_eq!(fbi.width(), 1280);
         assert_eq!(fbi.height(), 720);
         assert_eq!(fbi.bpp(), 32);
-        /*match fbi.buffer_type().unwrap() {
+        match fbi.buffer_type().unwrap() {
             FramebufferType::Indexed { palette } => assert_eq!(
                 palette,
                 [
@@ -363,14 +369,14 @@ mod tests {
                         blue: 255,
                     },
                     FramebufferColor {
-                        red: 0,
-                        green: 0,
-                        blue: 0,
+                        red: 3,
+                        green: 7,
+                        blue: 73,
                     }
                 ]
             ),
             _ => panic!("Expected indexed framebuffer type."),
-        }*/
+        }
     }
 
     #[test]
@@ -944,7 +950,7 @@ mod tests {
         assert_eq!(fbi.width(), 80);
         assert_eq!(fbi.height(), 25);
         assert_eq!(fbi.bpp(), 16);
-        //assert_eq!(fbi.buffer_type(), Ok(FramebufferType::Text));
+        assert_eq!(fbi.buffer_type(), Ok(FramebufferType::Text));
     }
 
     #[test]
