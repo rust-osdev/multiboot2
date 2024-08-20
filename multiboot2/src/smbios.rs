@@ -1,13 +1,12 @@
 //! Module for [`SmbiosTag`].
 
 use crate::tag::TagHeader;
-use crate::{TagTrait, TagType};
+use crate::TagType;
 use core::fmt::Debug;
 use core::mem;
+use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
-use {crate::new_boxed, alloc::boxed::Box};
-
-const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + mem::size_of::<u8>() * 8;
+use {alloc::boxed::Box, multiboot2_common::new_boxed};
 
 /// This tag contains a copy of SMBIOS tables as well as their version.
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -25,8 +24,9 @@ impl SmbiosTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(major: u8, minor: u8, tables: &[u8]) -> Box<Self> {
+        let header = TagHeader::new(Self::ID, 0);
         let reserved = [0, 0, 0, 0, 0, 0];
-        new_boxed(&[&[major, minor], &reserved, tables])
+        new_boxed(header, &[&[major, minor], &reserved, tables])
     }
 
     /// Returns the major number.
@@ -48,13 +48,21 @@ impl SmbiosTag {
     }
 }
 
-impl TagTrait for SmbiosTag {
-    const ID: TagType = TagType::Smbios;
+impl MaybeDynSized for SmbiosTag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = mem::size_of::<TagHeader>() + mem::size_of::<u8>() * 8;
 
     fn dst_len(header: &TagHeader) -> usize {
-        assert!(header.size as usize >= METADATA_SIZE);
-        header.size as usize - METADATA_SIZE
+        assert!(header.size as usize >= Self::BASE_SIZE);
+        header.size as usize - Self::BASE_SIZE
     }
+}
+
+impl Tag for SmbiosTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::Smbios;
 }
 
 impl Debug for SmbiosTag {
@@ -71,9 +79,9 @@ impl Debug for SmbiosTag {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tag::{GenericTag, TagBytesRef};
-    use crate::test_util::AlignedBytes;
+    use crate::GenericInfoTag;
     use core::borrow::Borrow;
+    use multiboot2_common::test_utils::AlignedBytes;
 
     #[rustfmt::skip]
     fn get_bytes() -> AlignedBytes<32> {
@@ -97,8 +105,7 @@ mod tests {
     #[test]
     fn test_parse() {
         let bytes = get_bytes();
-        let bytes = TagBytesRef::try_from(bytes.borrow()).unwrap();
-        let tag = GenericTag::ref_from(bytes);
+        let tag = GenericInfoTag::ref_from_slice(bytes.borrow()).unwrap();
         let tag = tag.cast::<SmbiosTag>();
         assert_eq!(tag.header.typ, TagType::Smbios);
         assert_eq!(tag.major, 7);
@@ -111,7 +118,8 @@ mod tests {
     #[cfg(feature = "builder")]
     fn test_build() {
         let tag = SmbiosTag::new(7, 42, &[0, 1, 2, 3, 4, 5, 6, 7, 8]);
-        let bytes = tag.as_bytes();
-        assert_eq!(bytes, &get_bytes()[..tag.size()]);
+        let bytes = tag.as_bytes().as_ref();
+        let bytes = &bytes[..tag.header.size as usize];
+        assert_eq!(bytes, &get_bytes()[..tag.header.size as usize]);
     }
 }

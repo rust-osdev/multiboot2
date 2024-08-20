@@ -13,12 +13,13 @@
 //!
 
 use crate::tag::TagHeader;
-use crate::{TagTrait, TagType};
+use crate::TagType;
 #[cfg(feature = "builder")]
 use core::mem::size_of;
 use core::slice;
 use core::str;
 use core::str::Utf8Error;
+use multiboot2_common::{MaybeDynSized, Tag};
 
 const RSDPV1_LENGTH: usize = 20;
 
@@ -35,19 +36,17 @@ pub struct RsdpV1Tag {
 }
 
 impl RsdpV1Tag {
+    /// Signature of RSDP v1.
+    pub const SIGNATURE: [u8; 8] = *b"RSD PTR ";
+
+    const BASE_SIZE: usize = size_of::<TagHeader>() + 16 + 4;
+
     /// Constructs a new tag.
-    #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new(
-        signature: [u8; 8],
-        checksum: u8,
-        oem_id: [u8; 6],
-        revision: u8,
-        rsdt_address: u32,
-    ) -> Self {
+    pub fn new(checksum: u8, oem_id: [u8; 6], revision: u8, rsdt_address: u32) -> Self {
         Self {
-            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
-            signature,
+            header: TagHeader::new(Self::ID, Self::BASE_SIZE as u32),
+            signature: Self::SIGNATURE,
             checksum,
             oem_id,
             revision,
@@ -91,10 +90,18 @@ impl RsdpV1Tag {
     }
 }
 
-impl TagTrait for RsdpV1Tag {
-    const ID: TagType = TagType::AcpiV1;
+impl MaybeDynSized for RsdpV1Tag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
+}
+
+impl Tag for RsdpV1Tag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::AcpiV1;
 }
 
 /// This tag contains a copy of RSDP as defined per ACPI 2.0 or later specification.
@@ -115,12 +122,16 @@ pub struct RsdpV2Tag {
 }
 
 impl RsdpV2Tag {
+    /// Signature of RSDP v2.
+    pub const SIGNATURE: [u8; 8] = *b"RSD PTR ";
+
+    const BASE_SIZE: usize =
+        size_of::<TagHeader>() + 16 + 2 * size_of::<u32>() + size_of::<u64>() + 4;
+
     /// Constructs a new tag.
-    #[cfg(feature = "builder")]
     #[allow(clippy::too_many_arguments)]
     #[must_use]
     pub fn new(
-        signature: [u8; 8],
         checksum: u8,
         oem_id: [u8; 6],
         revision: u8,
@@ -130,8 +141,8 @@ impl RsdpV2Tag {
         ext_checksum: u8,
     ) -> Self {
         Self {
-            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
-            signature,
+            header: TagHeader::new(Self::ID, Self::BASE_SIZE as u32),
+            signature: Self::SIGNATURE,
             checksum,
             oem_id,
             revision,
@@ -188,8 +199,16 @@ impl RsdpV2Tag {
     }
 }
 
-impl TagTrait for RsdpV2Tag {
-    const ID: TagType = TagType::AcpiV2;
+impl MaybeDynSized for RsdpV2Tag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
+}
+
+impl Tag for RsdpV2Tag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::AcpiV2;
 }

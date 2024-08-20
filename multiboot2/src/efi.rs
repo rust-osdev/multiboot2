@@ -7,8 +7,9 @@
 //! - [`EFIBootServicesNotExitedTag`]
 
 use crate::tag::TagHeader;
-use crate::{TagTrait, TagType};
+use crate::TagType;
 use core::mem::size_of;
+use multiboot2_common::{MaybeDynSized, Tag};
 
 /// EFI system table in 32 bit mode tag.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -19,11 +20,13 @@ pub struct EFISdt32Tag {
 }
 
 impl EFISdt32Tag {
+    const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
+
     /// Create a new tag to pass the EFI32 System Table pointer.
     #[must_use]
     pub fn new(pointer: u32) -> Self {
         Self {
-            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
+            header: TagHeader::new(Self::ID, Self::BASE_SIZE as u32),
             pointer,
         }
     }
@@ -35,10 +38,18 @@ impl EFISdt32Tag {
     }
 }
 
-impl TagTrait for EFISdt32Tag {
-    const ID: TagType = TagType::Efi32;
+impl MaybeDynSized for EFISdt32Tag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
+}
+
+impl Tag for EFISdt32Tag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::Efi32;
 }
 
 /// EFI system table in 64 bit mode tag.
@@ -66,10 +77,18 @@ impl EFISdt64Tag {
     }
 }
 
-impl TagTrait for EFISdt64Tag {
-    const ID: TagType = TagType::Efi64;
+impl MaybeDynSized for EFISdt64Tag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
+}
+
+impl Tag for EFISdt64Tag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::Efi64;
 }
 
 /// Tag that contains the pointer to the boot loader's UEFI image handle
@@ -82,12 +101,13 @@ pub struct EFIImageHandle32Tag {
 }
 
 impl EFIImageHandle32Tag {
+    const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
+
     /// Constructs a new tag.
-    #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(pointer: u32) -> Self {
         Self {
-            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
+            header: TagHeader::new(Self::ID, Self::BASE_SIZE as u32),
             pointer,
         }
     }
@@ -99,10 +119,18 @@ impl EFIImageHandle32Tag {
     }
 }
 
-impl TagTrait for EFIImageHandle32Tag {
-    const ID: TagType = TagType::Efi32Ih;
+impl MaybeDynSized for EFIImageHandle32Tag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
+}
+
+impl Tag for EFIImageHandle32Tag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::Efi32Ih;
 }
 
 /// Tag that contains the pointer to the boot loader's UEFI image handle
@@ -116,7 +144,6 @@ pub struct EFIImageHandle64Tag {
 
 impl EFIImageHandle64Tag {
     /// Constructs a new tag.
-    #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(pointer: u64) -> Self {
         Self {
@@ -132,10 +159,18 @@ impl EFIImageHandle64Tag {
     }
 }
 
-impl TagTrait for EFIImageHandle64Tag {
-    const ID: TagType = TagType::Efi64Ih;
+impl MaybeDynSized for EFIImageHandle64Tag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
+}
+
+impl Tag for EFIImageHandle64Tag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::Efi64Ih;
 }
 
 /// EFI ExitBootServices was not called tag. This tag has no payload and is
@@ -148,14 +183,12 @@ pub struct EFIBootServicesNotExitedTag {
 
 impl EFIBootServicesNotExitedTag {
     /// Constructs a new tag.
-    #[cfg(feature = "builder")]
     #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-#[cfg(feature = "builder")]
 impl Default for EFIBootServicesNotExitedTag {
     fn default() -> Self {
         Self {
@@ -164,10 +197,18 @@ impl Default for EFIBootServicesNotExitedTag {
     }
 }
 
-impl TagTrait for EFIBootServicesNotExitedTag {
-    const ID: TagType = TagType::EfiBs;
+impl MaybeDynSized for EFIBootServicesNotExitedTag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
+}
+
+impl Tag for EFIBootServicesNotExitedTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::EfiBs;
 }
 
 #[cfg(all(test, feature = "builder"))]

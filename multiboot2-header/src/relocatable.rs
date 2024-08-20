@@ -1,7 +1,8 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
-use core::mem::size_of;
+use core::mem;
+use multiboot2_common::{MaybeDynSized, Tag};
 
 /// It contains load address placement suggestion for boot loader. Boot loader
 /// should follow it. ‘0’ means none, ‘1’ means load image at lowest possible address
@@ -20,7 +21,7 @@ pub enum RelocatableHeaderTagPreference {
 
 /// This tag indicates that the image is relocatable.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct RelocatableHeaderTag {
     header: HeaderTagHeader,
     /// Lowest possible physical address at which image should be loaded. The bootloader cannot load any part of image below this address
@@ -42,8 +43,11 @@ impl RelocatableHeaderTag {
         align: u32,
         preference: RelocatableHeaderTagPreference,
     ) -> Self {
-        let header =
-            HeaderTagHeader::new(HeaderTagType::Relocatable, flags, size_of::<Self>() as u32);
+        let header = HeaderTagHeader::new(
+            HeaderTagType::Relocatable,
+            flags,
+            mem::size_of::<Self>() as u32,
+        );
         Self {
             header,
             min_addr,
@@ -109,6 +113,19 @@ impl Debug for RelocatableHeaderTag {
             .field("preference", &{ self.preference })
             .finish()
     }
+}
+
+impl MaybeDynSized for RelocatableHeaderTag {
+    type Header = HeaderTagHeader;
+
+    const BASE_SIZE: usize = mem::size_of::<Self>();
+
+    fn dst_len(_header: &Self::Header) -> Self::Metadata {}
+}
+
+impl Tag for RelocatableHeaderTag {
+    type IDType = HeaderTagType;
+    const ID: HeaderTagType = HeaderTagType::Relocatable;
 }
 
 #[cfg(test)]

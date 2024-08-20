@@ -1,14 +1,13 @@
 //! Module for [`ElfSectionsTag`].
 
-use crate::{TagHeader, TagTrait, TagType};
+use crate::{TagHeader, TagType};
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use core::mem;
 use core::str::Utf8Error;
+use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
-use {crate::new_boxed, alloc::boxed::Box};
-
-const METADATA_SIZE: usize = mem::size_of::<TagHeader>() + 3 * mem::size_of::<u32>();
+use {alloc::boxed::Box, multiboot2_common::new_boxed};
 
 /// This tag contains the section header table from an ELF binary.
 // The sections iterator is provided via the [`ElfSectionsTag::sections`]
@@ -28,10 +27,14 @@ impl ElfSectionsTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(number_of_sections: u32, entry_size: u32, shndx: u32, sections: &[u8]) -> Box<Self> {
+        let header = TagHeader::new(Self::ID, 0);
         let number_of_sections = number_of_sections.to_ne_bytes();
         let entry_size = entry_size.to_ne_bytes();
         let shndx = shndx.to_ne_bytes();
-        new_boxed(&[&number_of_sections, &entry_size, &shndx, sections])
+        new_boxed(
+            header,
+            &[&number_of_sections, &entry_size, &shndx, sections],
+        )
     }
 
     /// Get an iterator of loaded ELF sections.
@@ -68,13 +71,21 @@ impl ElfSectionsTag {
     }
 }
 
-impl TagTrait for ElfSectionsTag {
-    const ID: TagType = TagType::ElfSections;
+impl MaybeDynSized for ElfSectionsTag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = mem::size_of::<TagHeader>() + 3 * mem::size_of::<u32>();
 
     fn dst_len(header: &TagHeader) -> usize {
-        assert!(header.size as usize >= METADATA_SIZE);
-        header.size as usize - METADATA_SIZE
+        assert!(header.size as usize >= Self::BASE_SIZE);
+        header.size as usize - Self::BASE_SIZE
     }
+}
+
+impl Tag for ElfSectionsTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::ElfSections;
 }
 
 impl Debug for ElfSectionsTag {

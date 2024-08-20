@@ -2,34 +2,16 @@
 //! headers, as well as a builder to build them at runtime. This library is
 //! `no_std` and can be used in bootloaders.
 //!
-//! # Example
+//! # Example: Parsing a Header
 //!
-//! ```rust
-//! use multiboot2_header::builder::{InformationRequestHeaderTagBuilder, HeaderBuilder};
-//! use multiboot2_header::{HeaderTagFlag, HeaderTagISA, MbiTagType, RelocatableHeaderTag, RelocatableHeaderTagPreference, Multiboot2Header};
+//! ```no_run
+//! use multiboot2_header::Multiboot2Header;
 //!
-//! // Small example that creates a Multiboot2 header and parses it afterwards.
-//!
-//! // We create a Multiboot2 header during runtime here. A practical example is that your
-//! // program gets the header from a file and parses it afterwards.
-//! let mb2_hdr_bytes = HeaderBuilder::new(HeaderTagISA::I386)
-//!     .relocatable_tag(RelocatableHeaderTag::new(
-//!         HeaderTagFlag::Required,
-//!         0x1337,
-//!         0xdeadbeef,
-//!         4096,
-//!         RelocatableHeaderTagPreference::None,
-//!     ))
-//!     .information_request_tag(
-//!         InformationRequestHeaderTagBuilder::new(HeaderTagFlag::Required)
-//!             .add_irs(&[MbiTagType::Cmdline, MbiTagType::BootLoaderName]),
-//!     )
-//!     .build();
-//!
-//! // Cast bytes in vector to Multiboot2 information structure
-//! let mb2_hdr = unsafe { Multiboot2Header::load(mb2_hdr_bytes.as_ptr().cast()) };
-//! println!("{:#?}", mb2_hdr);
-//!
+//! let ptr = 0x1337_0000 as *const u8 /* use real ptr here */;
+//! let mb2_hdr = unsafe { Multiboot2Header::load(ptr.cast()) }.unwrap();
+//! for _tag in mb2_hdr.iter() {
+//!     //
+//! }
 //! ```
 //!
 //! ## MSRV
@@ -62,6 +44,13 @@ extern crate alloc;
 #[cfg(test)]
 extern crate std;
 
+/// Iterator over the tags of a Multiboot2 boot information.
+pub type TagIter<'a> = multiboot2_common::TagIter<'a, HeaderTagHeader>;
+
+/// A generic version of all boot information tags.
+#[cfg(test)]
+pub type GenericHeaderTag = multiboot2_common::DynSizedStructure<HeaderTagHeader>;
+
 mod address;
 mod console;
 mod end;
@@ -77,7 +66,9 @@ mod tags;
 mod uefi_bs;
 
 #[cfg(feature = "builder")]
-pub mod builder;
+mod builder;
+
+pub use multiboot2_common::{DynSizedStructure, MaybeDynSized, Tag};
 
 pub use self::address::*;
 pub use self::console::*;
@@ -92,6 +83,8 @@ pub use self::module_align::*;
 pub use self::relocatable::*;
 pub use self::tags::*;
 pub use self::uefi_bs::*;
+#[cfg(feature = "builder")]
+pub use builder::Builder;
 
 /// Re-export of [`multiboot2::TagType`] from `multiboot2`-crate.
 pub use multiboot2::{TagType as MbiTagType, TagTypeId as MbiTagTypeId};

@@ -1,8 +1,9 @@
 //! Module for [`VBEInfoTag`].
 
-use crate::{TagHeader, TagTrait, TagType};
+use crate::{TagHeader, TagType};
 use core::fmt;
 use core::mem;
+use multiboot2_common::{MaybeDynSized, Tag};
 
 /// This tag contains VBE metadata, VBE controller information returned by the
 /// VBE Function 00h and VBE mode information returned by the VBE Function 01h.
@@ -20,7 +21,6 @@ pub struct VBEInfoTag {
 
 impl VBEInfoTag {
     /// Constructs a new tag.
-    #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(
         mode: u16,
@@ -83,10 +83,18 @@ impl VBEInfoTag {
     }
 }
 
-impl TagTrait for VBEInfoTag {
-    const ID: TagType = TagType::Vbe;
+impl MaybeDynSized for VBEInfoTag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = mem::size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
+}
+
+impl Tag for VBEInfoTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::Vbe;
 }
 
 /// VBE controller information.
@@ -153,6 +161,25 @@ impl fmt::Debug for VBEControlInfo {
                 self.oem_product_revision_ptr
             })
             .finish()
+    }
+}
+
+impl Default for VBEControlInfo {
+    fn default() -> Self {
+        Self {
+            signature: Default::default(),
+            version: 0,
+            oem_string_ptr: 0,
+            capabilities: Default::default(),
+            mode_list_ptr: 0,
+            total_memory: 0,
+            oem_software_revision: 0,
+            oem_vendor_name_ptr: 0,
+            oem_product_name_ptr: 0,
+            oem_product_revision_ptr: 0,
+            reserved: [0; 222],
+            oem_data: [0; 256],
+        }
     }
 }
 
@@ -283,10 +310,44 @@ impl fmt::Debug for VBEModeInfo {
     }
 }
 
+impl Default for VBEModeInfo {
+    fn default() -> Self {
+        Self {
+            mode_attributes: Default::default(),
+            window_a_attributes: Default::default(),
+            window_b_attributes: Default::default(),
+            window_granularity: 0,
+            window_size: 0,
+            window_a_segment: 0,
+            window_b_segment: 0,
+            window_function_ptr: 0,
+            pitch: 0,
+            resolution: (0, 0),
+            character_size: (0, 0),
+            number_of_planes: 0,
+            bpp: 0,
+            number_of_banks: 0,
+            memory_model: Default::default(),
+            bank_size: 0,
+            number_of_image_pages: 0,
+            reserved0: 0,
+            red_field: Default::default(),
+            green_field: Default::default(),
+            blue_field: Default::default(),
+            reserved_field: Default::default(),
+            direct_color_attributes: Default::default(),
+            framebuffer_base_ptr: 0,
+            offscreen_memory_offset: 0,
+            offscreen_memory_size: 0,
+            reserved1: [0; 206],
+        }
+    }
+}
+
 /// A VBE colour field.
 ///
 /// Describes the size and position of some colour capability.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, packed)]
 pub struct VBEField {
     /// The size, in bits, of the color components of a direct color pixel.
@@ -386,11 +447,12 @@ bitflags! {
 }
 
 /// The MemoryModel field specifies the general type of memory organization used in modes.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 #[allow(missing_docs)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum VBEMemoryModel {
+    #[default]
     Text = 0x00,
     CGAGraphics = 0x01,
     HerculesGraphics = 0x02,

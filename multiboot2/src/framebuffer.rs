@@ -1,52 +1,49 @@
 //! Module for [`FramebufferTag`].
 
 use crate::tag::TagHeader;
-use crate::{TagTrait, TagType, TagTypeId};
+use crate::TagType;
 use core::fmt::Debug;
 use core::mem;
 use core::slice;
 use derive_more::Display;
+use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
-use {crate::builder::AsBytes, crate::new_boxed, alloc::boxed::Box, alloc::vec::Vec};
+use {alloc::boxed::Box, multiboot2_common::new_boxed};
 
 /// Helper struct to read bytes from a raw pointer and increase the pointer
 /// automatically.
-struct Reader {
-    ptr: *const u8,
+struct Reader<'a> {
+    buffer: &'a [u8],
     off: usize,
 }
 
-impl Reader {
-    const fn new<T>(ptr: *const T) -> Self {
-        Self {
-            ptr: ptr as *const u8,
-            off: 0,
-        }
+impl<'a> Reader<'a> {
+    const fn new(buffer: &'a [u8]) -> Self {
+        Self { buffer, off: 0 }
     }
 
     fn read_u8(&mut self) -> u8 {
+        let val = self
+            .buffer
+            .get(self.off)
+            .cloned()
+            // This is not a solution I'm proud of, but at least it is safe.
+            // The whole framebuffer tag code originally is not from me.
+            // I hope someone from the community wants to improve this overall
+            // functionality someday.
+            .expect("Embedded framebuffer info should be properly sized and available");
         self.off += 1;
-        unsafe { *self.ptr.add(self.off - 1) }
+        val
     }
 
     fn read_u16(&mut self) -> u16 {
         self.read_u8() as u16 | (self.read_u8() as u16) << 8
     }
 
-    fn read_u32(&mut self) -> u32 {
-        self.read_u16() as u32 | (self.read_u16() as u32) << 16
-    }
-
-    fn current_address(&self) -> usize {
-        unsafe { self.ptr.add(self.off) as usize }
+    const fn current_ptr(&self) -> *const u8 {
+        unsafe { self.buffer.as_ptr().add(self.off) }
     }
 }
-
-const METADATA_SIZE: usize = mem::size_of::<TagTypeId>()
-    + 4 * mem::size_of::<u32>()
-    + mem::size_of::<u64>()
-    + mem::size_of::<u16>()
-    + 2 * mem::size_of::<u8>();
 
 /// The VBE Framebuffer information tag.
 #[derive(ptr_meta::Pointee, Eq)]
@@ -73,13 +70,16 @@ pub struct FramebufferTag {
     /// Contains number of bits per pixel.
     bpp: u8,
 
-    /// The type of framebuffer, one of: `Indexed`, `RGB` or `Text`.
-    type_no: u8,
+    /// The type of framebuffer. See [`FramebufferTypeId`].
+    // TODO: Strictly speaking this causes UB for invalid values. However, no
+    //  sane bootloader puts something illegal there at the moment. When we
+    //  refactor this (newtype pattern?), we should also streamline other
+    //  parts in the code base accordingly.
+    framebuffer_type: FramebufferTypeId,
 
-    // In the multiboot spec, it has this listed as a u8 _NOT_ a u16.
-    // Reading the GRUB2 source code reveals it is in fact a u16.
-    _reserved: u16,
+    _padding: u16,
 
+    /// This optional data and its meaning depend on the [`FramebufferTypeId`].
     buffer: [u8],
 }
 
@@ -95,13 +95,27 @@ impl FramebufferTag {
         bpp: u8,
         buffer_type: FramebufferType,
     ) -> Box<Self> {
+        let header = TagHeader::new(Self::ID, 0);
         let address = address.to_ne_bytes();
         let pitch = pitch.to_ne_bytes();
         let width = width.to_ne_bytes();
         let height = height.to_ne_bytes();
-        let bpp = bpp.to_ne_bytes();
-        let buffer_type = buffer_type.to_bytes();
-        new_boxed(&[&address, &pitch, &width, &height, &bpp, &buffer_type])
+        let buffer_type_id = buffer_type.id();
+        let padding = [0; 2];
+        let optional_buffer = buffer_type.serialize();
+        new_boxed(
+            header,
+            &[
+                &address,
+                &pitch,
+                &width,
+                &height,
+                &[bpp],
+                &[buffer_type_id as u8],
+                &padding,
+                &optional_buffer,
+            ],
+        )
     }
 
     /// Contains framebuffer physical address.
@@ -140,18 +154,31 @@ impl FramebufferTag {
 
     /// The type of framebuffer, one of: `Indexed`, `RGB` or `Text`.
     pub fn buffer_type(&self) -> Result<FramebufferType, UnknownFramebufferType> {
-        let mut reader = Reader::new(self.buffer.as_ptr());
-        let typ = FramebufferTypeId::try_from(self.type_no)?;
-        match typ {
+        let mut reader = Reader::new(&self.buffer);
+
+        // TODO: We should use the newtype pattern instead or so to properly
+        //  solve this.
+        let fb_type_raw = self.framebuffer_type as u8;
+        let fb_type = FramebufferTypeId::try_from(fb_type_raw)?;
+
+        match fb_type {
             FramebufferTypeId::Indexed => {
-                let num_colors = reader.read_u32();
-                // TODO static cast looks like UB?
-                let palette = unsafe {
-                    slice::from_raw_parts(
-                        reader.current_address() as *const FramebufferColor,
-                        num_colors as usize,
-                    )
-                } as &'static [FramebufferColor];
+                // TODO we can create a struct for this and implement
+                //  DynSizedStruct for it to leverage the already existing
+                //  functionality
+                let num_colors = reader.read_u16();
+
+                let palette = {
+                    // Ensure the slice can be created without causing UB
+                    assert_eq!(mem::size_of::<FramebufferColor>(), 3);
+
+                    unsafe {
+                        slice::from_raw_parts(
+                            reader.current_ptr().cast::<FramebufferColor>(),
+                            num_colors as usize,
+                        )
+                    }
+                };
                 Ok(FramebufferType::Indexed { palette })
             }
             FramebufferTypeId::RGB => {
@@ -181,13 +208,25 @@ impl FramebufferTag {
     }
 }
 
-impl TagTrait for FramebufferTag {
-    const ID: TagType = TagType::Framebuffer;
+impl MaybeDynSized for FramebufferTag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = mem::size_of::<TagHeader>()
+        + mem::size_of::<u64>()
+        + 3 * mem::size_of::<u32>()
+        + 2 * mem::size_of::<u8>()
+        + mem::size_of::<u16>();
 
     fn dst_len(header: &TagHeader) -> usize {
-        assert!(header.size as usize >= METADATA_SIZE);
-        header.size as usize - METADATA_SIZE
+        assert!(header.size as usize >= Self::BASE_SIZE);
+        header.size as usize - Self::BASE_SIZE
     }
+}
+
+impl Tag for FramebufferTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::Framebuffer;
 }
 
 impl Debug for FramebufferTag {
@@ -213,16 +252,16 @@ impl PartialEq for FramebufferTag {
             && self.width == { other.width }
             && self.height == { other.height }
             && self.bpp == { other.bpp }
-            && self.type_no == { other.type_no }
+            && self.framebuffer_type == { other.framebuffer_type }
             && self.buffer == other.buffer
     }
 }
 
-/// Helper struct for [`FramebufferType`].
+/// ABI-compatible framebuffer type.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 #[allow(clippy::upper_case_acronyms)]
-enum FramebufferTypeId {
+pub enum FramebufferTypeId {
     Indexed = 0,
     RGB = 1,
     Text = 2,
@@ -242,7 +281,18 @@ impl TryFrom<u8> for FramebufferTypeId {
     }
 }
 
-/// The type of framebuffer.
+impl From<FramebufferType<'_>> for FramebufferTypeId {
+    fn from(value: FramebufferType) -> Self {
+        match value {
+            FramebufferType::Indexed { .. } => Self::Indexed,
+            FramebufferType::RGB { .. } => Self::RGB,
+            FramebufferType::Text => Self::Text,
+        }
+    }
+}
+
+/// Structured accessory to the provided framebuffer type that is not ABI
+/// compatible.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FramebufferType<'a> {
     /// Indexed color.
@@ -269,32 +319,44 @@ pub enum FramebufferType<'a> {
     Text,
 }
 
-#[cfg(feature = "builder")]
 impl<'a> FramebufferType<'a> {
-    fn to_bytes(&self) -> Vec<u8> {
-        let mut v = Vec::new();
+    #[must_use]
+    #[cfg(feature = "builder")]
+    const fn id(&self) -> FramebufferTypeId {
+        match self {
+            FramebufferType::Indexed { .. } => FramebufferTypeId::Indexed,
+            FramebufferType::RGB { .. } => FramebufferTypeId::RGB,
+            FramebufferType::Text => FramebufferTypeId::Text,
+        }
+    }
+
+    #[must_use]
+    #[cfg(feature = "builder")]
+    fn serialize(&self) -> alloc::vec::Vec<u8> {
+        let mut data = alloc::vec::Vec::new();
         match self {
             FramebufferType::Indexed { palette } => {
-                v.extend(0u8.to_ne_bytes()); // type
-                v.extend(0u16.to_ne_bytes()); // reserved
-                v.extend((palette.len() as u32).to_ne_bytes());
-                for color in palette.iter() {
-                    v.extend(color.as_bytes());
+                // TODO we can create a struct for this and implement
+                //  DynSizedStruct for it to leverage the already existing
+                //  functionality
+                let num_colors = palette.len() as u16;
+                data.extend(&num_colors.to_ne_bytes());
+                for color in *palette {
+                    let serialized_color = [color.red, color.green, color.blue];
+                    data.extend(&serialized_color);
                 }
             }
-            FramebufferType::RGB { red, green, blue } => {
-                v.extend(1u8.to_ne_bytes()); // type
-                v.extend(0u16.to_ne_bytes()); // reserved
-                v.extend(red.as_bytes());
-                v.extend(green.as_bytes());
-                v.extend(blue.as_bytes());
-            }
-            FramebufferType::Text => {
-                v.extend(2u8.to_ne_bytes()); // type
-                v.extend(0u16.to_ne_bytes()); // reserved
-            }
+            FramebufferType::RGB { red, green, blue } => data.extend(&[
+                red.position,
+                red.size,
+                green.position,
+                green.size,
+                blue.position,
+                blue.size,
+            ]),
+            FramebufferType::Text => {}
         }
-        v
+        data
     }
 }
 
@@ -309,10 +371,9 @@ pub struct FramebufferField {
     pub size: u8,
 }
 
-#[cfg(feature = "builder")]
-impl AsBytes for FramebufferField {}
-
-/// A framebuffer color descriptor in the palette.
+/// A framebuffer color descriptor in the palette. On the ABI level, multiple
+/// values are consecutively without padding bytes. The spec is not precise in
+/// that regard, but looking at Limine's and GRUB's source code confirm that.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)] // no align(8) here is correct
 pub struct FramebufferColor {
@@ -325,9 +386,6 @@ pub struct FramebufferColor {
     /// The Blue component of the color.
     pub blue: u8,
 }
-
-#[cfg(feature = "builder")]
-impl AsBytes for FramebufferColor {}
 
 /// Error when an unknown [`FramebufferTypeId`] is found.
 #[derive(Debug, Copy, Clone, Display, PartialEq, Eq)]
@@ -345,5 +403,61 @@ mod tests {
     #[test]
     fn test_size() {
         assert_eq!(mem::size_of::<FramebufferColor>(), 3)
+    }
+
+    #[test]
+    #[cfg(feature = "builder")]
+    fn create_new() {
+        let tag = FramebufferTag::new(0x1000, 1, 1024, 1024, 8, FramebufferType::Text);
+        // Good test for Miri
+        dbg!(tag);
+
+        let tag = FramebufferTag::new(
+            0x1000,
+            1,
+            1024,
+            1024,
+            8,
+            FramebufferType::Indexed {
+                palette: &[
+                    FramebufferColor {
+                        red: 255,
+                        green: 255,
+                        blue: 255,
+                    },
+                    FramebufferColor {
+                        red: 127,
+                        green: 42,
+                        blue: 73,
+                    },
+                ],
+            },
+        );
+        // Good test for Miri
+        dbg!(tag);
+
+        let tag = FramebufferTag::new(
+            0x1000,
+            1,
+            1024,
+            1024,
+            8,
+            FramebufferType::RGB {
+                red: FramebufferField {
+                    position: 0,
+                    size: 0,
+                },
+                green: FramebufferField {
+                    position: 10,
+                    size: 20,
+                },
+                blue: FramebufferField {
+                    position: 30,
+                    size: 40,
+                },
+            },
+        );
+        // Good test for Miri
+        dbg!(tag);
     }
 }

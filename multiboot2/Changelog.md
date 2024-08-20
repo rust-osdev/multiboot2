@@ -1,16 +1,49 @@
 # CHANGELOG for crate `multiboot2`
 
-## Unreleased
+## v0.22.0
 
--
+This release contains another major refactoring of the internals, guaranteeing
+even more sanity checks for correct behaviour and lack of UB. In this release,
+the `Builder` was rewritten and lots of corresponding UB in certain
+corer-cases removed. Further, the builder's API was streamlined.
+
+If you are interested in the internals of the major refactorings recently taken
+place, please head to the documentation of `multiboot2-common`.
+
+- **Breaking:** The builder type is now just called `Builder`. This needs the
+  `builder` feature.
+- **Breaking:** The framebuffer tag was refactored and several bugs, memory
+- issues, and UB were fixed. It is now safe to use this, but some existing
+  usages might break and need to be slightly adapted.
+- **Breaking:** The trait `TagTrait` was removed and was replaced by a new `Tag`
+  trait coming from `multiboot2-common`. This only affects you if you provide
+  custom tag types for the library.
+- **Breaking:** The error type returned by `BootInformation::load` has been
+  changed.
+
+**General Note on Safety and UB (TL;DR: Crate is Safe)**
+
+The major refactorings of release `0.21` and `0.22` were an incredible step
+forward in code quality and memory safety. We have a comprehensive test coverage
+and all tests are passed by Miri. It might be that by using fuzzing, more
+corner and niche cases where UB can occur get uncovered. However, for every-day
+usage with sane bootloaders that do not intentionally create malformed tags, you
+are now absolutely good to go.
+
+Sorry for all the UB that silently slept insight many parts of the code base.
+This is a community project that has grown over the years. But now, the code
+base is in excellent shape!
 
 ## 0.21.0 (2024-08-17)
 
-This release contains a massive refactoring of various internals. Now, **all
-unit tests pass Miri**, thus we removed lots of undefined behaviour and
+This release contains a massive refactoring of various internals. Now, **almost
+**unit tests pass Miri**, thus we removed lots of undefined behaviour and
 increased the memory safety! 🎉 Only a small part of these internal refactorings
 leak to the public interface. If you don't use external custom tags, you
 should be fine from any refactorings.
+
+_**Edit**: The builder and the framebuffer still contain some UB. This is fixed
+in the next release._
 
 Please note that **all previous releases** must be considered unsafe, as they
 contain UB. However, it is never clear how UB results in immediate incorrect

@@ -1,8 +1,8 @@
-use core::ops::Deref;
+use alloc::boxed::Box;
 use elf_rs::{ElfFile, ProgramHeaderEntry, ProgramType};
 use multiboot2::{
-    BootLoaderNameTag, CommandLineTag, MemoryArea, MemoryAreaType, MemoryMapTag, ModuleTag,
-    SmbiosTag,
+    BootLoaderNameTag, CommandLineTag, MaybeDynSized, MemoryArea, MemoryAreaType, MemoryMapTag,
+    ModuleTag, SmbiosTag,
 };
 
 /// Loads the first module into memory. Assumes that the module is a ELF file.
@@ -43,26 +43,26 @@ pub fn load_module(mut modules: multiboot::information::ModuleIter) -> ! {
     // that the basic data structures are usable.
 
     // build MBI
-    let mbi = multiboot2::builder::InformationBuilder::new()
-        .bootloader_name_tag(&BootLoaderNameTag::new("mb2_integrationtest_chainloader"))
-        .command_line_tag(&CommandLineTag::new("chainloaded YEAH"))
+    let mbi = multiboot2::Builder::new()
+        .bootloader(BootLoaderNameTag::new("mb2_integrationtest_chainloader"))
+        .cmdline(CommandLineTag::new("chainloaded YEAH"))
         // random non-sense memory map
-        .memory_map_tag(&MemoryMapTag::new(&[MemoryArea::new(
+        .mmap(MemoryMapTag::new(&[MemoryArea::new(
             0,
             0xffffffff,
             MemoryAreaType::Reserved,
         )]))
-        .add_module_tag(&ModuleTag::new(
+        .add_module(ModuleTag::new(
             elf_mod.start as u32,
             elf_mod.end as u32,
             elf_mod.string.unwrap(),
         ))
         // Test that we can add SmbiosTag multiple times.
-        .add_tag(SmbiosTag::new(1, 1, &[1, 2, 3]).deref())
-        .unwrap()
-        .add_tag(SmbiosTag::new(1, 2, &[1, 2, 3]).deref())
-        .expect("should allow tag multiple times")
+        .add_smbios(SmbiosTag::new(1, 1, &[1, 2, 3]))
+        .add_smbios(SmbiosTag::new(2, 3, &[4, 5, 6]))
         .build();
+
+    let mbi = Box::leak(mbi);
 
     log::info!(
         "Handing over to ELF: {}",
@@ -74,7 +74,7 @@ pub fn load_module(mut modules: multiboot::information::ModuleIter) -> ! {
         core::arch::asm!(
         "jmp *%ecx",
         in("eax") multiboot2::MAGIC,
-        in("ebx") mbi.as_ptr() as u32,
+        in("ebx") mbi.as_ptr(),
         in("ecx") elf.entry_point() as u32,
         options(noreturn, att_syntax));
     }

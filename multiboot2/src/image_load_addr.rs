@@ -1,9 +1,10 @@
 //! Module for [`ImageLoadPhysAddrTag`].
 
 use crate::tag::TagHeader;
-use crate::{TagTrait, TagType};
+use crate::TagType;
 #[cfg(feature = "builder")]
 use core::mem::size_of;
+use multiboot2_common::{MaybeDynSized, Tag};
 
 /// The physical load address tag. Typically, this is only available if the
 /// binary was relocated, for example if the relocatable header tag was
@@ -16,12 +17,13 @@ pub struct ImageLoadPhysAddrTag {
 }
 
 impl ImageLoadPhysAddrTag {
+    const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
+
     /// Constructs a new tag.
-    #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(load_base_addr: u32) -> Self {
         Self {
-            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
+            header: TagHeader::new(Self::ID, Self::BASE_SIZE as u32),
             load_base_addr,
         }
     }
@@ -32,11 +34,18 @@ impl ImageLoadPhysAddrTag {
         self.load_base_addr
     }
 }
+impl MaybeDynSized for ImageLoadPhysAddrTag {
+    type Header = TagHeader;
 
-impl TagTrait for ImageLoadPhysAddrTag {
-    const ID: TagType = TagType::LoadBaseAddr;
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
+}
+
+impl Tag for ImageLoadPhysAddrTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::LoadBaseAddr;
 }
 
 #[cfg(all(test, feature = "builder"))]

@@ -24,3 +24,5 @@ util = { path = "./util" }
 # transparently during local development.
 [patch.crates-io]
 multiboot2 = { path = "../../multiboot2" }
+multiboot2-common = { path = "../../multiboot2-common" }
+multiboot2-header = { path = "../../multiboot2-header" }

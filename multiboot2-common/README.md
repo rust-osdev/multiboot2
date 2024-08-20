@@ -1,0 +1,1 @@
+# multiboot2-common

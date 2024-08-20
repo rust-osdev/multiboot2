@@ -1,14 +1,13 @@
 //! Module for [`CommandLineTag`].
 
 use crate::tag::TagHeader;
-use crate::{parse_slice_as_string, StringError, TagTrait, TagType};
+use crate::{parse_slice_as_string, StringError, TagType};
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str;
+use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
-use {crate::new_boxed, alloc::boxed::Box};
-
-const METADATA_SIZE: usize = mem::size_of::<TagHeader>();
+use {alloc::boxed::Box, multiboot2_common::new_boxed};
 
 /// This tag contains the command line string.
 ///
@@ -27,11 +26,12 @@ impl CommandLineTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(command_line: &str) -> Box<Self> {
+        let header = TagHeader::new(Self::ID, 0);
         let bytes = command_line.as_bytes();
         if bytes.ends_with(&[0]) {
-            new_boxed(&[bytes])
+            new_boxed(header, &[bytes])
         } else {
-            new_boxed(&[bytes, &[0]])
+            new_boxed(header, &[bytes, &[0]])
         }
     }
 
@@ -69,21 +69,29 @@ impl Debug for CommandLineTag {
     }
 }
 
-impl TagTrait for CommandLineTag {
-    const ID: TagType = TagType::Cmdline;
+impl MaybeDynSized for CommandLineTag {
+    type Header = TagHeader;
+
+    const BASE_SIZE: usize = mem::size_of::<TagHeader>();
 
     fn dst_len(header: &TagHeader) -> usize {
-        assert!(header.size as usize >= METADATA_SIZE);
-        header.size as usize - METADATA_SIZE
+        assert!(header.size as usize >= Self::BASE_SIZE);
+        header.size as usize - Self::BASE_SIZE
     }
+}
+
+impl Tag for CommandLineTag {
+    type IDType = TagType;
+
+    const ID: TagType = TagType::Cmdline;
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tag::{GenericTag, TagBytesRef};
-    use crate::test_util::AlignedBytes;
+    use crate::GenericInfoTag;
     use core::borrow::Borrow;
+    use multiboot2_common::test_utils::AlignedBytes;
 
     #[rustfmt::skip]
     fn get_bytes() -> AlignedBytes<16> {
@@ -100,8 +108,7 @@ mod tests {
     #[test]
     fn test_parse_str() {
         let bytes = get_bytes();
-        let bytes = TagBytesRef::try_from(bytes.borrow()).unwrap();
-        let tag = GenericTag::ref_from(bytes);
+        let tag = GenericInfoTag::ref_from_slice(bytes.borrow()).unwrap();
         let tag = tag.cast::<CommandLineTag>();
         assert_eq!(tag.header.typ, TagType::Cmdline);
         assert_eq!(tag.cmdline(), Ok("hello"));
@@ -112,14 +119,16 @@ mod tests {
     #[cfg(feature = "builder")]
     fn test_build_str() {
         let tag = CommandLineTag::new("hello");
-        let bytes = tag.as_bytes();
-        assert_eq!(bytes, &get_bytes()[..tag.size()]);
+        let bytes = tag.as_bytes().as_ref();
+        let bytes = &bytes[..tag.header.size as usize];
+        assert_eq!(bytes, &get_bytes()[..tag.header().size as usize]);
         assert_eq!(tag.cmdline(), Ok("hello"));
 
         // With terminating null.
         let tag = CommandLineTag::new("hello\0");
-        let bytes = tag.as_bytes();
-        assert_eq!(bytes, &get_bytes()[..tag.size()]);
+        let bytes = tag.as_bytes().as_ref();
+        let bytes = &bytes[..tag.header.size as usize];
+        assert_eq!(bytes, &get_bytes()[..tag.header().size as usize]);
         assert_eq!(tag.cmdline(), Ok("hello"));
 
         // test also some bigger message

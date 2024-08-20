@@ -1,12 +1,13 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::mem::size_of;
+use multiboot2_common::{MaybeDynSized, Tag};
 
 /// This information does not need to be provided if the kernel image is in ELF
 /// format, but it must be provided if the image is in a.out format or in some
 /// other format. Required for legacy boot (BIOS).
 /// Determines load addresses.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct AddressHeaderTag {
     header: HeaderTagHeader,
     /// Contains the address corresponding to the beginning of the Multiboot2 header — the physical memory location at which the magic value is supposed to be loaded. This field serves to synchronize the mapping between OS image offsets and physical memory addresses.
@@ -82,6 +83,19 @@ impl AddressHeaderTag {
     pub const fn bss_end_addr(&self) -> u32 {
         self.bss_end_addr
     }
+}
+
+impl MaybeDynSized for AddressHeaderTag {
+    type Header = HeaderTagHeader;
+
+    const BASE_SIZE: usize = size_of::<Self>();
+
+    fn dst_len(_header: &Self::Header) -> Self::Metadata {}
+}
+
+impl Tag for AddressHeaderTag {
+    type IDType = HeaderTagType;
+    const ID: HeaderTagType = HeaderTagType::Address;
 }
 
 #[cfg(test)]
