@@ -214,6 +214,8 @@ impl Tag for EFIBootServicesNotExitedTag {
 #[cfg(all(test, feature = "builder"))]
 mod tests {
     use super::{EFIImageHandle32Tag, EFIImageHandle64Tag, EFISdt32Tag, EFISdt64Tag};
+    use crate::{EFIMemoryDesc, EFIMemoryMapTag};
+    use uefi_raw::table::boot::{MemoryAttribute, MemoryType};
 
     const ADDR: usize = 0xABCDEF;
 
@@ -239,5 +241,27 @@ mod tests {
     fn test_build_eftih64() {
         let tag = EFIImageHandle64Tag::new(ADDR.try_into().unwrap());
         assert_eq!(tag.image_handle(), ADDR);
+    }
+
+    #[test]
+    fn test_construct_efi_mmap_tag() {
+        let tag = EFIMemoryMapTag::new_from_descs(&[
+            EFIMemoryDesc {
+                ty: MemoryType::BOOT_SERVICES_CODE,
+                phys_start: 0x1000,
+                virt_start: 0x1000,
+                page_count: 1,
+                att: MemoryAttribute::WRITE_COMBINE,
+            },
+            EFIMemoryDesc {
+                ty: MemoryType::LOADER_DATA,
+                phys_start: 0x2000,
+                virt_start: 0x2000,
+                page_count: 2,
+                att: MemoryAttribute::NON_VOLATILE,
+            },
+        ]);
+        // Test for Miri
+        dbg!(tag);
     }
 }

@@ -384,9 +384,10 @@ impl Debug for EFIMemoryMapTag {
             .field("typ", &self.header.typ)
             .field("size", &self.header.size)
             .field("desc_size", &self.desc_size)
+            .field("desc_version", &self.desc_version)
             .field("buf", &self.memory_map.as_ptr())
             .field("buf_len", &self.memory_map.len())
-            .field("entries", &self.memory_areas().len())
+            .field("entries", &self.memory_areas())
             .finish()
     }
 }
@@ -409,7 +410,7 @@ impl Tag for EFIMemoryMapTag {
 }
 
 /// An iterator over the EFI memory areas emitting [`EFIMemoryDesc`] items.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct EFIMemoryAreaIter<'a> {
     mmap_tag: &'a EFIMemoryMapTag,
     i: usize,
@@ -457,6 +458,17 @@ impl<'a> Iterator for EFIMemoryAreaIter<'a> {
 impl<'a> ExactSizeIterator for EFIMemoryAreaIter<'a> {
     fn len(&self) -> usize {
         self.entries
+    }
+}
+
+impl<'a> Debug for EFIMemoryAreaIter<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        let mut debug = f.debug_list();
+        let iter = self.clone();
+        for elem in iter {
+            debug.entry(elem);
+        }
+        debug.finish()
     }
 }
 
