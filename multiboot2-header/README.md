@@ -4,9 +4,18 @@
 [![crates.io](https://img.shields.io/crates/v/multiboot2-header.svg)](https://crates.io/crates/multiboot2-header)
 [![docs](https://docs.rs/multiboot2-header/badge.svg)](https://docs.rs/multiboot2-header/)
 
-Rust library with type definitions and parsing functions for Multiboot2 headers,
-as well as a builder to build them at runtime. This library is `no_std` and can
-be used in bootloaders.
+Convenient and safe parsing of Multiboot2 Header structures and the
+contained header tags. Usable in `no_std` environments, such as a
+bootloader. An optional `builder` feature also allows the construction of
+the corresponding structures.
+
+## Design
+
+For every Multiboot2 header structure, there is an ABI-compatible rusty type.
+This enables a zero-copying parsing design while also enabling the creation of
+these structures via convenient constructors for the corresponding types.
+
+## Use-Cases
 
 What this library is good for:
 

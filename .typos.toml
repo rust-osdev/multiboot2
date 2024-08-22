@@ -2,7 +2,7 @@
 
 [files]
 extend-exclude = [
-    # "uefi/src/table/boot.rs"
+    "*.drawio.xml"
 ]
 
 [default.extend-words]
