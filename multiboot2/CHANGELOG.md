@@ -1,5 +1,10 @@
 # Changelog for Crate `multiboot2`
 
+## Unreleased
+
+- dependency updates
+- **Breaking:** MSRV is now 1.75
+
 ## v0.22.2 (2024-08-24)
 
 - Documentation improvements
@@ -67,7 +72,6 @@ release and you'll be fine!**
   references instead of owned values
 - **Breaking:** The `BoxedDst` has been removed in favor of a normal Rust `Box`.
   This only affects you if you use the `builder` feature.
-- **Breaking:** MSRV is 1.75
 - **Breaking:** Introduced new `TagHeader` type as replacement for the `Tag`
   type that will be changed in the next step. `Tag` has been renamed to an
   internal-only `GenericTag` type.

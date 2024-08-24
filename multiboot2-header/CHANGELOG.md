@@ -1,5 +1,10 @@
 # Changelog for Crate `multiboot2-header`
 
+## Unreleased
+
+- dependency updates
+- **Breaking:** MSRV is now 1.75
+
 ## v0.5.1 (2024-08-24)
 
 - Documentation improvements

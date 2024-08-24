@@ -47,7 +47,7 @@ There are many different types of tags, but they all have the same beginning:
 
 ## MSRV
 
-The MSRV is 1.70.0 stable.
+The MSRV is 1.75.0 stable.
 
 ## License & Contribution
 

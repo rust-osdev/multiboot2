@@ -42,7 +42,7 @@
 //! ```
 //!
 //! ## MSRV
-//! The MSRV is 1.70.0 stable.
+//! The MSRV is 1.75.0 stable.
 
 #[cfg_attr(feature = "builder", macro_use)]
 #[cfg(feature = "builder")]
@@ -131,7 +131,6 @@ mod tests {
     /// This test is relevant to give library users flexebility in passing the
     /// struct around.
     #[test]
-    #[allow(clippy::missing_const_for_fn)] // only in Rust 1.70 necessary
     fn boot_information_is_send_and_sync() {
         fn accept<T: Send + Sync>(_: T) {}
         let bytes = AlignedBytes([
