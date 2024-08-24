@@ -37,10 +37,10 @@ required-features = ["builder"]
 
 [features]
 default = ["builder"]
-alloc = []
-builder = ["alloc"]
+alloc = ["multiboot2-common/alloc"]
+builder = ["alloc", "multiboot2-common/builder"]
 # Nightly-only features, which will eventually be stabilized.
-unstable = []
+unstable = ["multiboot2-common/unstable"]
 
 [dependencies]
 derive_more.workspace = true
