@@ -3,7 +3,7 @@ name = "multiboot2-common"
 description = """
 Common helpers for the `multiboot2` and `multiboot2-header` crates.
 """
-version = "0.1.1"
+version = "0.1.2"
 authors = [
     "Philipp Schuster <phip1611@gmail.com>"
 ]

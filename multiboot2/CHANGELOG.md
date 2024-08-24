@@ -1,7 +1,8 @@
-# CHANGELOG for crate `multiboot2`
+# Changelog for Crate `multiboot2`
 
-## Unreleased
+## v0.22.2 (2024-08-24)
 
+- Documentation improvements
 - Improve debug formatting for EFIMemoryMapTag
 
 ## v0.22.1 (2024-08-20)

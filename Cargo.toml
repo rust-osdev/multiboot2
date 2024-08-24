@@ -13,6 +13,8 @@ exclude = [
 bitflags = "2.6.0"
 derive_more = { version = "~0.99.18", default-features = false, features = ["display"] }
 log = { version = "~0.4", default-features = false }
+multiboot2 = { version = "0.22.2", default-features = false }
+multiboot2-common = { version = "0.1.2", default-features = false }
 ptr_meta = { version = "~0.2", default-features = false }
 
 # This way, the corresponding crate dependency can be normalley referenced by
@@ -21,3 +23,4 @@ ptr_meta = { version = "~0.2", default-features = false }
 [patch.crates-io]
 multiboot2 = { path = "multiboot2" }
 multiboot2-common = { path = "multiboot2-common" }
+multiboot2-header = { path = "multiboot2-header" }

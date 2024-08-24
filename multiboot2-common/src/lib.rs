@@ -141,7 +141,7 @@
 //! [`Layout`] for the underlying type equals the one we manually used for the
 //! allocation.
 //!
-//! # Provided Abstractions
+//! # Architecture & Provided Abstractions
 //!
 //! Figure 2 in the [README](https://crates.io/crates/multiboot2-common)
 //! (currently not embeddable in lib.rs unfortunately) provides an overview of
