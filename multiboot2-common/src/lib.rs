@@ -15,7 +15,12 @@
 //!   - header structure (whole)
 //!   - header tags
 //!
-//! # The Problem / Difficulties
+//! # Solved Problem & Difficulties Along the Way
+//!
+//! Firstly, the design choice to have ABI-compatible rusty types influenced the
+//! requirements and difficulties along the way. They, on the other side,
+//! influenced the design. The outcome is what we perceive as the optimal rusty
+//! and convenient solution.
 //!
 //! ## Multiboot2 Structures
 //!
@@ -34,7 +39,9 @@
 //!
 //! Note that these structures can also be nested. So for example, the
 //! Multiboot2 boot information contains Multiboot2 tags, and the Multiboot2
-//! header contains Multiboot2 header tags - both are itself dynamic structures.
+//! header contains Multiboot2 header tags - both are itself **dynamically
+//! sized** structures. This means, you can know the size (and amount of
+//! elements) **only at runtime!**
 //!
 //! A final `[u8]` field in the structs is the most rusty way to model this.
 //! However, this makes the type a Dynamically Sized Type (DST). To create
@@ -42,7 +49,11 @@
 //! are a language feature currently not constructable with stable Rust.
 //! Luckily, we can utilize [`ptr_meta`].
 //!
-//! ## Dynamic and Sized Structs
+//! Figure 1 in the [README](https://crates.io/crates/multiboot2-common)
+//! (currently not embeddable in lib.rs unfortunately) provides an overview of
+//! Multiboot2 structures.
+//!
+//! ## Dynamic and Sized Structs in Rust
 //!
 //! Note that we also have structures (tags) in Multiboot2 that looks like this:
 //!
@@ -68,7 +79,38 @@
 //! }
 //! ```
 //!
-//! ## Fat Pointer Requirements
+//! ## Chosen Design
+//!
+//! The overall common abstractions needed to solve the problems mentioned in
+//! this section are also mainly influenced by the fact that the `multiboot2`
+//! and `multiboot2-header` crates use a **zero-copy** design for parsing
+//! the corresponding structures.
+//!
+//! Further, by having **ABI-compatible types** that fully represent the
+//! reality, we can use the same type for parsing **and** for construction,
+//! as modelled in the following simplified example:
+//!
+//! ```rust,ignore
+//! /// ABI-compatible tag for parsing.
+//! pub struct MemoryMapTag {
+//!     header: TagHeader,
+//!     entry_size: u32,
+//!     entry_version: u32,
+//!     areas: [MemoryArea],
+//! }
+//!
+//! impl MemoryMapTag {
+//!     // We can also create an ABI-compatible structure of that type.
+//!     pub fn new(areas: &[MemoryArea]) -> Box<Self> {
+//!         // omitted
+//!     }
+//! }
+//! ```
+//!
+//! Hence, the structures can also be build at runtime. This is what we
+//! consider **idiomatic and rusty**.
+//!
+//! ## Creating Fat Pointers with [`ptr_meta`]
 //!
 //! To create fat pointers with [`ptr_meta`], each tag needs a `Metadata` type
 //! which is either `usize` (for DSTs) or `()`. A trait is needed to abstract
@@ -76,22 +118,35 @@
 //!
 //! ## Multiboot2 Requirements
 //!
-//! All tags must be 8-byte aligned. Space between multiple tags may be
-//! filled with zeroes if necessary. These zeroes are not reflected in the
-//! previous tag's size.
+//! All tags must be 8-byte aligned. The actual payload of tags may be followed
+//! by padding zeroes to fill the gap until the next alignment boundary, if
+//! necessary. These zeroes are not reflected in the tag's size, but for Rust,
+//! must be reflected in the memory allocation size.
 //!
 //! ## Rustc Requirements
 //!
-//! The allocation space that Rust requires for types is a multiple of the
+//! The required allocation space that Rust uses for types is a multiple of the
 //! alignment. This means that if we cast between byte slices and specific
-//! types, Rust doesn't just see the size reported by the header but also
-//! any necessary padding bytes. If this is not the case, for example we
-//! cast to a structure from a `&[u8; 15]`, Miri will complain as it expects
-//! `&[u8; 16]`
+//! types, Rust doesn't just see the "trimmed down actual payload" defined by
+//! struct members, but also any necessary, but hidden, padding bytes. If we
+//! don't guarantee the correct is not the case, for example we cast the bytes
+//! from a `&[u8; 15]` to an 8-byte aligned struct, Miri will complain as it
+//! expects `&[u8; 16]`.
 //!
 //! See <https://doc.rust-lang.org/reference/type-layout.html> for information.
 //!
-//! # Provided Abstractions
+//! Further, this also means that we can't cast references to smaller structs
+//! to bigger ones. Also, once we construct a `Box` on the heap and construct
+//! it using the [`new_boxed`] helper, we must ensure that the default
+//! [`Layout`] for the underlying type equals the one we manually used for the
+//! allocation.
+//!
+//! # Architecture & Provided Abstractions
+//!
+//! Figure 2 in the [README](https://crates.io/crates/multiboot2-common)
+//! (currently not embeddable in lib.rs unfortunately) provides an overview of
+//! the parsing of Multiboot2 structures and how the definitions from this
+//! crate are used.
 //!
 //! ## Parsing and Casting
 //!
@@ -122,6 +177,8 @@
 //! # No Public API
 //!
 //! Not meant as stable public API for others outside Multiboot2.
+//!
+//! [`Layout`]: core::alloc::Layout
 
 #![no_std]
 #![cfg_attr(feature = "unstable", feature(error_in_core))]
@@ -270,10 +327,17 @@ impl<H: Header> DynSizedStructure<H> {
         &self.payload
     }
 
-    /// Casts the structure tag to a specific [`MaybeDynSized`] implementation which
-    /// may be a ZST or DST typed tag. The output type will have the exact same
-    /// size as `*self`. The target type must be sufficient for that. If not,
-    /// the function will panic.
+    /// Performs a memory-safe same-size cast from the base-structure to a
+    /// specific [`MaybeDynSized`]. The idea here is to cast the generic
+    /// mostly semantic-free version to a specific type with fields that have
+    /// a semantic.
+    ///
+    /// The provided `T` of type [`MaybeDynSized`] might be may be sized type
+    /// or DST. This depends on the type.
+    ///
+    /// # Panic
+    /// Panics if base assumptions are violated. For example, the
+    /// `T` of type [`MaybeDynSized`] must allow a proper casting to it.
     ///
     /// # Safety
     /// This function is safe due to various sanity checks and the overall

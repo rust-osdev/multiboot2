@@ -1,4 +1,8 @@
-# CHANGELOG for crate `multiboot2-header`
+# Changelog for Crate `multiboot2-header`
+
+## v0.5.1 (2024-08-24)
+
+- Documentation improvements
 
 ## v0.5.0 (2024-05-20)
 

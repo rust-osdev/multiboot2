@@ -17,15 +17,16 @@
 #![deny(rustdoc::all)]
 // --- END STYLE CHECKS ---
 
-//! Library that assists parsing the Multiboot2 Information Structure (MBI) from
-//! Multiboot2-compliant bootloaders, such as GRUB. It supports all tags from the
-//! specification including full support for the sections of ELF files. This library
-//! is `no_std` and can be used in a Multiboot2-kernel.
+//! Convenient and safe parsing of Multiboot2 Boot Information (MBI) structures
+//! and the contained information tags. Usable in `no_std` environments, such as
+//! a kernel. An optional builder feature also allows the construction of
+//! the corresponding structures.
 //!
-//! The GNU Multiboot(2) specification aims to provide a standardised
-//! method of sharing commonly used information about the host machine at
-//! boot time and give the payload, i.e. a kernel, a well defined machine
-//! state.
+//! ## Design
+//!
+//! For every Multiboot2 structure, there is an ABI-compatible rusty type. This
+//! enables a zero-copying parsing design while also enabling the creation of
+//! these structures via convenient constructors on the corresponding types.
 //!
 //! ## Example
 //!

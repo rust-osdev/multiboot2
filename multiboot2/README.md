@@ -5,12 +5,18 @@
 
 Convenient and safe parsing of Multiboot2 Boot Information (MBI)
 structures and the contained information tags. Usable in `no_std` environments,
-such as a kernel. An optional builder feature also allows the construction of
+such as a kernel. An optional `builder` feature also allows the construction of
 the corresponding structures.
 
 It follows the Multiboot 2.0 specification
 at https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html and the
 ELF 64 specification at http://www.uclibc.org/docs/elf-64-gen.pdf.
+
+## Design
+
+For every Multiboot2 structure, there is an ABI-compatible rusty type. This
+enables a zero-copying parsing design while also enabling the creation of these
+structures via convenient constructors on the corresponding types.
 
 ## Features and `no_std` Compatibility
 

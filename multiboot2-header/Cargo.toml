@@ -1,10 +1,12 @@
 [package]
 name = "multiboot2-header"
 description = """
-Library with type definitions and parsing functions for Multiboot2 headers.
-This library is `no_std` and can be used in bootloaders.
+Convenient and safe parsing of Multiboot2 Header structures and the
+contained header tags. Usable in no_std environments, such as a
+bootloader. An optional builder feature also allows the construction of
+the corresponding structures.
 """
-version = "0.5.0"
+version = "0.5.1"
 authors = [
     "Philipp Schuster <phip1611@gmail.com>"
 ]
@@ -43,9 +45,9 @@ unstable = []
 [dependencies]
 derive_more.workspace = true
 log.workspace = true
+multiboot2-common.workspace = true
+multiboot2.workspace = true
 ptr_meta.workspace = true
-multiboot2 = { version = "0.22.1", default-features = false }
-multiboot2-common = "0.1.1"
 
 [package.metadata.docs.rs]
 all-features = true

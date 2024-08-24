@@ -1,14 +1,10 @@
-# Multiboot2: MBI + Header
+# Rusty Wrappers for Multiboot2
 
-This repository contains the crates `multiboot2` and `multiboot2-header`.
-Please check their individual README-files ([multiboot2](multiboot2/README.md),
-[multiboot2-header](multiboot2-header/README.md)).
+## Repository Overview
 
-The `multiboot2` crate helps to parse the Multiboot2 information structure
-(MBI) and is relevant in kernels, that get booted by a bootloader such as
-GRUB, for example. `multiboot2-header` helps you to either build
-Multiboot2-headers yourself, or to parse Multiboot2 headers in custom bootloader
-or similar applications.
+- [`multiboot2`](./multiboot2/README.md)
+- [`multiboot2-header`](./multiboot2-header/README.md)
+- [`multiboot2-common`](./multiboot2-common/README.md)
 
 ## License
 
@@ -22,6 +18,6 @@ at your option.
 
 ### Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the
-work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any
-additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.

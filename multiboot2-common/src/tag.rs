@@ -10,7 +10,8 @@ use ptr_meta::Pointee;
 /// [`DynSizedStructure::cast`].
 ///
 /// Structs that are a DST must provide a **correct**
-/// [`MaybeDynSized::dst_len`] implementation.
+/// [`MaybeDynSized::dst_len`] implementation. Further, implementors **must**
+/// use `#[repr(C)]`.
 ///
 /// [`ID`]: Tag::ID
 /// [`DynSizedStructure`]: crate::DynSizedStructure
