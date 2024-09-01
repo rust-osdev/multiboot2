@@ -7,6 +7,7 @@
 - Added missing tags:
     - `ApmTag`
     - `BootdevTag`
+    - `NetworkTag`
 
 ## v0.22.2 (2024-08-24)
 

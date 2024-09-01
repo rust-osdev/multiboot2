@@ -78,6 +78,7 @@ mod framebuffer;
 mod image_load_addr;
 mod memory_map;
 mod module;
+mod network;
 mod rsdp;
 mod smbios;
 mod tag;
@@ -108,6 +109,7 @@ pub use memory_map::{
     MemoryArea, MemoryAreaType, MemoryAreaTypeId, MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
+pub use network::NetworkTag;
 pub use ptr_meta::Pointee;
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
 pub use smbios::SmbiosTag;

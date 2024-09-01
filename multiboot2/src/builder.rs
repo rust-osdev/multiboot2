@@ -2,6 +2,7 @@
 
 use crate::apm::ApmTag;
 use crate::bootdev::BootdevTag;
+use crate::network::NetworkTag;
 use crate::{
     BasicMemoryInfoTag, BootInformationHeader, BootLoaderNameTag, CommandLineTag,
     EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
@@ -31,7 +32,7 @@ pub struct Builder {
     smbios: Vec<Box<SmbiosTag>>,
     rsdpv1: Option<RsdpV1Tag>,
     rsdpv2: Option<RsdpV2Tag>,
-    // missing: network
+    network: Option<Box<NetworkTag>>,
     efi_mmap: Option<Box<EFIMemoryMapTag>>,
     efi_bs: Option<EFIBootServicesNotExitedTag>,
     efi32_ih: Option<EFIImageHandle32Tag>,
@@ -67,6 +68,7 @@ impl Builder {
             rsdpv1: None,
             rsdpv2: None,
             efi_mmap: None,
+            network: None,
             efi_bs: None,
             efi32_ih: None,
             efi64_ih: None,
@@ -184,6 +186,13 @@ impl Builder {
     #[must_use]
     pub fn efi_mmap(mut self, efi_mmap: Box<EFIMemoryMapTag>) -> Self {
         self.efi_mmap = Some(efi_mmap);
+        self
+    }
+
+    /// Sets the [`NetworkTag`] tag.
+    #[must_use]
+    pub fn network(mut self, network: Box<NetworkTag>) -> Self {
+        self.network = Some(network);
         self
     }
 
