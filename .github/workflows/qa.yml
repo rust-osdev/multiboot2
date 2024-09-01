@@ -2,6 +2,10 @@ name: QA
 
 on: [pull_request, push, merge_group]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   spellcheck:
     name: Spellcheck
