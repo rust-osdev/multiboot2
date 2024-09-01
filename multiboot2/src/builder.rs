@@ -1,5 +1,6 @@
 //! Module for [`Builder`].
 
+use crate::apm::ApmTag;
 use crate::{
     BasicMemoryInfoTag, BootInformationHeader, BootLoaderNameTag, CommandLineTag,
     EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
@@ -23,7 +24,7 @@ pub struct Builder {
     vbe: Option<VBEInfoTag>,
     framebuffer: Option<Box<FramebufferTag>>,
     elf_sections: Option<Box<ElfSectionsTag>>,
-    // missing apm:
+    apm: Option<ApmTag>,
     efi32: Option<EFISdt32Tag>,
     efi64: Option<EFISdt64Tag>,
     smbios: Vec<Box<SmbiosTag>>,
@@ -57,6 +58,7 @@ impl Builder {
             vbe: None,
             framebuffer: None,
             elf_sections: None,
+            apm: None,
             efi32: None,
             efi64: None,
             smbios: vec![],
@@ -124,6 +126,13 @@ impl Builder {
     #[must_use]
     pub fn elf_sections(mut self, elf_sections: Box<ElfSectionsTag>) -> Self {
         self.elf_sections = Some(elf_sections);
+        self
+    }
+
+    /// Sets the [`ApmTag`] tag.
+    #[must_use]
+    pub fn apm(mut self, apm: ApmTag) -> Self {
+        self.apm = Some(apm);
         self
     }
 
@@ -214,6 +223,9 @@ impl Builder {
     pub fn build(self) -> Box<DynSizedStructure<BootInformationHeader>> {
         let header = BootInformationHeader::new(0);
         let mut byte_refs = Vec::new();
+        if let Some(tag) = self.apm.as_ref() {
+            byte_refs.push(tag.as_bytes().as_ref());
+        }
         if let Some(tag) = self.cmdline.as_ref() {
             byte_refs.push(tag.as_bytes().as_ref());
         }
@@ -236,6 +248,9 @@ impl Builder {
             byte_refs.push(tag.as_bytes().as_ref());
         }
         if let Some(tag) = self.elf_sections.as_ref() {
+            byte_refs.push(tag.as_bytes().as_ref());
+        }
+        if let Some(tag) = self.apm.as_ref() {
             byte_refs.push(tag.as_bytes().as_ref());
         }
         if let Some(tag) = self.efi32.as_ref() {

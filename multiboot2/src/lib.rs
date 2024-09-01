@@ -66,6 +66,7 @@ pub type TagIter<'a> = multiboot2_common::TagIter<'a, TagHeader>;
 #[cfg(test)]
 pub type GenericInfoTag = multiboot2_common::DynSizedStructure<TagHeader>;
 
+mod apm;
 mod boot_information;
 mod boot_loader_name;
 mod command_line;
@@ -85,6 +86,7 @@ mod vbe_info;
 
 pub use multiboot2_common::{DynSizedStructure, MaybeDynSized, Tag};
 
+pub use apm::ApmTag;
 pub use boot_information::{BootInformation, BootInformationHeader, LoadError};
 pub use boot_loader_name::BootLoaderNameTag;
 #[cfg(feature = "builder")]
