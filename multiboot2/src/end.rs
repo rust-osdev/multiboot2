@@ -1,6 +1,6 @@
 //! Module for [`EndTag`].
 
-use crate::{TagHeader, TagType, TagTypeId};
+use crate::{TagHeader, TagType};
 use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
@@ -8,15 +8,13 @@ use multiboot2_common::{MaybeDynSized, Tag};
 #[derive(Debug)]
 #[repr(C, align(8))]
 pub struct EndTag {
-    typ: TagTypeId,
-    size: u32,
+    header: TagHeader,
 }
 
 impl Default for EndTag {
     fn default() -> Self {
         Self {
-            typ: TagType::End.into(),
-            size: 8,
+            header: TagHeader::new(TagType::End, mem::size_of::<Self>() as u32),
         }
     }
 }
