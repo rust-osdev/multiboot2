@@ -69,6 +69,7 @@ pub type GenericInfoTag = multiboot2_common::DynSizedStructure<TagHeader>;
 mod apm;
 mod boot_information;
 mod boot_loader_name;
+mod bootdev;
 mod command_line;
 mod efi;
 mod elf_sections;
@@ -89,6 +90,7 @@ pub use multiboot2_common::{DynSizedStructure, MaybeDynSized, Tag};
 pub use apm::ApmTag;
 pub use boot_information::{BootInformation, BootInformationHeader, LoadError};
 pub use boot_loader_name::BootLoaderNameTag;
+pub use bootdev::BootdevTag;
 #[cfg(feature = "builder")]
 pub use builder::Builder;
 pub use command_line::CommandLineTag;

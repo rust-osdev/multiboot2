@@ -1,6 +1,7 @@
 //! Module for [`Builder`].
 
 use crate::apm::ApmTag;
+use crate::bootdev::BootdevTag;
 use crate::{
     BasicMemoryInfoTag, BootInformationHeader, BootLoaderNameTag, CommandLineTag,
     EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
@@ -19,7 +20,7 @@ pub struct Builder {
     bootloader: Option<Box<BootLoaderNameTag>>,
     modules: Vec<Box<ModuleTag>>,
     meminfo: Option<BasicMemoryInfoTag>,
-    // missing bootdev: Option<BootDevice>
+    bootdev: Option<BootdevTag>,
     mmap: Option<Box<MemoryMapTag>>,
     vbe: Option<VBEInfoTag>,
     framebuffer: Option<Box<FramebufferTag>>,
@@ -54,6 +55,7 @@ impl Builder {
             bootloader: None,
             modules: vec![],
             meminfo: None,
+            bootdev: None,
             mmap: None,
             vbe: None,
             framebuffer: None,
@@ -101,6 +103,13 @@ impl Builder {
         self
     }
 
+    /// Sets the [`BootdevTag`] tag.
+    #[must_use]
+    pub const fn bootdev(mut self, bootdev: BootdevTag) -> Self {
+        self.bootdev = Some(bootdev);
+        self
+    }
+
     /// Sets the [`MemoryMapTag`] tag.
     #[must_use]
     pub fn mmap(mut self, mmap: Box<MemoryMapTag>) -> Self {
@@ -131,7 +140,7 @@ impl Builder {
 
     /// Sets the [`ApmTag`] tag.
     #[must_use]
-    pub fn apm(mut self, apm: ApmTag) -> Self {
+    pub const fn apm(mut self, apm: ApmTag) -> Self {
         self.apm = Some(apm);
         self
     }
@@ -223,9 +232,6 @@ impl Builder {
     pub fn build(self) -> Box<DynSizedStructure<BootInformationHeader>> {
         let header = BootInformationHeader::new(0);
         let mut byte_refs = Vec::new();
-        if let Some(tag) = self.apm.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
-        }
         if let Some(tag) = self.cmdline.as_ref() {
             byte_refs.push(tag.as_bytes().as_ref());
         }
@@ -236,6 +242,9 @@ impl Builder {
             byte_refs.push(i.as_bytes().as_ref());
         }
         if let Some(tag) = self.meminfo.as_ref() {
+            byte_refs.push(tag.as_bytes().as_ref());
+        }
+        if let Some(tag) = self.bootdev.as_ref() {
             byte_refs.push(tag.as_bytes().as_ref());
         }
         if let Some(tag) = self.mmap.as_ref() {
@@ -308,6 +317,7 @@ mod tests {
             .add_module(ModuleTag::new(0x1000, 0x2000, "module 1"))
             .add_module(ModuleTag::new(0x3000, 0x4000, "module 2"))
             .meminfo(BasicMemoryInfoTag::new(0x4000, 0x5000))
+            .bootdev(BootdevTag::new(0x00, 0x00, 0x00))
             .mmap(MemoryMapTag::new(&[MemoryArea::new(
                 0x1000000,
                 0x1000,
@@ -331,6 +341,7 @@ mod tests {
                 FramebufferType::Text,
             ))
             .elf_sections(ElfSectionsTag::new(0, 32, 0, &[]))
+            .apm(ApmTag::new(0, 0, 0, 0, 0, 0, 0, 0, 0))
             .efi32(EFISdt32Tag::new(0x1000))
             .efi64(EFISdt64Tag::new(0x1000))
             .add_smbios(SmbiosTag::new(0, 0, &[1, 2, 3]))
@@ -341,6 +352,7 @@ mod tests {
                 MemoryDescriptor::default(),
                 MemoryDescriptor::default(),
             ]))
+            .network(NetworkTag::new(&[0; 1500]))
             .efi_bs(EFIBootServicesNotExitedTag::new())
             .efi32_ih(EFIImageHandle32Tag::new(0x1000))
             .efi64_ih(EFIImageHandle64Tag::new(0x1000))

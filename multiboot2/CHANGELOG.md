@@ -6,6 +6,7 @@
 - **Breaking:** MSRV is now 1.75
 - Added missing tags:
     - `ApmTag`
+    - `BootdevTag`
 
 ## v0.22.2 (2024-08-24)
 
