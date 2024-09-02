@@ -21,7 +21,7 @@
         .align 8
         .Lmb2_header_tag_information_request_start:
             .word  1       # type  (16bit)
-            .word  0       # flags (16bit)
+            .word  1       # flags (16bit)
             .long  .Lmb2_header_tag_information_request_end - .Lmb2_header_tag_information_request_start # size  (32bit)
             .long  1
             .long  2
