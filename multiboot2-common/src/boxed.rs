@@ -7,10 +7,11 @@ use core::mem;
 use core::ops::Deref;
 use core::ptr;
 
-/// Creates a new tag implementing [`MaybeDynSized`] on the heap. This works for
-/// sized and unsized tags. However, it only makes sense to use this for tags
-/// that are DSTs (unsized). For regular sized structs, you can just create a
-/// typical constructor and box the result.
+/// Creates a new tag implementing [`MaybeDynSized`] on the heap.
+///
+/// This works for sized and unsized tags. However, it only makes sense to use
+/// this for tags that are DSTs (unsized). For regular sized structs, you can
+/// just create a typical constructor and box the result.
 ///
 /// The provided `header`' total size (see [`Header`]) will be set dynamically
 /// by this function using [`Header::set_size`]. However, it must contain all

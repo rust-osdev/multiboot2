@@ -18,9 +18,11 @@ pub enum HeaderTagISA {
     MIPS32 = 4,
 }
 
-/// Possible types for header tags of a Multiboot2 header. The names and values are taken
-/// from the example C code at the bottom of the Multiboot2 specification. This value
-/// stands in the `typ` property of [`HeaderTagHeader`].
+/// Possible types for header tags of a Multiboot2 header.
+///
+/// The names and values are taken from the example C code at the bottom of the
+/// Multiboot2 specification. This value stands in the `typ` property of
+/// [`HeaderTagHeader`].
 #[repr(u16)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HeaderTagType {

@@ -4,6 +4,8 @@ use core::fmt::{Debug, Formatter};
 use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
+/// Contains the entry address for EFI i386 machine state.
+///
 /// This tag is taken into account only on EFI i386 platforms when Multiboot2 image header
 /// contains EFI boot services tag. Then entry point specified in ELF header and the entry address
 /// tag of Multiboot2 header are ignored.

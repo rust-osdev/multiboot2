@@ -371,9 +371,11 @@ pub struct FramebufferField {
     pub size: u8,
 }
 
-/// A framebuffer color descriptor in the palette. On the ABI level, multiple
-/// values are consecutively without padding bytes. The spec is not precise in
-/// that regard, but looking at Limine's and GRUB's source code confirm that.
+/// A framebuffer color descriptor in the palette.
+///
+/// On the ABI level, multiple values are consecutively without padding bytes.
+/// The spec is not precise in that regard, but looking at Limine's and GRUB's
+/// source code confirm that.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)] // no align(8) here is correct
 pub struct FramebufferColor {

@@ -4,10 +4,11 @@ use core::fmt::{Debug, Formatter};
 use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
-/// It contains load address placement suggestion for boot loader. Boot loader
-/// should follow it. ‘0’ means none, ‘1’ means load image at lowest possible address
-/// but not lower than min addr and ‘2’ means load image at highest possible
-/// address but not higher than max addr.
+/// It contains load address placement suggestion for bootloader.
+///
+/// Bootloader should follow it. ‘0’ means none, ‘1’ means load image at lowest
+/// possible address but not lower than min addr and ‘2’ means load image at
+/// highest possible address but not higher than max addr.
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum RelocatableHeaderTagPreference {

@@ -8,8 +8,10 @@ use core::mem;
 use core::ops::Deref;
 
 /// Helper to 8-byte align the underlying bytes, as mandated in the Multiboot2
-/// spec. With this type, one can create manual and raw Multiboot2 boot
-/// information or just the bytes for simple tags, in a manual and raw approach.
+/// spec.
+///
+/// With this type, one can create manual and raw Multiboot2 boot information or
+/// just the bytes for simple tags, in a manual and raw approach.
 #[derive(Debug)]
 #[repr(C, align(8))]
 pub struct AlignedBytes<const N: usize>(pub [u8; N]);

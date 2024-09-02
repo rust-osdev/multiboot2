@@ -6,8 +6,10 @@ use core::fmt::{Debug, Formatter};
 use core::hash::Hash;
 
 /// Serialized form of [`TagType`] that matches the binary representation
-/// (`u32`). The abstraction corresponds to the `typ`/`type` field of a
-/// Multiboot2 [`TagHeader`]. This type can easily be created from or converted to
+/// (`u32`).
+///
+/// The abstraction corresponds to the `typ`/`type` field of a Multiboot2
+/// [`TagHeader`]. This type can easily be created from or converted to
 /// [`TagType`].
 ///
 /// [`TagHeader`]: crate::TagHeader
@@ -31,9 +33,10 @@ impl Debug for TagTypeId {
 }
 
 /// Higher level abstraction for [`TagTypeId`] that assigns each possible value
-/// to a specific semantic according to the specification. Additionally, it
-/// allows to use the [`TagType::Custom`] variant. It is **not binary compatible**
-/// with [`TagTypeId`].
+/// to a specific semantic according to the specification.
+///
+/// Additionally, it allows to use the [`TagType::Custom`] variant. It is
+/// **not binary compatible** with [`TagTypeId`].
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TagType {
     /// Tag `0`: Marks the end of the tags.

@@ -2,6 +2,8 @@ use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::mem::size_of;
 use multiboot2_common::{MaybeDynSized, Tag};
 
+/// Binary address information for non-ELF images.
+///
 /// This information does not need to be provided if the kernel image is in ELF
 /// format, but it must be provided if the image is in a.out format or in some
 /// other format. Required for legacy boot (BIOS).

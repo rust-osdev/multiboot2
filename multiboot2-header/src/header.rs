@@ -15,6 +15,7 @@ use multiboot2_common::{DynSizedStructure, Header, MemoryError, Tag, ALIGNMENT};
 pub const MAGIC: u32 = 0xe85250d6;
 
 /// Wrapper type around a pointer to the Multiboot2 header.
+///
 /// The Multiboot2 header is the [`Multiboot2BasicHeader`] followed
 /// by all tags (see [`crate::tags::HeaderTagType`]).
 /// Use this if you get a pointer to the header and just want
