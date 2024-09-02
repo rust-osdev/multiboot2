@@ -6,8 +6,10 @@ use core::mem;
 use core::ops::Deref;
 
 /// Wraps a byte slice representing a Multiboot2 structure including an optional
-/// terminating padding, if necessary. It guarantees that the memory
-/// requirements promised in the crates description are respected.
+/// terminating padding, if necessary.
+///
+/// Instances of this type guarantee that the memory requirements promised in
+/// the crates description are respected.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct BytesRef<'a, H: Header> {

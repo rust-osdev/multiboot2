@@ -226,10 +226,12 @@ use core::slice;
 /// The alignment of all Multiboot2 data structures.
 pub const ALIGNMENT: usize = 8;
 
-/// A sized header type for [`DynSizedStructure`]. Note that `header` refers to
-/// the header pattern. Thus, depending on the use case, this is not just a
-/// tag header. Instead, it refers to all bytes that are fixed and not part of
-/// any optional terminating dynamic `[u8]` slice in a [`DynSizedStructure`].
+/// A sized header type for [`DynSizedStructure`].
+///
+/// Note that `header` refers to the header pattern. Thus, depending on the use
+/// case, this is not just a tag header. Instead, it refers to all bytes that
+/// are fixed and not part of any optional terminating dynamic `[u8]` slice in a
+/// [`DynSizedStructure`].
 ///
 /// The alignment of implementors **must** be the compatible with the demands
 /// for the corresponding structure, which typically is [`ALIGNMENT`].
@@ -251,9 +253,11 @@ pub trait Header: Clone + Sized + PartialEq + Eq + Debug {
 }
 
 /// An C ABI-compatible dynamically sized type with a common sized [`Header`]
-/// and a dynamic amount of bytes. This structures owns all its bytes, unlike
-/// [`Header`]. Instances guarantees that the memory requirements promised in
-/// the crates description are respected.
+/// and a dynamic amount of bytes.
+///
+/// This structures owns all its bytes, unlike [`Header`]. Instances guarantees
+/// that the memory requirements promised in the crates description are
+/// respected.
 ///
 /// This can be a Multiboot2 header tag, information tag, boot information, or
 /// a Multiboot2 header. Depending on the context, the [`Header`] is different.
@@ -386,9 +390,10 @@ pub enum MemoryError {
 impl core::error::Error for MemoryError {}
 
 /// Increases the given size to the next alignment boundary, if it is not a
-/// multiple of the alignment yet. This is relevant as in Rust's [type layout],
-/// the allocated size of a type is always a multiple of the alignment, even
-/// if the type is smaller.
+/// multiple of the alignment yet.
+///
+/// This is relevant as in Rust's [type layout], the allocated size of a type is
+/// always a multiple of the alignment, even if the type is smaller.
 ///
 /// [type layout]: https://doc.rust-lang.org/reference/type-layout.html
 #[must_use]
