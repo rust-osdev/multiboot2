@@ -18,8 +18,6 @@ core::arch::global_asm!(include_str!("start.S"), options(att_syntax));
 #[unsafe(no_mangle)]
 fn rust_entry(multiboot_magic: u32, multiboot_hdr: *const u32) -> ! {
     init_environment();
-    let x = 0.12 + 0.56;
-    log::debug!("{x}");
     log::debug!("multiboot_hdr={multiboot_hdr:x?}, multiboot_magic=0x{multiboot_magic:x?}");
     let mbi = multiboot::get_mbi(multiboot_magic, multiboot_hdr as u32).unwrap();
     let module_iter = mbi.modules().expect("Should provide modules");
