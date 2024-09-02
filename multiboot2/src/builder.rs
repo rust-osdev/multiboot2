@@ -1,5 +1,8 @@
 //! Module for [`Builder`].
 
+use crate::apm::ApmTag;
+use crate::bootdev::BootdevTag;
+use crate::network::NetworkTag;
 use crate::{
     BasicMemoryInfoTag, BootInformationHeader, BootLoaderNameTag, CommandLineTag,
     EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
@@ -18,18 +21,18 @@ pub struct Builder {
     bootloader: Option<Box<BootLoaderNameTag>>,
     modules: Vec<Box<ModuleTag>>,
     meminfo: Option<BasicMemoryInfoTag>,
-    // missing bootdev: Option<BootDevice>
+    bootdev: Option<BootdevTag>,
     mmap: Option<Box<MemoryMapTag>>,
     vbe: Option<VBEInfoTag>,
     framebuffer: Option<Box<FramebufferTag>>,
     elf_sections: Option<Box<ElfSectionsTag>>,
-    // missing apm:
+    apm: Option<ApmTag>,
     efi32: Option<EFISdt32Tag>,
     efi64: Option<EFISdt64Tag>,
     smbios: Vec<Box<SmbiosTag>>,
     rsdpv1: Option<RsdpV1Tag>,
     rsdpv2: Option<RsdpV2Tag>,
-    // missing: network
+    network: Option<Box<NetworkTag>>,
     efi_mmap: Option<Box<EFIMemoryMapTag>>,
     efi_bs: Option<EFIBootServicesNotExitedTag>,
     efi32_ih: Option<EFIImageHandle32Tag>,
@@ -53,16 +56,19 @@ impl Builder {
             bootloader: None,
             modules: vec![],
             meminfo: None,
+            bootdev: None,
             mmap: None,
             vbe: None,
             framebuffer: None,
             elf_sections: None,
+            apm: None,
             efi32: None,
             efi64: None,
             smbios: vec![],
             rsdpv1: None,
             rsdpv2: None,
             efi_mmap: None,
+            network: None,
             efi_bs: None,
             efi32_ih: None,
             efi64_ih: None,
@@ -99,6 +105,13 @@ impl Builder {
         self
     }
 
+    /// Sets the [`BootdevTag`] tag.
+    #[must_use]
+    pub const fn bootdev(mut self, bootdev: BootdevTag) -> Self {
+        self.bootdev = Some(bootdev);
+        self
+    }
+
     /// Sets the [`MemoryMapTag`] tag.
     #[must_use]
     pub fn mmap(mut self, mmap: Box<MemoryMapTag>) -> Self {
@@ -124,6 +137,13 @@ impl Builder {
     #[must_use]
     pub fn elf_sections(mut self, elf_sections: Box<ElfSectionsTag>) -> Self {
         self.elf_sections = Some(elf_sections);
+        self
+    }
+
+    /// Sets the [`ApmTag`] tag.
+    #[must_use]
+    pub const fn apm(mut self, apm: ApmTag) -> Self {
+        self.apm = Some(apm);
         self
     }
 
@@ -166,6 +186,13 @@ impl Builder {
     #[must_use]
     pub fn efi_mmap(mut self, efi_mmap: Box<EFIMemoryMapTag>) -> Self {
         self.efi_mmap = Some(efi_mmap);
+        self
+    }
+
+    /// Sets the [`NetworkTag`] tag.
+    #[must_use]
+    pub fn network(mut self, network: Box<NetworkTag>) -> Self {
+        self.network = Some(network);
         self
     }
 
@@ -226,6 +253,9 @@ impl Builder {
         if let Some(tag) = self.meminfo.as_ref() {
             byte_refs.push(tag.as_bytes().as_ref());
         }
+        if let Some(tag) = self.bootdev.as_ref() {
+            byte_refs.push(tag.as_bytes().as_ref());
+        }
         if let Some(tag) = self.mmap.as_ref() {
             byte_refs.push(tag.as_bytes().as_ref());
         }
@@ -236,6 +266,9 @@ impl Builder {
             byte_refs.push(tag.as_bytes().as_ref());
         }
         if let Some(tag) = self.elf_sections.as_ref() {
+            byte_refs.push(tag.as_bytes().as_ref());
+        }
+        if let Some(tag) = self.apm.as_ref() {
             byte_refs.push(tag.as_bytes().as_ref());
         }
         if let Some(tag) = self.efi32.as_ref() {
@@ -293,6 +326,7 @@ mod tests {
             .add_module(ModuleTag::new(0x1000, 0x2000, "module 1"))
             .add_module(ModuleTag::new(0x3000, 0x4000, "module 2"))
             .meminfo(BasicMemoryInfoTag::new(0x4000, 0x5000))
+            .bootdev(BootdevTag::new(0x00, 0x00, 0x00))
             .mmap(MemoryMapTag::new(&[MemoryArea::new(
                 0x1000000,
                 0x1000,
@@ -316,6 +350,7 @@ mod tests {
                 FramebufferType::Text,
             ))
             .elf_sections(ElfSectionsTag::new(0, 32, 0, &[]))
+            .apm(ApmTag::new(0, 0, 0, 0, 0, 0, 0, 0, 0))
             .efi32(EFISdt32Tag::new(0x1000))
             .efi64(EFISdt64Tag::new(0x1000))
             .add_smbios(SmbiosTag::new(0, 0, &[1, 2, 3]))
@@ -326,6 +361,7 @@ mod tests {
                 MemoryDescriptor::default(),
                 MemoryDescriptor::default(),
             ]))
+            .network(NetworkTag::new(&[0; 1500]))
             .efi_bs(EFIBootServicesNotExitedTag::new())
             .efi32_ih(EFIImageHandle32Tag::new(0x1000))
             .efi64_ih(EFIImageHandle64Tag::new(0x1000))

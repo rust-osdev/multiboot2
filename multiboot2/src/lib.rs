@@ -66,8 +66,10 @@ pub type TagIter<'a> = multiboot2_common::TagIter<'a, TagHeader>;
 #[cfg(test)]
 pub type GenericInfoTag = multiboot2_common::DynSizedStructure<TagHeader>;
 
+mod apm;
 mod boot_information;
 mod boot_loader_name;
+mod bootdev;
 mod command_line;
 mod efi;
 mod elf_sections;
@@ -76,6 +78,7 @@ mod framebuffer;
 mod image_load_addr;
 mod memory_map;
 mod module;
+mod network;
 mod rsdp;
 mod smbios;
 mod tag;
@@ -85,8 +88,10 @@ mod vbe_info;
 
 pub use multiboot2_common::{DynSizedStructure, MaybeDynSized, Tag};
 
+pub use apm::ApmTag;
 pub use boot_information::{BootInformation, BootInformationHeader, LoadError};
 pub use boot_loader_name::BootLoaderNameTag;
+pub use bootdev::BootdevTag;
 #[cfg(feature = "builder")]
 pub use builder::Builder;
 pub use command_line::CommandLineTag;
@@ -104,6 +109,7 @@ pub use memory_map::{
     MemoryArea, MemoryAreaType, MemoryAreaTypeId, MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
+pub use network::NetworkTag;
 pub use ptr_meta::Pointee;
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
 pub use smbios::SmbiosTag;
