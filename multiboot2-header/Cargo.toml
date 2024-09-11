@@ -26,7 +26,7 @@ keywords = [
 # without this, sometimes crates.io doesn't show the preview of the README
 # I expeciended this multiple times in the past
 readme = "README.md"
-homepage = "https://github.com/rust-osdev/multiboot2-header"
+homepage = "https://github.com/rust-osdev/multiboot2/tree/main/multiboot2-header"
 repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2-header"
 rust-version = "1.75"
