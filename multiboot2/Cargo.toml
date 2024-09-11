@@ -6,7 +6,7 @@ structures and the contained information tags. Usable in `no_std` environments,
 such as a kernel. An optional builder feature also allows the construction of
 the corresponding structures.
 """
-version = "0.22.2"
+version = "0.23.0"
 authors = [
     "Philipp Oppermann <dev@phil-opp.com>",
     "Calvin Lee <cyrus296@gmail.com>",
@@ -47,11 +47,7 @@ derive_more.workspace = true
 log.workspace = true
 ptr_meta.workspace = true
 multiboot2-common.workspace = true
-# We only use a very basic type definition from this crate. To prevent MSRV
-# bumps from uefi-raw, I restrict this here. Upstream users are likely to have
-# two versions of this library in it, which is no problem, as we only use the
-# type definition.
-uefi-raw = { version = "~0.7", default-features = false }
+uefi-raw = { version = "~0.8.0", default-features = false }
 
 [package.metadata.docs.rs]
 all-features = true
