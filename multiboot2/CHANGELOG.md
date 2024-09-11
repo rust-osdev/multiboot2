@@ -9,6 +9,7 @@
     - `BootdevTag`
     - `NetworkTag`
 - `BootInformation::tags` iterator is now public
+- misc metadata fixes
 
 ## v0.22.2 (2024-08-24)
 

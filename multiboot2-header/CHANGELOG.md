@@ -4,6 +4,7 @@
 
 - dependency updates
 - **Breaking:** MSRV is now 1.75
+- misc metadata fixes
 
 ## v0.5.1 (2024-08-24)
 

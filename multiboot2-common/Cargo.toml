@@ -17,7 +17,7 @@ keywords = [
     "Multiboot2"
 ]
 readme = "README.md"
-homepage = "https://github.com/rust-osdev/multiboot2"
+homepage = "https://github.com/rust-osdev/multiboot2/tree/main/multiboot2-common"
 repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2-common"
 rust-version = "1.75"
