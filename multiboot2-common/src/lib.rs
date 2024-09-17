@@ -339,14 +339,16 @@ impl<H: Header> DynSizedStructure<H> {
     /// Performs a memory-safe same-size cast from the base-structure to a
     /// specific [`MaybeDynSized`]. The idea here is to cast the generic
     /// mostly semantic-free version to a specific type with fields that have
-    /// a semantic.
+    /// a clear semantic.
     ///
     /// The provided `T` of type [`MaybeDynSized`] might be may be sized type
-    /// or DST. This depends on the type.
+    /// or DST. This depends on the type. However, the source and the target
+    /// both will have the same actual payload size and the same
+    /// [`size_of_val`].
     ///
     /// # Panic
     /// Panics if base assumptions are violated. For example, the
-    /// `T` of type [`MaybeDynSized`] must allow a proper casting to it.
+    /// `T` of type [`MaybeDynSized`] must allow proper same-size casting to it.
     ///
     /// # Safety
     /// This function is safe due to various sanity checks and the overall
@@ -355,6 +357,8 @@ impl<H: Header> DynSizedStructure<H> {
     /// # Panics
     /// This panics if there is a size mismatch. However, this should never be
     /// the case if all types follow their documented requirements.
+    ///
+    /// [`size_of_val`]: mem::size_of_val
     pub fn cast<T: MaybeDynSized<Header = H> + ?Sized>(&self) -> &T {
         let base_ptr = ptr::addr_of!(*self);
 
