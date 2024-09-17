@@ -3,10 +3,11 @@
 use crate::framebuffer::UnknownFramebufferType;
 use crate::tag::TagHeader;
 use crate::{
-    module, BasicMemoryInfoTag, BootLoaderNameTag, CommandLineTag, EFIBootServicesNotExitedTag,
-    EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag, EFISdt32Tag, EFISdt64Tag,
-    ElfSectionIter, ElfSectionsTag, EndTag, FramebufferTag, ImageLoadPhysAddrTag, MemoryMapTag,
-    ModuleIter, RsdpV1Tag, RsdpV2Tag, SmbiosTag, TagIter, TagType, VBEInfoTag,
+    module, ApmTag, BasicMemoryInfoTag, BootLoaderNameTag, BootdevTag, CommandLineTag,
+    EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
+    EFISdt32Tag, EFISdt64Tag, ElfSectionIter, ElfSectionsTag, EndTag, FramebufferTag,
+    ImageLoadPhysAddrTag, MemoryMapTag, ModuleIter, NetworkTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag,
+    TagIter, TagType, VBEInfoTag,
 };
 #[cfg(feature = "unstable")]
 use core::error::Error;
@@ -165,44 +166,46 @@ impl<'a> BootInformation<'a> {
     // ######################################################
     // ### BEGIN OF TAG GETTERS (in alphabetical order)
 
-    /*fn apm(&self) {
-        // also add to debug output
-        todo!()
-    }*/
+    /// Search for the [`ApmTag`].
+    #[must_use]
+    pub fn apm_tag(&self) -> Option<&ApmTag> {
+        self.get_tag::<ApmTag>()
+    }
 
-    /// Search for the basic memory info tag.
+    /// Search for the [`BasicMemoryInfoTag`].
     #[must_use]
     pub fn basic_memory_info_tag(&self) -> Option<&BasicMemoryInfoTag> {
         self.get_tag::<BasicMemoryInfoTag>()
     }
 
-    /// Search for the BootLoader name tag.
+    /// Search for the [`BootLoaderNameTag`].
     #[must_use]
     pub fn boot_loader_name_tag(&self) -> Option<&BootLoaderNameTag> {
         self.get_tag::<BootLoaderNameTag>()
     }
 
-    /*fn bootdev(&self) {
-        // also add to debug output
-        todo!()
-    }*/
+    /// Search for the [`BootdevTag`].
+    #[must_use]
+    pub fn bootdev_tag(&self) -> Option<&BootdevTag> {
+        self.get_tag::<BootdevTag>()
+    }
 
-    /// Search for the Command line tag.
+    /// Search for the [`CommandLineTag`].
     #[must_use]
     pub fn command_line_tag(&self) -> Option<&CommandLineTag> {
         self.get_tag::<CommandLineTag>()
     }
 
-    /// Search for the EFI boot services not exited tag.
+    /// Search for the [`EFIBootServicesNotExitedTag`].
     #[must_use]
     pub fn efi_bs_not_exited_tag(&self) -> Option<&EFIBootServicesNotExitedTag> {
         self.get_tag::<EFIBootServicesNotExitedTag>()
     }
 
-    /// Search for the EFI Memory map tag, if the boot services were exited.
+    /// Search for the [`EFIMemoryMapTag`], if the boot services were exited.
     /// Otherwise, if the [`TagType::EfiBs`] tag is present, this returns `None`
-    /// as it is strictly recommended to get the memory map from the `uefi`
-    /// services.
+    /// as it is strictly recommended to get the memory map from `uefi`
+    /// instead.
     ///
     /// [`TagType::EfiBs`]: crate::TagType::EfiBs
     #[must_use]
@@ -216,25 +219,25 @@ impl<'a> BootInformation<'a> {
                         })
     }
 
-    /// Search for the EFI 32-bit SDT tag.
+    /// Search for the [`EFISdt32Tag`].
     #[must_use]
     pub fn efi_sdt32_tag(&self) -> Option<&EFISdt32Tag> {
         self.get_tag::<EFISdt32Tag>()
     }
 
-    /// Search for the EFI 64-bit SDT tag.
+    /// Search for the [`EFISdt64Tag`].
     #[must_use]
     pub fn efi_sdt64_tag(&self) -> Option<&EFISdt64Tag> {
         self.get_tag::<EFISdt64Tag>()
     }
 
-    /// Search for the EFI 32-bit image handle pointer tag.
+    /// Search for the [`EFIImageHandle32Tag`].
     #[must_use]
     pub fn efi_ih32_tag(&self) -> Option<&EFIImageHandle32Tag> {
         self.get_tag::<EFIImageHandle32Tag>()
     }
 
-    /// Search for the EFI 64-bit image handle pointer tag.
+    /// Search for the [`EFIImageHandle64Tag`].
     #[must_use]
     pub fn efi_ih64_tag(&self) -> Option<&EFIImageHandle64Tag> {
         self.get_tag::<EFIImageHandle64Tag>()
@@ -266,61 +269,62 @@ impl<'a> BootInformation<'a> {
         })
     }
 
-    /// Search for the VBE framebuffer tag. The result is `Some(Err(e))`, if the
+    /// Search for the [`FramebufferTag`]. The result is `Some(Err(e))`, if the
     /// framebuffer type is unknown, while the framebuffer tag is present.
     #[must_use]
     pub fn framebuffer_tag(&self) -> Option<Result<&FramebufferTag, UnknownFramebufferType>> {
         self.get_tag::<FramebufferTag>()
-            // TODO temporarily. Someone needs to fix the framebuffer thingy.
-            .map(Ok)
-        /*.map(|tag| match tag.buffer_type() {
-            Ok(_) => Ok(tag),
-            Err(e) => Err(e),
-        })*/
+            .map(|tag| match tag.buffer_type() {
+                Ok(_) => Ok(tag),
+                Err(e) => Err(e),
+            })
     }
 
-    /// Search for the Image Load Base Physical Address tag.
+    /// Search for the [`ImageLoadPhysAddrTag`].
     #[must_use]
     pub fn load_base_addr_tag(&self) -> Option<&ImageLoadPhysAddrTag> {
         self.get_tag::<ImageLoadPhysAddrTag>()
     }
 
-    /// Search for the Memory map tag.
+    /// Search for the [`MemoryMapTag`].
     #[must_use]
     pub fn memory_map_tag(&self) -> Option<&MemoryMapTag> {
         self.get_tag::<MemoryMapTag>()
     }
 
-    /// Get an iterator of all module tags.
+    /// Get an iterator of all [`ModuleTag`]s.
+    ///
+    /// [`ModuleTag`]: crate::ModuleTag
     #[must_use]
     pub fn module_tags(&self) -> ModuleIter {
         module::module_iter(self.tags())
     }
 
-    /*fn network_tag(&self) {
-        // also add to debug output
-        todo!()
-    }*/
+    /// Search for the [`NetworkTag`].
+    #[must_use]
+    pub fn network_tag(&self) -> Option<&NetworkTag> {
+        self.get_tag::<NetworkTag>()
+    }
 
-    /// Search for the (ACPI 1.0) RSDP tag.
+    /// Search for the [`RsdpV1Tag`].
     #[must_use]
     pub fn rsdp_v1_tag(&self) -> Option<&RsdpV1Tag> {
         self.get_tag::<RsdpV1Tag>()
     }
 
-    /// Search for the (ACPI 2.0 or later) RSDP tag.
+    /// Search for the [`RsdpV2Tag`].
     #[must_use]
     pub fn rsdp_v2_tag(&self) -> Option<&RsdpV2Tag> {
         self.get_tag::<RsdpV2Tag>()
     }
 
-    /// Search for the SMBIOS tag.
+    /// Search for the [`SmbiosTag`].
     #[must_use]
     pub fn smbios_tag(&self) -> Option<&SmbiosTag> {
         self.get_tag::<SmbiosTag>()
     }
 
-    /// Search for the VBE information tag.
+    /// Search for the [`VBEInfoTag`].
     #[must_use]
     pub fn vbe_info_tag(&self) -> Option<&VBEInfoTag> {
         self.get_tag::<VBEInfoTag>()

@@ -4,7 +4,7 @@
 
 - dependency updates
 - **Breaking:** MSRV is now 1.75
-- Added missing tags:
+- Added missing tags along with getters for on `BootInformation`:
     - `ApmTag`
     - `BootdevTag`
     - `NetworkTag`
