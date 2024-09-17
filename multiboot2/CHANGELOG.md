@@ -8,6 +8,7 @@
     - `ApmTag`
     - `BootdevTag`
     - `NetworkTag`
+- `BootInformation::tags` iterator is now public
 
 ## v0.22.2 (2024-08-24)
 

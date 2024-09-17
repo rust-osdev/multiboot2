@@ -403,7 +403,12 @@ impl<'a> BootInformation<'a> {
     }
 
     /// Returns an iterator over all tags.
-    pub(crate) fn tags(&self) -> TagIter {
+    ///
+    /// This is public to enable users to iterate over tags that appear multiple
+    /// times, even tho this is unusual. However, it is recommended to use the
+    /// tag getters as normal bootloaders provide most tags only once.
+    #[must_use]
+    pub fn tags(&self) -> TagIter {
         TagIter::new(self.0.payload())
     }
 }
