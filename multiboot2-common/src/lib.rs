@@ -267,6 +267,11 @@ pub trait Header: Clone + Sized + PartialEq + Eq + Debug {
 /// Further, there is a variable amount of payload bytes. Thus, this type can
 /// only exist on the heap or references to it can be made by cast via fat
 /// pointers.
+///
+/// As there might be padding necessary for the proper Rust layout,
+/// `size_of_val(&self)` might report additional padding bytes that are not
+/// reflected by the actual payload. These additional padding bytes however
+/// will be reflected in corresponding [`BytesRef`] instances.
 #[derive(Debug, PartialEq, Eq, ptr_meta::Pointee)]
 #[repr(C, align(8))]
 pub struct DynSizedStructure<H: Header> {

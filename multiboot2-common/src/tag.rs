@@ -9,9 +9,15 @@ use ptr_meta::Pointee;
 /// casting a [`DynSizedStructure`] to sized or unsized structures using
 /// [`DynSizedStructure::cast`].
 ///
-/// Structs that are a DST must provide a **correct**
-/// [`MaybeDynSized::dst_len`] implementation. Further, implementors **must**
-/// use `#[repr(C)]`.
+/// Structs that are a DST must provide a **correct** [`MaybeDynSized::dst_len`]
+/// implementation.
+///
+/// # ABI
+/// Implementors **must** use `#[repr(C)]`. As there might be padding necessary
+/// for the proper Rust layout, `size_of_val(&self)` might report additional
+/// padding bytes that are not reflected by the actual payload. These additional
+/// padding bytes however will be reflected in corresponding [`BytesRef`]
+/// instances.
 ///
 /// [`ID`]: Tag::ID
 /// [`DynSizedStructure`]: crate::DynSizedStructure
