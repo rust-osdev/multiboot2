@@ -90,6 +90,8 @@ pub trait Tag: MaybeDynSized {
     const ID: Self::IDType;
 }
 
+// This implementation is not needed for parsing but for creation, when
+// downstream types just wrap this type.
 impl<H: Header> MaybeDynSized for DynSizedStructure<H> {
     type Header = H;
 

@@ -143,10 +143,13 @@
 //!
 //! # Architecture & Provided Abstractions
 //!
-//! Figure 2 in the [README](https://crates.io/crates/multiboot2-common)
+//! The figures in the [README](https://crates.io/crates/multiboot2-common)
 //! (currently not embeddable in lib.rs unfortunately) provides an overview of
 //! the parsing of Multiboot2 structures and how the definitions from this
 //! crate are used.
+//!
+//! Note that although the diagrams seem complex, most logic is in
+//! `multiboot2-common`. For downstream users, the usage is quite simple.
 //!
 //! ## Parsing and Casting
 //!
