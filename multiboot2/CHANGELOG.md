@@ -27,7 +27,7 @@ Minor documentation fixes.
 This release contains another major refactoring of the internals, guaranteeing
 even more sanity checks for correct behaviour and lack of UB. In this release,
 the `Builder` was rewritten and lots of corresponding UB in certain
-corer-cases removed. Further, the builder's API was streamlined.
+corner cases removed. Further, the builder's API was streamlined.
 
 If you are interested in the internals of the major refactorings recently taken
 place, please head to the documentation of `multiboot2-common`.
@@ -58,7 +58,7 @@ base is in excellent shape!
 
 ## 0.21.0 (2024-08-17)
 
-This release contains a massive refactoring of various internals. Now, **almost
+This release contains a massive refactoring of various internals. Now, almost
 **unit tests pass Miri**, thus we removed lots of undefined behaviour and
 increased the memory safety! 🎉 Only a small part of these internal refactorings
 leak to the public interface. If you don't use external custom tags, you
