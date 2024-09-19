@@ -49,7 +49,7 @@ dependencies = [
 
 [[package]]
 name = "multiboot2-common"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "derive_more",
  "ptr_meta",
