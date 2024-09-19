@@ -1,0 +1,312 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36" version="24.7.14">
+  <diagram name="Page-1" id="2CKFIAWtDax4PS3orJks">
+    <mxGraphModel dx="1049" dy="522" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-42" value="&amp;amp;XyzTag" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=10;fillColor=#FFCCCC;" parent="1" vertex="1">
+          <mxGeometry x="480" y="285" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-37" value="" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" vertex="1">
+          <mxGeometry x="344" y="345" width="80" height="41" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-1" value="&amp;amp;[u8]" style="rounded=0;whiteSpace=wrap;html=1;fontSize=11;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fillColor=#CCFF99;" parent="1" vertex="1">
+          <mxGeometry x="20" y="90" width="120" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-2" value="BytesRef" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=10;fillColor=#E5CCFF;" parent="1" vertex="1">
+          <mxGeometry x="200" y="160" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-3" value="&amp;amp;DynSized&lt;br style=&quot;font-size: 10px;&quot;&gt;Structure&lt;br&gt;&amp;lt;H: Header&amp;gt;" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=10;fillColor=#E5CCFF;" parent="1" vertex="1">
+          <mxGeometry x="340" y="160" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-5" value="DynSized&lt;br&gt;Structure::H" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=10;fillColor=#E5CCFF;" parent="1" vertex="1">
+          <mxGeometry x="270" y="100" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-6" value="BootInformation" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=10;fillColor=#FFCCCC;" parent="1" vertex="1">
+          <mxGeometry x="480" y="160" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-7" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0.993;entryY=0.012;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0;exitY=0;exitDx=0;exitDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-2" target="nbB3mwhe1C9cpLEP2DVL-1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="290" y="370" as="sourcePoint" />
+            <mxPoint x="160" y="30" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-8" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0;entryY=1;entryDx=0;entryDy=0;exitX=1;exitY=1;exitDx=0;exitDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-1" target="nbB3mwhe1C9cpLEP2DVL-2" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="180" y="350" as="sourcePoint" />
+            <mxPoint x="300" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-9" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-2" target="nbB3mwhe1C9cpLEP2DVL-3" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="340" y="320" as="sourcePoint" />
+            <mxPoint x="390" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-10" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.375;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;dashed=1;dashPattern=1 1;" parent="1" target="nbB3mwhe1C9cpLEP2DVL-5" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="300" y="180" as="sourcePoint" />
+            <mxPoint x="330" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-12" value="cast" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=9;" parent="nbB3mwhe1C9cpLEP2DVL-10" vertex="1" connectable="0">
+          <mxGeometry x="0.0313" y="-1" relative="1" as="geometry">
+            <mxPoint y="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-11" value="" style="endArrow=none;html=1;rounded=0;entryX=0.632;entryY=1.03;entryDx=0;entryDy=0;entryPerimeter=0;startArrow=classic;startFill=1;endFill=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;dashed=1;dashPattern=1 1;" parent="1" target="nbB3mwhe1C9cpLEP2DVL-5" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="180" as="sourcePoint" />
+            <mxPoint x="310" y="120" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-13" value="size" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=9;" parent="nbB3mwhe1C9cpLEP2DVL-11" vertex="1" connectable="0">
+          <mxGeometry x="0.2979" relative="1" as="geometry">
+            <mxPoint y="-3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-15" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=classic;startFill=1;endFill=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-6" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="450" y="179.92" as="sourcePoint" />
+            <mxPoint x="420" y="179.92" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-16" value="wrap in" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=9;" parent="nbB3mwhe1C9cpLEP2DVL-15" vertex="1" connectable="0">
+          <mxGeometry x="0.2979" relative="1" as="geometry">
+            <mxPoint x="3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-17" value="&lt;span style=&quot;font-size: 11px;&quot;&gt;tags: &amp;amp;[u8]&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontSize=11;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fillColor=#CCFF99;" parent="1" vertex="1">
+          <mxGeometry x="600" y="90" width="120" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-18" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;span style=&quot;font-size: 11px;&quot;&gt;size: u32&lt;br style=&quot;font-size: 11px;&quot;&gt;_reserved: u32&lt;/span&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=11;fillColor=#CCFF99;" parent="1" vertex="1">
+          <mxGeometry x="600" y="90" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-19" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-6" target="nbB3mwhe1C9cpLEP2DVL-17" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="170" y="250" as="sourcePoint" />
+            <mxPoint x="460" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-21" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-6" target="nbB3mwhe1C9cpLEP2DVL-18" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="550" y="210" as="sourcePoint" />
+            <mxPoint x="610" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-22" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 1;strokeWidth=2;rounded=0;fontColor=#B3B3B3;strokeColor=#B3B3B3;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;entryX=1;entryY=0;entryDx=0;entryDy=0;" parent="1" target="nbB3mwhe1C9cpLEP2DVL-1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="600" y="90" as="sourcePoint" />
+            <mxPoint x="160" y="90" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-23" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 1;strokeWidth=2;rounded=0;fontColor=#B3B3B3;strokeColor=#B3B3B3;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="600" y="240" as="sourcePoint" />
+            <mxPoint x="140" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-24" value="&lt;span style=&quot;font-size: 11px;&quot;&gt;tags: &amp;amp;[u8]&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontSize=11;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fillColor=#CCFF99;" parent="1" vertex="1">
+          <mxGeometry x="20" y="280" width="120" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-25" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;span style=&quot;font-size: 11px;&quot;&gt;size: u32&lt;br style=&quot;font-size: 11px;&quot;&gt;_reserved: u32&lt;/span&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=11;fillColor=#CCFF99;" parent="1" vertex="1">
+          <mxGeometry x="20" y="280" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-26" value="TagIter&lt;br&gt;&amp;lt;&lt;font data-font-src=&quot;https://fonts.googleapis.com/css?family=Source+Code+Pro&quot;&gt;H: Header&lt;/font&gt;&amp;gt;" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=10;fillColor=#E5CCFF;" parent="1" vertex="1">
+          <mxGeometry x="201" y="349" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-27" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=1;entryY=1;entryDx=0;entryDy=0;exitX=0;exitY=0;exitDx=0;exitDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-26" target="nbB3mwhe1C9cpLEP2DVL-25" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="291" y="559" as="sourcePoint" />
+            <mxPoint x="160" y="281" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-28" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0;entryY=1;entryDx=0;entryDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" target="nbB3mwhe1C9cpLEP2DVL-26" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="140" y="429" as="sourcePoint" />
+            <mxPoint x="301" y="529" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-30" value="TagIter::H" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=10;fillColor=#E5CCFF;" parent="1" vertex="1">
+          <mxGeometry x="270" y="290" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-31" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.375;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;dashed=1;dashPattern=1 1;" parent="1" target="nbB3mwhe1C9cpLEP2DVL-30" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="300" y="370" as="sourcePoint" />
+            <mxPoint x="330" y="400" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-32" value="cast" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=9;" parent="nbB3mwhe1C9cpLEP2DVL-31" vertex="1" connectable="0">
+          <mxGeometry x="0.0313" y="-1" relative="1" as="geometry">
+            <mxPoint y="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-33" value="" style="endArrow=none;html=1;rounded=0;entryX=0.632;entryY=1.03;entryDx=0;entryDy=0;entryPerimeter=0;startArrow=classic;startFill=1;endFill=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;dashed=1;dashPattern=1 1;" parent="1" target="nbB3mwhe1C9cpLEP2DVL-30" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="370" as="sourcePoint" />
+            <mxPoint x="310" y="310" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-34" value="size" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=9;" parent="nbB3mwhe1C9cpLEP2DVL-33" vertex="1" connectable="0">
+          <mxGeometry x="0.2979" relative="1" as="geometry">
+            <mxPoint y="-3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-35" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-26" target="nbB3mwhe1C9cpLEP2DVL-29" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="290" y="190" as="sourcePoint" />
+            <mxPoint x="350" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-36" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-17" target="nbB3mwhe1C9cpLEP2DVL-25" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="620" y="300" as="sourcePoint" />
+            <mxPoint x="670" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-38" value="" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" vertex="1">
+          <mxGeometry x="342" y="347" width="80" height="41" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-29" value="&lt;span style=&quot;font-size: 10px;&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&quot;background-color: initial; font-size: 10px;&quot;&gt;DynSized&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;Structure&lt;br&gt;&amp;lt;TagIter::H&amp;gt;&lt;/span&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fillColor=#E5CCFF;" parent="1" vertex="1">
+          <mxGeometry x="340" y="349" width="80" height="41" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-40" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=classic;startFill=1;endFill=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-39" target="nbB3mwhe1C9cpLEP2DVL-29" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="490" y="190" as="sourcePoint" />
+            <mxPoint x="430" y="189.92" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-41" value="cast" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=9;" parent="nbB3mwhe1C9cpLEP2DVL-40" vertex="1" connectable="0">
+          <mxGeometry x="0.2979" relative="1" as="geometry">
+            <mxPoint x="3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-43" value="&amp;amp;EndTag" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=10;fillColor=#FFCCCC;" parent="1" vertex="1">
+          <mxGeometry x="480" y="385" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-39" value="&amp;amp;CmdlineTag" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=10;fillColor=#FFCCCC;" parent="1" vertex="1">
+          <mxGeometry x="480" y="335" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-44" value="" style="rounded=0;whiteSpace=wrap;html=1;fontSize=11;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" vertex="1">
+          <mxGeometry x="600" y="280" width="120" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-45" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;span style=&quot;font-size: 11px;&quot;&gt;size: u32&lt;br style=&quot;font-size: 11px;&quot;&gt;_reserved: u32&lt;/span&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=11;fillColor=#CCFF99;" parent="1" vertex="1">
+          <mxGeometry x="600" y="280" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-47" value="tag: [u8]" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=11;fillColor=#CCFF99;" parent="1" vertex="1">
+          <mxGeometry x="600" y="310" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-49" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 1;strokeWidth=2;rounded=0;exitX=1.009;exitY=1.045;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;exitPerimeter=0;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-43" target="nbB3mwhe1C9cpLEP2DVL-44" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="550" y="470" as="sourcePoint" />
+            <mxPoint x="590" y="510" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-50" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 1;strokeWidth=2;rounded=0;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-43" target="nbB3mwhe1C9cpLEP2DVL-56" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="581" y="432" as="sourcePoint" />
+            <mxPoint x="610" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-51" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 1;strokeWidth=2;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-39" target="nbB3mwhe1C9cpLEP2DVL-56" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="580" y="390" as="sourcePoint" />
+            <mxPoint x="610" y="411" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-52" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 1;strokeWidth=2;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-42" target="nbB3mwhe1C9cpLEP2DVL-55" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="570" y="400" as="sourcePoint" />
+            <mxPoint x="600" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-53" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 1;strokeWidth=2;rounded=0;entryX=0;entryY=0;entryDx=0;entryDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;exitX=1;exitY=0;exitDx=0;exitDy=0;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-39" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="570" y="360" as="sourcePoint" />
+            <mxPoint x="600" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-54" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 1;strokeWidth=2;rounded=0;entryX=0;entryY=0;entryDx=0;entryDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;exitX=1.015;exitY=0.063;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-42" target="nbB3mwhe1C9cpLEP2DVL-47" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="580" y="370" as="sourcePoint" />
+            <mxPoint x="610" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-55" value="tag: [u8]" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=11;fillColor=#CCFF99;" parent="1" vertex="1">
+          <mxGeometry x="600" y="349.5" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-56" value="tag: [u8]" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=11;fillColor=#CCFF99;" parent="1" vertex="1">
+          <mxGeometry x="600" y="390" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-57" value="" style="endArrow=none;html=1;rounded=0;startArrow=classic;startFill=1;endFill=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-43" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="490" y="380" as="sourcePoint" />
+            <mxPoint x="422" y="388" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-58" value="cast" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=9;" parent="nbB3mwhe1C9cpLEP2DVL-57" vertex="1" connectable="0">
+          <mxGeometry x="0.2979" relative="1" as="geometry">
+            <mxPoint x="3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-59" value="" style="endArrow=none;html=1;rounded=0;startArrow=classic;startFill=1;endFill=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;entryX=1;entryY=0;entryDx=0;entryDy=0;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-42" target="nbB3mwhe1C9cpLEP2DVL-37" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="490" y="410" as="sourcePoint" />
+            <mxPoint x="432" y="398" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-60" value="cast" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=9;" parent="nbB3mwhe1C9cpLEP2DVL-59" vertex="1" connectable="0">
+          <mxGeometry x="0.2979" relative="1" as="geometry">
+            <mxPoint x="3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-62" value="uses&lt;br style=&quot;font-size: 11px;&quot;&gt;BootInformationHeader" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontColor=#FF9999;" parent="1" vertex="1">
+          <mxGeometry x="320" y="200" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-63" value="uses&lt;br style=&quot;font-size: 11px;&quot;&gt;TagHeader" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontColor=#FF9999;" parent="1" vertex="1">
+          <mxGeometry x="181" y="389.5" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-65" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 1;strokeWidth=2;rounded=0;fontColor=#B3B3B3;strokeColor=#B3B3B3;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;entryX=1;entryY=0;entryDx=0;entryDy=0;" parent="1" target="nbB3mwhe1C9cpLEP2DVL-25" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="600" y="279.31" as="sourcePoint" />
+            <mxPoint x="160" y="279" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-66" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 1;strokeWidth=2;rounded=0;fontColor=#B3B3B3;strokeColor=#B3B3B3;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;entryX=1;entryY=1;entryDx=0;entryDy=0;" parent="1" target="nbB3mwhe1C9cpLEP2DVL-24" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="600" y="429.31" as="sourcePoint" />
+            <mxPoint x="160" y="429.31" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-67" value="Parsing base structure" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="295" y="240" width="170" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-68" value="Parsing tags in base structure" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="295" y="260" width="170" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-69" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.6;entryDx=0;entryDy=0;startArrow=classic;startFill=1;endFill=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;entryPerimeter=0;" parent="1" source="nbB3mwhe1C9cpLEP2DVL-2" target="nbB3mwhe1C9cpLEP2DVL-1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="490" y="190" as="sourcePoint" />
+            <mxPoint x="430" y="189.92" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-70" value="wrap in" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=9;" parent="nbB3mwhe1C9cpLEP2DVL-69" vertex="1" connectable="0">
+          <mxGeometry x="0.2979" relative="1" as="geometry">
+            <mxPoint x="3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-71" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.6;entryDx=0;entryDy=0;startArrow=classic;startFill=1;endFill=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;entryPerimeter=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="200" y="369.21000000000004" as="sourcePoint" />
+            <mxPoint x="140" y="369.21000000000004" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nbB3mwhe1C9cpLEP2DVL-72" value="wrap in" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Roboto;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DRoboto;fontSize=9;" parent="nbB3mwhe1C9cpLEP2DVL-71" vertex="1" connectable="0">
+          <mxGeometry x="0.2979" relative="1" as="geometry">
+            <mxPoint x="3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

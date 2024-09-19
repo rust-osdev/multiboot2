@@ -4,23 +4,57 @@
 //!
 //! The main value-add of this crate is to abstract away the parsing and
 //! construction of Multiboot2 structures. This is more complex as it may sound
-//! at first due to the difficulties listed below.
+//! at first due to the difficulties listed below. Further, functionality for
+//! the iteration of tags are provided.
 //!
 //! The abstractions provided by this crate serve as the base to work with the
-//! following structures:
+//! following structures in interaction:
 //! - multiboot2:
-//!   - boot information structure (whole)
+//!   - boot information
+//!   - boot information header (the fixed sized begin portion of a boot
+//!     information)
 //!   - boot information tags
+//!   - boot information tag header (the fixed sized begin portion of a tag)
 //! - multiboot2-header:
-//!   - header structure (whole)
+//!   - header
+//!   - header header (the fixed sized begin portion of a header)
 //!   - header tags
+//!   - header tag header (the fixed sized begin portion of a tag)
 //!
-//! # Solved Problem & Difficulties Along the Way
+//! # TL;DR: Specific Example
 //!
-//! Firstly, the design choice to have ABI-compatible rusty types influenced the
-//! requirements and difficulties along the way. They, on the other side,
-//! influenced the design. The outcome is what we perceive as the optimal rusty
-//! and convenient solution.
+//! To name a specific example, the `multiboot2` crate just needs the following
+//! types:
+//!
+//! - `BootInformationHeader` implementing [`Header`]
+//! - `BootInformation` wrapping [`DynSizedStructure`]
+//! - `type TagIter<'a> = multiboot2_common::TagIter<'a, TagHeader>`
+//!    ([`TagIter`])
+//! - `TagHeader` implementing [`Header`]
+//! - Structs for each tag, each implementing [`MaybeDynSized`]
+//!
+//! Then, all the magic using the [`TagIter`] and [`DynSizedStructure::cast`]
+//! can easily be utilized.
+//!
+//! The same correspondingly applies to the structures in `multiboot2-header`.
+//!
+//! # Design, Solved Problem, and Difficulties along the Way
+//!
+//! Firstly, the design choice to have ABI-compatible rusty types in
+//! `multiboot2` and `multiboot2-header` mainly influenced the requirements and
+//! difficulties along the way. These obstacles on the other side, influenced
+//! the design. The outcome is what we perceive as the optimal rusty and
+//! convenient solution.
+//!
+//! ## Architecture Diagrams
+//!
+//! The figures in the [README](https://crates.io/crates/multiboot2-common)
+//! (currently not embeddable in lib.rs unfortunately) provides an overview of
+//! the parsing of Multiboot2 structures and how the definitions from this
+//! crate are used.
+//!
+//! Note that although the diagrams seem complex, most logic is in
+//! `multiboot2-common`. For downstream users, the usage is quite simple.
 //!
 //! ## Multiboot2 Structures
 //!
@@ -83,15 +117,17 @@
 //!
 //! The overall common abstractions needed to solve the problems mentioned in
 //! this section are also mainly influenced by the fact that the `multiboot2`
-//! and `multiboot2-header` crates use a **zero-copy** design for parsing
-//! the corresponding structures.
+//! and `multiboot2-header` crates use a **zero-copy** design by parsing
+//! the corresponding raw bytes with **ABI-compatible types** owning all their
+//! memory.
 //!
-//! Further, by having **ABI-compatible types** that fully represent the
-//! reality, we can use the same type for parsing **and** for construction,
-//! as modelled in the following simplified example:
+//! Further, by having ABI-compatible types that fully represent the reality, we
+//! can use the same type for parsing **and** for construction, as modelled in
+//! the following simplified example:
 //!
 //! ```rust,ignore
 //! /// ABI-compatible tag for parsing.
+//! #[repr(C)]
 //! pub struct MemoryMapTag {
 //!     header: TagHeader,
 //!     entry_size: u32,
@@ -112,16 +148,23 @@
 //!
 //! ## Creating Fat Pointers with [`ptr_meta`]
 //!
+//! Fat pointers are a language feature and the base for references to
+//! dynamically sized types, such as `&str`, `&[T]`, `dyn T` or
+//! `&DynamicallySizedStruct`.
+//!
+//! Currently, they can't be created using the standard library, but
+//! [`ptr_meta`] can be utilized.
+//!
 //! To create fat pointers with [`ptr_meta`], each tag needs a `Metadata` type
 //! which is either `usize` (for DSTs) or `()`. A trait is needed to abstract
-//! above sized or unsized types.
+//! above sized or unsized types. This is done by [`MaybeDynSized`].
 //!
 //! ## Multiboot2 Requirements
 //!
 //! All tags must be 8-byte aligned. The actual payload of tags may be followed
 //! by padding zeroes to fill the gap until the next alignment boundary, if
 //! necessary. These zeroes are not reflected in the tag's size, but for Rust,
-//! must be reflected in the memory allocation size.
+//! must be reflected in the type's memory allocation.
 //!
 //! ## Rustc Requirements
 //!
@@ -141,17 +184,10 @@
 //! [`Layout`] for the underlying type equals the one we manually used for the
 //! allocation.
 //!
-//! # Architecture & Provided Abstractions
-//!
-//! The figures in the [README](https://crates.io/crates/multiboot2-common)
-//! (currently not embeddable in lib.rs unfortunately) provides an overview of
-//! the parsing of Multiboot2 structures and how the definitions from this
-//! crate are used.
-//!
-//! Note that although the diagrams seem complex, most logic is in
-//! `multiboot2-common`. For downstream users, the usage is quite simple.
-//!
 //! ## Parsing and Casting
+//!
+//! The general idea of parsing is that the lifetime of the original byte slice
+//! propagates through to references of target types.
 //!
 //! First, we need byte slices which are guaranteed to be aligned and are a
 //! multiple of the alignment. We have [`BytesRef`] for that. With that, we can
@@ -256,25 +292,30 @@ pub trait Header: Clone + Sized + PartialEq + Eq + Debug {
 }
 
 /// An C ABI-compatible dynamically sized type with a common sized [`Header`]
-/// and a dynamic amount of bytes.
+/// and a dynamic amount of bytes without hidden implicit padding.
 ///
-/// This structures owns all its bytes, unlike [`Header`]. Instances guarantees
-/// that the memory requirements promised in the crates description are
-/// respected.
+/// This structures combines a [`Header`] with the logically owned data by
+/// that header according to the reported [`Header::payload_len`]. Instances
+/// guarantees that the memory requirements promised in the crates description
+/// are respected.
 ///
 /// This can be a Multiboot2 header tag, information tag, boot information, or
-/// a Multiboot2 header. Depending on the context, the [`Header`] is different.
+/// a Multiboot2 header. It is the base for **same-size casts** to these
+/// corresponding structures using [`DynSizedStructure::cast`]. Depending on the
+/// context, the [`Header`] is different (header header, boot information
+/// header, header tag header, or boot information tag header).
 ///
 /// # ABI
 /// This type uses the C ABI. The fixed [`Header`] portion is always there.
 /// Further, there is a variable amount of payload bytes. Thus, this type can
 /// only exist on the heap or references to it can be made by cast via fat
-/// pointers.
+/// pointers. The main constructor is [`DynSizedStructure::ref_from_bytes`].
 ///
-/// As there might be padding necessary for the proper Rust layout,
+/// As terminating padding might be necessary for the proper Rust type layout,
 /// `size_of_val(&self)` might report additional padding bytes that are not
 /// reflected by the actual payload. These additional padding bytes however
-/// will be reflected in corresponding [`BytesRef`] instances.
+/// will be reflected in corresponding [`BytesRef`] instances from that this
+/// structure was created.
 #[derive(Debug, PartialEq, Eq, ptr_meta::Pointee)]
 #[repr(C, align(8))]
 pub struct DynSizedStructure<H: Header> {
@@ -363,6 +404,8 @@ impl<H: Header> DynSizedStructure<H> {
     ///
     /// [`size_of_val`]: mem::size_of_val
     pub fn cast<T: MaybeDynSized<Header = H> + ?Sized>(&self) -> &T {
+        // Thin or fat pointer, depending on type.
+        // However, only thin ptr is needed.
         let base_ptr = ptr::addr_of!(*self);
 
         // This should be a compile-time assertion. However, this is the best
@@ -370,6 +413,7 @@ impl<H: Header> DynSizedStructure<H> {
         assert!(T::BASE_SIZE >= mem::size_of::<H>());
 
         let t_dst_size = T::dst_len(self.header());
+        // Creates thin or fat pointer, depending on type.
         let t_ptr = ptr_meta::from_raw_parts(base_ptr.cast(), t_dst_size);
         let t_ref = unsafe { &*t_ptr };
 

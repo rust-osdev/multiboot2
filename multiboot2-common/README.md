@@ -22,7 +22,14 @@ manner. The `BytesRef` wrapper ensures basic memory guarantees for the
 underlying `&[u8]` slice, while `DynSizedStructure` can then be used to
 safely cast to the target type.
 
-![Parsing flow overview](./parsing-flow.drawio.png "Parsing flow overview: From raw bytes to specific structures")
+![Generic parsing flow overview](./parsing-flow-generic.drawio.png "Generic parsing flow overview: From raw bytes to specific structures")
+
+The next figure is like the previous figure, but shows a more specific parsing
+flow by using types of the `multiboot2` crate. Green shows the raw memory.
+Purple boxes refers to logic in `multiboot2-common`. Red components show structs
+from the `multiboot2` crate.
+
+![Specific parsing flow overview](./parsing-flow-specific.drawio.png "Specific parsing flow overview: From raw bytes to multiboot2 structures")
 
 The last complex figure shows all traits and structs from `multiboot2-common`,
 their internal relation, and how consumers (`multiboot2` and
