@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v0.2.1 (2024-09-19)
+
+- Documentation improvements
+
 ## v0.2.0 (2024-09-17)
 
 - dependency updates
