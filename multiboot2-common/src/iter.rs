@@ -7,11 +7,14 @@ use core::marker::PhantomData;
 use core::mem;
 
 /// Iterates over the tags (modelled by [`DynSizedStructure`]) of the underlying
-/// byte slice. Each tag is expected to have the same common [`Header`].
+/// byte slice. Each tag is expected to have the same common [`Header`] with
+/// the corresponding ABI guarantees.
 ///
 /// As the iterator emits elements of type [`DynSizedStructure`], users should
-/// casted them to specific [`Tag`]s using [`DynSizedStructure::cast`] following
-/// a user policy. This can for example happen on the basis of some ID.
+/// cast them to specific [`Tag`]s using [`DynSizedStructure::cast`] following
+/// a user-specific policy. This can for example happen on the basis of some ID.
+///
+/// This iterator also emits end tags and doesn't treat them separately.
 ///
 /// This type ensures the memory safety guarantees promised by this crates
 /// documentation.
@@ -30,6 +33,8 @@ pub struct TagIter<'a, H: Header> {
 impl<'a, H: Header> TagIter<'a, H> {
     /// Creates a new iterator.
     #[must_use]
+    // TODO we could take a BytesRef here, but the surrounding code should be
+    //  bullet-proof enough.
     pub fn new(mem: &'a [u8]) -> Self {
         // Assert alignment.
         assert_eq!(mem.as_ptr().align_offset(ALIGNMENT), 0);

@@ -25,9 +25,13 @@ safely cast to the target type.
 ![Generic parsing flow overview](./parsing-flow-generic.drawio.png "Generic parsing flow overview: From raw bytes to specific structures")
 
 The next figure is like the previous figure, but shows a more specific parsing
-flow by using types of the `multiboot2` crate. Green shows the raw memory.
-Purple boxes refers to logic in `multiboot2-common`. Red components show structs
-from the `multiboot2` crate.
+flow by using example types of the `multiboot2` crate. Specifically, it shows
+how the header structs for each multiboot2 structure, each implementing
+the `Header` trait, are utilized as generic types to get the right size
+information of the final type tag type.
+
+Green shows the raw memory, purple boxes refer to logic in `multiboot2-common`,
+and red components show structs from the `multiboot2` crate.
 
 ![Specific parsing flow overview](./parsing-flow-specific.drawio.png "Specific parsing flow overview: From raw bytes to multiboot2 structures")
 
