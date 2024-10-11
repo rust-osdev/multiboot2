@@ -1,0 +1,4 @@
+[submodule "limine-bootloader"]
+	path = integration-test/limine-bootloader
+	url = https://github.com/limine-bootloader/limine.git
+	branch = v7.x-binary

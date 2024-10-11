@@ -1,5 +1,5 @@
+mod bootloader;
 mod chainloader;
-mod grub;
 
 use alloc::format;
 use alloc::vec::Vec;
@@ -17,8 +17,11 @@ pub fn run(mbi: &BootInformation) -> anyhow::Result<()> {
         .map_err(anyhow::Error::msg)?;
 
     if bootloader.to_lowercase().contains("grub") {
-        log::info!("loaded by grub");
-        grub::run(mbi)?;
+        log::info!("loaded by GRUB");
+        bootloader::run(mbi)?;
+    } else if bootloader.to_lowercase().contains("limine") {
+        log::info!("loaded by Limine");
+        bootloader::run(mbi)?;
     } else {
         log::info!("loaded by chainloader");
         chainloader::run(mbi)?;
@@ -78,6 +81,15 @@ pub(self) fn print_module_info(mbi: &BootInformation) -> anyhow::Result<()> {
     }
     let module = modules.first().unwrap();
     let module_cmdline = module.cmdline().map_err(anyhow::Error::msg)?;
+
+    let allowed_module_cmdlines = ["Limine bootloader config", "multiboot2_payload"];
+    assert!(
+        allowed_module_cmdlines
+            .iter()
+            .any(|&str| module_cmdline == str),
+        "The module cmdline must be one of {allowed_module_cmdlines:?} but is {module_cmdline}"
+    );
+
     println!("Modules:");
     println!(
         "  0x{:010x} - 0x{:010x} ({} B, cmdline='{}')",
@@ -86,13 +98,13 @@ pub(self) fn print_module_info(mbi: &BootInformation) -> anyhow::Result<()> {
         module.module_size(),
         module_cmdline
     );
-    println!(" grub cfg passed as boot module:");
+    println!(" bootloader cfg passed as boot module:");
     let grup_cfg_ptr = module.start_address() as *const u32 as *const u8;
     let grub_cfg =
         unsafe { core::slice::from_raw_parts(grup_cfg_ptr, module.module_size() as usize) };
 
-    // In the GRUB bootflow case, we pass the config as module with it. This is
-    // not done for the chainloaded case.
+    // In the Limine bootflow case, we pass the config as module with it. This
+    // is not done for the chainloaded case.
     if let Ok(str) = core::str::from_utf8(grub_cfg) {
         println!("=== file begin ===");
         for line in str.lines() {
