@@ -108,10 +108,10 @@ impl Debug for RelocatableHeaderTag {
             .field("flags", &self.flags())
             .field("size", &self.size())
             // trick to print this as hexadecimal pointer
-            .field("min_addr", &(self.min_addr as *const u32))
-            .field("max_addr", &(self.max_addr as *const u32))
-            .field("align", &{ self.align })
-            .field("preference", &{ self.preference })
+            .field("min_addr", &self.min_addr)
+            .field("max_addr", &self.max_addr)
+            .field("align", &self.align)
+            .field("preference", &self.preference)
             .finish()
     }
 }

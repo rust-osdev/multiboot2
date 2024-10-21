@@ -64,7 +64,7 @@ pub trait MaybeDynSized: Pointee {
     /// data, read the tag size from [`Self::header`] and create a sub slice.
     fn as_bytes(&self) -> BytesRef<Self::Header> {
         let ptr = core::ptr::addr_of!(*self);
-        // Actual tag size, optionally with terminating padding.
+        // Actual tag size with optional terminating padding.
         let size = mem::size_of_val(self);
         let slice = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), size) };
         // Unwrap is fine as this type can't exist without the underlying memory

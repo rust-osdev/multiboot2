@@ -123,7 +123,7 @@ impl<'a> Iterator for ModuleIter<'a> {
     }
 }
 
-impl<'a> Debug for ModuleIter<'a> {
+impl Debug for ModuleIter<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         let mut list = f.debug_list();
         self.clone().for_each(|tag| {

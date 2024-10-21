@@ -319,7 +319,7 @@ pub enum FramebufferType<'a> {
     Text,
 }
 
-impl<'a> FramebufferType<'a> {
+impl FramebufferType<'_> {
     #[must_use]
     #[cfg(feature = "builder")]
     const fn id(&self) -> FramebufferTypeId {

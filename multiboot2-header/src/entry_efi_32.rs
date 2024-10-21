@@ -62,7 +62,7 @@ impl Debug for EntryEfi32HeaderTag {
             .field("type", &self.typ())
             .field("flags", &self.flags())
             .field("size", &self.size())
-            .field("entry_addr", &(self.entry_addr as *const u32))
+            .field("entry_addr", &self.entry_addr)
             .finish()
     }
 }

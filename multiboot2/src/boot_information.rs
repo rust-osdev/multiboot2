@@ -132,6 +132,7 @@ impl<'a> BootInformation<'a> {
 
     /// Get the start address of the boot info.
     #[must_use]
+    // TODO deprecated and use pointers only (see provenance discussions)
     pub fn start_address(&self) -> usize {
         self.as_ptr() as usize
     }
@@ -153,6 +154,7 @@ impl<'a> BootInformation<'a> {
     /// let end_addr = boot_info.start_address() + boot_info.total_size();
     /// ```
     #[must_use]
+    // TODO deprecated and use pointers only (see provenance discussions)
     pub fn end_address(&self) -> usize {
         self.start_address() + self.total_size()
     }
