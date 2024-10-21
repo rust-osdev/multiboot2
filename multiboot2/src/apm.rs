@@ -36,7 +36,7 @@ impl ApmTag {
         dseg_len: u16,
     ) -> Self {
         Self {
-            header: TagHeader::new(TagType::Apm, mem::size_of::<Self>() as u32),
+            header: TagHeader::new(Self::ID, mem::size_of::<Self>() as u32),
             version,
             cseg,
             offset,

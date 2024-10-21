@@ -14,7 +14,7 @@ pub struct EndTag {
 impl Default for EndTag {
     fn default() -> Self {
         Self {
-            header: TagHeader::new(TagType::End, mem::size_of::<Self>() as u32),
+            header: TagHeader::new(Self::ID, mem::size_of::<Self>() as u32),
         }
     }
 }
