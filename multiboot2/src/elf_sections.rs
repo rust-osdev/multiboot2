@@ -134,7 +134,7 @@ impl<'a> Iterator for ElfSectionIter<'a> {
     }
 }
 
-impl<'a> Debug for ElfSectionIter<'a> {
+impl Debug for ElfSectionIter<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         let mut debug = f.debug_list();
         self.clone().for_each(|ref e| {
@@ -183,7 +183,7 @@ struct ElfSectionInner64 {
     entry_size: u64,
 }
 
-impl<'a> ElfSection<'a> {
+impl ElfSection<'_> {
     /// Get the section type as a `ElfSectionType` enum variant.
     #[must_use]
     pub fn section_type(&self) -> ElfSectionType {

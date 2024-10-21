@@ -455,13 +455,13 @@ impl<'a> Iterator for EFIMemoryAreaIter<'a> {
     }
 }
 
-impl<'a> ExactSizeIterator for EFIMemoryAreaIter<'a> {
+impl ExactSizeIterator for EFIMemoryAreaIter<'_> {
     fn len(&self) -> usize {
         self.entries
     }
 }
 
-impl<'a> Debug for EFIMemoryAreaIter<'a> {
+impl Debug for EFIMemoryAreaIter<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         let mut debug = f.debug_list();
         let iter = self.clone();
