@@ -168,7 +168,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        assert!(bi.elf_sections().is_none());
+        assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
         assert!(bi.boot_loader_name_tag().is_none());
@@ -191,7 +191,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        assert!(bi.elf_sections().is_none());
+        assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
         assert!(bi.boot_loader_name_tag().is_none());
@@ -214,7 +214,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        assert!(bi.elf_sections().is_none());
+        assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
         assert!(bi.boot_loader_name_tag().is_none());
@@ -240,7 +240,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        assert!(bi.elf_sections().is_none());
+        assert!(bi.elf_sections_tag().is_none());
         assert!(bi.memory_map_tag().is_none());
         assert!(bi.module_tags().next().is_none());
         assert_eq!(
@@ -834,7 +834,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.len(), bi.end_address());
         assert_eq!(bytes.len(), bi.total_size());
-        let mut es = bi.elf_sections().unwrap();
+        let mut es = bi.elf_sections_tag().unwrap().sections();
         let s1 = es.next().expect("Should have one more section");
         assert_eq!(".rodata", s1.name().expect("Should be valid utf-8"));
         assert_eq!(0xFFFF_8000_0010_0000, s1.start_address());
@@ -1022,7 +1022,7 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        let mut es = bi.elf_sections().unwrap();
+        let mut es = bi.elf_sections_tag().unwrap().sections();
         let s1 = es.next().expect("Should have one more section");
         assert_eq!(".shstrtab", s1.name().expect("Should be valid utf-8"));
         assert_eq!(string_addr, s1.start_address());

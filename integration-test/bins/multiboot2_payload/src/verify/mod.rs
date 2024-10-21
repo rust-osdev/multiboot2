@@ -48,8 +48,9 @@ pub(self) fn print_memory_map(mbi: &BootInformation) -> anyhow::Result<()> {
 
 pub(self) fn print_elf_info(mbi: &BootInformation) -> anyhow::Result<()> {
     let sections_iter = mbi
-        .elf_sections()
+        .elf_sections_tag()
         .ok_or("Should have elf sections")
+        .map(|tag| tag.sections())
         .map_err(anyhow::Error::msg)?;
     println!("ELF sections:");
     for s in sections_iter {

@@ -254,7 +254,7 @@ impl<'a> BootInformation<'a> {
     /// # use multiboot2::{BootInformation, BootInformationHeader};
     /// # let ptr = 0xdeadbeef as *const BootInformationHeader;
     /// # let boot_info = unsafe { BootInformation::load(ptr).unwrap() };
-    /// if let Some(sections) = boot_info.elf_sections() {
+    /// if let Some(sections) = boot_info.elf_sections_tag().map(|tag| tag.sections()) {
     ///     let mut total = 0;
     ///     for section in sections {
     ///         println!("Section: {:?}", section);
@@ -263,12 +263,19 @@ impl<'a> BootInformation<'a> {
     /// }
     /// ```
     #[must_use]
+    #[deprecated = "Use elf_sections_tag() instead and corresponding getters"]
     pub fn elf_sections(&self) -> Option<ElfSectionIter> {
         let tag = self.get_tag::<ElfSectionsTag>();
         tag.map(|t| {
             assert!((t.entry_size() * t.shndx()) <= t.header().size);
-            t.sections_iter()
+            t.sections()
         })
+    }
+
+    /// Search for the [`ElfSectionsTag`].
+    #[must_use]
+    pub fn elf_sections_tag(&self) -> Option<&ElfSectionsTag> {
+        self.get_tag()
     }
 
     /// Search for the [`FramebufferTag`]. The result is `Some(Err(e))`, if the

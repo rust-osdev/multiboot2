@@ -37,9 +37,9 @@ impl ElfSectionsTag {
         )
     }
 
-    /// Get an iterator of loaded ELF sections.
+    /// Get an iterator over the ELF sections.
     #[must_use]
-    pub(crate) const fn sections_iter(&self) -> ElfSectionIter {
+    pub const fn sections(&self) -> ElfSectionIter {
         let string_section_offset = (self.shndx * self.entry_size) as isize;
         let string_section_ptr =
             unsafe { self.sections.as_ptr().offset(string_section_offset) as *const _ };
@@ -96,12 +96,12 @@ impl Debug for ElfSectionsTag {
             .field("number_of_sections", &self.number_of_sections)
             .field("entry_size", &self.entry_size)
             .field("shndx", &self.shndx)
-            .field("sections", &self.sections_iter())
+            .field("sections", &self.sections())
             .finish()
     }
 }
 
-/// An iterator over some ELF sections.
+/// An iterator over [`ElfSection`]s.
 #[derive(Clone)]
 pub struct ElfSectionIter<'a> {
     current_section: *const u8,
