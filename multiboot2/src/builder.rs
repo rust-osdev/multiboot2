@@ -378,5 +378,6 @@ mod tests {
             // Mainly a test for Miri.
             dbg!(tag.header(), tag.payload().len());
         }
+        eprintln!("{info:#x?}")
     }
 }

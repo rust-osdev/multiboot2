@@ -428,50 +428,42 @@ impl<'a> BootInformation<'a> {
 
 impl fmt::Debug for BootInformation<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        /// Limit how many Elf-Sections should be debug-formatted.
-        /// Can be thousands of sections for a Rust binary => this is useless output.
-        /// If the user really wants this, they should debug-format the field directly.
-        const ELF_SECTIONS_LIMIT: usize = 7;
-
         let mut debug = f.debug_struct("Multiboot2BootInformation");
         debug
             .field("start_address", &self.start_address())
             .field("end_address", &self.end_address())
             .field("total_size", &self.total_size())
             // now tags in alphabetical order
+            .field("apm", &self.apm_tag())
             .field("basic_memory_info", &(self.basic_memory_info_tag()))
             .field("boot_loader_name", &self.boot_loader_name_tag())
-            // .field("bootdev", &self.bootdev_tag())
+            .field("bootdev", &self.bootdev_tag())
             .field("command_line", &self.command_line_tag())
             .field("efi_bs_not_exited", &self.efi_bs_not_exited_tag())
+            .field("efi_ih32", &self.efi_ih32_tag())
+            .field("efi_ih64", &self.efi_ih64_tag())
             .field("efi_memory_map", &self.efi_memory_map_tag())
             .field("efi_sdt32", &self.efi_sdt32_tag())
             .field("efi_sdt64", &self.efi_sdt64_tag())
-            .field("efi_ih32", &self.efi_ih32_tag())
-            .field("efi_ih64", &self.efi_ih64_tag());
-
-        // usually this is REALLY big (thousands of tags) => skip it here
-        {
-            let elf_sections_tag_entries_count =
-                self.elf_sections().map(|x| x.count()).unwrap_or(0);
-
-            if elf_sections_tag_entries_count > ELF_SECTIONS_LIMIT {
-                debug.field("elf_sections (count)", &elf_sections_tag_entries_count);
-            } else {
-                debug.field("elf_sections", &self.elf_sections());
-            }
-        }
-
-        debug
+            .field("elf_sections", &self.elf_sections_tag())
             .field("framebuffer", &self.framebuffer_tag())
             .field("load_base_addr", &self.load_base_addr_tag())
             .field("memory_map", &self.memory_map_tag())
             .field("modules", &self.module_tags())
-            // .field("network", &self.network_tag())
+            .field("network", &self.network_tag())
             .field("rsdp_v1", &self.rsdp_v1_tag())
             .field("rsdp_v2", &self.rsdp_v2_tag())
-            .field("smbios_tag", &self.smbios_tag())
-            .field("vbe_info_tag", &self.vbe_info_tag())
+            .field("smbios", &self.smbios_tag())
+            .field("vbe_info", &self.vbe_info_tag())
+            // computed fields
+            .field("custom_tags_count", &{
+                self.tags()
+                    .filter(|tag| {
+                        let id: TagType = tag.header().typ.into();
+                        matches!(id, TagType::Custom(_))
+                    })
+                    .count()
+            })
             .finish()
     }
 }

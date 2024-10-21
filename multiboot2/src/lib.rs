@@ -1007,8 +1007,7 @@ mod tests {
         ]);
         #[repr(C, align(8))]
         struct StringBytes([u8; 11]);
-        let string_bytes: StringBytes =
-            StringBytes([0, 46, 115, 104, 115, 116, 114, 116, 97, 98, 0]);
+        let string_bytes: StringBytes = StringBytes(*b"\0.shstrtab\0");
         let string_addr = string_bytes.0.as_ptr() as u64;
         for i in 0..8 {
             let offset = 108;
@@ -1019,6 +1018,9 @@ mod tests {
         let addr = ptr as usize;
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
+
+        eprintln!("boot information with elf sections: {bi:#x?}");
+
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
