@@ -132,6 +132,19 @@ impl<'a> Iterator for ElfSectionIter<'a> {
         }
         None
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (
+            self.remaining_sections as usize,
+            Some(self.remaining_sections as usize),
+        )
+    }
+}
+
+impl ExactSizeIterator for ElfSectionIter<'_> {
+    fn len(&self) -> usize {
+        self.remaining_sections as usize
+    }
 }
 
 impl Debug for ElfSectionIter<'_> {
