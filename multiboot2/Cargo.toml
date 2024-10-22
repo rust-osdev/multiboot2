@@ -6,7 +6,7 @@ structures and the contained information tags. Usable in `no_std` environments,
 such as a kernel. An optional builder feature also allows the construction of
 the corresponding structures.
 """
-version = "0.23.0"
+version = "0.23.1"
 authors = [
     "Philipp Oppermann <dev@phil-opp.com>",
     "Calvin Lee <cyrus296@gmail.com>",

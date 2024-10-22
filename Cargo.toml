@@ -13,8 +13,8 @@ exclude = [
 bitflags = "2.6.0"
 derive_more = { version = "1.0.0", default-features = false, features = ["display"] }
 log = { version = "~0.4", default-features = false }
-multiboot2 = { version = "0.23.0", default-features = false }
-multiboot2-common = { version = "0.2.0", default-features = false }
+multiboot2 = { version = "0.23.1", default-features = false }
+multiboot2-common = { version = "0.2.1", default-features = false }
 # Warn: 0.3 has multiple very breaking changes
 ptr_meta = { version = "~0.2", default-features = false }
 
