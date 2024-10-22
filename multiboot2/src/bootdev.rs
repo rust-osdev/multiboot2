@@ -19,7 +19,7 @@ impl BootdevTag {
     #[must_use]
     pub fn new(biosdev: u32, slice: u32, part: u32) -> Self {
         Self {
-            header: TagHeader::new(TagType::Apm, mem::size_of::<Self>() as u32),
+            header: TagHeader::new(Self::ID, mem::size_of::<Self>() as u32),
             biosdev,
             slice,
             part,

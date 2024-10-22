@@ -37,9 +37,9 @@ impl ElfSectionsTag {
         )
     }
 
-    /// Get an iterator of loaded ELF sections.
+    /// Get an iterator over the ELF sections.
     #[must_use]
-    pub(crate) const fn sections_iter(&self) -> ElfSectionIter {
+    pub const fn sections(&self) -> ElfSectionIter {
         let string_section_offset = (self.shndx * self.entry_size) as isize;
         let string_section_ptr =
             unsafe { self.sections.as_ptr().offset(string_section_offset) as *const _ };
@@ -96,12 +96,12 @@ impl Debug for ElfSectionsTag {
             .field("number_of_sections", &self.number_of_sections)
             .field("entry_size", &self.entry_size)
             .field("shndx", &self.shndx)
-            .field("sections", &self.sections_iter())
+            .field("sections", &self.sections())
             .finish()
     }
 }
 
-/// An iterator over some ELF sections.
+/// An iterator over [`ElfSection`]s.
 #[derive(Clone)]
 pub struct ElfSectionIter<'a> {
     current_section: *const u8,
@@ -132,25 +132,60 @@ impl<'a> Iterator for ElfSectionIter<'a> {
         }
         None
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (
+            self.remaining_sections as usize,
+            Some(self.remaining_sections as usize),
+        )
+    }
+}
+
+impl ExactSizeIterator for ElfSectionIter<'_> {
+    fn len(&self) -> usize {
+        self.remaining_sections as usize
+    }
 }
 
 impl Debug for ElfSectionIter<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        /// Limit how many Elf-Sections should be debug-formatted.
+        /// Can be thousands of sections for a Rust binary => this is useless output.
+        /// If the user really wants this, they should debug-format the field directly.
+        const ELF_SECTIONS_LIMIT: usize = 7;
+
         let mut debug = f.debug_list();
-        self.clone().for_each(|ref e| {
+
+        self.clone().take(ELF_SECTIONS_LIMIT).for_each(|ref e| {
             debug.entry(e);
         });
+
+        if self.clone().len() > ELF_SECTIONS_LIMIT {
+            debug.entry(&"...");
+        }
+
         debug.finish()
     }
 }
 
 /// A single generic ELF Section.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+// TODO Shouldn't this be called ElfSectionPtrs, ElfSectionWrapper or so?
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ElfSection<'a> {
     inner: *const u8,
     string_section: *const u8,
     entry_size: u32,
     _phantom: PhantomData<&'a ()>,
+}
+
+impl Debug for ElfSection<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        let inner = self.get();
+        f.debug_struct("ElfSection")
+            .field("inner", &inner)
+            .field("string_section_ptr", &self.string_section)
+            .finish()
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -297,7 +332,7 @@ impl ElfSection<'_> {
     }
 }
 
-trait ElfSectionInner {
+trait ElfSectionInner: Debug {
     fn name_index(&self) -> u32;
 
     fn typ(&self) -> u32;

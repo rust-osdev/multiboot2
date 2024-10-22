@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.23.1 (2024-10-21)
+
+- Fix wrong tag ID when using `BootdevTag::new`
+- `BootInformation::elf_sections` is now deprecated and replaced by the newly
+- added `BootInformation::elf_sections_tag`. On the returned type, you can call
+  `.sections()` to iterate the sections
+- Fixed the debug output of `BootInformation`
+
 ## v0.23.0 (2024-09-17)
 
 - dependency updates
