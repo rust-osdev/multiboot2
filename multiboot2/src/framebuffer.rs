@@ -22,7 +22,12 @@ impl<'a> Reader<'a> {
         Self { buffer, off: 0 }
     }
 
-    fn read_u8(&mut self) -> u8 {
+    /// Reads the next [`u8`] from the buffer and updates the internal pointer.
+    ///
+    /// # Panic
+    ///
+    /// Panics if the index is out of bounds.
+    fn read_next_u8(&mut self) -> u8 {
         let val = self
             .buffer
             .get(self.off)
@@ -36,8 +41,15 @@ impl<'a> Reader<'a> {
         val
     }
 
-    fn read_u16(&mut self) -> u16 {
-        self.read_u8() as u16 | (self.read_u8() as u16) << 8
+    /// Reads the next [`u16`] from the buffer and updates the internal pointer.
+    ///
+    /// # Panic
+    ///
+    /// Panics if the index is out of bounds.
+    fn read_next_u16(&mut self) -> u16 {
+        let u16_lo = self.read_next_u8() as u16;
+        let u16_hi = self.read_next_u8() as u16;
+        (u16_hi << 8) | u16_lo
     }
 
     const fn current_ptr(&self) -> *const u8 {
@@ -166,7 +178,7 @@ impl FramebufferTag {
                 // TODO we can create a struct for this and implement
                 //  DynSizedStruct for it to leverage the already existing
                 //  functionality
-                let num_colors = reader.read_u16();
+                let num_colors = reader.read_next_u16();
 
                 let palette = {
                     // Ensure the slice can be created without causing UB
@@ -182,12 +194,12 @@ impl FramebufferTag {
                 Ok(FramebufferType::Indexed { palette })
             }
             FramebufferTypeId::RGB => {
-                let red_pos = reader.read_u8(); // These refer to the bit positions of the LSB of each field
-                let red_mask = reader.read_u8(); // And then the length of the field from LSB to MSB
-                let green_pos = reader.read_u8();
-                let green_mask = reader.read_u8();
-                let blue_pos = reader.read_u8();
-                let blue_mask = reader.read_u8();
+                let red_pos = reader.read_next_u8(); // These refer to the bit positions of the LSB of each field
+                let red_mask = reader.read_next_u8(); // And then the length of the field from LSB to MSB
+                let green_pos = reader.read_next_u8();
+                let green_mask = reader.read_next_u8();
+                let blue_pos = reader.read_next_u8();
+                let blue_mask = reader.read_next_u8();
                 Ok(FramebufferType::RGB {
                     red: FramebufferField {
                         position: red_pos,

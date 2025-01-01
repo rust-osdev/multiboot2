@@ -89,11 +89,12 @@ jobs:
       - name: Code Formatting
         if: inputs.do-style-check
         run: cargo fmt --all -- --check
-      - name: Code Style and Doc Style
+      - name: "Code style: clippy"
         if: inputs.do-style-check
-        run: |
-          cargo doc --no-deps --document-private-items --features ${{ inputs.features }} --no-default-features
-          cargo clippy --all-targets --features ${{ inputs.features }} --no-default-features
+        run: cargo clippy --all-targets --features ${{ inputs.features }} --no-default-features
+      - name: "Code style: rustdoc"
+        if: inputs.do-style-check
+        run: cargo doc --no-deps --document-private-items --features ${{ inputs.features }} --no-default-features
       - name: Unit Test
         run: cargo test --verbose
       - name: Unit Test with Miri
