@@ -37,7 +37,9 @@ impl<'a> Reader<'a> {
     }
 
     fn read_u16(&mut self) -> u16 {
-        self.read_u8() as u16 | (self.read_u8() as u16) << 8
+        let u16_lo = self.read_u8() as u16;
+        let u16_hi = self.read_u8() as u16;
+        (u16_hi << 8) | u16_lo
     }
 
     const fn current_ptr(&self) -> *const u8 {
