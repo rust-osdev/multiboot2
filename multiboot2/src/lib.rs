@@ -134,7 +134,7 @@ mod tests {
     use std::mem;
 
     /// Compile time test to check if the boot information is Send and Sync.
-    /// This test is relevant to give library users flexebility in passing the
+    /// This test is relevant to give library users flexibility in passing the
     /// struct around.
     #[test]
     fn boot_information_is_send_and_sync() {
