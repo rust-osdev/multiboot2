@@ -63,7 +63,7 @@ mod tests {
         // must not include final null
         assert_eq!(parse_slice_as_string(b"hello\0"), Ok("hello"));
         assert_eq!(parse_slice_as_string(b"hello\0\0"), Ok("hello"));
-        // must skip everytihng after first null
+        // must skip everything after first null
         assert_eq!(parse_slice_as_string(b"hello\0foo"), Ok("hello"));
     }
 }
