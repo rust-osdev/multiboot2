@@ -10,7 +10,7 @@ exclude = [
 ]
 
 [workspace.dependencies]
-bitflags = "2.6.0"
+bitflags = "2.7.0"
 derive_more = { version = "1.0.0", default-features = false, features = ["display"] }
 log = { version = "~0.4", default-features = false }
 multiboot2 = { version = "0.23.1", default-features = false }
