@@ -10,5 +10,4 @@ Rela = "Rela"
 grup = "grup"
 
 [default.extend-identifiers]
-# FOOBAR = "FOOBAR"
-
+typ = "typ"
