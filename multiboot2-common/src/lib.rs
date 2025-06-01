@@ -29,7 +29,7 @@
 //! - `BootInformationHeader` implementing [`Header`]
 //! - `BootInformation` wrapping [`DynSizedStructure`]
 //! - `type TagIter<'a> = multiboot2_common::TagIter<'a, TagHeader>`
-//!    ([`TagIter`])
+//!   ([`TagIter`])
 //! - `TagHeader` implementing [`Header`]
 //! - Structs for each tag, each implementing [`MaybeDynSized`]
 //!

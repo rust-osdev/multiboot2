@@ -219,7 +219,7 @@ struct ElfSectionInner64 {
 }
 
 impl ElfSection<'_> {
-    /// Get the section type as a `ElfSectionType` enum variant.
+    /// Get the section type as an `ElfSectionType` enum variant.
     #[must_use]
     pub fn section_type(&self) -> ElfSectionType {
         match self.get().typ() {
@@ -238,10 +238,7 @@ impl ElfSection<'_> {
             0x6000_0000..=0x6FFF_FFFF => ElfSectionType::EnvironmentSpecific,
             0x7000_0000..=0x7FFF_FFFF => ElfSectionType::ProcessorSpecific,
             e => {
-                log::warn!(
-                    "Unknown section type {:x}. Treating as ElfSectionType::Unused",
-                    e
-                );
+                log::warn!("Unknown section type {e:x}. Treating as ElfSectionType::Unused");
                 ElfSectionType::Unused
             }
         }
