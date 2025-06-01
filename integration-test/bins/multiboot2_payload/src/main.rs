@@ -1,6 +1,5 @@
 #![no_main]
 #![no_std]
-#![feature(error_in_core)]
 
 extern crate alloc;
 
@@ -16,7 +15,7 @@ use util::{init_environment, qemu_exit_success};
 mod verify;
 
 /// Entry into the Rust code from assembly.
-#[no_mangle]
+#[unsafe(no_mangle)]
 fn rust_entry(multiboot2_magic: u32, multiboot2_hdr: u32) -> ! {
     main(multiboot2_magic, multiboot2_hdr).expect("Should run multiboot2 integration test");
     log::info!("Integration test finished successfully");

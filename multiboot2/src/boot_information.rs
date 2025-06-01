@@ -3,39 +3,29 @@
 use crate::framebuffer::UnknownFramebufferType;
 use crate::tag::TagHeader;
 use crate::{
-    module, ApmTag, BasicMemoryInfoTag, BootLoaderNameTag, BootdevTag, CommandLineTag,
+    ApmTag, BasicMemoryInfoTag, BootLoaderNameTag, BootdevTag, CommandLineTag,
     EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
     EFISdt32Tag, EFISdt64Tag, ElfSectionIter, ElfSectionsTag, EndTag, FramebufferTag,
     ImageLoadPhysAddrTag, MemoryMapTag, ModuleIter, NetworkTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag,
-    TagIter, TagType, VBEInfoTag,
+    TagIter, TagType, VBEInfoTag, module,
 };
-#[cfg(feature = "unstable")]
-use core::error::Error;
 use core::fmt;
 use core::mem;
 use core::ptr::NonNull;
-use derive_more::Display;
 use multiboot2_common::{DynSizedStructure, Header, MaybeDynSized, MemoryError, Tag};
+use thiserror::Error;
 
 /// Errors that occur when a chunk of memory can't be parsed as
 /// [`BootInformation`].
-#[derive(Display, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Error)]
 pub enum LoadError {
     /// The provided memory can't be parsed as [`BootInformation`].
     /// See [`MemoryError`].
-    Memory(MemoryError),
+    #[error("memory can't be parsed as boot information")]
+    Memory(#[source] MemoryError),
     /// Missing mandatory end tag.
+    #[error("missing mandatory end tag")]
     NoEndTag,
-}
-
-#[cfg(feature = "unstable")]
-impl Error for LoadError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::Memory(inner) => Some(inner),
-            Self::NoEndTag => None,
-        }
-    }
 }
 
 /// The basic header of a [`BootInformation`] as sized Rust type.
@@ -104,7 +94,7 @@ impl<'a> BootInformation<'a> {
     ///   program may observe unsynchronized mutation.
     pub unsafe fn load(ptr: *const BootInformationHeader) -> Result<Self, LoadError> {
         let ptr = NonNull::new(ptr.cast_mut()).ok_or(LoadError::Memory(MemoryError::Null))?;
-        let inner = DynSizedStructure::ref_from_ptr(ptr).map_err(LoadError::Memory)?;
+        let inner = unsafe { DynSizedStructure::ref_from_ptr(ptr).map_err(LoadError::Memory)? };
 
         let this = Self(inner);
         if !this.has_valid_end_tag() {

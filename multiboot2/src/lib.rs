@@ -1,5 +1,4 @@
 #![no_std]
-#![cfg_attr(feature = "unstable", feature(error_in_core))]
 // --- BEGIN STYLE CHECKS ---
 #![deny(
     clippy::all,
@@ -42,7 +41,7 @@
 //! ```
 //!
 //! ## MSRV
-//! The MSRV is 1.75.0 stable.
+//! The MSRV is 1.85.0 stable.
 
 #[cfg_attr(feature = "builder", macro_use)]
 #[cfg(feature = "builder")]
@@ -115,7 +114,7 @@ pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
 pub use smbios::SmbiosTag;
 pub use tag::TagHeader;
 pub use tag_type::{TagType, TagTypeId};
-pub use util::{parse_slice_as_string, StringError};
+pub use util::{StringError, parse_slice_as_string};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
@@ -1102,7 +1101,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "unstable")]
     /// This test succeeds if it compiles.
     fn mbi_load_error_implements_error() {
         fn consumer<E: core::error::Error>(_e: E) {}

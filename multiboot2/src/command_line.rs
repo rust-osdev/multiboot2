@@ -1,7 +1,7 @@
 //! Module for [`CommandLineTag`].
 
 use crate::tag::TagHeader;
-use crate::{parse_slice_as_string, StringError, TagType};
+use crate::{StringError, TagType, parse_slice_as_string};
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use core::str;

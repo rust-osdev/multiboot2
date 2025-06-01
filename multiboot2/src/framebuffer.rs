@@ -1,12 +1,12 @@
 //! Module for [`FramebufferTag`].
 
-use crate::tag::TagHeader;
 use crate::TagType;
+use crate::tag::TagHeader;
 use core::fmt::Debug;
 use core::mem;
 use core::slice;
-use derive_more::Display;
 use multiboot2_common::{MaybeDynSized, Tag};
+use thiserror::Error;
 #[cfg(feature = "builder")]
 use {alloc::boxed::Box, multiboot2_common::new_boxed};
 
@@ -402,12 +402,9 @@ pub struct FramebufferColor {
 }
 
 /// Error when an unknown [`FramebufferTypeId`] is found.
-#[derive(Debug, Copy, Clone, Display, PartialEq, Eq)]
-#[display("Unknown framebuffer type {}", _0)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Error)]
+#[error("Unknown framebuffer type {0}")]
 pub struct UnknownFramebufferType(u8);
-
-#[cfg(feature = "unstable")]
-impl core::error::Error for UnknownFramebufferType {}
 
 #[cfg(test)]
 mod tests {

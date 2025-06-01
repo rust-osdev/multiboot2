@@ -219,7 +219,7 @@ struct ElfSectionInner64 {
 }
 
 impl ElfSection<'_> {
-    /// Get the section type as a `ElfSectionType` enum variant.
+    /// Get the section type as an `ElfSectionType` enum variant.
     #[must_use]
     pub fn section_type(&self) -> ElfSectionType {
         match self.get().typ() {
@@ -238,10 +238,7 @@ impl ElfSection<'_> {
             0x6000_0000..=0x6FFF_FFFF => ElfSectionType::EnvironmentSpecific,
             0x7000_0000..=0x7FFF_FFFF => ElfSectionType::ProcessorSpecific,
             e => {
-                log::warn!(
-                    "Unknown section type {:x}. Treating as ElfSectionType::Unused",
-                    e
-                );
+                log::warn!("Unknown section type {e:x}. Treating as ElfSectionType::Unused");
                 ElfSectionType::Unused
             }
         }
@@ -318,17 +315,24 @@ impl ElfSection<'_> {
         match self.entry_size {
             40 => unsafe { &*(self.inner as *const ElfSectionInner32) },
             64 => unsafe { &*(self.inner as *const ElfSectionInner64) },
-            s => panic!("Unexpected entry size: {}", s),
+            s => panic!("Unexpected entry size: {s}"),
         }
     }
 
     unsafe fn string_table(&self) -> *const u8 {
-        let addr = match self.entry_size {
-            40 => (*(self.string_section as *const ElfSectionInner32)).addr as usize,
-            64 => (*(self.string_section as *const ElfSectionInner64)).addr as usize,
-            s => panic!("Unexpected entry size: {}", s),
-        };
-        addr as *const _
+        match self.entry_size {
+            40 => {
+                let ptr = self.string_section.cast::<ElfSectionInner32>();
+                let reference = unsafe { ptr.as_ref().unwrap() };
+                reference.addr() as *const u8
+            }
+            64 => {
+                let ptr = self.string_section.cast::<ElfSectionInner64>();
+                let reference = unsafe { ptr.as_ref().unwrap() };
+                reference.addr() as *const u8
+            }
+            s => panic!("Unexpected entry size: {s}"),
+        }
     }
 }
 

@@ -1,22 +1,27 @@
 [workspace]
 resolver = "2"
 members = [
-    "multiboot2",
-    "multiboot2-common",
-    "multiboot2-header",
+  "multiboot2",
+  "multiboot2-common",
+  "multiboot2-header",
 ]
 exclude = [
-    "integration-test"
+  "integration-test"
 ]
+package.rust-version = "1.85.0"
+package.edition = "2024"
+package.license = "MIT/Apache-2.0"
 
 [workspace.dependencies]
-bitflags = "2.9.0"
-derive_more = { version = "1.0.0", default-features = false, features = ["display"] }
+bitflags = "2.9.1"
 log = { version = "~0.4", default-features = false }
+ptr_meta = { version = "~0.3", default-features = false, features = ["derive"] }
+thiserror = { version = "2.0.12", default-features = false }
+
+# Intra-workspace dependencies of upstream crates: always point to the latest
+# stable version
 multiboot2 = { version = "0.23.1", default-features = false }
 multiboot2-common = { version = "0.2.1", default-features = false }
-# Warn: 0.3 has multiple very breaking changes
-ptr_meta = { version = "~0.2", default-features = false }
 
 # This way, the corresponding crate dependency can be normalley referenced by
 # version, while still the repository version is used transparently during local

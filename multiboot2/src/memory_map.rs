@@ -422,7 +422,11 @@ impl<'a> EFIMemoryAreaIter<'a> {
     fn new(mmap_tag: &'a EFIMemoryMapTag) -> Self {
         let desc_size = mmap_tag.desc_size as usize;
         let mmap_len = mmap_tag.memory_map.len();
-        assert_eq!(mmap_len % desc_size, 0, "memory map length must be a multiple of `desc_size` by definition. The MBI seems to be corrupt.");
+        assert_eq!(
+            mmap_len % desc_size,
+            0,
+            "memory map length must be a multiple of `desc_size` by definition. The MBI seems to be corrupt."
+        );
         Self {
             mmap_tag,
             i: 0,

@@ -1,7 +1,7 @@
 //! Module for [`SmbiosTag`].
 
-use crate::tag::TagHeader;
 use crate::TagType;
+use crate::tag::TagHeader;
 use core::fmt::Debug;
 use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};

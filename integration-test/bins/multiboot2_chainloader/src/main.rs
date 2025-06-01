@@ -1,6 +1,5 @@
 #![no_main]
 #![no_std]
-#![feature(error_in_core)]
 
 mod loader;
 mod multiboot;
@@ -16,7 +15,7 @@ core::arch::global_asm!(include_str!("start.S"), options(att_syntax));
 
 /// Entry into the Rust code from assembly using the x86 SystemV calling
 /// convention.
-#[no_mangle]
+#[unsafe(no_mangle)]
 fn rust_entry(multiboot_magic: u32, multiboot_hdr: *const u32) -> ! {
     init_environment();
     let x = 0.12 + 0.56;

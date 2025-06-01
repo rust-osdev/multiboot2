@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Breaking:** Removed the optional `unstable` feature (required nightly)
+  - `core::error::Error` is now implemented unconditionally
+- **Breaking:** The MSRV is now 1.81
+
 ## v0.6.0 (2024-09-17)
 
 - dependency updates
@@ -61,7 +65,7 @@ without Undefined Behavior.
 - **BREAKING** `HeaderBuilder::build` now returns a value of type `HeaderBytes`
   The old builder could produce misaligned structures.
 - added the optional `unstable` feature (requires nightly)
-    - implement `core::error::Error` for `LoadError`
+  - implement `core::error::Error` for `LoadError`
 
 ## 0.2.0 (2022-05-03) (**YANKED**)
 

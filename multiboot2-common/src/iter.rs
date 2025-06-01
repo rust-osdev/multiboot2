@@ -2,7 +2,7 @@
 //! Multiboot2 information tags and iterating Multiboot2 header tags is the
 //! same.
 
-use crate::{increase_to_alignment, DynSizedStructure, Header, ALIGNMENT};
+use crate::{ALIGNMENT, DynSizedStructure, Header, increase_to_alignment};
 use core::marker::PhantomData;
 use core::mem;
 
@@ -86,8 +86,8 @@ impl<'a, H: Header + 'a> Iterator for TagIter<'a, H> {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils::{AlignedBytes, DummyTestHeader};
     use crate::TagIter;
+    use crate::test_utils::{AlignedBytes, DummyTestHeader};
     use core::borrow::Borrow;
 
     #[test]

@@ -26,13 +26,7 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v30
-        with:
-          # This channel is only required to invoke "nix-shell".
-          # Everything inside that nix-shell will use a pinned version of
-          # nixpkgs.
-          nix_path: nixpkgs=channel:nixos-23.11
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - uses: cachix/install-nix-action@v31
       - name: Set up cargo cache
         uses: actions/cache@v4
         continue-on-error: false
@@ -48,6 +42,6 @@ jobs:
           key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('integration-test/**/Cargo.toml', 'integration-test/**/Cargo.lock', 'integration-test/bins/rust-toolchain.toml') }}
       # Have all the "copying into Nix store" messages in a dedicated step for
       # better log visibility.
-      - run: nix-shell --run "echo OK"
+      - run: nix develop --command bash -c "echo OK"
       # Now, run the actual test.
-      - run: nix-shell --run run-integrationtest
+      - run: nix develop --command bash -c "run-integrationtest"

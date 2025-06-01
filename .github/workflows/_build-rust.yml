@@ -102,8 +102,7 @@ jobs:
         run: |
           rustup component add miri
           # Run with stack-borrow model
-          # XXX Temporarily, just for multiboot2 crate.
-          cargo miri test -p multiboot2
+          cargo miri test
           # Run with tree-borrow model
-          # XXX Temporarily, just for multiboot2 crate.
-          MIRIFLAGS=-Zmiri-tree-borrows cargo +nightly miri test -p multiboot2
+          # TODO currently doesn't work with the ELF section parsing code
+          # MIRIFLAGS="-Zmiri-tree-borrows" cargo +nightly miri test

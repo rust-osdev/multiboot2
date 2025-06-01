@@ -5,33 +5,32 @@ Common helpers for the `multiboot2` and `multiboot2-header` crates.
 """
 version = "0.2.1"
 authors = [
-    "Philipp Schuster <phip1611@gmail.com>"
+  "Philipp Schuster <phip1611@gmail.com>"
 ]
-license = "MIT/Apache-2.0"
-edition = "2021"
 categories = [
-    "no-std",
-    "no-std::no-alloc",
+  "no-std",
+  "no-std::no-alloc",
 ]
 keywords = [
-    "Multiboot2"
+  "Multiboot2"
 ]
 readme = "README.md"
 homepage = "https://github.com/rust-osdev/multiboot2/tree/main/multiboot2-common"
 repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2-common"
-rust-version = "1.75"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
 
 [features]
 default = ["builder"]
 alloc = []
 builder = ["alloc"]
-unstable = []
 
 
 [dependencies]
-derive_more.workspace = true
 ptr_meta.workspace = true
+thiserror.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
