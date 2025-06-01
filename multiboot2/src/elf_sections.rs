@@ -320,12 +320,19 @@ impl ElfSection<'_> {
     }
 
     unsafe fn string_table(&self) -> *const u8 {
-        let addr = match self.entry_size {
-            40 => (*(self.string_section as *const ElfSectionInner32)).addr as usize,
-            64 => (*(self.string_section as *const ElfSectionInner64)).addr as usize,
+        match self.entry_size {
+            40 => {
+                let ptr = self.string_section.cast::<ElfSectionInner32>();
+                let reference = unsafe { ptr.as_ref().unwrap() };
+                reference.addr() as *const u8
+            }
+            64 => {
+                let ptr = self.string_section.cast::<ElfSectionInner64>();
+                let reference = unsafe { ptr.as_ref().unwrap() };
+                reference.addr() as *const u8
+            }
             s => panic!("Unexpected entry size: {s}"),
-        };
-        addr as *const _
+        }
     }
 }
 
