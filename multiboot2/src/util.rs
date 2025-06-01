@@ -3,9 +3,10 @@
 use core::fmt;
 use core::fmt::{Display, Formatter};
 use core::str::Utf8Error;
+use thiserror::Error;
 
 /// Error type describing failures when parsing the string from a tag.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Error)]
 pub enum StringError {
     /// There is no terminating NUL character, although the specification
     /// requires one.

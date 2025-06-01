@@ -3,7 +3,8 @@
 ## Unreleased
 
 - **Breaking:** Removed the optional `unstable` feature (required nightly)
-    - `core::error::Error` is now implemented unconditionally
+  - `core::error::Error` is now implemented unconditionally
+- **Breaking:** The MSRV is now 1.81
 
 ## v0.2.1 (2024-09-19)
 

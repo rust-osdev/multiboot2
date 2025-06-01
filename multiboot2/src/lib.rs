@@ -41,7 +41,7 @@
 //! ```
 //!
 //! ## MSRV
-//! The MSRV is 1.75.0 stable.
+//! The MSRV is 1.81.0 stable.
 
 #[cfg_attr(feature = "builder", macro_use)]
 #[cfg(feature = "builder")]

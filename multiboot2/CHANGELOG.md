@@ -3,7 +3,8 @@
 ## Unreleased
 
 - **Breaking:** Removed the optional `unstable` feature (required nightly)
-    - `core::error::Error` is now implemented unconditionally
+  - `core::error::Error` is now implemented unconditionally
+- **Breaking:** The MSRV is now 1.81
 
 ## v0.23.1 (2024-10-21)
 
@@ -18,9 +19,9 @@
 - dependency updates
 - **Breaking:** MSRV is now 1.75
 - Added missing tags along with getters for on `BootInformation`:
-    - `ApmTag`
-    - `BootdevTag`
-    - `NetworkTag`
+  - `ApmTag`
+  - `BootdevTag`
+  - `NetworkTag`
 - `BootInformation::tags` iterator is now public
 - misc metadata fixes
 
@@ -223,12 +224,12 @@ release and you'll be fine!**
 - **BREAKING** MSRV is 1.56.1
 - **BREAKING** fixed lifetime issues: `VBEInfoTag` is no longer `&static`
 - **BREAKING:** `TagType` is now split into `TagTypeId` and `TagType`
-    - `TagTypeId` is a binary-compatible form of a Multiboot2 tag id
-    - `TagType` is a higher-level abstraction for either specified or custom
-      tags
-      but not ABI compatible.
-    - There exists a seamless integration between `u32`, `TagType`, and
-      `TagTypeId` via `From` and `PartialEq`-implementations.
+  - `TagTypeId` is a binary-compatible form of a Multiboot2 tag id
+  - `TagType` is a higher-level abstraction for either specified or custom
+    tags
+    but not ABI compatible.
+  - There exists a seamless integration between `u32`, `TagType`, and
+    `TagTypeId` via `From` and `PartialEq`-implementations.
 - fixed another internal lifetime issue
 - `BootInformation::framebuffer_tag()` now returns
   `Option<Result<FramebufferTag, UnknownFramebufferType>>` instead of
@@ -261,14 +262,14 @@ release and you'll be fine!**
   This version includes a few small breaking changes that brings more safety
   when parsing strings from the
   multiboot information structure.
-    - `BootLoaderNameTag::name` now returns a Result instead of just the value
-    - `CommandLineTag::command_line` now returns a Result instead of just the
-      value
-    - `ModuleTag::cmdline` now returns a Result instead of just the value
-    - `RsdpV1Tag::signature` now returns a Result instead of an Option
-    - `RsdpV1Tag::oem_id` now returns a Result instead of an Option
-    - `RsdpV2Tag::signature` now returns a Result instead of an Option
-    - `RsdpV2Tag::oem_id` now returns a Result instead of an Option
+  - `BootLoaderNameTag::name` now returns a Result instead of just the value
+  - `CommandLineTag::command_line` now returns a Result instead of just the
+    value
+  - `ModuleTag::cmdline` now returns a Result instead of just the value
+  - `RsdpV1Tag::signature` now returns a Result instead of an Option
+  - `RsdpV1Tag::oem_id` now returns a Result instead of an Option
+  - `RsdpV2Tag::signature` now returns a Result instead of an Option
+  - `RsdpV2Tag::oem_id` now returns a Result instead of an Option
 - internal code improvements
 
 ## 0.13.3 (2022-06-03) (**YANKED**)
@@ -294,14 +295,14 @@ release and you'll be fine!**
 
 - `TagType` now implements `Eq` and `Hash`
 - internal improvements
-    - `std` can be used in tests; the crate is still `no_std`
-        - this implies that `cargo test` doesn't work on "non-standard" targets
-        - CI (Ubuntu) still works.
-    - code formatting/style
-    - sensible style checks as optional CI job
-    - `.editorconfig` file
-    - prepared co-existence of crates `multiboot2` and `multiboot2-header`
-      in a Cargo workspace inside the same repository
+  - `std` can be used in tests; the crate is still `no_std`
+    - this implies that `cargo test` doesn't work on "non-standard" targets
+    - CI (Ubuntu) still works.
+  - code formatting/style
+  - sensible style checks as optional CI job
+  - `.editorconfig` file
+  - prepared co-existence of crates `multiboot2` and `multiboot2-header`
+    in a Cargo workspace inside the same repository
 
 ## 0.12.1 (2021-08-11) (**YANKED**)
 

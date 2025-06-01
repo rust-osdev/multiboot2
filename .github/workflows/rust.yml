@@ -24,7 +24,7 @@ jobs:
     name: build (msrv)
     uses: ./.github/workflows/_build-rust.yml
     with:
-      rust-version: 1.75.0 # MSRV
+      rust-version: 1.81.0 # MSRV
       do-style-check: false
       features: builder
 
@@ -50,7 +50,7 @@ jobs:
     needs: build_msrv
     uses: ./.github/workflows/_build-rust.yml
     with:
-      rust-version: 1.75.0 # MSRV
+      rust-version: 1.81.0 # MSRV
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
       features: builder
@@ -107,7 +107,7 @@ jobs:
     needs: build_msrv
     uses: ./.github/workflows/_build-rust.yml
     with:
-      rust-version: 1.75.0 # MSRV
+      rust-version: 1.81.0 # MSRV
       do-style-check: true
       do-test: false
       features: builder
