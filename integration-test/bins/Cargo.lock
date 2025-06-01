@@ -28,9 +28,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.6.0"
+version = "2.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
+checksum = "1b8e56985ec62d17e9c1001dc89c88ecd7dc08e47eba5ec7c29c7b5eeecde967"
 
 [[package]]
 name = "derive_more"
@@ -65,7 +65,7 @@ version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "894d710b6b07dae25ce69f9227ec2ffa3a3f71dc7f071acea3e1928ab4aeafdf"
 dependencies = [
- "bitflags 2.6.0",
+ "bitflags 2.9.1",
  "num-traits",
 ]
 
@@ -108,7 +108,7 @@ dependencies = [
 name = "multiboot2"
 version = "0.23.1"
 dependencies = [
- "bitflags 2.6.0",
+ "bitflags 2.9.1",
  "derive_more",
  "log",
  "multiboot2-common",
@@ -272,7 +272,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b463030b802e1265a3800fab24df95d3229c202c2e408832a206f05b4d1496ca"
 dependencies = [
- "bitflags 2.6.0",
+ "bitflags 2.9.1",
  "ptr_meta",
  "uguid",
 ]
