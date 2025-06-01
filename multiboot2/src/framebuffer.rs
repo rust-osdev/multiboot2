@@ -406,7 +406,6 @@ pub struct FramebufferColor {
 #[display("Unknown framebuffer type {}", _0)]
 pub struct UnknownFramebufferType(u8);
 
-#[cfg(feature = "unstable")]
 impl core::error::Error for UnknownFramebufferType {}
 
 #[cfg(test)]

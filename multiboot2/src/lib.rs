@@ -1,5 +1,4 @@
 #![no_std]
-#![cfg_attr(feature = "unstable", feature(error_in_core))]
 // --- BEGIN STYLE CHECKS ---
 #![deny(
     clippy::all,
@@ -1102,7 +1101,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "unstable")]
     /// This test succeeds if it compiles.
     fn mbi_load_error_implements_error() {
         fn consumer<E: core::error::Error>(_e: E) {}

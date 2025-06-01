@@ -38,8 +38,6 @@ rust-version = "1.75"
 default = ["builder"]
 alloc = ["multiboot2-common/alloc"]
 builder = ["alloc", "multiboot2-common/builder"]
-# Nightly-only features, which will eventually be stabilized.
-unstable = ["multiboot2-common/unstable"]
 
 [dependencies]
 bitflags.workspace = true

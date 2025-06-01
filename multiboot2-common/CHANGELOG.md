@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Breaking:** Removed the optional `unstable` feature (required nightly)
+    - `core::error::Error` is now implemented unconditionally
+
 ## v0.2.1 (2024-09-19)
 
 - Documentation improvements

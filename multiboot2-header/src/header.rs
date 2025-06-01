@@ -4,7 +4,6 @@ use crate::{
     HeaderTagType, InformationRequestHeaderTag, ModuleAlignHeaderTag, RelocatableHeaderTag,
     TagIter,
 };
-#[cfg(feature = "unstable")]
 use core::error::Error;
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
@@ -237,7 +236,6 @@ pub enum LoadError {
     Memory(MemoryError),
 }
 
-#[cfg(feature = "unstable")]
 impl Error for LoadError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {

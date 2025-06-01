@@ -26,7 +26,6 @@ rust-version = "1.75"
 default = ["builder"]
 alloc = []
 builder = ["alloc"]
-unstable = []
 
 
 [dependencies]

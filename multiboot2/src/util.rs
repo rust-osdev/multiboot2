@@ -20,7 +20,6 @@ impl Display for StringError {
     }
 }
 
-#[cfg(feature = "unstable")]
 impl core::error::Error for StringError {
     fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
         match self {

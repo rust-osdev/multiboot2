@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Breaking:** Removed the optional `unstable` feature (required nightly)
+    - `core::error::Error` is now implemented unconditionally
+
 ## v0.23.1 (2024-10-21)
 
 - Fix wrong tag ID when using `BootdevTag::new`

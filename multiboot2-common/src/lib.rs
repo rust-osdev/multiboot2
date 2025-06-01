@@ -220,7 +220,6 @@
 //! [`Layout`]: core::alloc::Layout
 
 #![no_std]
-#![cfg_attr(feature = "unstable", feature(error_in_core))]
 // --- BEGIN STYLE CHECKS ---
 #![deny(
     clippy::all,
@@ -442,7 +441,6 @@ pub enum MemoryError {
     InvalidReportedTotalSize,
 }
 
-#[cfg(feature = "unstable")]
 impl core::error::Error for MemoryError {}
 
 /// Increases the given size to the next alignment boundary, if it is not a

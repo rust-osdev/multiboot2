@@ -9,7 +9,6 @@ use crate::{
     ImageLoadPhysAddrTag, MemoryMapTag, ModuleIter, NetworkTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag,
     TagIter, TagType, VBEInfoTag,
 };
-#[cfg(feature = "unstable")]
 use core::error::Error;
 use core::fmt;
 use core::mem;
@@ -28,7 +27,6 @@ pub enum LoadError {
     NoEndTag,
 }
 
-#[cfg(feature = "unstable")]
 impl Error for LoadError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {

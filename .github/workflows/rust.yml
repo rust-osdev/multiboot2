@@ -42,7 +42,7 @@ jobs:
     with:
       rust-version: nightly
       do-style-check: false
-      features: builder,unstable
+      features: builder
 
   ### no-std Build   #########################
   build_nostd_msrv:
@@ -99,7 +99,7 @@ jobs:
       rust-version: nightly
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
-      features: builder,unstable
+      features: builder
 
   ### Style Checks + Doc #####################
   style_msrv:
@@ -130,7 +130,7 @@ jobs:
       rust-version: nightly
       do-style-check: true
       do-test: false
-      features: builder,unstable
+      features: builder
 
   miri:
     name: tests with miri (nightly)
@@ -141,4 +141,4 @@ jobs:
       do-style-check: false
       do-test: false
       do-miri: true
-      features: builder,unstable
+      features: builder
