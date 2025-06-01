@@ -11,5 +11,5 @@ indent_size = 4
 trim_trailing_whitespace = true
 max_line_length = 80
 
-[{*.nix,*.yml}]
+[{*.md,*.nix,*.toml,*.yml}]
 indent_size = 2
