@@ -1,7 +1,5 @@
 //! Various utilities.
 
-use core::fmt;
-use core::fmt::{Display, Formatter};
 use core::str::Utf8Error;
 use thiserror::Error;
 
@@ -10,24 +8,11 @@ use thiserror::Error;
 pub enum StringError {
     /// There is no terminating NUL character, although the specification
     /// requires one.
-    MissingNul(core::ffi::FromBytesUntilNulError),
+    #[error("string is not null terminated")]
+    MissingNul(#[source] core::ffi::FromBytesUntilNulError),
     /// The sequence until the first NUL character is not valid UTF-8.
-    Utf8(Utf8Error),
-}
-
-impl Display for StringError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{self:?}")
-    }
-}
-
-impl core::error::Error for StringError {
-    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
-        match self {
-            Self::MissingNul(e) => Some(e),
-            Self::Utf8(e) => Some(e),
-        }
-    }
+    #[error("string is not valid UTF-8")]
+    Utf8(#[source] Utf8Error),
 }
 
 /// Parses the provided byte sequence as Multiboot string, which maps to a

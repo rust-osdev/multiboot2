@@ -41,11 +41,11 @@ alloc = ["multiboot2-common/alloc"]
 builder = ["alloc", "multiboot2-common/builder"]
 
 [dependencies]
-derive_more.workspace = true
 log.workspace = true
 multiboot2-common.workspace = true
 multiboot2.workspace = true
 ptr_meta.workspace = true
+thiserror.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true

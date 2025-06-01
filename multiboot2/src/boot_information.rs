@@ -3,37 +3,29 @@
 use crate::framebuffer::UnknownFramebufferType;
 use crate::tag::TagHeader;
 use crate::{
-    module, ApmTag, BasicMemoryInfoTag, BootLoaderNameTag, BootdevTag, CommandLineTag,
+    ApmTag, BasicMemoryInfoTag, BootLoaderNameTag, BootdevTag, CommandLineTag,
     EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFIMemoryMapTag,
     EFISdt32Tag, EFISdt64Tag, ElfSectionIter, ElfSectionsTag, EndTag, FramebufferTag,
     ImageLoadPhysAddrTag, MemoryMapTag, ModuleIter, NetworkTag, RsdpV1Tag, RsdpV2Tag, SmbiosTag,
-    TagIter, TagType, VBEInfoTag,
+    TagIter, TagType, VBEInfoTag, module,
 };
-use core::error::Error;
 use core::fmt;
 use core::mem;
 use core::ptr::NonNull;
-use derive_more::Display;
 use multiboot2_common::{DynSizedStructure, Header, MaybeDynSized, MemoryError, Tag};
+use thiserror::Error;
 
 /// Errors that occur when a chunk of memory can't be parsed as
 /// [`BootInformation`].
-#[derive(Display, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Error)]
 pub enum LoadError {
     /// The provided memory can't be parsed as [`BootInformation`].
     /// See [`MemoryError`].
-    Memory(MemoryError),
+    #[error("memory can't be parsed as boot information")]
+    Memory(#[source] MemoryError),
     /// Missing mandatory end tag.
+    #[error("missing mandatory end tag")]
     NoEndTag,
-}
-
-impl Error for LoadError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::Memory(inner) => Some(inner),
-            Self::NoEndTag => None,
-        }
-    }
 }
 
 /// The basic header of a [`BootInformation`] as sized Rust type.

@@ -7,7 +7,8 @@ use crate::{
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 use core::ptr::NonNull;
-use multiboot2_common::{DynSizedStructure, Header, MemoryError, Tag, ALIGNMENT};
+use multiboot2_common::{ALIGNMENT, DynSizedStructure, Header, MemoryError, Tag};
+use thiserror::Error;
 
 /// Magic value for a [`Multiboot2Header`], as defined by the spec.
 pub const MAGIC: u32 = 0xe85250d6;
@@ -224,24 +225,18 @@ impl Debug for Multiboot2Header<'_> {
 
 /// Errors that occur when a chunk of memory can't be parsed as
 /// [`Multiboot2Header`].
-#[derive(Copy, Clone, Debug, derive_more::Display, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Error)]
 pub enum LoadError {
     /// The provided checksum does not match the expected value.
+    #[error("checksum does not match expected value")]
     ChecksumMismatch,
     /// The header does not contain the correct magic number.
+    #[error("header does not contain expected magic value")]
     MagicNotFound,
     /// The provided memory can't be parsed as [`Multiboot2Header`].
     /// See [`MemoryError`].
-    Memory(MemoryError),
-}
-
-impl Error for LoadError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::Memory(inner) => Some(inner),
-            _ => None,
-        }
-    }
+    #[error("memory can't be parsed as multiboot2 header")]
+    Memory(#[source] MemoryError),
 }
 
 /// The "basic" Multiboot2 header. This means only the properties, that are known during

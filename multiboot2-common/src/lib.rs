@@ -260,6 +260,7 @@ use core::mem;
 use core::ptr;
 use core::ptr::NonNull;
 use core::slice;
+use thiserror::Error;
 
 /// The alignment of all Multiboot2 data structures.
 pub const ALIGNMENT: usize = 8;
@@ -423,25 +424,28 @@ impl<H: Header> DynSizedStructure<H> {
 }
 
 /// Errors that may occur when working with memory.
-#[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash, derive_more::Display)]
+#[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash, Error)]
 pub enum MemoryError {
     /// The memory points to null.
+    #[error("memory points to null")]
     Null,
     /// The memory must be at least [`ALIGNMENT`]-aligned.
+    #[error("memory is not properly aligned")]
     WrongAlignment,
     /// The memory must cover at least the length of the sized structure header
     /// type.
+    #[error("memory range is shorter than the size of the header structure")]
     ShorterThanHeader,
     /// The buffer misses the terminating padding to the next alignment
     /// boundary. The padding is relevant to satisfy Rustc/Miri, but also the
     /// spec mandates that the padding is added.
+    #[error("memory is missing required padding")]
     MissingPadding,
     /// The size-property has an illegal value that can't be fulfilled with the
     /// given bytes.
+    #[error("the header reports an invalid total size")]
     InvalidReportedTotalSize,
 }
-
-impl core::error::Error for MemoryError {}
 
 /// Increases the given size to the next alignment boundary, if it is not a
 /// multiple of the alignment yet.
