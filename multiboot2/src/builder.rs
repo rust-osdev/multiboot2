@@ -11,7 +11,7 @@ use crate::{
 };
 use alloc::boxed::Box;
 use alloc::vec::Vec;
-use multiboot2_common::{new_boxed, DynSizedStructure, MaybeDynSized};
+use multiboot2_common::{DynSizedStructure, MaybeDynSized, new_boxed};
 
 /// Builder for a Multiboot2 header information.
 // #[derive(Debug)]

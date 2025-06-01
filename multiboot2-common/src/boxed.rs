@@ -1,6 +1,6 @@
 //! Module for [`new_boxed`].
 
-use crate::{increase_to_alignment, Header, MaybeDynSized, ALIGNMENT};
+use crate::{ALIGNMENT, Header, MaybeDynSized, increase_to_alignment};
 use alloc::boxed::Box;
 use core::alloc::Layout;
 use core::mem;
@@ -88,8 +88,8 @@ pub fn clone_dyn<T: MaybeDynSized<Metadata = usize> + ?Sized>(tag: &T) -> Box<T>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::{DummyDstTag, DummyTestHeader};
     use crate::Tag;
+    use crate::test_utils::{DummyDstTag, DummyTestHeader};
 
     #[test]
     fn test_new_boxed() {

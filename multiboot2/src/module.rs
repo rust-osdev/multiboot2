@@ -1,7 +1,7 @@
 //! Module for [`ModuleTag`].
 
 use crate::tag::TagHeader;
-use crate::{parse_slice_as_string, StringError, TagIter, TagType};
+use crate::{StringError, TagIter, TagType, parse_slice_as_string};
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};

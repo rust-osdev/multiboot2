@@ -6,8 +6,8 @@
 //! - [`EFIImageHandle64Tag`]
 //! - [`EFIBootServicesNotExitedTag`]
 
-use crate::tag::TagHeader;
 use crate::TagType;
+use crate::tag::TagHeader;
 use core::mem::size_of;
 use multiboot2_common::{MaybeDynSized, Tag};
 

@@ -1,6 +1,6 @@
 //! Module for [`BytesRef`].
 
-use crate::{Header, MemoryError, ALIGNMENT};
+use crate::{ALIGNMENT, Header, MemoryError};
 use core::marker::PhantomData;
 use core::mem;
 use core::ops::Deref;
