@@ -102,7 +102,7 @@ impl<'a> BootInformation<'a> {
     ///   program may observe unsynchronized mutation.
     pub unsafe fn load(ptr: *const BootInformationHeader) -> Result<Self, LoadError> {
         let ptr = NonNull::new(ptr.cast_mut()).ok_or(LoadError::Memory(MemoryError::Null))?;
-        let inner = DynSizedStructure::ref_from_ptr(ptr).map_err(LoadError::Memory)?;
+        let inner = unsafe { DynSizedStructure::ref_from_ptr(ptr).map_err(LoadError::Memory)? };
 
         let this = Self(inner);
         if !this.has_valid_end_tag() {

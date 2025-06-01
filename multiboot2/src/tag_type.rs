@@ -305,7 +305,7 @@ mod tests {
         set.insert(TagType::LoadBaseAddr);
         set.insert(TagType::LoadBaseAddr);
         assert_eq!(set.len(), 4);
-        println!("{:#?}", set);
+        println!("{set:#?}");
     }
 
     #[test]
@@ -320,7 +320,7 @@ mod tests {
         for (current, next) in set.iter().zip(set.iter().skip(1)) {
             assert!(current < next);
         }
-        println!("{:#?}", set);
+        println!("{set:#?}");
     }
 
     /// Tests for equality when one type is u32 and the other the enum representation.

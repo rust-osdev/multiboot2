@@ -315,7 +315,7 @@ impl ElfSection<'_> {
         match self.entry_size {
             40 => unsafe { &*(self.inner as *const ElfSectionInner32) },
             64 => unsafe { &*(self.inner as *const ElfSectionInner64) },
-            s => panic!("Unexpected entry size: {}", s),
+            s => panic!("Unexpected entry size: {s}"),
         }
     }
 
@@ -323,7 +323,7 @@ impl ElfSection<'_> {
         let addr = match self.entry_size {
             40 => (*(self.string_section as *const ElfSectionInner32)).addr as usize,
             64 => (*(self.string_section as *const ElfSectionInner64)).addr as usize,
-            s => panic!("Unexpected entry size: {}", s),
+            s => panic!("Unexpected entry size: {s}"),
         };
         addr as *const _
     }

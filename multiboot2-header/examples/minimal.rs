@@ -31,5 +31,5 @@ fn main() {
     let ptr = mb2_hdr_bytes.as_bytes().as_ptr();
     let mb2_hdr = unsafe { Multiboot2Header::load(ptr.cast()) };
     let mb2_hdr = mb2_hdr.unwrap();
-    println!("{:#?}", mb2_hdr);
+    println!("{mb2_hdr:#?}");
 }

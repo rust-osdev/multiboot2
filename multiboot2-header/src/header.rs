@@ -4,7 +4,6 @@ use crate::{
     HeaderTagType, InformationRequestHeaderTag, ModuleAlignHeaderTag, RelocatableHeaderTag,
     TagIter,
 };
-use core::error::Error;
 use core::fmt::{Debug, Formatter};
 use core::mem::size_of;
 use core::ptr::NonNull;
@@ -38,7 +37,7 @@ impl<'a> Multiboot2Header<'a> {
     /// Multiboot2 header pointer.
     pub unsafe fn load(ptr: *const Multiboot2BasicHeader) -> Result<Self, LoadError> {
         let ptr = NonNull::new(ptr.cast_mut()).ok_or(LoadError::Memory(MemoryError::Null))?;
-        let inner = DynSizedStructure::ref_from_ptr(ptr).map_err(LoadError::Memory)?;
+        let inner = unsafe { DynSizedStructure::ref_from_ptr(ptr).map_err(LoadError::Memory)? };
         let this = Self(inner);
 
         let header = this.0.header();
