@@ -10,13 +10,12 @@ exclude = [
 ]
 
 [workspace.dependencies]
-bitflags = "2.9.0"
-derive_more = { version = "1.0.0", default-features = false, features = ["display"] }
+bitflags = "2.9.1"
+derive_more = { version = "2.0.1", default-features = false, features = ["display"] }
 log = { version = "~0.4", default-features = false }
 multiboot2 = { version = "0.23.1", default-features = false }
 multiboot2-common = { version = "0.2.1", default-features = false }
-# Warn: 0.3 has multiple very breaking changes
-ptr_meta = { version = "~0.2", default-features = false }
+ptr_meta = { version = "~0.3", default-features = false, features = ["derive"] }
 
 # This way, the corresponding crate dependency can be normalley referenced by
 # version, while still the repository version is used transparently during local
