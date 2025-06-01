@@ -25,7 +25,7 @@ struct Mem;
 impl MemoryManagement for Mem {
     unsafe fn paddr_to_slice(&self, addr: PAddr, size: usize) -> Option<&'static [u8]> {
         let ptr = addr as *const u64 as *const u8;
-        Some(slice::from_raw_parts(ptr, size))
+        Some(unsafe { slice::from_raw_parts(ptr, size) })
     }
 
     // If you only want to read fields, you can simply return `None`.

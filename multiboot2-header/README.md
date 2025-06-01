@@ -75,7 +75,7 @@ include it like this:
 
 ```
 #[used]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[link_section = ".text.multiboot2_header"]
 static MULTIBOOT2_HDR: [u8; 64] = *include_bytes!("mb2_hdr_dump.bin");
 ```
