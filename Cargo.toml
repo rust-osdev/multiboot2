@@ -20,8 +20,8 @@ thiserror = { version = "2.0.12", default-features = false }
 
 # Intra-workspace dependencies of upstream crates: always point to the latest
 # stable version
-multiboot2 = { version = "0.23.1", default-features = false }
-multiboot2-common = { version = "0.2.1", default-features = false }
+multiboot2 = { version = "0.24.0", default-features = false }
+multiboot2-common = { version = "0.3.0", default-features = false }
 
 # This way, the corresponding crate dependency can be normalley referenced by
 # version, while still the repository version is used transparently during local

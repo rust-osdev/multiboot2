@@ -1,10 +1,10 @@
 # Changelog for Crate `multiboot2-header`
 
-## Unreleased
+## v0.7.0 (2025-06-01)
 
 - **Breaking:** Removed the optional `unstable` feature (required nightly)
   - `core::error::Error` is now implemented unconditionally
-- **Breaking:** The MSRV is now 1.81
+- **Breaking:** The MSRV is now 1.85
 
 ## v0.6.0 (2024-09-17)
 

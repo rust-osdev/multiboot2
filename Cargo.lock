@@ -16,7 +16,7 @@ checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 
 [[package]]
 name = "multiboot2"
-version = "0.23.1"
+version = "0.24.0"
 dependencies = [
  "bitflags",
  "log",
@@ -28,7 +28,7 @@ dependencies = [
 
 [[package]]
 name = "multiboot2-common"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "ptr_meta 0.3.0",
  "thiserror",
@@ -36,7 +36,7 @@ dependencies = [
 
 [[package]]
 name = "multiboot2-header"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "log",
  "multiboot2",

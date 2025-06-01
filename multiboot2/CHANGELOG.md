@@ -1,10 +1,10 @@
 # Changelog for Crate `multiboot2`
 
-## Unreleased
+## v0.24.0 (2025-06-01)
 
 - **Breaking:** Removed the optional `unstable` feature (required nightly)
   - `core::error::Error` is now implemented unconditionally
-- **Breaking:** The MSRV is now 1.81
+- **Breaking:** The MSRV is now 1.85
 - Fixed a bug causing UB in `ElfSection::name()`
 
 ## v0.23.1 (2024-10-21)

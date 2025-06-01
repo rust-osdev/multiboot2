@@ -6,7 +6,7 @@ contained header tags. Usable in no_std environments, such as a
 bootloader. An optional builder feature also allows the construction of
 the corresponding structures.
 """
-version = "0.6.0"
+version = "0.7.0"
 authors = [
   "Philipp Schuster <phip1611@gmail.com>"
 ]
