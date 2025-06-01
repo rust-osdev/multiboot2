@@ -8,23 +8,21 @@ the corresponding structures.
 """
 version = "0.23.1"
 authors = [
-    "Philipp Oppermann <dev@phil-opp.com>",
-    "Calvin Lee <cyrus296@gmail.com>",
-    "Isaac Woods",
-    "Philipp Schuster <phip1611@gmail.com>"
+  "Philipp Oppermann <dev@phil-opp.com>",
+  "Calvin Lee <cyrus296@gmail.com>",
+  "Isaac Woods",
+  "Philipp Schuster <phip1611@gmail.com>"
 ]
-license = "MIT/Apache-2.0"
-edition = "2021"
 categories = [
-    "no-std",
-    "no-std::no-alloc",
-    "parsing",
+  "no-std",
+  "no-std::no-alloc",
+  "parsing",
 ]
 keywords = [
-    "Multiboot2",
-    "kernel",
-    "boot",
-    "bootloader",
+  "Multiboot2",
+  "kernel",
+  "boot",
+  "bootloader",
 ]
 # without this, sometimes crates.io doesn't show the preview of the README
 # I expeciended this multiple times in the past
@@ -32,7 +30,9 @@ readme = "README.md"
 homepage = "https://github.com/rust-osdev/multiboot2/tree/main/multiboot2"
 repository = "https://github.com/rust-osdev/multiboot2"
 documentation = "https://docs.rs/multiboot2"
-rust-version = "1.75"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
 
 [features]
 default = ["builder"]

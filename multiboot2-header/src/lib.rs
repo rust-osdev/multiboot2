@@ -23,7 +23,7 @@
 //!
 //! ## MSRV
 //!
-//! The MSRV is 1.81.0 stable.
+//! The MSRV is 1.85.0 stable.
 
 #![no_std]
 // --- BEGIN STYLE CHECKS ---

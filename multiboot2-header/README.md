@@ -46,25 +46,25 @@ use multiboot2_header::{HeaderTagFlag, HeaderTagISA, MbiTagType, RelocatableHead
 
 /// Small example that creates a Multiboot2 header and parses it afterwards.
 fn main() {
-    // We create a Multiboot2 header during runtime here. A practical example is that your
-    // program gets the header from a file and parses it afterwards.
-    let mb2_hdr_bytes = Multiboot2HeaderBuilder::new(HeaderTagISA::I386)
-        .relocatable_tag(RelocatableHeaderTag::new(
-            HeaderTagFlag::Required,
-            0x1337,
-            0xdeadbeef,
-            4096,
-            RelocatableHeaderTagPreference::None,
-        ))
-        .information_request_tag(
-            InformationRequestHeaderTagBuilder::new(HeaderTagFlag::Required)
-                .add_irs(&[MbiTagType::Cmdline, MbiTagType::BootLoaderName]),
-        )
-        .build();
+  // We create a Multiboot2 header during runtime here. A practical example is that your
+  // program gets the header from a file and parses it afterwards.
+  let mb2_hdr_bytes = Multiboot2HeaderBuilder::new(HeaderTagISA::I386)
+    .relocatable_tag(RelocatableHeaderTag::new(
+      HeaderTagFlag::Required,
+      0x1337,
+      0xdeadbeef,
+      4096,
+      RelocatableHeaderTagPreference::None,
+    ))
+    .information_request_tag(
+      InformationRequestHeaderTagBuilder::new(HeaderTagFlag::Required)
+        .add_irs(&[MbiTagType::Cmdline, MbiTagType::BootLoaderName]),
+    )
+    .build();
 
-    // Cast bytes in vector to Multiboot2 information structure
-    let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr_bytes.as_ptr().cast()) };
-    println!("{:#?}", mb2_hdr);
+  // Cast bytes in vector to Multiboot2 information structure
+  let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr_bytes.as_ptr().cast()) };
+  println!("{:#?}", mb2_hdr);
 }
 ```
 
@@ -85,7 +85,7 @@ bytes of the ELF. See Multiboot2 specification.
 
 ## MSRV
 
-The MSRV is 1.81.0 stable.
+The MSRV is 1.85.0 stable.
 
 ## License & Contribution
 
