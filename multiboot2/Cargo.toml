@@ -45,7 +45,7 @@ log.workspace = true
 multiboot2-common.workspace = true
 ptr_meta.workspace = true
 thiserror.workspace = true
-uefi-raw = { version = "~0.8.0", default-features = false }
+uefi-raw = { version = "~0.11.0", default-features = false }
 
 [package.metadata.docs.rs]
 all-features = true
