@@ -75,15 +75,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 
 [[package]]
-name = "multiboot"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f87ad3b7b7bcf5da525c22221e3eb3a020cd68b2d55ae62f629c15e8bc3bd56e"
-dependencies = [
- "paste",
-]
-
-[[package]]
 name = "multiboot2"
 version = "0.24.0"
 dependencies = [
@@ -122,7 +113,6 @@ dependencies = [
  "elf_rs",
  "good_memory_allocator",
  "log",
- "multiboot",
  "multiboot2",
  "multiboot2-header",
  "util",
@@ -148,12 +138,6 @@ checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
 ]
-
-[[package]]
-name = "paste"
-version = "1.0.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "proc-macro2"

@@ -8,7 +8,7 @@ pkgs.mkShell rec {
     niv
 
     # integration test
-    grub2
+    grub2  # for grub-file
     qemu
     xorriso
 
@@ -16,4 +16,6 @@ pkgs.mkShell rec {
     ./integration-test/run.sh
     '')
   ];
+
+  OVMF = "${pkgs.OVMF.fd}/FV/OVMF.fd";
 }
