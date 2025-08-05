@@ -1,6 +1,9 @@
 [package]
 name = "multiboot2_chainloader"
-description = "Integrationtest: Multiboot2 chainloader"
+description = """
+Integrationtest: Multiboot2 chainloader. The loader itself loads via Multiboot1,
+but the payload is loaded via Multiboot2 by the loader.
+"""
 version = "0.1.0"
 edition = "2024"
 publish = false
@@ -9,7 +12,6 @@ publish = false
 anyhow.workspace = true
 log.workspace = true
 good_memory_allocator.workspace = true
-multiboot = "0.8"
 multiboot2.workspace = true
 multiboot2-header.workspace = true
 util.workspace = true
