@@ -36,9 +36,9 @@ fn assert_load_segment_fits_into_memory(
         .iter()
         .find(|(a_start, a_size)| start >= *a_start && end <= a_start + a_size);
     if let Some(range) = range {
-        debug!("Can load load segment (0x{start:x?}, {size:x?}) into free memory area {range:#x?}");
+        debug!("Can load load segment ({start:#x?}, {size:#x?}) into free memory area {range:#x?}");
     } else {
-        panic!("Can't load load segment  (0x{start:x?}, {size:x?}) into any area!");
+        panic!("Can't load load segment  ({start:#x?}, {size:#x?}) into any area!");
     }
 }
 

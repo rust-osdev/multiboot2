@@ -7,7 +7,7 @@ IFS=$'\n\t'
 DIR=$(dirname "$(realpath "$0")")
 cd "$DIR" || exit
 
-BINS_DIR=bins/target/x86-unknown-none/release
+BINS_DIR=../target/x86-unknown-none/release-integration-test
 ANSI_HIGHLIGHT="\e[1;32m" # green + bold
 ANSI_HIGHLIGHT_ERROR="\e[1;31m" # red + bold
 ANSI_RESET="\e[0m"
