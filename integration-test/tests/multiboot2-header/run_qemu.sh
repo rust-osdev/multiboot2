@@ -9,9 +9,9 @@ IFS=$'\n\t'
 DIR=$(dirname "$(realpath "$0")")
 cd "$DIR" || exit
 
-BINS_DIR="../../bins/target/x86-unknown-none/release"
-CHAINLOADER="$BINS_DIR/multiboot2_chainloader"
-PAYLOAD="$BINS_DIR/multiboot2_payload"
+TARGET_DIR="../../../target/x86-unknown-none/release-integration-test"
+CHAINLOADER="$TARGET_DIR/multiboot2_chainloader"
+PAYLOAD="$TARGET_DIR/multiboot2_payload"
 # add "-d int \" to debug CPU exceptions
 # "-display none" is necessary for the CI but locally the display and the
 #   combat monitor are really helpful

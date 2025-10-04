@@ -1,11 +1,11 @@
 [package]
-name = "util"
-description = "Util library"
+name = "integration-test-util"
+description = "Integration Test Utils"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
 publish = false
 
 [dependencies]
-good_memory_allocator = "0.1"
-log = { version = "0.4", default-features = false }
-qemu-exit = "3.0.2"
+good_memory_allocator = { workspace = true, features = ["spin"] }
+log = { workspace = true }
+qemu-exit = { workspace = true }

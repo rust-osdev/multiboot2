@@ -1,31 +1,53 @@
 [workspace]
 resolver = "2"
 members = [
+  "integration-test/bins/multiboot2_chainloader",
+  "integration-test/bins/multiboot2_payload",
+  "integration-test/bins/util",
   "multiboot2",
   "multiboot2-common",
   "multiboot2-header",
 ]
-exclude = [
-  "integration-test"
+# Default members are all members without special Rust runtime attributes, such
+# as panic_handler and global_allocator. This way, `cargo test` et al. will work
+# smoothley while the workspace still contains the integration tests.
+default-members = [
+  "multiboot2",
+  "multiboot2-common",
+  "multiboot2-header",
 ]
 package.rust-version = "1.85.0"
 package.edition = "2024"
 package.license = "MIT/Apache-2.0"
 
 [workspace.dependencies]
-bitflags = "2.9.1"
+# Dependencies of multiboot2 et al.
+bitflags = { version = "2.9", default-features = false }
 log = { version = "~0.4", default-features = false }
-ptr_meta = { version = "~0.3", default-features = false, features = ["derive"] }
-thiserror = { version = "2.0.12", default-features = false }
+ptr_meta = { version = "~0.3", default-features = false }
+thiserror = { version = "2.0", default-features = false }
+uefi-raw = { version = "~0.11", default-features = false }
 
-# Intra-workspace dependencies of upstream crates: always point to the latest
-# stable version
+# Dependencies for integration tests
+anyhow = { version = "1.0", default-features = false }
+multiboot = { version = "0.8", default-features = false }
+elf_rs = { version = "0.3", default-features = false }
+good_memory_allocator = { version = "0.1", default-features = false }
+integration-test-util = { path = "./integration-test/bins/util" }
+qemu-exit = { version = "3.0", default-features = false }
+
+# Intra-workspace dependencies of upstream crates
 multiboot2 = { version = "0.24.0", default-features = false }
 multiboot2-common = { version = "0.3.0", default-features = false }
+multiboot2-header = { version = "0.7.0", default-features = false }
 
-# This way, the corresponding crate dependency can be normalley referenced by
-# version, while still the repository version is used transparently during local
-# development.
+[profile.release-integration-test]
+inherits = "release"
+panic = "abort"
+opt-level = "s"
+
+# Force the local versions of the multiboot2 crates, i.e., override any
+# dependency to a crates.io version.
 [patch.crates-io]
 multiboot2 = { path = "multiboot2" }
 multiboot2-common = { path = "multiboot2-common" }

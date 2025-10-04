@@ -4,13 +4,13 @@
 extern crate alloc;
 
 #[macro_use]
-extern crate util;
+extern crate integration_test_util;
 
 core::arch::global_asm!(include_str!("start.S"), options(att_syntax));
 core::arch::global_asm!(include_str!("multiboot2_header.S"));
 
+use integration_test_util::{init_environment, qemu_exit_success};
 use multiboot2::BootInformation;
-use util::{init_environment, qemu_exit_success};
 
 mod verify;
 

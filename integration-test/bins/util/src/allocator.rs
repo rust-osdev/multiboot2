@@ -11,6 +11,7 @@ static ALLOCATOR: SpinLockedAllocator = SpinLockedAllocator::empty();
 
 /// Initializes the allocator. Call only once.
 pub fn init() {
+    #[allow(static_mut_refs)]
     unsafe {
         ALLOCATOR.init(HEAP.0.as_ptr().cast::<usize>() as _, HEAP.0.len());
     }
