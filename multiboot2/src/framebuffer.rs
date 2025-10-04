@@ -165,7 +165,7 @@ impl FramebufferTag {
     }
 
     /// The type of framebuffer, one of: `Indexed`, `RGB` or `Text`.
-    pub fn buffer_type(&self) -> Result<FramebufferType, UnknownFramebufferType> {
+    pub fn buffer_type(&self) -> Result<FramebufferType<'_>, UnknownFramebufferType> {
         let mut reader = Reader::new(&self.buffer);
 
         // TODO: We should use the newtype pattern instead or so to properly
