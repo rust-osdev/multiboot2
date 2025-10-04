@@ -103,7 +103,7 @@ impl<'a> Multiboot2Header<'a> {
 
     /// Returns a [`TagIter`].
     #[must_use]
-    pub fn iter(&self) -> TagIter {
+    pub fn iter(&self) -> TagIter<'_> {
         TagIter::new(self.0.payload())
     }
 

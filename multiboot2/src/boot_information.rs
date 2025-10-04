@@ -254,7 +254,7 @@ impl<'a> BootInformation<'a> {
     /// ```
     #[must_use]
     #[deprecated = "Use elf_sections_tag() instead and corresponding getters"]
-    pub fn elf_sections(&self) -> Option<ElfSectionIter> {
+    pub fn elf_sections(&self) -> Option<ElfSectionIter<'_>> {
         let tag = self.get_tag::<ElfSectionsTag>();
         tag.map(|t| {
             assert!((t.entry_size() * t.shndx()) <= t.header().size);
@@ -295,7 +295,7 @@ impl<'a> BootInformation<'a> {
     ///
     /// [`ModuleTag`]: crate::ModuleTag
     #[must_use]
-    pub fn module_tags(&self) -> ModuleIter {
+    pub fn module_tags(&self) -> ModuleIter<'_> {
         module::module_iter(self.tags())
     }
 
@@ -411,7 +411,7 @@ impl<'a> BootInformation<'a> {
     /// times, even tho this is unusual. However, it is recommended to use the
     /// tag getters as normal bootloaders provide most tags only once.
     #[must_use]
-    pub fn tags(&self) -> TagIter {
+    pub fn tags(&self) -> TagIter<'_> {
         TagIter::new(self.0.payload())
     }
 }

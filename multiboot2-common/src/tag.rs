@@ -62,7 +62,7 @@ pub trait MaybeDynSized: Pointee {
     /// Returns the whole allocated bytes for this structure encapsulated in
     /// [`BytesRef`]. This includes padding bytes. To only get the "true" tag
     /// data, read the tag size from [`Self::header`] and create a sub slice.
-    fn as_bytes(&self) -> BytesRef<Self::Header> {
+    fn as_bytes(&self) -> BytesRef<'_, Self::Header> {
         let ptr = core::ptr::addr_of!(*self);
         // Actual tag size with optional terminating padding.
         let size = mem::size_of_val(self);

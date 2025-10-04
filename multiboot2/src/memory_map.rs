@@ -363,7 +363,7 @@ impl EFIMemoryMapTag {
     /// Usually, this should already reflect the memory consumed by the
     /// code running this.
     #[must_use]
-    pub fn memory_areas(&self) -> EFIMemoryAreaIter {
+    pub fn memory_areas(&self) -> EFIMemoryAreaIter<'_> {
         // If this ever fails, this needs to be refactored in a joint-effort
         // with the uefi-rs project to have all corresponding typings.
         assert_eq!(self.desc_version, EFIMemoryDesc::VERSION);

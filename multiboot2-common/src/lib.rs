@@ -330,7 +330,7 @@ pub struct DynSizedStructure<H: Header> {
 impl<H: Header> DynSizedStructure<H> {
     /// Creates a new fat-pointer backed reference to a [`DynSizedStructure`]
     /// from the given [`BytesRef`].
-    pub fn ref_from_bytes(bytes: BytesRef<H>) -> Result<&Self, MemoryError> {
+    pub fn ref_from_bytes(bytes: BytesRef<'_, H>) -> Result<&Self, MemoryError> {
         let ptr = bytes.as_ptr().cast::<H>();
         let hdr = unsafe { &*ptr };
 

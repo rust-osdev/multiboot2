@@ -39,7 +39,7 @@ impl ElfSectionsTag {
 
     /// Get an iterator over the ELF sections.
     #[must_use]
-    pub const fn sections(&self) -> ElfSectionIter {
+    pub const fn sections(&self) -> ElfSectionIter<'_> {
         let string_section_offset = (self.shndx * self.entry_size) as isize;
         let string_section_ptr =
             unsafe { self.sections.as_ptr().offset(string_section_offset) as *const _ };
