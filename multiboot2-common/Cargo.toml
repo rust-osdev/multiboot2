@@ -29,8 +29,8 @@ builder = ["alloc"]
 
 
 [dependencies]
-ptr_meta.workspace = true
-thiserror.workspace = true
+ptr_meta = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
 
 [package.metadata.docs.rs]
 all-features = true

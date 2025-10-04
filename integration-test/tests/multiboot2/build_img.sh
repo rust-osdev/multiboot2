@@ -11,8 +11,8 @@ IFS=$'\n\t'
 DIR=$(dirname "$(realpath "$0")")
 cd "$DIR" || exit
 
-MULTIBOOT2_PAYLOAD_DIR="../../bins"
-MULTIBOOT2_PAYLOAD_PATH="$MULTIBOOT2_PAYLOAD_DIR/target/x86-unknown-none/release/multiboot2_payload"
+TARGET_DIR="../../../target/x86-unknown-none/release-integration-test"
+MULTIBOOT2_PAYLOAD_PATH="$TARGET_DIR/multiboot2_payload"
 
 echo "Verifying that the binary is a multiboot2 binary..."
 grub-file --is-x86-multiboot2 "$MULTIBOOT2_PAYLOAD_PATH"

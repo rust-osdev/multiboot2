@@ -2,15 +2,17 @@
 name = "multiboot2_chainloader"
 description = "Integrationtest: Multiboot2 chainloader"
 version = "0.1.0"
-edition = "2024"
+edition.workspace = true
 publish = false
 
+[features]
+default = []
+
 [dependencies]
-anyhow.workspace = true
-log.workspace = true
-good_memory_allocator.workspace = true
-multiboot = "0.8"
-multiboot2.workspace = true
-multiboot2-header.workspace = true
-util.workspace = true
-elf_rs = "0.3"
+anyhow = { workspace = true }
+elf_rs = { workspace = true }
+integration-test-util = { workspace = true }
+log = { workspace = true }
+multiboot = { workspace = true }
+multiboot2 = { workspace = true, features = ["builder"] }
+multiboot2-header = { workspace = true }

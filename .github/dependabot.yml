@@ -8,14 +8,6 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: [ "version-update:semver-patch" ]
-  - package-ecosystem: cargo
-    directory: "/integration-test/bins"
-    schedule:
-      interval: monthly
-    open-pull-requests-limit: 10
-    ignore:
-      - dependency-name: "*"
-        update-types: [ "version-update:semver-patch" ]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
