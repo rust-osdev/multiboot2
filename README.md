@@ -1,4 +1,4 @@
-# Rusty Wrappers for Multiboot2
+# Rusty Wrappers for Multiboot 2
 
 ## Repository Overview
 
