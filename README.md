@@ -22,6 +22,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
 
-## Run Integration Tests
+## Developer Guide
 
-- `$ nix develop --command bash -c "run-integrationtest"`
+This is a pretty normal Cargo workspace. To run the the integration
+test, please read the corresponding [instructions](./integration-test/README.md)

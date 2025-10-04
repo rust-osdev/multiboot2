@@ -30,7 +30,6 @@ uefi-raw = { version = "~0.11", default-features = false }
 
 # Dependencies for integration tests
 anyhow = { version = "1.0", default-features = false }
-multiboot = { version = "0.8", default-features = false }
 elf_rs = { version = "0.3", default-features = false }
 good_memory_allocator = { version = "0.1", default-features = false }
 integration-test-util = { path = "./integration-test/bins/util" }

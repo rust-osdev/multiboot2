@@ -28,7 +28,9 @@ fn main(multiboot2_magic: u32, multiboot2_hdr: u32) -> anyhow::Result<()> {
     if multiboot2_magic != multiboot2::MAGIC {
         Err(anyhow::Error::msg("Invalid bootloader magic"))?
     }
-    log::debug!("multiboot2_hdr={multiboot2_hdr:x?}, multiboot2_magic=0x{multiboot2_magic:x?}");
+    log::debug!(
+        "multiboot2_hdr=0x{multiboot2_hdr:08x?}, multiboot2_magic=0x{multiboot2_magic:08x?}"
+    );
 
     let mbi_ptr = (multiboot2_hdr as *const u8).cast();
     let mbi = unsafe { BootInformation::load(mbi_ptr) }.map_err(anyhow::Error::msg)?;

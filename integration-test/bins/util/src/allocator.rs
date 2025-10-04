@@ -1,10 +1,10 @@
 use good_memory_allocator::SpinLockedAllocator;
 
-#[repr(align(0x4000))]
-struct Align16K<T>(T);
+#[repr(align(0x1000))]
+struct PageAlign<T>(T);
 
-/// 16 KiB naturally aligned backing storage for heap.
-static mut HEAP: Align16K<[u8; 0x4000]> = Align16K([0; 0x4000]);
+/// 16 KiB page-aligned backing storage for heap.
+static mut HEAP: PageAlign<[u8; 0x4000]> = PageAlign([0; 0x4000]);
 
 #[global_allocator]
 static ALLOCATOR: SpinLockedAllocator = SpinLockedAllocator::empty();
