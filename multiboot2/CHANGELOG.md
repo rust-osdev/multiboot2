@@ -1,11 +1,17 @@
 # Changelog for Crate `multiboot2`
 
+## Unreleased
+
+- Small code improvements
+
+
 ## v0.24.0 (2025-06-01)
 
 - **Breaking:** Removed the optional `unstable` feature (required nightly)
   - `core::error::Error` is now implemented unconditionally
 - **Breaking:** The MSRV is now 1.85
 - Fixed a bug causing UB in `ElfSection::name()`
+
 
 ## v0.23.1 (2024-10-21)
 
@@ -14,6 +20,7 @@
 - added `BootInformation::elf_sections_tag`. On the returned type, you can call
   `.sections()` to iterate the sections
 - Fixed the debug output of `BootInformation`
+
 
 ## v0.23.0 (2024-09-17)
 
@@ -26,14 +33,17 @@
 - `BootInformation::tags` iterator is now public
 - misc metadata fixes
 
+
 ## v0.22.2 (2024-08-24)
 
 - Documentation improvements
 - Improve debug formatting for EFIMemoryMapTag
 
+
 ## v0.22.1 (2024-08-20)
 
 Minor documentation fixes.
+
 
 ## v0.22.0 (2024-08-20)
 
@@ -73,6 +83,7 @@ All previous versions have been marked as **YANKED**. `0.22.0` is the first
 version where all unit tests are passed by Miri, i.e., the first version
 without Undefined Behavior.
 
+
 ## 0.21.0 (2024-08-17) (**YANKED**)
 
 This release contains a massive refactoring of various internals. Now, almost
@@ -104,9 +115,11 @@ release and you'll be fine!**
 - documentation enhancements
 - updated dependencies
 
+
 ## 0.20.2 (2024-05-26) (**YANKED**)
 
 - fix Debug implementation of `EfiMemoryMapTag`
+
 
 ## 0.20.1 (2024-05-26) (**YANKED**)
 
@@ -116,10 +129,12 @@ release and you'll be fine!**
   `EFIMemoryMapTag::new_from_map`.
 - `ModuleTag::new`'s `end` parameter now must be bigger than `start`.
 
+
 ## 0.20.0 (2024-05-01) (**YANKED**)
 
 - added `InformationBuilder::default()`
 - MSRV is 1.70
+
 
 ## 0.19.0 (2023-09-21) (**YANKED**)
 
@@ -135,9 +150,11 @@ release and you'll be fine!**
 - `InformationBuilder` now also allows to add custom tags. The new public method
   `add_tag` was introduced for that.
 
+
 ## 0.18.1 (2023-07-13) (**YANKED**)
 
 - Documentation improvements
+
 
 ## 0.18.0 (2023-07-13) (**YANKED**)
 
@@ -160,12 +177,14 @@ release and you'll be fine!**
 - Better debug output of `BootInformation` and `MemoryArea`
 - Internal code cleanup.
 
+
 ## 0.17.0 (2023-07-12) (**YANKED**)
 
 - **BREAKING** Make functions of `InformationBuilder` chainable. They now
   consume the builder.
 - **BREAKING** Allow non-standard memory area types by using new pair of
   corresponding types: `MemoryAreaTypeId` and `MemoryAreaType`.
+
 
 ## 0.16.0 (2023-06-23) (**YANKED**)
 
@@ -205,6 +224,7 @@ release and you'll be fine!**
 - added `BootInformation::load` as new default constructor
 - added `MemoryMapTag::entry_size` and `MemoryMapTag::entry_version`
 
+
 ## 0.15.1 (2023-03-18) (**YANKED**)
 
 - **BREAKING** `MemoryMapTag::all_memory_areas()` was renamed to `memory_areas`
@@ -219,6 +239,7 @@ release and you'll be fine!**
 - **BREAKING** `ElfSection::name()` now returns a Result instead of just the
   value. This prevents possible panics.
 - fix: prevent a possible panic in `ElfSection::section_type()`
+
 
 ## 0.15.0 (2023-03-17) (**YANKED**)
 
@@ -242,6 +263,7 @@ release and you'll be fine!**
   (check docs.rs). There is also a small unit test that you can use to learn
   from.
 
+
 ## 0.14.2 (2023-03-17) (**YANKED**)
 
 - documentation fixes
@@ -250,12 +272,14 @@ release and you'll be fine!**
   With this feature, `MbiLoadError` now implements `core::error::Error` and can
   be used with `anyhow::Result` for example.
 
+
 ## 0.14.1 (2023-03-09) (**YANKED**)
 
 - fixed the calculation of the last area of the memory map
   tag ([#119](https://github.com/rust-osdev/multiboot2/pull/119))
   (Previously, iterating the EFI Memory map resulted in a superfluous entry as
   it ran over the next tag)
+
 
 ## 0.14.0 (2022-06-30) (**YANKED**)
 
@@ -273,9 +297,11 @@ release and you'll be fine!**
   - `RsdpV2Tag::oem_id` now returns a Result instead of an Option
 - internal code improvements
 
+
 ## 0.13.3 (2022-06-03) (**YANKED**)
 
 - impl `Send` for `BootInformation`
+
 
 ## 0.13.2 (2022-05-02) (**YANKED**)
 
@@ -283,14 +309,17 @@ release and you'll be fine!**
 - small internal improvements and restructuring of the code (no breaking changes
   to public API)
 
+
 ## 0.13.1 (2022-01-09) (**YANKED**)
 
 - minor fix
+
 
 ## 0.13.0 (2022-01-09) (**YANKED**)
 
 - added missing getters for tag `ImageLoadPhysAddr`
 - added missing getters for tags `EFIImageHandle32` and `EFIImageHandle64`
+
 
 ## 0.12.2 (2021-10-02) (**YANKED**)
 
@@ -305,10 +334,12 @@ release and you'll be fine!**
   - prepared co-existence of crates `multiboot2` and `multiboot2-header`
     in a Cargo workspace inside the same repository
 
+
 ## 0.12.1 (2021-08-11) (**YANKED**)
 
 - `TagType`-enum introduced in `v0.11` is now actually public
 - internal code improvements
+
 
 ## 0.12.0 (2021-08-06) (**YANKED**)
 
@@ -316,6 +347,7 @@ release and you'll be fine!**
 - added public constant `MULTIBOOT2_BOOTLOADER_MAGIC`
 - Rust edition 2018 (instead of 2015)
 - internal code improvements
+
 
 ## 0.11.0 (2021-07-07) (**YANKED**)
 
@@ -326,15 +358,18 @@ release and you'll be fine!**
 - much improved debug-formatting of `BootInformation`
 - internal code improvements / formatting
 
+
 ## 0.10.0 (2020-11-03) (**YANKED**)
 
 - allow access to all memory regions (MemoryMap-Tag)
 - internal code improvements
 
+
 ## 0.9.0 (2020-07-06)
 
 - Add a `checksum_is_valid` method to the RSDP
   tags ([#64](https://github.com/rust-osdev/multiboot2/pull/64))
+
 
 ## 0.8.2 (2022-03-02)
 
