@@ -22,7 +22,7 @@ package.license = "MIT/Apache-2.0"
 
 [workspace.dependencies]
 # Dependencies of multiboot2 et al.
-bitflags = { version = "2.9", default-features = false }
+bitflags = { version = "2.10", default-features = false }
 log = { version = "~0.4", default-features = false }
 ptr_meta = { version = "~0.3", default-features = false }
 thiserror = { version = "2.0", default-features = false }
