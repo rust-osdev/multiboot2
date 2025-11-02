@@ -114,7 +114,7 @@ pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
 pub use smbios::SmbiosTag;
 pub use tag::TagHeader;
 pub use tag_type::{TagType, TagTypeId};
-pub use util::{parse_slice_as_string, StringError};
+pub use util::{StringError, parse_slice_as_string};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
