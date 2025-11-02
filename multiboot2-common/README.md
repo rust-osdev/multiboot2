@@ -46,7 +46,7 @@ to first study the inner box (`multiboot2-common`) and then study how types from
 
 ## MSRV
 
-The MSRV is 1.85.0 stable.
+The MSRV is 1.85.1 stable.
 
 ## License & Contribution
 

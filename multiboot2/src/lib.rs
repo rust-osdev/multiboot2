@@ -41,7 +41,7 @@
 //! ```
 //!
 //! ## MSRV
-//! The MSRV is 1.85.0 stable.
+//! The MSRV is 1.85.1 stable.
 
 #[cfg_attr(feature = "builder", macro_use)]
 #[cfg(feature = "builder")]
@@ -114,7 +114,7 @@ pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
 pub use smbios::SmbiosTag;
 pub use tag::TagHeader;
 pub use tag_type::{TagType, TagTypeId};
-pub use util::{StringError, parse_slice_as_string};
+pub use util::{parse_slice_as_string, StringError};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,

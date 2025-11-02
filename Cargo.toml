@@ -16,7 +16,7 @@ default-members = [
   "multiboot2-common",
   "multiboot2-header",
 ]
-package.rust-version = "1.85.0"
+package.rust-version = "1.85.1"
 package.edition = "2024"
 package.license = "MIT/Apache-2.0"
 
