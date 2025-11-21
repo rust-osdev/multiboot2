@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-- Small code improvements
+## v0.24.1 (2025-11-21)
 
+- Fix typo
+- Small code improvements
 
 ## v0.24.0 (2025-06-01)
 

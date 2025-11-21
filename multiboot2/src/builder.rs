@@ -13,8 +13,7 @@ use alloc::boxed::Box;
 use alloc::vec::Vec;
 use multiboot2_common::{DynSizedStructure, MaybeDynSized, new_boxed};
 
-/// Builder for a Multiboot2 header information.
-// #[derive(Debug)]
+/// Builder for a Multiboot2 boot information (MBI.
 #[derive(Debug)]
 pub struct Builder {
     cmdline: Option<Box<CommandLineTag>>,
