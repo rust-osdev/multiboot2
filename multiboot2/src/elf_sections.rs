@@ -302,7 +302,7 @@ impl ElfSection<'_> {
     /// Get the section's flags.
     #[must_use]
     pub fn flags(&self) -> ElfSectionFlags {
-        ElfSectionFlags::from_bits_truncate(self.get().flags())
+        ElfSectionFlags::from_bits_retain(self.get().flags())
     }
 
     /// Check if the `ALLOCATED` flag is set in the section flags.
