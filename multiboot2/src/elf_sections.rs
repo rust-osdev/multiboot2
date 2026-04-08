@@ -5,6 +5,8 @@ use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use core::mem;
 use core::str::Utf8Error;
+use elf::endian::NativeEndian;
+use elf::section::{SectionHeader, SectionHeaderTable};
 use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
 use {alloc::boxed::Box, multiboot2_common::new_boxed};
@@ -21,6 +23,9 @@ pub struct ElfSectionsTag {
     shndx: u32,
     sections: [u8],
 }
+
+/// Iterator over the ELF section header table.
+pub type ElfSectionIter<'a> = elf::parse::ParsingIterator<'a, NativeEndian, SectionHeader>;
 
 impl ElfSectionsTag {
     /// Create a new ElfSectionsTag with the given data.
@@ -39,16 +44,21 @@ impl ElfSectionsTag {
 
     /// Get an iterator over the ELF sections.
     #[must_use]
-    pub const fn sections(&self) -> ElfSectionIter<'_> {
-        let string_section_offset = (self.shndx * self.entry_size) as isize;
-        let string_section_ptr =
-            unsafe { self.sections.as_ptr().offset(string_section_offset) as *const _ };
-        ElfSectionIter {
-            current_section: self.sections.as_ptr(),
-            remaining_sections: self.number_of_sections,
-            entry_size: self.entry_size,
-            string_section: string_section_ptr,
-            _phantom_data: PhantomData,
+    pub fn sections(&self) -> ElfSectionIter<'_> {
+        SectionHeaderTable::new(NativeEndian, self.class(), &self.sections).into_iter()
+    }
+
+    const fn class(&self) -> elf::file::Class {
+        use elf::section::{Elf32_Shdr, Elf64_Shdr};
+        const SHDR_ELF32_SIZE: usize = size_of::<Elf32_Shdr>();
+        const SHDR_ELF64_SIZE: usize = size_of::<Elf64_Shdr>();
+
+        match self.entry_size as usize {
+            SHDR_ELF32_SIZE => elf::file::Class::ELF32,
+            SHDR_ELF64_SIZE => elf::file::Class::ELF64,
+            _ => {
+                panic!("Unknown ELF section entry size");
+            }
         }
     }
 
@@ -98,73 +108,6 @@ impl Debug for ElfSectionsTag {
             .field("shndx", &self.shndx)
             .field("sections", &self.sections())
             .finish()
-    }
-}
-
-/// An iterator over [`ElfSection`]s.
-#[derive(Clone)]
-pub struct ElfSectionIter<'a> {
-    current_section: *const u8,
-    remaining_sections: u32,
-    entry_size: u32,
-    string_section: *const u8,
-    _phantom_data: PhantomData<&'a ()>,
-}
-
-impl<'a> Iterator for ElfSectionIter<'a> {
-    type Item = ElfSection<'a>;
-
-    fn next(&mut self) -> Option<ElfSection<'a>> {
-        while self.remaining_sections != 0 {
-            let section = ElfSection {
-                inner: self.current_section,
-                string_section: self.string_section,
-                entry_size: self.entry_size,
-                _phantom: PhantomData,
-            };
-
-            self.current_section = unsafe { self.current_section.offset(self.entry_size as isize) };
-            self.remaining_sections -= 1;
-
-            if section.section_type() != ElfSectionType::Unused {
-                return Some(section);
-            }
-        }
-        None
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (
-            self.remaining_sections as usize,
-            Some(self.remaining_sections as usize),
-        )
-    }
-}
-
-impl ExactSizeIterator for ElfSectionIter<'_> {
-    fn len(&self) -> usize {
-        self.remaining_sections as usize
-    }
-}
-
-impl Debug for ElfSectionIter<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        /// Limit how many Elf-Sections should be debug-formatted.
-        /// Can be thousands of sections for a Rust binary => this is useless output.
-        /// If the user really wants this, they should debug-format the field directly.
-        const ELF_SECTIONS_LIMIT: usize = 7;
-
-        let mut debug = f.debug_list();
-
-        self.clone().take(ELF_SECTIONS_LIMIT).for_each(|ref e| {
-            debug.entry(e);
-        });
-
-        if self.clone().len() > ELF_SECTIONS_LIMIT {
-            debug.entry(&"...");
-        }
-
-        debug.finish()
     }
 }
 
