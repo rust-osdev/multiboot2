@@ -81,6 +81,12 @@ impl ElfSectionsTag {
     }
 }
 
+impl<'a> From<&'a ElfSectionsTag> for SectionHeaderTable<'a, NativeEndian> {
+    fn from(value: &'a ElfSectionsTag) -> Self {
+        SectionHeaderTable::new(NativeEndian, value.class(), &value.sections)
+    }
+}
+
 impl MaybeDynSized for ElfSectionsTag {
     type Header = TagHeader;
 
