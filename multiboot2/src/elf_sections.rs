@@ -2,9 +2,7 @@
 
 use crate::{TagHeader, TagType};
 use core::fmt::{Debug, Formatter};
-use core::marker::PhantomData;
 use core::mem;
-use core::str::Utf8Error;
 use elf::endian::NativeEndian;
 use elf::section::{SectionHeader, SectionHeaderTable};
 use multiboot2_common::{MaybeDynSized, Tag};
@@ -117,61 +115,20 @@ impl Debug for ElfSectionsTag {
     }
 }
 
-/// A single generic ELF Section.
-// TODO Shouldn't this be called ElfSectionPtrs, ElfSectionWrapper or so?
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ElfSection<'a> {
-    inner: *const u8,
-    string_section: *const u8,
-    entry_size: u32,
-    _phantom: PhantomData<&'a ()>,
-}
-
-impl Debug for ElfSection<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        let inner = self.get();
-        f.debug_struct("ElfSection")
-            .field("inner", &inner)
-            .field("string_section_ptr", &self.string_section)
-            .finish()
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-#[repr(C, packed)]
-struct ElfSectionInner32 {
-    name_index: u32,
-    typ: u32,
-    flags: u32,
-    addr: u32,
-    offset: u32,
-    size: u32,
-    link: u32,
-    info: u32,
-    addralign: u32,
-    entry_size: u32,
-}
-
-#[derive(Clone, Copy, Debug)]
-#[repr(C, packed)]
-struct ElfSectionInner64 {
-    name_index: u32,
-    typ: u32,
-    flags: u64,
-    addr: u64,
-    offset: u64,
-    size: u64,
-    link: u32,
-    info: u32,
-    addralign: u64,
-    entry_size: u64,
-}
-
-impl ElfSection<'_> {
+/// Extension trait for [SectionHeader] containing getters for rust-native types
+pub trait ElfSectionExt {
     /// Get the section type as an `ElfSectionType` enum variant.
     #[must_use]
-    pub fn section_type(&self) -> ElfSectionType {
-        match self.get().typ() {
+    fn section_type(&self) -> ElfSectionType;
+
+    /// Get the section's flags.
+    #[must_use]
+    fn flags(&self) -> ElfSectionFlags;
+}
+
+impl ElfSectionExt for SectionHeader {
+    fn section_type(&self) -> ElfSectionType {
+        match self.sh_type {
             0 => ElfSectionType::Unused,
             1 => ElfSectionType::ProgramSection,
             2 => ElfSectionType::LinkerSymbolTable,
@@ -193,161 +150,8 @@ impl ElfSection<'_> {
         }
     }
 
-    /// Get the "raw" section type as a `u32`
-    #[must_use]
-    pub fn section_type_raw(&self) -> u32 {
-        self.get().typ()
-    }
-
-    /// Read the name of the section.
-    pub fn name(&self) -> Result<&str, Utf8Error> {
-        use core::{slice, str};
-
-        let name_ptr = unsafe { self.string_table().offset(self.get().name_index() as isize) };
-
-        // strlen without null byte
-        let strlen = {
-            let mut len = 0;
-            while unsafe { *name_ptr.offset(len) } != 0 {
-                len += 1;
-            }
-            len as usize
-        };
-
-        str::from_utf8(unsafe { slice::from_raw_parts(name_ptr, strlen) })
-    }
-
-    /// Get the physical start address of the section.
-    #[must_use]
-    pub fn start_address(&self) -> u64 {
-        self.get().addr()
-    }
-
-    /// Get the physical end address of the section.
-    ///
-    /// This is the same as doing `section.start_address() + section.size()`
-    #[must_use]
-    pub fn end_address(&self) -> u64 {
-        self.get().addr() + self.get().size()
-    }
-
-    /// Get the section's size in bytes.
-    #[must_use]
-    pub fn size(&self) -> u64 {
-        self.get().size()
-    }
-
-    /// Get the section's address alignment constraints.
-    ///
-    /// That is, the value of `start_address` must be congruent to 0,
-    /// modulo the value of `addrlign`. Currently, only 0 and positive
-    /// integral powers of two are allowed. Values 0 and 1 mean the section has no
-    /// alignment constraints.
-    #[must_use]
-    pub fn addralign(&self) -> u64 {
-        self.get().addralign()
-    }
-
-    /// Get the section's flags.
-    #[must_use]
-    pub fn flags(&self) -> ElfSectionFlags {
-        ElfSectionFlags::from_bits_retain(self.get().flags())
-    }
-
-    /// Check if the `ALLOCATED` flag is set in the section flags.
-    #[must_use]
-    pub fn is_allocated(&self) -> bool {
-        self.flags().contains(ElfSectionFlags::ALLOCATED)
-    }
-
-    fn get(&self) -> &dyn ElfSectionInner {
-        match self.entry_size {
-            40 => unsafe { &*(self.inner as *const ElfSectionInner32) },
-            64 => unsafe { &*(self.inner as *const ElfSectionInner64) },
-            s => panic!("Unexpected entry size: {s}"),
-        }
-    }
-
-    unsafe fn string_table(&self) -> *const u8 {
-        match self.entry_size {
-            40 => {
-                let ptr = self.string_section.cast::<ElfSectionInner32>();
-                let reference = unsafe { ptr.as_ref().unwrap() };
-                reference.addr() as *const u8
-            }
-            64 => {
-                let ptr = self.string_section.cast::<ElfSectionInner64>();
-                let reference = unsafe { ptr.as_ref().unwrap() };
-                reference.addr() as *const u8
-            }
-            s => panic!("Unexpected entry size: {s}"),
-        }
-    }
-}
-
-trait ElfSectionInner: Debug {
-    fn name_index(&self) -> u32;
-
-    fn typ(&self) -> u32;
-
-    fn flags(&self) -> u64;
-
-    fn addr(&self) -> u64;
-
-    fn size(&self) -> u64;
-
-    fn addralign(&self) -> u64;
-}
-
-impl ElfSectionInner for ElfSectionInner32 {
-    fn name_index(&self) -> u32 {
-        self.name_index
-    }
-
-    fn typ(&self) -> u32 {
-        self.typ
-    }
-
-    fn flags(&self) -> u64 {
-        self.flags.into()
-    }
-
-    fn addr(&self) -> u64 {
-        self.addr.into()
-    }
-
-    fn size(&self) -> u64 {
-        self.size.into()
-    }
-
-    fn addralign(&self) -> u64 {
-        self.addralign.into()
-    }
-}
-
-impl ElfSectionInner for ElfSectionInner64 {
-    fn name_index(&self) -> u32 {
-        self.name_index
-    }
-
-    fn typ(&self) -> u32 {
-        self.typ
-    }
-
-    fn flags(&self) -> u64 {
-        self.flags
-    }
-
-    fn addr(&self) -> u64 {
-        self.addr
-    }
-
-    fn size(&self) -> u64 {
-        self.size
-    }
-
-    fn addralign(&self) -> u64 {
-        self.addralign
+    fn flags(&self) -> ElfSectionFlags {
+        ElfSectionFlags::from_bits_retain(self.sh_flags)
     }
 }
 
