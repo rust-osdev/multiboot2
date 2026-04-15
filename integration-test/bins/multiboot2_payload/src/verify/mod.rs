@@ -3,7 +3,7 @@ mod grub;
 
 use alloc::format;
 use alloc::vec::Vec;
-use multiboot2::BootInformation;
+use multiboot2::{BootInformation, ElfSectionExt};
 
 pub fn run(mbi: &BootInformation) -> anyhow::Result<()> {
     println!("MBI: {mbi:#x?}");
@@ -52,20 +52,32 @@ pub(self) fn print_elf_info(mbi: &BootInformation) -> anyhow::Result<()> {
         .ok_or("Should have elf sections")
         .map(|tag| tag.sections())
         .map_err(anyhow::Error::msg)?;
+    let string_table = mbi
+        .elf_sections_tag()
+        .ok_or("Should have elf sections")
+        .map(|tag| tag.string_table())
+        .map_err(anyhow::Error::msg)?
+        .ok_or("String table section should be present")
+        .map_err(anyhow::Error::msg)?;
+
     println!("ELF sections:");
     for s in sections_iter {
-        let typ = format!("{:?}", s.section_type());
+        let typ = format!("{:?}", s.sh_type);
         let flags = format!("{:?}", s.flags());
-        let name = s.name().map_err(anyhow::Error::msg)?;
+        let name = s
+            .name_from_string_table(string_table)
+            .map_err(anyhow::Error::msg)?
+            .to_str()
+            .map_err(anyhow::Error::msg)?;
         println!(
             "  {:<13} {:<17} {:<22} 0x{:010x} 0x{:010x} {:>5.2} MiB align={}",
             name,
             typ,
             flags,
-            s.start_address(),
-            s.end_address(),
-            s.size() as f32 / 1024.0,
-            s.addralign(),
+            s.sh_addr,
+            s.sh_addr + s.sh_size,
+            s.sh_size as f32 / 1024.0,
+            s.sh_addralign,
         );
     }
     println!();
