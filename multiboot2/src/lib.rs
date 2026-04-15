@@ -98,7 +98,7 @@ pub use efi::{
     EFIBootServicesNotExitedTag, EFIImageHandle32Tag, EFIImageHandle64Tag, EFISdt32Tag, EFISdt64Tag,
 };
 pub use elf_sections::{
-    ElfSection, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
+    ElfSectionExt, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
 pub use end::EndTag;
 pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
@@ -833,76 +833,127 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.len(), bi.end_address());
         assert_eq!(bytes.len(), bi.total_size());
+        let strtab = bi.elf_sections_tag().unwrap().string_table().unwrap();
         let mut es = bi.elf_sections_tag().unwrap().sections();
+
+        let _s0 = es.next().expect("Should have one more section");
         let s1 = es.next().expect("Should have one more section");
-        assert_eq!(".rodata", s1.name().expect("Should be valid utf-8"));
-        assert_eq!(0xFFFF_8000_0010_0000, s1.start_address());
-        assert_eq!(0xFFFF_8000_0010_3000, s1.end_address());
-        assert_eq!(0x0000_0000_0000_3000, s1.size());
+        assert_eq!(
+            ".rodata",
+            s1.name_from_string_table(strtab)
+                .expect("No NULL byte found")
+                .to_str()
+                .expect("Should be valid utf-8")
+        );
+        assert_eq!(0xFFFF_8000_0010_0000, s1.sh_addr);
+        assert_eq!(0x0000_0000_0000_3000, s1.sh_size);
         assert_eq!(ElfSectionFlags::ALLOCATED, s1.flags());
         assert_eq!(ElfSectionType::ProgramSection, s1.section_type());
+
         let s2 = es.next().expect("Should have one more section");
-        assert_eq!(".text", s2.name().expect("Should be valid utf-8"));
-        assert_eq!(0xFFFF_8000_0010_3000, s2.start_address());
-        assert_eq!(0xFFFF_8000_0010_C000, s2.end_address());
-        assert_eq!(0x0000_0000_0000_9000, s2.size());
+        assert_eq!(
+            ".text",
+            s2.name_from_string_table(strtab)
+                .expect("No NULL byte found")
+                .to_str()
+                .expect("Should be valid utf-8")
+        );
+        assert_eq!(0xFFFF_8000_0010_3000, s2.sh_addr);
+        assert_eq!(0x0000_0000_0000_9000, s2.sh_size);
         assert_eq!(
             ElfSectionFlags::EXECUTABLE | ElfSectionFlags::ALLOCATED,
             s2.flags()
         );
         assert_eq!(ElfSectionType::ProgramSection, s2.section_type());
+
         let s3 = es.next().expect("Should have one more section");
-        assert_eq!(".data", s3.name().expect("Should be valid utf-8"));
-        assert_eq!(0xFFFF_8000_0010_C000, s3.start_address());
-        assert_eq!(0xFFFF_8000_0010_E000, s3.end_address());
-        assert_eq!(0x0000_0000_0000_2000, s3.size());
+        assert_eq!(
+            ".data",
+            s3.name_from_string_table(strtab)
+                .expect("No NULL byte found")
+                .to_str()
+                .expect("Should be valid utf-8")
+        );
+        assert_eq!(0xFFFF_8000_0010_C000, s3.sh_addr);
+        assert_eq!(0x0000_0000_0000_2000, s3.sh_size);
         assert_eq!(
             ElfSectionFlags::ALLOCATED | ElfSectionFlags::WRITABLE,
             s3.flags()
         );
         assert_eq!(ElfSectionType::ProgramSection, s3.section_type());
+
         let s4 = es.next().expect("Should have one more section");
-        assert_eq!(".bss", s4.name().expect("Should be valid utf-8"));
-        assert_eq!(0xFFFF_8000_0010_E000, s4.start_address());
-        assert_eq!(0xFFFF_8000_0011_3000, s4.end_address());
-        assert_eq!(0x0000_0000_0000_5000, s4.size());
+        assert_eq!(
+            ".bss",
+            s4.name_from_string_table(strtab)
+                .expect("No NULL byte found")
+                .to_str()
+                .expect("Should be valid utf-8")
+        );
+        assert_eq!(0xFFFF_8000_0010_E000, s4.sh_addr);
+        assert_eq!(0x0000_0000_0000_5000, s4.sh_size);
         assert_eq!(
             ElfSectionFlags::ALLOCATED | ElfSectionFlags::WRITABLE,
             s4.flags()
         );
         assert_eq!(ElfSectionType::Uninitialized, s4.section_type());
+
         let s5 = es.next().expect("Should have one more section");
-        assert_eq!(".data.rel.ro", s5.name().expect("Should be valid utf-8"));
-        assert_eq!(0xFFFF_8000_0011_3000, s5.start_address());
-        assert_eq!(0xFFFF_8000_0011_3000, s5.end_address());
-        assert_eq!(0x0000_0000_0000_0000, s5.size());
+        assert_eq!(
+            ".data.rel.ro",
+            s5.name_from_string_table(strtab)
+                .expect("No NULL byte found")
+                .to_str()
+                .expect("Should be valid utf-8")
+        );
+        assert_eq!(0xFFFF_8000_0011_3000, s5.sh_addr);
+        assert_eq!(0x0000_0000_0000_0000, s5.sh_size);
         assert_eq!(
             ElfSectionFlags::ALLOCATED | ElfSectionFlags::WRITABLE,
             s5.flags()
         );
         assert_eq!(ElfSectionType::ProgramSection, s5.section_type());
+
         let s6 = es.next().expect("Should have one more section");
-        assert_eq!(".symtab", s6.name().expect("Should be valid utf-8"));
-        assert_eq!(0x0000_0000_0011_3000, s6.start_address());
-        assert_eq!(0x0000_0000_0011_5BE0, s6.end_address());
-        assert_eq!(0x0000_0000_0000_2BE0, s6.size());
+        assert_eq!(
+            ".symtab",
+            s6.name_from_string_table(strtab)
+                .expect("No NULL byte found")
+                .to_str()
+                .expect("Should be valid utf-8")
+        );
+        assert_eq!(0x0000_0000_0011_3000, s6.sh_addr);
+        assert_eq!(0x0000_0000_0000_2BE0, s6.sh_size);
         assert_eq!(ElfSectionFlags::empty(), s6.flags());
         assert_eq!(ElfSectionType::LinkerSymbolTable, s6.section_type());
+
         let s7 = es.next().expect("Should have one more section");
-        assert_eq!(".strtab", s7.name().expect("Should be valid utf-8"));
-        assert_eq!(0x0000_0000_0011_5BE0, s7.start_address());
-        assert_eq!(0x0000_0000_0011_9371, s7.end_address());
-        assert_eq!(0x0000_0000_0000_3791, s7.size());
+        assert_eq!(
+            ".strtab",
+            s7.name_from_string_table(strtab)
+                .expect("No NULL byte found")
+                .to_str()
+                .expect("Should be valid utf-8")
+        );
+        assert_eq!(0x0000_0000_0011_5BE0, s7.sh_addr);
+        assert_eq!(0x0000_0000_0000_3791, s7.sh_size);
         assert_eq!(ElfSectionFlags::empty(), s7.flags());
         assert_eq!(ElfSectionType::StringTable, s7.section_type());
+
         let s8 = es.next().expect("Should have one more section");
-        assert_eq!(".shstrtab", s8.name().expect("Should be valid utf-8"));
-        assert_eq!(string_addr, s8.start_address());
-        assert_eq!(string_addr + string_bytes.len() as u64, s8.end_address());
-        assert_eq!(string_bytes.len() as u64, s8.size());
+        assert_eq!(
+            ".shstrtab",
+            s8.name_from_string_table(strtab)
+                .expect("No NULL byte found")
+                .to_str()
+                .expect("Should be valid utf-8")
+        );
+        assert_eq!(string_addr, s8.sh_addr);
+        assert_eq!(string_bytes.len() as u64, s8.sh_size);
         assert_eq!(ElfSectionFlags::empty(), s8.flags());
         assert_eq!(ElfSectionType::StringTable, s8.section_type());
         assert!(es.next().is_none());
+
         let mut mm = bi
             .memory_map_tag()
             .unwrap()
@@ -1023,12 +1074,36 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
+        let strtab = bi.elf_sections_tag().unwrap().string_table().unwrap();
         let mut es = bi.elf_sections_tag().unwrap().sections();
+
+        let s0 = es.next().expect("Should have one more sections");
+        assert_eq!(
+            "",
+            s0.name_from_string_table(strtab)
+                .expect("No NULL byte found")
+                .to_str()
+                .expect("Should be valid utf-8")
+        );
+        assert_eq!(0, s0.sh_addr);
+        assert_eq!(0, s0.sh_size);
+        assert_eq!(s0.section_type(), ElfSectionType::Unused);
+        assert_eq!(s0.flags(), ElfSectionFlags::empty());
+
         let s1 = es.next().expect("Should have one more section");
-        assert_eq!(".shstrtab", s1.name().expect("Should be valid utf-8"));
-        assert_eq!(string_addr, s1.start_address());
-        assert_eq!(string_addr + string_bytes.0.len() as u64, s1.end_address());
-        assert_eq!(string_bytes.0.len() as u64, s1.size());
+        assert_eq!(
+            ".shstrtab",
+            s1.name_from_string_table(strtab)
+                .expect("No NULL byte found")
+                .to_str()
+                .expect("Should be valid utf-8")
+        );
+        assert_eq!(string_addr, s1.sh_addr);
+        assert_eq!(
+            string_addr + string_bytes.0.len() as u64,
+            s1.sh_addr + s1.sh_size
+        );
+        assert_eq!(string_bytes.0.len() as u64, s1.sh_size);
         assert_eq!(ElfSectionFlags::empty(), s1.flags());
         assert_eq!(ElfSectionType::StringTable, s1.section_type());
         assert!(es.next().is_none());
