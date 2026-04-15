@@ -162,20 +162,20 @@ pub trait ElfSectionExt {
 impl ElfSectionExt for SectionHeader {
     fn section_type(&self) -> ElfSectionType {
         match self.sh_type {
-            0 => ElfSectionType::Unused,
-            1 => ElfSectionType::ProgramSection,
-            2 => ElfSectionType::LinkerSymbolTable,
-            3 => ElfSectionType::StringTable,
-            4 => ElfSectionType::RelaRelocation,
-            5 => ElfSectionType::SymbolHashTable,
-            6 => ElfSectionType::DynamicLinkingTable,
-            7 => ElfSectionType::Note,
-            8 => ElfSectionType::Uninitialized,
-            9 => ElfSectionType::RelRelocation,
-            10 => ElfSectionType::Reserved,
-            11 => ElfSectionType::DynamicLoaderSymbolTable,
-            0x6000_0000..=0x6FFF_FFFF => ElfSectionType::EnvironmentSpecific,
-            0x7000_0000..=0x7FFF_FFFF => ElfSectionType::ProcessorSpecific,
+            elf::abi::SHT_NULL => ElfSectionType::Unused,
+            elf::abi::SHT_PROGBITS => ElfSectionType::ProgramSection,
+            elf::abi::SHT_SYMTAB => ElfSectionType::LinkerSymbolTable,
+            elf::abi::SHT_STRTAB => ElfSectionType::StringTable,
+            elf::abi::SHT_RELA => ElfSectionType::RelaRelocation,
+            elf::abi::SHT_HASH => ElfSectionType::SymbolHashTable,
+            elf::abi::SHT_DYNAMIC => ElfSectionType::DynamicLinkingTable,
+            elf::abi::SHT_NOTE => ElfSectionType::Note,
+            elf::abi::SHT_NOBITS => ElfSectionType::Uninitialized,
+            elf::abi::SHT_REL => ElfSectionType::RelRelocation,
+            elf::abi::SHT_SHLIB => ElfSectionType::Reserved,
+            elf::abi::SHT_DYNSYM => ElfSectionType::DynamicLoaderSymbolTable,
+            elf::abi::SHT_LOOS..=elf::abi::SHT_HIOS => ElfSectionType::EnvironmentSpecific,
+            elf::abi::SHT_LOPROC..=elf::abi::SHT_HIPROC => ElfSectionType::ProcessorSpecific,
             e => {
                 log::warn!("Unknown section type {e:x}. Treating as ElfSectionType::Unused");
                 ElfSectionType::Unused
@@ -202,55 +202,55 @@ pub enum ElfSectionType {
     /// This value marks the section header as inactive; it does not have an
     /// associated section. Other members of the section header have undefined
     /// values.
-    Unused = 0,
+    Unused = elf::abi::SHT_NULL,
 
     /// The section holds information defined by the program, whose format and
     /// meaning are determined solely by the program.
-    ProgramSection = 1,
+    ProgramSection = elf::abi::SHT_PROGBITS,
 
     /// This section holds a linker symbol table.
-    LinkerSymbolTable = 2,
+    LinkerSymbolTable = elf::abi::SHT_SYMTAB,
 
     /// The section holds a string table.
-    StringTable = 3,
+    StringTable = elf::abi::SHT_STRTAB,
 
     /// The section holds relocation entries with explicit addends, such as type
     /// Elf32_Rela for the 32-bit class of object files. An object file may have
     /// multiple relocation sections.
-    RelaRelocation = 4,
+    RelaRelocation = elf::abi::SHT_RELA,
 
     /// The section holds a symbol hash table.
-    SymbolHashTable = 5,
+    SymbolHashTable = elf::abi::SHT_HASH,
 
     /// The section holds dynamic linking tables.
-    DynamicLinkingTable = 6,
+    DynamicLinkingTable = elf::abi::SHT_DYNAMIC,
 
     /// This section holds information that marks the file in some way.
-    Note = 7,
+    Note = elf::abi::SHT_NOTE,
 
     /// A section of this type occupies no space in the file but otherwise resembles
     /// `ProgramSection`. Although this section contains no bytes, the
     /// sh_offset member contains the conceptual file offset.
-    Uninitialized = 8,
+    Uninitialized = elf::abi::SHT_NOBITS,
 
     /// The section holds relocation entries without explicit addends, such as type
     /// Elf32_Rel for the 32-bit class of object files. An object file may have
     /// multiple relocation sections.
-    RelRelocation = 9,
+    RelRelocation = elf::abi::SHT_REL,
 
     /// This section type is reserved but has unspecified semantics.
-    Reserved = 10,
+    Reserved = elf::abi::SHT_SHLIB,
 
     /// This section holds a dynamic loader symbol table.
-    DynamicLoaderSymbolTable = 11,
+    DynamicLoaderSymbolTable = elf::abi::SHT_DYNSYM,
 
     /// Values in this inclusive range (`[0x6000_0000, 0x6FFF_FFFF)`) are
     /// reserved for environment-specific semantics.
-    EnvironmentSpecific = 0x6000_0000,
+    EnvironmentSpecific = elf::abi::SHT_LOOS,
 
     /// Values in this inclusive range (`[0x7000_0000, 0x7FFF_FFFF)`) are
     /// reserved for processor-specific semantics.
-    ProcessorSpecific = 0x7000_0000,
+    ProcessorSpecific = elf::abi::SHT_LOPROC,
 }
 
 bitflags! {
@@ -259,13 +259,13 @@ bitflags! {
     #[repr(transparent)]
     pub struct ElfSectionFlags: u64 {
         /// The section contains data that should be writable during program execution.
-        const WRITABLE = 0x1;
+        const WRITABLE = elf::abi::SHF_WRITE as u64;
 
         /// The section occupies memory during the process execution.
-        const ALLOCATED = 0x2;
+        const ALLOCATED = elf::abi::SHF_ALLOC as u64;
 
         /// The section contains executable machine instructions.
-        const EXECUTABLE = 0x4;
+        const EXECUTABLE = elf::abi::SHF_EXECINSTR as u64;
         // plus environment-specific use at 0x0F000000
         // plus processor-specific use at 0xF0000000
     }
