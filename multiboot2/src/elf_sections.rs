@@ -176,6 +176,7 @@ impl ElfSectionExt for SectionHeader {
             elf::abi::SHT_DYNSYM => ElfSectionType::DynamicLoaderSymbolTable,
             elf::abi::SHT_LOOS..=elf::abi::SHT_HIOS => ElfSectionType::EnvironmentSpecific,
             elf::abi::SHT_LOPROC..=elf::abi::SHT_HIPROC => ElfSectionType::ProcessorSpecific,
+            elf::abi::SHT_LOUSER..=elf::abi::SHT_HIUSER => ElfSectionType::UserDefined,
             e => {
                 log::warn!("Unknown section type {e:x}. Treating as ElfSectionType::Unused");
                 ElfSectionType::Unused
@@ -251,6 +252,10 @@ pub enum ElfSectionType {
     /// Values in this inclusive range (`[0x7000_0000, 0x7FFF_FFFF)`) are
     /// reserved for processor-specific semantics.
     ProcessorSpecific = elf::abi::SHT_LOPROC,
+
+    /// Values in this inclusive range (`[0x8000_0000, 0x8FFF_FFFF)`) are
+    /// reserved for user-specific semantics.
+    UserDefined = elf::abi::SHT_LOUSER,
 }
 
 bitflags! {
