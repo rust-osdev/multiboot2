@@ -1,6 +1,7 @@
 //! Module for [`ElfSectionsTag`].
 
 use crate::{TagHeader, TagType};
+use core::ffi::{CStr, FromBytesUntilNulError};
 use core::fmt::{Debug, Formatter};
 use core::mem;
 use elf::endian::NativeEndian;
@@ -58,6 +59,32 @@ impl ElfSectionsTag {
                 panic!("Unknown ELF section entry size");
             }
         }
+    }
+
+    /// Returns the string table data, if it's present.
+    #[must_use]
+    pub fn string_table(&self) -> Option<&[u8]> {
+        let shdr_table: SectionHeaderTable<NativeEndian> = self.into();
+
+        // Info for this here
+        // https://docs.oracle.com/cd/E23824_01/html/819-0690/chapter6-43405.html @ `e_shstrndx`
+        let strtab_index = match self.shndx as u16 {
+            elf::abi::SHN_UNDEF => return None,
+            elf::abi::SHN_XINDEX => shdr_table.get(0).unwrap().sh_link as usize,
+            i => i as usize,
+        };
+
+        let strtab_hdr = shdr_table.get(strtab_index).ok()?;
+        // todo: Should this check that `strtab_hdr.sh_type == elf::abi::SHT_STRTAB`?
+
+        // SAFETY: The multiboot2 spec defines that sections are always loaded at `sh_addr`.
+        // Casting through `usize` will not truncate data on 32bit systems because the multiboot2 loads all sections below u32::MAX
+        Some(unsafe {
+            core::slice::from_raw_parts(
+                strtab_hdr.sh_addr as usize as *const u8,
+                strtab_hdr.sh_size as usize,
+            )
+        })
     }
 
     /// Returns the amount of sections.
@@ -124,6 +151,12 @@ pub trait ElfSectionExt {
     /// Get the section's flags.
     #[must_use]
     fn flags(&self) -> ElfSectionFlags;
+
+    /// Fetches the section name from the string table.
+    fn name_from_string_table<'a>(
+        &self,
+        name: &'a [u8],
+    ) -> Result<&'a CStr, FromBytesUntilNulError>;
 }
 
 impl ElfSectionExt for SectionHeader {
@@ -152,6 +185,13 @@ impl ElfSectionExt for SectionHeader {
 
     fn flags(&self) -> ElfSectionFlags {
         ElfSectionFlags::from_bits_retain(self.sh_flags)
+    }
+
+    fn name_from_string_table<'a>(
+        &self,
+        name: &'a [u8],
+    ) -> Result<&'a CStr, FromBytesUntilNulError> {
+        CStr::from_bytes_until_nul(&name[self.sh_name as usize..])
     }
 }
 
