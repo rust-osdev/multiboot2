@@ -271,6 +271,15 @@ bitflags! {
 
         /// The section contains executable machine instructions.
         const EXECUTABLE = elf::abi::SHF_EXECINSTR as u64;
+
+        /// Identifies a section that consists of null-terminated character strings.
+        /// The size of each character is specified in the section header's `sh_entsize` field.
+        const STRINGS = elf::abi::SHF_STRINGS as u64;
+
+        /// This section holds thread-local storage. Each thread within a process has a distinct instance
+        /// of this data.
+        const THREAD_LOCAL = elf::abi::SHF_TLS as u64;
+
         // plus environment-specific use at 0x0F000000
         // plus processor-specific use at 0xF0000000
     }
