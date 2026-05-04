@@ -490,7 +490,7 @@ mod tests {
         assert!(vbe.mode_info().window_a_attributes.contains(
             VBEWindowAttributes::RELOCATABLE
                 | VBEWindowAttributes::READABLE
-                | VBEWindowAttributes::WRITEABLE
+                | VBEWindowAttributes::WRITABLE
         ));
         assert_eq!({ vbe.mode_info().window_granularity }, 64);
         assert_eq!({ vbe.mode_info().window_size }, 64);
