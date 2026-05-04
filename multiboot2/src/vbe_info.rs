@@ -420,8 +420,8 @@ bitflags! {
         /// Window is readable?
         const READABLE = 0x2;
 
-        /// Window is writeable?
-        const WRITEABLE = 0x4;
+        /// Window is writable?
+        const WRITABLE = 0x4;
     }
 }
 

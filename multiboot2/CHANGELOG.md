@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Breaking**: Renamed `VBEWindowAttributes::WRITABLE` (fix typo)
+
 ## v0.24.1 (2025-11-21)
 
 - Fix typo
