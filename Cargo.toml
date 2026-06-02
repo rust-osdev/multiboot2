@@ -34,7 +34,7 @@ multiboot = { version = "0.8", default-features = false }
 elf_rs = { version = "0.3", default-features = false }
 good_memory_allocator = { version = "0.1", default-features = false }
 integration-test-util = { path = "./integration-test/bins/util" }
-qemu-exit = { version = "3.0", default-features = false }
+qemu-exit = { version = "4.0", default-features = false }
 
 # Intra-workspace dependencies of upstream crates
 multiboot2 = { version = "0.24.0", default-features = false }
