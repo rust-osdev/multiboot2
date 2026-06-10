@@ -3,6 +3,15 @@
 ## Unreleased
 
 - **Breaking**: Renamed `VBEWindowAttributes::WRITABLE` (fix typo)
+- **Breaking** Changed `multiboot2::elf_sections` to use the [elf](https://docs.rs/elf/latest/elf/) crate
+  - `ElfSectionsTag::sections()` now returns an iterator over `elf::section::SectionHeader`.
+  - `ElfSection` has been removed and replaced with `elf::section::SectionHeader`.
+- Added `ElfSectionExt` trait to replace functionality for `ElfSection::flags()`,
+  `ElfSection::section_type()`, and `ElfSection::name()`.
+- Added `ElfSectionsTag::string_table()`.
+- Added some flags to `ElfSectionFlags`.
+- Added UserDefined section to `ElfSectionType`.
+- Fixed some bugs.
 
 ## v0.24.1 (2025-11-21)
 
