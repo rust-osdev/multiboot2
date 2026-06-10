@@ -81,7 +81,7 @@ impl ElfSectionsTag {
         // Casting through `usize` will not truncate data on 32bit systems because the multiboot2 loads all sections below u32::MAX
         Some(unsafe {
             core::slice::from_raw_parts(
-                strtab_hdr.sh_addr as usize as *const u8,
+                core::ptr::with_exposed_provenance(strtab_hdr.sh_addr as usize),
                 strtab_hdr.sh_size as usize,
             )
         })
