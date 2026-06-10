@@ -142,7 +142,7 @@ impl Debug for ElfSectionsTag {
     }
 }
 
-/// Extension trait for [SectionHeader] containing getters for rust-native types
+/// Extension trait for [`SectionHeader`] containing getters for rust-native types
 pub trait ElfSectionExt {
     /// Get the section type as an `ElfSectionType` enum variant.
     #[must_use]
