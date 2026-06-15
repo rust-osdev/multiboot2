@@ -64,7 +64,7 @@ impl ElfSectionsTag {
     /// Returns the string table data, if it's present.
     #[must_use]
     pub fn string_table(&self) -> Option<&[u8]> {
-        let shdr_table: SectionHeaderTable<NativeEndian> = self.into();
+        let shdr_table = SectionHeaderTable::new(NativeEndian, self.class(), &self.sections);
 
         // Info for this here
         // https://docs.oracle.com/cd/E23824_01/html/819-0690/chapter6-43405.html @ `e_shstrndx`
@@ -103,12 +103,6 @@ impl ElfSectionsTag {
     #[must_use]
     pub const fn shndx(&self) -> u32 {
         self.shndx
-    }
-}
-
-impl<'a> From<&'a ElfSectionsTag> for SectionHeaderTable<'a, NativeEndian> {
-    fn from(value: &'a ElfSectionsTag) -> Self {
-        SectionHeaderTable::new(NativeEndian, value.class(), &value.sections)
     }
 }
 
