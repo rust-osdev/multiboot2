@@ -348,7 +348,7 @@ mod tests {
                 8,
                 FramebufferType::Text,
             ))
-            .elf_sections(ElfSectionsTag::new(0, 32, 0, &[]))
+            .elf_sections(ElfSectionsTag::new(0, 40, 0, &[]))
             .apm(ApmTag::new(0, 0, 0, 0, 0, 0, 0, 0, 0))
             .efi32(EFISdt32Tag::new(0x1000))
             .efi64(EFISdt64Tag::new(0x1000))
