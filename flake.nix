@@ -2,8 +2,7 @@
   description = "multiboot2-rs";
 
   inputs = {
-    # We follow the latest stable release of nixpkgs
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
   };
 
   outputs =
@@ -19,11 +18,9 @@
         function: nixpkgs.lib.genAttrs systems (system: function nixpkgs.legacyPackages.${system});
     in
     {
-      formatter = forAllSystems (pkgs: pkgs.nixfmt-rfc-style);
+      formatter = forAllSystems (pkgs: pkgs.nixfmt-tree);
       devShells = forAllSystems (pkgs: {
-        default = import ./shell.nix {
-          inherit pkgs;
-        };
+        default = pkgs.callPackage ./shell.nix { };
       });
     };
 }

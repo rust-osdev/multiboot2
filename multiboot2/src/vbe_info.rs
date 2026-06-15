@@ -449,8 +449,7 @@ bitflags! {
 /// The MemoryModel field specifies the general type of memory organization used in modes.
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
-#[allow(missing_docs)]
-#[allow(clippy::upper_case_acronyms)]
+#[expect(missing_docs)]
 pub enum VBEMemoryModel {
     #[default]
     Text = 0x00,

@@ -385,7 +385,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::cognitive_complexity)]
+    #[expect(clippy::cognitive_complexity)]
     fn vbe_info_tag() {
         //Taken from GRUB2 running in QEMU.
         let bytes = AlignedBytes([
@@ -822,7 +822,7 @@ mod tests {
     }
 
     /// Helper for [`grub2`].
-    #[allow(clippy::cognitive_complexity)]
+    #[expect(clippy::cognitive_complexity)]
     fn test_grub2_boot_info(
         bi: &BootInformation,
         addr: usize,

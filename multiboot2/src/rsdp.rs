@@ -129,7 +129,6 @@ impl RsdpV2Tag {
         size_of::<TagHeader>() + 16 + 2 * size_of::<u32>() + size_of::<u64>() + 4;
 
     /// Constructs a new tag.
-    #[allow(clippy::too_many_arguments)]
     #[must_use]
     pub fn new(
         checksum: u8,
