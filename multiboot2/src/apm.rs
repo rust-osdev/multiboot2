@@ -22,7 +22,7 @@ pub struct ApmTag {
 
 impl ApmTag {
     /// Creates a new tag.
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     #[must_use]
     pub fn new(
         version: u16,

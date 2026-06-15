@@ -240,7 +240,7 @@ extern crate std;
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-#[allow(unused)]
+#[doc(hidden)]
 pub mod test_utils;
 
 #[cfg(feature = "alloc")]

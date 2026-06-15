@@ -336,7 +336,7 @@ mod tests {
 
     /// Tests the construction of [`TagTypeId`] from primitive `u32` values.
     #[test]
-    #[allow(non_snake_case)]
+    #[expect(non_snake_case)]
     fn test_TagTypeId() {
         assert_eq!(size_of::<TagTypeId>(), size_of::<u32>());
         assert_eq!(align_of::<TagTypeId>(), align_of::<u32>());
@@ -356,7 +356,6 @@ mod tests {
     /// Tests the construction of [`TagTypeId`] from primitive `u32` values for
     /// specified and custom tags.
     #[test]
-    #[allow(non_snake_case)]
     fn test_from_and_to_tag_type_id() {
         for i in 0..1_000 {
             let tag_type_id = TagTypeId::new(i);

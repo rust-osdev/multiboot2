@@ -272,7 +272,7 @@ impl PartialEq for FramebufferTag {
 /// ABI-compatible framebuffer type.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
-#[allow(clippy::upper_case_acronyms)]
+#[expect(clippy::upper_case_acronyms)]
 pub enum FramebufferTypeId {
     Indexed = 0,
     RGB = 1,
@@ -309,13 +309,12 @@ impl From<FramebufferType<'_>> for FramebufferTypeId {
 pub enum FramebufferType<'a> {
     /// Indexed color.
     Indexed {
-        #[allow(missing_docs)]
+        #[expect(missing_docs)]
         palette: &'a [FramebufferColor],
     },
 
     /// Direct RGB color.
-    #[allow(missing_docs)]
-    #[allow(clippy::upper_case_acronyms)]
+    #[expect(missing_docs)]
     RGB {
         red: FramebufferField,
         green: FramebufferField,
