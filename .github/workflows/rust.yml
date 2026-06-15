@@ -5,19 +5,14 @@
 # CI runs per workspace member but the complexity in the end was not worth it.
 # Instead, it is the right thing that the CI always covers the whole repository
 # and that it is as stable as possible.
-
 name: "Cargo workspace"
-
 # Run on every push (tag, branch) and pull_request
-on: [ pull_request, push, workflow_dispatch, merge_group ]
-
+on: [pull_request, push, workflow_dispatch, merge_group]
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
-
 env:
   CARGO_TERM_COLOR: always
-
 jobs:
   ### Regular Build  #########################
   build_msrv:
@@ -27,7 +22,6 @@ jobs:
       rust-version: 1.85.1 # MSRV
       do-style-check: false
       features: builder
-
   build_stable:
     name: build (stable)
     uses: ./.github/workflows/_build-rust.yml
@@ -35,7 +29,6 @@ jobs:
       rust-version: stable
       do-style-check: false
       features: builder
-
   build_nightly:
     name: build (nightly)
     uses: ./.github/workflows/_build-rust.yml
@@ -43,7 +36,6 @@ jobs:
       rust-version: nightly
       do-style-check: false
       features: builder
-
   ### no-std Build   #########################
   build_nostd_msrv:
     name: build no_std (msrv)
@@ -54,7 +46,6 @@ jobs:
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
       features: builder
-
   build_nostd_stable:
     name: build no_std (stable)
     needs: build_stable
@@ -64,7 +55,6 @@ jobs:
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
       features: builder
-
   # Also tests the build one time without the "builder" feature.
   build_nostd_stable_no_builder:
     name: build no_std (stable) [w/o builder]
@@ -74,7 +64,6 @@ jobs:
       rust-version: stable
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
-
   # We perform one single run also in Windows. This should be sufficient to
   # check that devs can also use this on Windows.
   build_nostd_stable_windows:
@@ -90,7 +79,6 @@ jobs:
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
       features: builder
-
   build_nostd_nightly:
     name: build no_std (nightly)
     needs: build_nightly
@@ -100,7 +88,6 @@ jobs:
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
       features: builder
-
   ### Style Checks + Doc #####################
   style_msrv:
     name: style (msrv)
@@ -111,7 +98,6 @@ jobs:
       do-style-check: true
       do-test: false
       features: builder
-
   style_stable:
     name: style (stable)
     needs: build_stable
@@ -121,7 +107,6 @@ jobs:
       do-style-check: true
       do-test: false
       features: builder
-
   style_nightly:
     name: style (nightly)
     needs: build_nightly
@@ -131,7 +116,6 @@ jobs:
       do-style-check: true
       do-test: false
       features: builder
-
   miri:
     name: tests with miri (nightly)
     needs: build_nightly

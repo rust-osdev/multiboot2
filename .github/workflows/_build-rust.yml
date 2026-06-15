@@ -5,7 +5,6 @@
 # and set's up the cargo cache. It builds, tests, and lints the code, but is
 # configurable. This way, the same workflow can be used to build, test, and lint
 # all in different steps, but with the same cache.
-
 on:
   workflow_call:
     inputs:
@@ -33,12 +32,10 @@ on:
         # Make sure we always an empty string to "--features <FEATURES>"
         default: '""'
         description: >
-          Comma-separated string with additional crate features. Empty string by
-          default. CAUTION: For Windows CI runners, this must be '""' as is,
-          i.e., the string itself must be "". This is a limitation of the
-          Windows power shell. This might be configured like this:
+          Comma-separated string with additional crate features. Empty string by default. CAUTION: For Windows CI runners, this must be '""' as is, i.e., the string itself must be "". This is a limitation of the Windows power shell. This might be configured like this:
 
           features: >
+
             '""'
       do-style-check:
         type: boolean
@@ -55,7 +52,6 @@ on:
         required: false
         default: false
         description: Execute unit tests with miri.
-
 jobs:
   rust:
     runs-on: ${{ inputs.runs-on }}
