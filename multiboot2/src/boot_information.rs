@@ -56,7 +56,8 @@ impl BootInformationHeader {
 
 impl Header for BootInformationHeader {
     fn payload_len(&self) -> usize {
-        self.total_size as usize - mem::size_of::<Self>()
+        assert!(self.total_size as usize >= size_of::<Self>());
+        self.total_size as usize - size_of::<Self>()
     }
 
     fn set_size(&mut self, total_size: usize) {
@@ -108,6 +109,11 @@ impl<'a> BootInformation<'a> {
     /// bytes.
     fn has_valid_end_tag(&self) -> bool {
         let header = self.0.header();
+        // Check we have an end tag
+        if header.payload_len() < size_of::<EndTag>() {
+            return false;
+        }
+
         let end_tag_ptr = unsafe {
             self.0
                 .payload()

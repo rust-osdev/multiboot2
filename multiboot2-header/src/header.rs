@@ -61,6 +61,7 @@ impl<'a> Multiboot2Header<'a> {
     /// Checks whether the header ends with the mandatory end tag.
     fn has_valid_end_tag(&self) -> bool {
         let payload = self.0.payload();
+        // Check we have an end tag.
         if payload.len() < size_of::<HeaderTagHeader>() {
             return false;
         }
@@ -390,6 +391,7 @@ impl Multiboot2BasicHeader {
 
 impl Header for Multiboot2BasicHeader {
     fn payload_len(&self) -> usize {
+        assert!(self.length as usize >= size_of::<Self>());
         self.length as usize - size_of::<Self>()
     }
 
