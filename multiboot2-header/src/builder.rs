@@ -219,7 +219,7 @@ mod tests {
             unsafe { Multiboot2Header::load(structure.as_bytes().as_ref().as_ptr().cast()) }
                 .unwrap();
 
-        assert!(header.verify_checksum());
+        assert_eq!(header.verify_checksum(), Ok(()));
         assert_eq!(
             header.iter().last().unwrap().header().typ(),
             crate::HeaderTagType::End

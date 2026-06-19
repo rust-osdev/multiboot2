@@ -45,9 +45,9 @@ impl<'a> Multiboot2Header<'a> {
         if header.header_magic != MAGIC {
             return Err(LoadError::MagicNotFound);
         }
-        if !header.verify_checksum() {
-            return Err(LoadError::ChecksumMismatch);
-        }
+        header
+            .verify_checksum()
+            .map_err(|x| LoadError::ChecksumMismatch(x.0, x.1))?;
         Ok(this)
     }
 
@@ -108,8 +108,15 @@ impl<'a> Multiboot2Header<'a> {
     }
 
     /// Wrapper around [`Multiboot2BasicHeader::verify_checksum`].
-    #[must_use]
-    pub const fn verify_checksum(&self) -> bool {
+    pub const fn verify_checksum(
+        &self,
+    ) -> Result<
+        (),
+        (
+            u32, /* actual checksum */
+            u32, /* expected checksum */
+        ),
+    > {
         self.0.header().verify_checksum()
     }
     /// Wrapper around [`Multiboot2BasicHeader::header_magic`].
@@ -228,8 +235,8 @@ impl Debug for Multiboot2Header<'_> {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Error)]
 pub enum LoadError {
     /// The provided checksum does not match the expected value.
-    #[error("checksum does not match expected value")]
-    ChecksumMismatch,
+    #[error("checksum 0x{0:X} does not match expected value 0x{1:x}")]
+    ChecksumMismatch(u32 /* is */, u32 /* expected */),
     /// The header does not contain the correct magic number.
     #[error("header does not contain expected magic value")]
     MagicNotFound,
@@ -267,11 +274,22 @@ impl Multiboot2BasicHeader {
         }
     }
 
-    /// Verifies that a Multiboot2 header is valid.
-    #[must_use]
-    pub const fn verify_checksum(&self) -> bool {
+    /// Verifies if a Multiboot2 header is valid.
+    pub const fn verify_checksum(
+        &self,
+    ) -> Result<
+        (),
+        (
+            u32, /* actual checksum */
+            u32, /* expected checksum */
+        ),
+    > {
         let check = Self::calc_checksum(self.header_magic, self.arch, self.length);
-        check == self.checksum
+        if check == self.checksum {
+            Ok(())
+        } else {
+            Err((self.checksum, check))
+        }
     }
 
     /// Calculates the checksum as described in the spec.

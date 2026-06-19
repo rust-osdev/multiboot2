@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Changed checksum validation errors to include the actual and expected
+  checksum values.
 - Fixed `EndHeaderTag::new` and `Builder::build` so generated headers contain
   the mandatory end tag.
 - Small code improvements
