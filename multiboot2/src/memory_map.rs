@@ -367,6 +367,17 @@ impl EFIMemoryMapTag {
         // If this ever fails, this needs to be refactored in a joint-effort
         // with the uefi-rs project to have all corresponding typings.
         assert_eq!(self.desc_version, EFIMemoryDesc::VERSION);
+        let desc_size = self.desc_size as usize;
+        assert_ne!(desc_size, 0, "EFI descriptor size must not be zero");
+        assert!(
+            desc_size >= mem::size_of::<EFIMemoryDesc>(),
+            "EFI descriptor size must cover an EFI memory descriptor"
+        );
+        assert_eq!(
+            desc_size % mem::align_of::<EFIMemoryDesc>(),
+            0,
+            "EFI descriptor size must preserve EFI memory descriptor alignment"
+        );
         assert_eq!(
             self.memory_map
                 .as_ptr()
@@ -517,6 +528,25 @@ mod tests {
         assert_eq!(iter.next(), Some(&descs[1]));
 
         assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    #[should_panic(expected = "EFI descriptor size must cover an EFI memory descriptor")]
+    fn efi_rejects_too_small_desc_size() {
+        let map = [0; size_of::<EFIMemoryDesc>()];
+        let tag = EFIMemoryMapTag::new_from_map(1, EFIMemoryDesc::VERSION, &map);
+
+        let _ = tag.memory_areas();
+    }
+
+    #[test]
+    #[should_panic(expected = "EFI descriptor size must preserve EFI memory descriptor alignment")]
+    fn efi_rejects_misaligned_desc_size() {
+        let desc_size = size_of::<EFIMemoryDesc>() + 1;
+        let map = alloc::vec![0; desc_size];
+        let tag = EFIMemoryMapTag::new_from_map(desc_size as u32, EFIMemoryDesc::VERSION, &map);
+
+        let _ = tag.memory_areas();
     }
 
     /// Tests the EFI memory map parsing using a real world efi memory map.

@@ -11,6 +11,8 @@
 - Added `ElfSectionsTag::string_table()`.
 - Added some flags to `ElfSectionFlags`.
 - Added UserDefined section to `ElfSectionType`.
+- Fixed EFI memory map parsing to reject descriptor sizes that cannot safely
+  describe EFI memory descriptors.
 - Fixed some bugs.
 
 ## v0.24.1 (2025-11-21)
