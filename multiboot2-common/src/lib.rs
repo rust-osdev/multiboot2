@@ -334,7 +334,9 @@ impl<H: Header> DynSizedStructure<H> {
         let ptr = bytes.as_ptr().cast::<H>();
         let hdr = unsafe { &*ptr };
 
-        if hdr.payload_len() > bytes.len() {
+        let payload_len = hdr.payload_len();
+        let total_size = mem::size_of::<H>() + payload_len;
+        if total_size > bytes.len() {
             return Err(MemoryError::InvalidReportedTotalSize);
         }
 
@@ -342,7 +344,7 @@ impl<H: Header> DynSizedStructure<H> {
         // assumptions and requirements. Now, we safety can create the fat
         // pointer.
 
-        let dst_size = hdr.payload_len();
+        let dst_size = payload_len;
         // Create fat pointer for the DST.
         let ptr = ptr_meta::from_raw_parts(ptr.cast(), dst_size);
         let reference = unsafe { &*ptr };
@@ -529,5 +531,25 @@ mod tests {
         let tag = tag.cast::<DynSizedStructure<DummyTestHeader>>();
         assert_eq!(tag.header().typ(), 0x1337);
         assert_eq!(tag.header().size(), 18);
+    }
+
+    #[test]
+    fn test_ref_from_slice_rejects_oversized_header() {
+        #[rustfmt::skip]
+        let bytes = AlignedBytes::new(
+            [
+                0x37, 0x13, 0, 0,
+                /* Tag size */
+                24, 0, 0, 0,
+                /* Only 8 bytes payload plus padding are available. */
+                0, 1, 2, 3,
+                4, 5, 6, 7,
+            ],
+        );
+
+        assert_eq!(
+            DynSizedStructure::<DummyTestHeader>::ref_from_slice(bytes.borrow()),
+            Err(MemoryError::InvalidReportedTotalSize)
+        );
     }
 }

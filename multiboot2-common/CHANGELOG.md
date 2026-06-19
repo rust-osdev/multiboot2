@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed validation for dynamically sized structures whose reported total size
+  exceeds the available buffer.
 - Small code improvements
 
 
