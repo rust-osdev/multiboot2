@@ -66,6 +66,7 @@ impl Header for BootInformationHeader {
 
 /// A Multiboot 2 Boot Information (MBI) accessor.
 #[repr(transparent)]
+#[derive(PartialEq, Eq)]
 pub struct BootInformation<'a>(&'a DynSizedStructure<BootInformationHeader>);
 
 impl<'a> BootInformation<'a> {

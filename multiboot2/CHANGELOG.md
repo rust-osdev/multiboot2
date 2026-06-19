@@ -11,6 +11,7 @@
 - Added `ElfSectionsTag::string_table()`.
 - Added some flags to `ElfSectionFlags`.
 - Added UserDefined section to `ElfSectionType`.
+- Added equality implementations for `BootInformation`.
 - Fixed indexed framebuffer parsing to reject palette metadata that exceeds
   the tag payload.
 - Fixed EFI memory map parsing to reject descriptor sizes that cannot safely
