@@ -10,7 +10,6 @@ use crate::{
     TagIter, TagType, VBEInfoTag, module,
 };
 use core::fmt;
-use core::mem;
 use core::ptr::NonNull;
 use multiboot2_common::{DynSizedStructure, Header, MaybeDynSized, MemoryError, Tag};
 use thiserror::Error;
@@ -119,12 +118,12 @@ impl<'a> BootInformation<'a> {
                 .payload()
                 .as_ptr()
                 .add(header.payload_len())
-                .sub(mem::size_of::<EndTag>())
+                .sub(size_of::<EndTag>())
                 .cast::<TagHeader>()
         };
         let end_tag = unsafe { &*end_tag_ptr };
 
-        end_tag.typ == EndTag::ID && end_tag.size as usize == mem::size_of::<EndTag>()
+        end_tag.typ == EndTag::ID && end_tag.size as usize == size_of::<EndTag>()
     }
 
     /// Get the start address of the boot info.
@@ -377,7 +376,7 @@ impl<'a> BootInformation<'a> {
     /// // Give the library hints how big this tag is.
     /// impl MaybeDynSized for CustomTag {
     ///     type Header = TagHeader;
-    ///     const BASE_SIZE: usize = mem::size_of::<TagHeader>() + mem::size_of::<u32>();
+    ///     const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
     ///
     ///     // This differs for DSTs and normal structs. See function
     ///     // documentation.

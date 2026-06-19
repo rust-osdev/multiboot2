@@ -1,7 +1,6 @@
 //! Module for [`ApmTag`].
 
 use crate::{TagHeader, TagType};
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// The Advanced Power Management (APM) tag.
@@ -36,7 +35,7 @@ impl ApmTag {
         dseg_len: u16,
     ) -> Self {
         Self {
-            header: TagHeader::new(Self::ID, mem::size_of::<Self>() as u32),
+            header: TagHeader::new(Self::ID, size_of::<Self>() as u32),
             version,
             cseg,
             offset,
@@ -114,7 +113,7 @@ impl ApmTag {
 impl MaybeDynSized for ApmTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<Self>();
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
 }

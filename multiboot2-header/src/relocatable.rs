@@ -1,7 +1,6 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// It contains load address placement suggestion for bootloader.
@@ -44,11 +43,8 @@ impl RelocatableHeaderTag {
         align: u32,
         preference: RelocatableHeaderTagPreference,
     ) -> Self {
-        let header = HeaderTagHeader::new(
-            HeaderTagType::Relocatable,
-            flags,
-            mem::size_of::<Self>() as u32,
-        );
+        let header =
+            HeaderTagHeader::new(HeaderTagType::Relocatable, flags, size_of::<Self>() as u32);
         Self {
             header,
             min_addr,
@@ -119,7 +115,7 @@ impl Debug for RelocatableHeaderTag {
 impl MaybeDynSized for RelocatableHeaderTag {
     type Header = HeaderTagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<Self>();
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_header: &Self::Header) -> Self::Metadata {}
 }
@@ -135,9 +131,6 @@ mod tests {
 
     #[test]
     fn test_assert_size() {
-        assert_eq!(
-            core::mem::size_of::<RelocatableHeaderTag>(),
-            2 + 2 + 4 + 4 + 4 + 4 + 4
-        );
+        assert_eq!(size_of::<RelocatableHeaderTag>(), 2 + 2 + 4 + 4 + 4 + 4 + 4);
     }
 }

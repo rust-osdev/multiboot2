@@ -2,7 +2,6 @@
 
 use crate::TagTypeId;
 use core::fmt::Debug;
-use core::mem;
 use multiboot2_common::Header;
 
 /// The common header that all tags have in common. This type is ABI compatible.
@@ -35,8 +34,8 @@ impl TagHeader {
 
 impl Header for TagHeader {
     fn payload_len(&self) -> usize {
-        assert!(self.size as usize >= mem::size_of::<Self>());
-        self.size as usize - mem::size_of::<Self>()
+        assert!(self.size as usize >= size_of::<Self>());
+        self.size as usize - size_of::<Self>()
     }
 
     fn set_size(&mut self, total_size: usize) {

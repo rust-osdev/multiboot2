@@ -4,7 +4,6 @@
 
 use crate::{Header, MaybeDynSized, Tag};
 use core::borrow::Borrow;
-use core::mem;
 use core::ops::Deref;
 
 /// Helper to 8-byte align the underlying bytes, as mandated in the Multiboot2
@@ -71,7 +70,7 @@ impl DummyTestHeader {
 
 impl Header for DummyTestHeader {
     fn payload_len(&self) -> usize {
-        self.size as usize - mem::size_of::<Self>()
+        self.size as usize - size_of::<Self>()
     }
 
     fn set_size(&mut self, total_size: usize) {
@@ -87,7 +86,7 @@ pub struct DummyDstTag {
 }
 
 impl DummyDstTag {
-    const BASE_SIZE: usize = mem::size_of::<DummyTestHeader>();
+    const BASE_SIZE: usize = size_of::<DummyTestHeader>();
 
     #[must_use]
     pub const fn header(&self) -> &DummyTestHeader {
@@ -103,7 +102,7 @@ impl DummyDstTag {
 impl MaybeDynSized for DummyDstTag {
     type Header = DummyTestHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<DummyTestHeader>();
+    const BASE_SIZE: usize = size_of::<DummyTestHeader>();
 
     fn dst_len(header: &Self::Header) -> Self::Metadata {
         header.size as usize - Self::BASE_SIZE
@@ -117,7 +116,6 @@ impl Tag for DummyDstTag {
 
 #[cfg(test)]
 mod tests {
-    use core::mem;
     use core::ptr::addr_of;
 
     use crate::ALIGNMENT;
@@ -126,7 +124,7 @@ mod tests {
 
     #[test]
     fn abi() {
-        assert_eq!(mem::align_of::<AlignedBytes<0>>(), ALIGNMENT);
+        assert_eq!(align_of::<AlignedBytes<0>>(), ALIGNMENT);
 
         let bytes = AlignedBytes([0]);
         assert_eq!(bytes.as_ptr().align_offset(8), 0);

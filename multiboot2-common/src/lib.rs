@@ -256,7 +256,6 @@ pub use iter::TagIter;
 pub use tag::{MaybeDynSized, Tag};
 
 use core::fmt::Debug;
-use core::mem;
 use core::ptr;
 use core::ptr::NonNull;
 use core::slice;
@@ -284,7 +283,7 @@ pub trait Header: Clone + Sized + PartialEq + Eq + Debug {
     /// plus [`Header::payload_len`].
     #[must_use]
     fn total_size(&self) -> usize {
-        mem::size_of::<Self>() + self.payload_len()
+        size_of::<Self>() + self.payload_len()
     }
 
     /// Updates the header with the given `total_size`.
@@ -335,7 +334,7 @@ impl<H: Header> DynSizedStructure<H> {
         let hdr = unsafe { &*ptr };
 
         let payload_len = hdr.payload_len();
-        let total_size = mem::size_of::<H>() + payload_len;
+        let total_size = size_of::<H>() + payload_len;
         if total_size > bytes.len() {
             return Err(MemoryError::InvalidReportedTotalSize(
                 total_size,
@@ -406,8 +405,6 @@ impl<H: Header> DynSizedStructure<H> {
     /// # Panics
     /// This panics if there is a size mismatch. However, this should never be
     /// the case if all types follow their documented requirements.
-    ///
-    /// [`size_of_val`]: mem::size_of_val
     pub fn cast<T: MaybeDynSized<Header = H> + ?Sized>(&self) -> &T {
         // Thin or fat pointer, depending on type.
         // However, only thin ptr is needed.
@@ -415,14 +412,14 @@ impl<H: Header> DynSizedStructure<H> {
 
         // This should be a compile-time assertion. However, this is the best
         // location to place it for now.
-        assert!(T::BASE_SIZE >= mem::size_of::<H>());
+        assert!(T::BASE_SIZE >= size_of::<H>());
 
         let t_dst_size = T::dst_len(self.header());
         // Creates thin or fat pointer, depending on type.
         let t_ptr = ptr_meta::from_raw_parts(base_ptr.cast(), t_dst_size);
         let t_ref = unsafe { &*t_ptr };
 
-        assert_eq!(mem::size_of_val(self), mem::size_of_val(t_ref));
+        assert_eq!(size_of_val(self), size_of_val(t_ref));
 
         t_ref
     }
@@ -497,7 +494,7 @@ mod tests {
         impl MaybeDynSized for CustomSizedTag {
             type Header = DummyTestHeader;
 
-            const BASE_SIZE: usize = mem::size_of::<Self>();
+            const BASE_SIZE: usize = size_of::<Self>();
 
             fn dst_len(_header: &DummyTestHeader) -> Self::Metadata {}
         }
@@ -512,7 +509,7 @@ mod tests {
         let tag = DynSizedStructure::ref_from_slice(bytes.borrow()).unwrap();
         let custom_tag = tag.cast::<CustomSizedTag>();
 
-        assert_eq!(mem::size_of_val(custom_tag), 16);
+        assert_eq!(size_of_val(custom_tag), 16);
         assert_eq!(custom_tag.a, 0xdead_beef);
         assert_eq!(custom_tag.b, 0x1337_1337);
     }

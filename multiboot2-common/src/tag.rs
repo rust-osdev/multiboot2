@@ -1,7 +1,6 @@
 //! Module for the traits [`MaybeDynSized`] and [`Tag`].
 
 use crate::{BytesRef, DynSizedStructure, Header};
-use core::mem;
 use core::slice;
 use ptr_meta::Pointee;
 
@@ -55,7 +54,7 @@ pub trait MaybeDynSized: Pointee {
     /// Returns the payload, i.e., all memory that is not occupied by the
     /// [`Header`] of the type.
     fn payload(&self) -> &[u8] {
-        let from = mem::size_of::<Self::Header>();
+        let from = size_of::<Self::Header>();
         &self.as_bytes()[from..]
     }
 
@@ -65,7 +64,7 @@ pub trait MaybeDynSized: Pointee {
     fn as_bytes(&self) -> BytesRef<'_, Self::Header> {
         let ptr = core::ptr::addr_of!(*self);
         // Actual tag size with optional terminating padding.
-        let size = mem::size_of_val(self);
+        let size = size_of_val(self);
         let slice = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), size) };
         // Unwrap is fine as this type can't exist without the underlying memory
         // guarantees.
@@ -95,7 +94,7 @@ pub trait Tag: MaybeDynSized {
 impl<H: Header> MaybeDynSized for DynSizedStructure<H> {
     type Header = H;
 
-    const BASE_SIZE: usize = mem::size_of::<H>();
+    const BASE_SIZE: usize = size_of::<H>();
 
     fn dst_len(header: &Self::Header) -> Self::Metadata {
         header.payload_len()

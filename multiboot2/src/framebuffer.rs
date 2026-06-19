@@ -3,7 +3,6 @@
 use crate::TagType;
 use crate::tag::TagHeader;
 use core::fmt::Debug;
-use core::mem;
 use core::slice;
 use multiboot2_common::{MaybeDynSized, Tag};
 use thiserror::Error;
@@ -182,8 +181,8 @@ impl FramebufferTag {
 
                 let palette = {
                     // Ensure the slice can be created without causing UB
-                    assert_eq!(mem::size_of::<FramebufferColor>(), 3);
-                    let palette_len = num_colors as usize * mem::size_of::<FramebufferColor>();
+                    assert_eq!(size_of::<FramebufferColor>(), 3);
+                    let palette_len = num_colors as usize * size_of::<FramebufferColor>();
                     assert!(
                         self.buffer.len() - reader.off >= palette_len,
                         "indexed framebuffer palette must fit in the tag"
@@ -228,11 +227,11 @@ impl FramebufferTag {
 impl MaybeDynSized for FramebufferTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<TagHeader>()
-        + mem::size_of::<u64>()
-        + 3 * mem::size_of::<u32>()
-        + 2 * mem::size_of::<u8>()
-        + mem::size_of::<u16>();
+    const BASE_SIZE: usize = size_of::<TagHeader>()
+        + size_of::<u64>()
+        + 3 * size_of::<u32>()
+        + 2 * size_of::<u8>()
+        + size_of::<u16>();
 
     fn dst_len(header: &TagHeader) -> usize {
         assert!(header.size as usize >= Self::BASE_SIZE);
@@ -420,7 +419,7 @@ mod tests {
     // Compile time test
     #[test]
     fn test_size() {
-        assert_eq!(mem::size_of::<FramebufferColor>(), 3)
+        assert_eq!(size_of::<FramebufferColor>(), 3)
     }
 
     #[test]

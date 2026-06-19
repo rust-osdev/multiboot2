@@ -3,7 +3,6 @@
 use crate::{TagHeader, TagType};
 use core::ffi::{CStr, FromBytesUntilNulError};
 use core::fmt::{Debug, Formatter};
-use core::mem;
 use elf::endian::NativeEndian;
 use elf::section::{SectionHeader, SectionHeaderTable};
 use multiboot2_common::{MaybeDynSized, Tag};
@@ -109,7 +108,7 @@ impl ElfSectionsTag {
 impl MaybeDynSized for ElfSectionsTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<TagHeader>() + 3 * mem::size_of::<u32>();
+    const BASE_SIZE: usize = size_of::<TagHeader>() + 3 * size_of::<u32>();
 
     fn dst_len(header: &TagHeader) -> usize {
         assert!(header.size as usize >= Self::BASE_SIZE);

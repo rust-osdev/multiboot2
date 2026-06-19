@@ -1,5 +1,4 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// If this tag is present, provided boot modules must be page aligned.
@@ -13,11 +12,8 @@ impl ModuleAlignHeaderTag {
     /// Constructs a new tag.
     #[must_use]
     pub const fn new(flags: HeaderTagFlag) -> Self {
-        let header = HeaderTagHeader::new(
-            HeaderTagType::ModuleAlign,
-            flags,
-            mem::size_of::<Self>() as u32,
-        );
+        let header =
+            HeaderTagHeader::new(HeaderTagType::ModuleAlign, flags, size_of::<Self>() as u32);
         Self { header }
     }
 
@@ -43,7 +39,7 @@ impl ModuleAlignHeaderTag {
 impl MaybeDynSized for ModuleAlignHeaderTag {
     type Header = HeaderTagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<Self>();
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_header: &Self::Header) -> Self::Metadata {}
 }
@@ -59,6 +55,6 @@ mod tests {
 
     #[test]
     fn test_assert_size() {
-        assert_eq!(core::mem::size_of::<ModuleAlignHeaderTag>(), 2 + 2 + 4);
+        assert_eq!(size_of::<ModuleAlignHeaderTag>(), 2 + 2 + 4);
     }
 }

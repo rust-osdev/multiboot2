@@ -128,9 +128,9 @@ pub const MAGIC: u32 = 0x36d76289;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::mem::transmute;
     use multiboot2_common::test_utils::AlignedBytes;
     use multiboot2_common::{MaybeDynSized, Tag};
-    use std::mem;
 
     /// Compile time test to check if the boot information is Send and Sync.
     /// This test is relevant to give library users flexibility in passing the
@@ -547,7 +547,7 @@ mod tests {
     fn vbe_info_tag_size() {
         unsafe {
             // 16 for the start + 512 from `VBEControlInfo` + 256 from `VBEModeInfo`.
-            core::mem::transmute::<[u8; 784], VBEInfoTag>([0u8; 784]);
+            transmute::<[u8; 784], VBEInfoTag>([0u8; 784]);
         }
     }
 
@@ -1195,7 +1195,7 @@ mod tests {
         impl MaybeDynSized for CustomTag {
             type Header = TagHeader;
 
-            const BASE_SIZE: usize = mem::size_of::<Self>();
+            const BASE_SIZE: usize = size_of::<Self>();
 
             fn dst_len(_: &TagHeader) -> Self::Metadata {}
         }
@@ -1273,7 +1273,7 @@ mod tests {
         impl MaybeDynSized for CustomTag {
             type Header = TagHeader;
 
-            const BASE_SIZE: usize = mem::size_of::<TagHeader>() + mem::size_of::<u32>();
+            const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
 
             fn dst_len(header: &TagHeader) -> usize {
                 // The size of the sized portion of the command line tag.

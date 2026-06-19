@@ -1,7 +1,6 @@
 //! Module for [`BootdevTag`].
 
 use crate::{TagHeader, TagType};
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// The end tag ends the information struct.
@@ -19,7 +18,7 @@ impl BootdevTag {
     #[must_use]
     pub fn new(biosdev: u32, slice: u32, part: u32) -> Self {
         Self {
-            header: TagHeader::new(Self::ID, mem::size_of::<Self>() as u32),
+            header: TagHeader::new(Self::ID, size_of::<Self>() as u32),
             biosdev,
             slice,
             part,
@@ -55,7 +54,7 @@ impl BootdevTag {
 impl MaybeDynSized for BootdevTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<Self>();
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
 }

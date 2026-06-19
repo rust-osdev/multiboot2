@@ -2,7 +2,6 @@
 
 use crate::{ALIGNMENT, Header, MemoryError};
 use core::marker::PhantomData;
-use core::mem;
 use core::ops::Deref;
 
 /// Wraps a byte slice representing a Multiboot2 structure including an optional
@@ -25,7 +24,7 @@ impl<'a, H: Header> TryFrom<&'a [u8]> for BytesRef<'a, H> {
     type Error = MemoryError;
 
     fn try_from(bytes: &'a [u8]) -> Result<Self, Self::Error> {
-        if bytes.len() < mem::size_of::<H>() {
+        if bytes.len() < size_of::<H>() {
             return Err(MemoryError::ShorterThanHeader);
         }
         // Doesn't work as expected: if align_of_val(&value[0]) < ALIGNMENT {

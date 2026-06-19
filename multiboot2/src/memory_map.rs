@@ -9,7 +9,6 @@ use crate::tag::TagHeader;
 use crate::{TagType, TagTypeId};
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
 use {alloc::boxed::Box, core::slice, multiboot2_common::new_boxed};
@@ -39,11 +38,11 @@ impl MemoryMapTag {
     #[must_use]
     pub fn new(areas: &[MemoryArea]) -> Box<Self> {
         let header = TagHeader::new(Self::ID, 0);
-        let entry_size = (mem::size_of::<MemoryArea>() as u32).to_ne_bytes();
+        let entry_size = (size_of::<MemoryArea>() as u32).to_ne_bytes();
         let entry_version = 0_u32.to_ne_bytes();
         let areas = {
             let ptr = areas.as_ptr().cast::<u8>();
-            let len = mem::size_of_val(areas);
+            let len = size_of_val(areas);
             unsafe { slice::from_raw_parts(ptr, len) }
         };
         new_boxed(header, &[&entry_size, &entry_version, areas])
@@ -68,7 +67,7 @@ impl MemoryMapTag {
     #[must_use]
     pub fn memory_areas(&self) -> &[MemoryArea] {
         // If this ever fails, we need to model this differently in this crate.
-        assert_eq!(self.entry_size as usize, mem::size_of::<MemoryArea>());
+        assert_eq!(self.entry_size as usize, size_of::<MemoryArea>());
         &self.areas
     }
 }
@@ -76,13 +75,13 @@ impl MemoryMapTag {
 impl MaybeDynSized for MemoryMapTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u32>();
+    const BASE_SIZE: usize = size_of::<TagHeader>() + 2 * size_of::<u32>();
 
     fn dst_len(header: &TagHeader) -> usize {
         assert!(header.size as usize >= Self::BASE_SIZE);
         let size = header.size as usize - Self::BASE_SIZE;
-        assert_eq!(size % mem::size_of::<MemoryArea>(), 0);
-        size / mem::size_of::<MemoryArea>()
+        assert_eq!(size % size_of::<MemoryArea>(), 0);
+        size / size_of::<MemoryArea>()
     }
 }
 
@@ -271,7 +270,7 @@ impl BasicMemoryInfoTag {
     #[must_use]
     pub fn new(memory_lower: u32, memory_upper: u32) -> Self {
         Self {
-            header: TagHeader::new(Self::ID, mem::size_of::<Self>().try_into().unwrap()),
+            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
             memory_lower,
             memory_upper,
         }
@@ -293,7 +292,7 @@ impl BasicMemoryInfoTag {
 impl MaybeDynSized for BasicMemoryInfoTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<Self>();
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
 }
@@ -336,12 +335,12 @@ impl EFIMemoryMapTag {
     pub fn new_from_descs(descs: &[EFIMemoryDesc]) -> Box<Self> {
         let efi_mmap = {
             let ptr = descs.as_ptr().cast::<u8>();
-            let len = mem::size_of_val(descs);
+            let len = size_of_val(descs);
             unsafe { slice::from_raw_parts(ptr, len) }
         };
 
         Self::new_from_map(
-            mem::size_of::<EFIMemoryDesc>() as u32,
+            size_of::<EFIMemoryDesc>() as u32,
             EFIMemoryDesc::VERSION,
             efi_mmap,
         )
@@ -370,18 +369,18 @@ impl EFIMemoryMapTag {
         let desc_size = self.desc_size as usize;
         assert_ne!(desc_size, 0, "EFI descriptor size must not be zero");
         assert!(
-            desc_size >= mem::size_of::<EFIMemoryDesc>(),
+            desc_size >= size_of::<EFIMemoryDesc>(),
             "EFI descriptor size must cover an EFI memory descriptor"
         );
         assert_eq!(
-            desc_size % mem::align_of::<EFIMemoryDesc>(),
+            desc_size % align_of::<EFIMemoryDesc>(),
             0,
             "EFI descriptor size must preserve EFI memory descriptor alignment"
         );
         assert_eq!(
             self.memory_map
                 .as_ptr()
-                .align_offset(mem::align_of::<EFIMemoryDesc>()),
+                .align_offset(align_of::<EFIMemoryDesc>()),
             0
         );
 
@@ -406,7 +405,7 @@ impl Debug for EFIMemoryMapTag {
 impl MaybeDynSized for EFIMemoryMapTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<TagTypeId>() + 3 * mem::size_of::<u32>();
+    const BASE_SIZE: usize = size_of::<TagTypeId>() + 3 * size_of::<u32>();
 
     fn dst_len(header: &TagHeader) -> usize {
         assert!(header.size as usize >= Self::BASE_SIZE);
@@ -490,7 +489,6 @@ impl Debug for EFIMemoryAreaIter<'_> {
 #[cfg(all(test, feature = "builder"))]
 mod tests {
     use super::*;
-    use std::mem::size_of;
 
     #[test]
     fn test_create_old_mmap() {

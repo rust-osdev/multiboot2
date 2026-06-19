@@ -1,5 +1,4 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
-use core::mem::size_of;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// Binary address information for non-ELF images.
@@ -106,9 +105,6 @@ mod tests {
 
     #[test]
     fn test_assert_size() {
-        assert_eq!(
-            core::mem::size_of::<AddressHeaderTag>(),
-            2 + 2 + 4 + 4 + 4 + 4 + 4
-        );
+        assert_eq!(size_of::<AddressHeaderTag>(), 2 + 2 + 4 + 4 + 4 + 4 + 4);
     }
 }

@@ -8,7 +8,6 @@
 
 use crate::TagType;
 use crate::tag::TagHeader;
-use core::mem::size_of;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// EFI system table in 32 bit mode tag.

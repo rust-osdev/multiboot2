@@ -3,7 +3,6 @@
 use crate::tag::TagHeader;
 use crate::{StringError, TagIter, TagType, parse_slice_as_string};
 use core::fmt::{Debug, Formatter};
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
 use {alloc::boxed::Box, multiboot2_common::new_boxed};
@@ -75,7 +74,7 @@ impl ModuleTag {
 impl MaybeDynSized for ModuleTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<TagHeader>() + 2 * mem::size_of::<u32>();
+    const BASE_SIZE: usize = size_of::<TagHeader>() + 2 * size_of::<u32>();
 
     fn dst_len(header: &TagHeader) -> usize {
         assert!(header.size as usize >= Self::BASE_SIZE);

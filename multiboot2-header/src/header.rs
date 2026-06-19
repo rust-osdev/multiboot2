@@ -5,7 +5,6 @@ use crate::{
     TagIter,
 };
 use core::fmt::{Debug, Formatter};
-use core::mem::size_of;
 use core::ptr::NonNull;
 use multiboot2_common::{ALIGNMENT, DynSizedStructure, Header, MemoryError, Tag};
 use thiserror::Error;
@@ -441,7 +440,7 @@ mod tests {
 
     #[test]
     fn test_assert_size() {
-        assert_eq!(core::mem::size_of::<Multiboot2BasicHeader>(), 4 + 4 + 4 + 4);
+        assert_eq!(size_of::<Multiboot2BasicHeader>(), 4 + 4 + 4 + 4);
     }
 
     #[test]

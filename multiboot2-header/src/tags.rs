@@ -2,7 +2,6 @@
 //! code at the end of the official Multiboot2 spec. These tags follow in memory right after
 //! [`crate::Multiboot2BasicHeader`].
 
-use core::mem;
 use multiboot2_common::Header;
 
 /// ISA/ARCH in Multiboot2 header.
@@ -74,8 +73,7 @@ pub enum HeaderTagFlag {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct HeaderTagHeader {
-    typ: HeaderTagType, /* u16 */
-    // u16 value
+    typ: HeaderTagType,   /* u16 */
     flags: HeaderTagFlag, /* u16 */
     size: u32,
     // Followed by optional additional tag specific fields.
@@ -109,7 +107,7 @@ impl HeaderTagHeader {
 
 impl Header for HeaderTagHeader {
     fn payload_len(&self) -> usize {
-        self.size as usize - mem::size_of::<Self>()
+        self.size as usize - size_of::<Self>()
     }
 
     fn set_size(&mut self, total_size: usize) {
@@ -123,6 +121,6 @@ mod tests {
 
     #[test]
     fn test_assert_size() {
-        assert_eq!(core::mem::size_of::<HeaderTagHeader>(), 2 + 2 + 4);
+        assert_eq!(size_of::<HeaderTagHeader>(), 2 + 2 + 4);
     }
 }
