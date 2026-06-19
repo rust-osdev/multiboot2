@@ -48,7 +48,27 @@ impl<'a> Multiboot2Header<'a> {
         header
             .verify_checksum()
             .map_err(|x| LoadError::ChecksumMismatch(x.0, x.1))?;
+        if !this.has_valid_end_tag() {
+            return Err(LoadError::NoEndTag);
+        }
         Ok(this)
+    }
+
+    /// Checks whether the header ends with the mandatory end tag.
+    fn has_valid_end_tag(&self) -> bool {
+        let payload = self.0.payload();
+        if payload.len() < size_of::<HeaderTagHeader>() {
+            return false;
+        }
+
+        let end_tag = &payload[payload.len() - size_of::<HeaderTagHeader>()..];
+        let typ = u16::from_le_bytes(end_tag[0..2].try_into().unwrap());
+        let flags = u16::from_le_bytes(end_tag[2..4].try_into().unwrap());
+        let size = u32::from_le_bytes(end_tag[4..8].try_into().unwrap());
+
+        typ == HeaderTagType::End as u16
+            && flags == crate::HeaderTagFlag::Required as u16
+            && size as usize == size_of::<HeaderTagHeader>()
     }
 
     /// Find the header in a given slice.
@@ -240,6 +260,9 @@ pub enum LoadError {
     /// The header does not contain the correct magic number.
     #[error("header does not contain expected magic value")]
     MagicNotFound,
+    /// Missing mandatory end tag.
+    #[error("missing mandatory end tag")]
+    NoEndTag,
     /// The provided memory can't be parsed as [`Multiboot2Header`].
     /// See [`MemoryError`].
     #[error("memory can't be parsed as multiboot2 header")]
@@ -348,10 +371,53 @@ impl Debug for Multiboot2BasicHeader {
 
 #[cfg(test)]
 mod tests {
-    use crate::Multiboot2BasicHeader;
+    use crate::{HeaderTagISA, LoadError, MAGIC, Multiboot2BasicHeader, Multiboot2Header};
+    use multiboot2_common::test_utils::AlignedBytes;
+
+    /// Writes a minimal valid Multiboot2 header into the buffer, consisting
+    /// only of the basic header and an end tag.
+    fn write_minimal_valid_header_tag(buffer: &mut [u8]) {
+        // Aligned magic
+        buffer[0..4].copy_from_slice(&MAGIC.to_le_bytes());
+        // Architecture
+        buffer[4..8].copy_from_slice(&(HeaderTagISA::I386 as u32).to_le_bytes());
+        // Total size
+        buffer[8..12].copy_from_slice(&24_u32.to_le_bytes());
+        // Checksum
+        buffer[12..16].copy_from_slice(&0x17adaf12_u32.to_le_bytes());
+        // End tag: ID
+        buffer[16..18].copy_from_slice(&0_u16.to_le_bytes());
+        // End tag: Flags
+        buffer[18..20].copy_from_slice(&0_u16.to_le_bytes());
+        // End tag: Size
+        buffer[20..24].copy_from_slice(&8_u32.to_le_bytes());
+    }
 
     #[test]
     fn test_assert_size() {
         assert_eq!(core::mem::size_of::<Multiboot2BasicHeader>(), 4 + 4 + 4 + 4);
+    }
+
+    #[test]
+    fn load_accepts_minimal_header_with_end_tag() {
+        let mut bytes = AlignedBytes::new([0; 24]);
+        write_minimal_valid_header_tag(&mut bytes.0);
+
+        let header = unsafe { Multiboot2Header::load(bytes.as_ptr().cast()) };
+
+        assert!(header.is_ok());
+    }
+
+    #[test]
+    fn load_rejects_missing_end_tag() {
+        let mut bytes = AlignedBytes::new([0; 16]);
+        let checksum = Multiboot2BasicHeader::calc_checksum(MAGIC, HeaderTagISA::I386, 16);
+        bytes.0[0..4].copy_from_slice(&MAGIC.to_le_bytes());
+        bytes.0[8..12].copy_from_slice(&16_u32.to_le_bytes());
+        bytes.0[12..16].copy_from_slice(&checksum.to_le_bytes());
+
+        let header = unsafe { Multiboot2Header::load(bytes.as_ptr().cast()) };
+
+        assert!(matches!(header, Err(LoadError::NoEndTag)));
     }
 }
