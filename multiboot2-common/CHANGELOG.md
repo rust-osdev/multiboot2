@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added size details to memory validation errors.
 - Fixed validation for dynamically sized structures whose reported total size
   exceeds the available buffer.
 - Small code improvements

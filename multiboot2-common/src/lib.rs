@@ -337,7 +337,10 @@ impl<H: Header> DynSizedStructure<H> {
         let payload_len = hdr.payload_len();
         let total_size = mem::size_of::<H>() + payload_len;
         if total_size > bytes.len() {
-            return Err(MemoryError::InvalidReportedTotalSize);
+            return Err(MemoryError::InvalidReportedTotalSize(
+                total_size,
+                bytes.len(),
+            ));
         }
 
         // At this point we know that the memory slice fulfills the base
@@ -438,6 +441,9 @@ pub enum MemoryError {
     /// type.
     #[error("memory range is shorter than the size of the header structure")]
     ShorterThanHeader,
+    /// The size is insufficient to contain at least a valid minimal structure.
+    #[error("memory range is shorter than the size of the header structure")]
+    SizeInsufficient(usize /* actual */, usize /* expected */),
     /// The buffer misses the terminating padding to the next alignment
     /// boundary. The padding is relevant to satisfy Rustc/Miri, but also the
     /// spec mandates that the padding is added.
@@ -445,8 +451,10 @@ pub enum MemoryError {
     MissingPadding,
     /// The size-property has an illegal value that can't be fulfilled with the
     /// given bytes.
-    #[error("the header reports an invalid total size")]
-    InvalidReportedTotalSize,
+    #[error(
+        "header reports an invalid total size of 0x{0:x} while only 0x{1:x} bytes are available"
+    )]
+    InvalidReportedTotalSize(usize /* actual */, usize /* expected */),
 }
 
 /// Increases the given size to the next alignment boundary, if it is not a
@@ -549,7 +557,7 @@ mod tests {
 
         assert_eq!(
             DynSizedStructure::<DummyTestHeader>::ref_from_slice(bytes.borrow()),
-            Err(MemoryError::InvalidReportedTotalSize)
+            Err(MemoryError::InvalidReportedTotalSize(24, 16))
         );
     }
 }
