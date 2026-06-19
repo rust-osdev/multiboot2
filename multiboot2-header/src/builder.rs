@@ -1,9 +1,10 @@
 //! Exports a builder [`Builder`].
 
 use crate::{
-    AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EntryAddressHeaderTag,
-    EntryEfi32HeaderTag, EntryEfi64HeaderTag, FramebufferHeaderTag, HeaderTagISA,
-    InformationRequestHeaderTag, ModuleAlignHeaderTag, Multiboot2BasicHeader, RelocatableHeaderTag,
+    AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EndHeaderTag,
+    EntryAddressHeaderTag, EntryEfi32HeaderTag, EntryEfi64HeaderTag, FramebufferHeaderTag,
+    HeaderTagISA, InformationRequestHeaderTag, ModuleAlignHeaderTag, Multiboot2BasicHeader,
+    RelocatableHeaderTag,
 };
 use alloc::boxed::Box;
 use alloc::vec::Vec;
@@ -155,6 +156,8 @@ impl Builder {
             byte_refs.push(tag.as_bytes().as_ref());
         }
         // TODO add support for custom tags once someone requests it.
+        let end_tag = EndHeaderTag::new();
+        byte_refs.push(end_tag.as_bytes().as_ref());
         new_boxed(header, byte_refs.as_slice())
     }
 }
@@ -217,6 +220,10 @@ mod tests {
                 .unwrap();
 
         assert!(header.verify_checksum());
+        assert_eq!(
+            header.iter().last().unwrap().header().typ(),
+            crate::HeaderTagType::End
+        );
 
         for tag in header.iter() {
             dbg!(tag);

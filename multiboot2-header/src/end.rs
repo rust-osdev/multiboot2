@@ -20,7 +20,7 @@ impl EndHeaderTag {
     #[must_use]
     pub const fn new() -> Self {
         let header = HeaderTagHeader::new(
-            HeaderTagType::EntryAddress,
+            HeaderTagType::End,
             HeaderTagFlag::Required,
             mem::size_of::<Self>() as u32,
         );

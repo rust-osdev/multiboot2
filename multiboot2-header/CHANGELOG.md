@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed `EndHeaderTag::new` and `Builder::build` so generated headers contain
+  the mandatory end tag.
 - Small code improvements
 
 
