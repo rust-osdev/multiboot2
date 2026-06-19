@@ -183,6 +183,11 @@ impl FramebufferTag {
                 let palette = {
                     // Ensure the slice can be created without causing UB
                     assert_eq!(mem::size_of::<FramebufferColor>(), 3);
+                    let palette_len = num_colors as usize * mem::size_of::<FramebufferColor>();
+                    assert!(
+                        self.buffer.len() - reader.off >= palette_len,
+                        "indexed framebuffer palette must fit in the tag"
+                    );
 
                     unsafe {
                         slice::from_raw_parts(
@@ -408,6 +413,9 @@ pub struct UnknownFramebufferType(u8);
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::GenericInfoTag;
+    use core::borrow::Borrow;
+    use multiboot2_common::test_utils::AlignedBytes;
 
     // Compile time test
     #[test]
@@ -469,5 +477,36 @@ mod tests {
         );
         // Good test for Miri
         dbg!(tag);
+    }
+
+    #[test]
+    #[should_panic(expected = "indexed framebuffer palette must fit in the tag")]
+    fn indexed_palette_must_fit_in_tag() {
+        #[rustfmt::skip]
+        let bytes = AlignedBytes::new([
+            /* typ = framebuffer */
+            8, 0, 0, 0,
+            /* size = base size + num_colors + one palette entry */
+            37, 0, 0, 0,
+            /* address */
+            0, 0, 0, 0, 0, 0, 0, 0,
+            /* pitch, width, height */
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            /* bpp, type = indexed, padding */
+            0, 0, 0, 0,
+            /* num_colors = 2 */
+            2, 0,
+            /* only one 3-byte palette entry follows */
+            1, 2, 3,
+            /* padding */
+            0, 0, 0,
+        ]);
+        let tag = GenericInfoTag::ref_from_slice(bytes.borrow())
+            .unwrap()
+            .cast::<FramebufferTag>();
+
+        let _ = tag.buffer_type();
     }
 }
