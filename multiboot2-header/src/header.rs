@@ -12,6 +12,9 @@ use thiserror::Error;
 
 /// Magic value for a [`Multiboot2Header`], as defined by the spec.
 pub const MAGIC: u32 = 0xe85250d6;
+/// Range from the beginning of an image in that bootloaders will search for a
+/// multiboot2 header.
+pub const HEADER_SEARCH_LIMIT: usize = 32768;
 
 /// Wrapper type around a pointer to the Multiboot2 header.
 ///
@@ -21,6 +24,7 @@ pub const MAGIC: u32 = 0xe85250d6;
 /// to parse it. If you want to construct the type by yourself,
 /// please look at `HeaderBuilder` (requires the `builder` feature).
 #[repr(transparent)]
+#[derive(PartialEq, Eq)]
 pub struct Multiboot2Header<'a>(&'a DynSizedStructure<Multiboot2BasicHeader>);
 
 impl<'a> Multiboot2Header<'a> {
@@ -71,54 +75,92 @@ impl<'a> Multiboot2Header<'a> {
             && size as usize == size_of::<HeaderTagHeader>()
     }
 
-    /// Find the header in a given slice.
+    /// Tries finding a Multiboot2 header in a given slice of binary data.
     ///
-    /// If it succeeds, it returns a tuple consisting of the subslice containing
-    /// just the header and the index of the header in the given slice.
-    /// If it fails (either because the header is not properly 64-bit aligned
-    /// or because it is truncated), it returns a [`LoadError`].
-    /// If there is no header, it returns `None`.
-    pub fn find_header(buffer: &[u8]) -> Result<Option<(&[u8], u32)>, LoadError> {
+    /// Performs basic checks, such as length checks and a checksum match.
+    ///
+    /// The Multiboot2 header must be contained completely within the first
+    /// [`HEADER_SEARCH_LIMIT`] bytes of the OS image, and must be
+    /// [64-bit aligned](ALIGNMENT).
+    ///
+    /// On success, it returns the parsed header and an index into the original
+    /// buffer pointing to where the header starts.
+    ///
+    /// # Parameter
+    /// - `buffer`: [64-bit aligned](ALIGNMENT) buffer describing the first
+    ///   [`HEADER_SEARCH_LIMIT`] bytes of a potential Multiboot2 kernel image.
+    pub fn find_header(buffer: &[u8]) -> Result<(Self, usize /* index in buffer */), LoadError> {
+        if buffer.len() < size_of::<Multiboot2BasicHeader>() {
+            return Err(LoadError::Memory(MemoryError::ShorterThanHeader));
+        }
         if buffer.as_ptr().align_offset(ALIGNMENT) != 0 {
             return Err(LoadError::Memory(MemoryError::WrongAlignment));
         }
 
-        let mut windows = buffer[0..8192].windows(4);
-        let magic_index = match windows.position(|vals| {
-            u32::from_le_bytes(vals.try_into().unwrap()) // yes, there's 4 bytes here
-            == MAGIC
-        }) {
-            Some(idx) => {
-                if idx % 8 == 0 {
-                    idx
-                } else {
-                    return Err(LoadError::Memory(MemoryError::WrongAlignment));
-                }
-            }
-            None => return Ok(None),
-        };
-        // skip over rest of magic
-        windows.next();
-        windows.next();
-        windows.next();
-        // arch
-        windows.next();
-        windows.next();
-        windows.next();
-        windows.next();
-        let header_length: usize = u32::from_le_bytes(
-            windows
-                .next()
-                .ok_or(LoadError::Memory(MemoryError::MissingPadding))?
-                .try_into()
-                .unwrap(), // 4 bytes are a u32
-        )
-        .try_into()
-        .unwrap();
-        Ok(Some((
-            &buffer[magic_index..magic_index + header_length],
-            magic_index as u32,
-        )))
+        let search_len = buffer.len().min(HEADER_SEARCH_LIMIT);
+        let buffer = &buffer[0..search_len];
+
+        let mut u32_iter = buffer
+            .chunks(size_of::<u32>())
+            .enumerate()
+            .take_while(|(_, chunk)| chunk.len() == size_of::<u32>())
+            // Index now points into the original byte buffer.
+            .map(|(idx, chunk)| {
+                (
+                    idx * size_of::<u32>(),
+                    u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]),
+                )
+            });
+
+        // After that, `u32_iter` continues at the next index after the magic.
+        let (magic_begin_idx, _) = u32_iter
+            // The 64-bit-aligned header starts with magic, so magic must be
+            // aligned too.
+            .find(|(idx, value)| {
+                let is_64bit_aligned = idx % ALIGNMENT == 0;
+                let magic_matches = *value == MAGIC;
+                is_64bit_aligned && magic_matches
+            })
+            .ok_or(LoadError::MagicNotFound)?;
+
+        // After that, `u32_iter` continues at the next index after the size.
+        let (_, header_size) = u32_iter
+            // skip the arch field
+            .nth(1)
+            .ok_or(LoadError::Memory(MemoryError::ShorterThanHeader))?;
+
+        let header_size = usize::try_from(header_size)
+            .map_err(|_| LoadError::Memory(MemoryError::ShorterThanHeader))?;
+
+        if header_size < size_of::<Multiboot2BasicHeader>() {
+            return Err(LoadError::Memory(MemoryError::ShorterThanHeader));
+        }
+
+        let min_size = size_of::<Multiboot2BasicHeader>() + size_of::<HeaderTagHeader>();
+        if header_size < min_size {
+            return Err(LoadError::Memory(MemoryError::SizeInsufficient(
+                header_size,
+                min_size,
+            )));
+        }
+
+        // Check if the remaining length of the buffer contains the expected
+        // memory.
+        let remaining = buffer[magic_begin_idx..].len();
+        if remaining < header_size {
+            return Err(LoadError::Memory(MemoryError::InvalidReportedTotalSize(
+                header_size,
+                remaining,
+            )));
+        }
+
+        let ptr = buffer
+            .as_ptr()
+            .wrapping_add(magic_begin_idx)
+            .cast::<Multiboot2BasicHeader>();
+
+        let header = unsafe { Self::load(ptr)? };
+        Ok((header, magic_begin_idx))
     }
 
     /// Returns a [`TagIter`].
@@ -372,6 +414,8 @@ impl Debug for Multiboot2BasicHeader {
 #[cfg(test)]
 mod tests {
     use crate::{HeaderTagISA, LoadError, MAGIC, Multiboot2BasicHeader, Multiboot2Header};
+    use core::borrow::Borrow;
+    use multiboot2_common::MemoryError;
     use multiboot2_common::test_utils::AlignedBytes;
 
     /// Writes a minimal valid Multiboot2 header into the buffer, consisting
@@ -396,6 +440,50 @@ mod tests {
     #[test]
     fn test_assert_size() {
         assert_eq!(core::mem::size_of::<Multiboot2BasicHeader>(), 4 + 4 + 4 + 4);
+    }
+
+    #[test]
+    fn find_header_handles_short_buffers() {
+        let bytes = AlignedBytes::new([0; 16]);
+
+        assert_eq!(
+            Multiboot2Header::find_header(bytes.borrow()),
+            Err(LoadError::MagicNotFound)
+        );
+    }
+
+    #[test]
+    fn find_header_rejects_truncated_header() {
+        let mut bytes = AlignedBytes::new([0; 16]);
+        bytes.0[0..4].copy_from_slice(&MAGIC.to_le_bytes());
+        bytes.0[8..12].copy_from_slice(&32_u32.to_le_bytes());
+
+        assert_eq!(
+            Multiboot2Header::find_header(bytes.borrow()),
+            Err(LoadError::Memory(MemoryError::InvalidReportedTotalSize(
+                32, 16
+            )))
+        );
+    }
+
+    #[test]
+    fn find_header_searches_full_multiboot2_range() {
+        let mut bytes = AlignedBytes::new([0; 9000]);
+        write_minimal_valid_header_tag(&mut bytes.0[8192..]);
+
+        let (_header, offset) = Multiboot2Header::find_header(bytes.borrow()).unwrap();
+        assert_eq!(offset, 8192);
+    }
+
+    #[test]
+    fn find_header_skips_unaligned_magic_candidates() {
+        let mut bytes = AlignedBytes::new([0; 40]);
+        // Unaligned magic
+        bytes.0[4..8].copy_from_slice(&MAGIC.to_le_bytes());
+        write_minimal_valid_header_tag(&mut bytes.0[8..]);
+
+        let (_header, offset) = Multiboot2Header::find_header(bytes.borrow()).unwrap();
+        assert_eq!(offset, 8);
     }
 
     #[test]

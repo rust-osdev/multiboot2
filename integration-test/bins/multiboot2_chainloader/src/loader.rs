@@ -20,11 +20,8 @@ pub fn load_module(mut modules: multiboot::information::ModuleIter) -> ! {
 
     // Check if a header is present.
     {
-        let hdr = multiboot2_header::Multiboot2Header::find_header(elf_bytes)
-            .unwrap()
+        let (hdr, _) = multiboot2_header::Multiboot2Header::find_header(elf_bytes)
             .expect("Should have Multiboot2 header");
-        let hdr =
-            unsafe { multiboot2_header::Multiboot2Header::load(hdr.0.as_ptr().cast()) }.unwrap();
         log::info!("Multiboot2 header:\n{hdr:#?}");
     }
 
