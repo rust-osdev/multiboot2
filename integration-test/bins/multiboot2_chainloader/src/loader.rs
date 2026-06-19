@@ -91,9 +91,6 @@ fn map_memory(ph: ProgramHeaderEntry) {
     let dest_ptr = unsafe { dest_ptr.add(ph.filesz() as usize) };
 
     // Zero .bss memory
-    for _ in 0..(ph.memsz() - ph.filesz()) {
-        unsafe {
-            core::ptr::write(dest_ptr, 0);
-        }
-    }
+    assert!(ph.memsz() >= ph.filesz());
+    unsafe { core::ptr::write_bytes(dest_ptr, 0, (ph.memsz() - ph.filesz()) as usize) };
 }
