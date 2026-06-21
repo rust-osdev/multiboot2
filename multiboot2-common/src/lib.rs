@@ -425,6 +425,66 @@ impl<H: Header> DynSizedStructure<H> {
     }
 }
 
+/// Validates a sequence of padded Multiboot2 (header) tags.
+///
+/// Both Multiboot2 information tags and Multiboot2 header tags use an 8-byte
+/// tag header with the reported tag size stored in bytes 4..8. The reported
+/// size excludes alignment padding, but each following tag starts at the next
+/// 8-byte boundary.
+///
+/// Returns `Ok(true)` when a valid end tag is present exactly at the end of the
+/// provided byte range, and `Ok(false)` when the byte range ends without an end
+/// tag.
+pub fn validate_tag_sequence(
+    bytes: &[u8],
+    mut is_end_tag: impl FnMut(&[u8]) -> bool,
+) -> Result<bool, MemoryError> {
+    // Common header property for Multiboot2 and Multiboot2 header tags:
+    // The `size` property is always at offset 4..8 (the second u32).
+    const TAG_HEADER_SIZE: usize = size_of::<u32>() * 2;
+
+    if bytes.as_ptr().align_offset(ALIGNMENT) != 0 {
+        return Err(MemoryError::WrongAlignment);
+    }
+
+    let mut offset = 0;
+    while offset < bytes.len() {
+        let remaining = bytes.len() - offset;
+        if remaining < TAG_HEADER_SIZE {
+            return Err(MemoryError::ShorterThanHeader);
+        }
+
+        let tag = &bytes[offset..];
+        let total_size =
+            u32::from_ne_bytes(tag[4..8].try_into().expect("slice has exactly 4 bytes")) as usize;
+
+        if total_size < TAG_HEADER_SIZE {
+            return Err(MemoryError::SizeInsufficient(total_size, TAG_HEADER_SIZE));
+        }
+
+        let padded_size = total_size
+            .checked_add(ALIGNMENT - 1)
+            .map(|size| size & !(ALIGNMENT - 1))
+            .ok_or(MemoryError::InvalidReportedTotalSize(total_size, remaining))?;
+        if padded_size > remaining {
+            return Err(MemoryError::InvalidReportedTotalSize(
+                padded_size,
+                remaining,
+            ));
+        }
+
+        offset += padded_size;
+        if is_end_tag(&tag[..total_size]) {
+            if offset == bytes.len() {
+                return Ok(true);
+            }
+            return Err(MemoryError::InvalidReportedTotalSize(offset, bytes.len()));
+        }
+    }
+
+    Ok(false)
+}
+
 /// Errors that may occur when working with memory.
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash, Error)]
 pub enum MemoryError {
