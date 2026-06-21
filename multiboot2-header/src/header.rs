@@ -6,7 +6,9 @@ use crate::{
 };
 use core::fmt::{Debug, Formatter};
 use core::ptr::NonNull;
-use multiboot2_common::{ALIGNMENT, DynSizedStructure, Header, MemoryError, Tag};
+use multiboot2_common::{
+    ALIGNMENT, DynSizedStructure, Header, MemoryError, Tag, validate_tag_sequence,
+};
 use thiserror::Error;
 
 /// Magic value for a [`Multiboot2Header`], as defined by the spec.
@@ -27,18 +29,25 @@ pub const HEADER_SEARCH_LIMIT: usize = 32768;
 pub struct Multiboot2Header<'a>(&'a DynSizedStructure<Multiboot2BasicHeader>);
 
 impl<'a> Multiboot2Header<'a> {
-    /// Public constructor for this type with various validations.
+    /// Loads the [`Multiboot2Header`] from a pointer.
     ///
     /// If the header is invalid, it returns a [`LoadError`].
     /// This may be because:
-    /// - `addr` is a null-pointer
-    /// - `addr` isn't 8-byte aligned
+    /// - `ptr` is a null pointer
+    /// - `ptr` is not 8-byte aligned
+    /// - the reported total size is invalid
     /// - the magic value of the header is not present
     /// - the checksum field is invalid
+    /// - the tag sequence is incomplete or malformed
+    /// - the mandatory end tag is missing
     ///
     /// # Safety
-    /// This function may produce undefined behaviour, if the provided `addr` is not a valid
-    /// Multiboot2 header pointer.
+    ///
+    /// * `ptr` must be valid for reading the complete reported header size.
+    ///   Otherwise, this function might cause invalid machine state or crash
+    ///   your binary.
+    /// * The memory at `ptr` must not be modified after calling `load` or the
+    ///   program may observe unsynchronized mutation.
     pub unsafe fn load(ptr: *const Multiboot2BasicHeader) -> Result<Self, LoadError> {
         let ptr = NonNull::new(ptr.cast_mut()).ok_or(LoadError::Memory(MemoryError::Null))?;
         let inner = unsafe { DynSizedStructure::ref_from_ptr(ptr).map_err(LoadError::Memory)? };
@@ -51,28 +60,23 @@ impl<'a> Multiboot2Header<'a> {
         header
             .verify_checksum()
             .map_err(|x| LoadError::ChecksumMismatch(x.0, x.1))?;
-        if !this.has_valid_end_tag() {
+        if !this.has_valid_tag_sequence().map_err(LoadError::Memory)? {
             return Err(LoadError::NoEndTag);
         }
         Ok(this)
     }
 
-    /// Checks whether the header ends with the mandatory end tag.
-    fn has_valid_end_tag(&self) -> bool {
-        let payload = self.0.payload();
-        // Check we have an end tag.
-        if payload.len() < size_of::<HeaderTagHeader>() {
-            return false;
-        }
+    /// Checks whether the header has a valid, complete tag sequence.
+    fn has_valid_tag_sequence(&self) -> Result<bool, MemoryError> {
+        validate_tag_sequence(self.0.payload(), |tag| {
+            let typ = u16::from_ne_bytes(tag[0..2].try_into().unwrap());
+            let flags = u16::from_ne_bytes(tag[2..4].try_into().unwrap());
+            let size = u32::from_ne_bytes(tag[4..8].try_into().unwrap()) as usize;
 
-        let end_tag = &payload[payload.len() - size_of::<HeaderTagHeader>()..];
-        let typ = u16::from_le_bytes(end_tag[0..2].try_into().unwrap());
-        let flags = u16::from_le_bytes(end_tag[2..4].try_into().unwrap());
-        let size = u32::from_le_bytes(end_tag[4..8].try_into().unwrap());
-
-        typ == HeaderTagType::End as u16
-            && flags == crate::HeaderTagFlag::Required as u16
-            && size as usize == size_of::<HeaderTagHeader>()
+            typ == HeaderTagType::End as u16
+                && flags == crate::HeaderTagFlag::Required as u16
+                && size == size_of::<HeaderTagHeader>()
+        })
     }
 
     /// Tries finding a Multiboot2 header in a given slice of binary data.
@@ -414,7 +418,9 @@ impl Debug for Multiboot2BasicHeader {
 
 #[cfg(test)]
 mod tests {
-    use crate::{HeaderTagISA, LoadError, MAGIC, Multiboot2BasicHeader, Multiboot2Header};
+    use crate::{
+        HeaderTagISA, HeaderTagType, LoadError, MAGIC, Multiboot2BasicHeader, Multiboot2Header,
+    };
     use core::borrow::Borrow;
     use multiboot2_common::MemoryError;
     use multiboot2_common::test_utils::AlignedBytes;
@@ -508,5 +514,26 @@ mod tests {
         let header = unsafe { Multiboot2Header::load(bytes.as_ptr().cast()) };
 
         assert!(matches!(header, Err(LoadError::NoEndTag)));
+    }
+
+    #[test]
+    fn load_rejects_invalid_inner_tag_size() {
+        let mut bytes = AlignedBytes::new([0; 32]);
+        let checksum = Multiboot2BasicHeader::calc_checksum(MAGIC, HeaderTagISA::I386, 32);
+        bytes.0[0..4].copy_from_slice(&MAGIC.to_le_bytes());
+        bytes.0[4..8].copy_from_slice(&(HeaderTagISA::I386 as u32).to_le_bytes());
+        bytes.0[8..12].copy_from_slice(&32_u32.to_le_bytes());
+        bytes.0[12..16].copy_from_slice(&checksum.to_le_bytes());
+        bytes.0[16..18].copy_from_slice(&(HeaderTagType::InformationRequest as u16).to_le_bytes());
+        bytes.0[20..24].copy_from_slice(&24_u32.to_le_bytes());
+
+        let header = unsafe { Multiboot2Header::load(bytes.as_ptr().cast()) };
+
+        assert_eq!(
+            header,
+            Err(LoadError::Memory(MemoryError::InvalidReportedTotalSize(
+                24, 16
+            )))
+        );
     }
 }
