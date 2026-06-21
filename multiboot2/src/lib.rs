@@ -130,7 +130,7 @@ mod tests {
     use super::*;
     use core::mem::transmute;
     use multiboot2_common::test_utils::AlignedBytes;
-    use multiboot2_common::{MaybeDynSized, Tag};
+    use multiboot2_common::{MaybeDynSized, MemoryError, Tag};
 
     /// Compile time test to check if the boot information is Send and Sync.
     /// This test is relevant to give library users flexibility in passing the
@@ -175,7 +175,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn invalid_total_size() {
         let bytes = AlignedBytes([
             15, 0, 0, 0, // total_size
@@ -184,21 +183,12 @@ mod tests {
             8, 0, 0, // end tag size
         ]);
         let ptr = bytes.0.as_ptr();
-        let addr = ptr as usize;
         let bi = unsafe { BootInformation::load(ptr.cast()) };
-        let bi = bi.unwrap();
-        assert_eq!(addr, bi.start_address());
-        assert_eq!(addr + bytes.0.len(), bi.end_address());
-        assert_eq!(bytes.0.len(), bi.total_size());
-        assert!(bi.elf_sections_tag().is_none());
-        assert!(bi.memory_map_tag().is_none());
-        assert!(bi.module_tags().next().is_none());
-        assert!(bi.boot_loader_name_tag().is_none());
-        assert!(bi.command_line_tag().is_none());
+
+        assert_eq!(bi, Err(LoadError::Memory(MemoryError::MissingPadding)));
     }
 
     #[test]
-    #[should_panic]
     fn invalid_end_tag() {
         let bytes = AlignedBytes([
             16, 0, 0, 0, // total_size
@@ -207,17 +197,35 @@ mod tests {
             9, 0, 0, 0, // end tag size
         ]);
         let ptr = bytes.0.as_ptr();
-        let addr = ptr as usize;
         let bi = unsafe { BootInformation::load(ptr.cast()) };
-        let bi = bi.unwrap();
-        assert_eq!(addr, bi.start_address());
-        assert_eq!(addr + bytes.0.len(), bi.end_address());
-        assert_eq!(bytes.0.len(), bi.total_size());
-        assert!(bi.elf_sections_tag().is_none());
-        assert!(bi.memory_map_tag().is_none());
-        assert!(bi.module_tags().next().is_none());
-        assert!(bi.boot_loader_name_tag().is_none());
-        assert!(bi.command_line_tag().is_none());
+
+        assert_eq!(
+            bi,
+            Err(LoadError::Memory(MemoryError::InvalidReportedTotalSize(
+                16, 8
+            )))
+        );
+    }
+
+    #[test]
+    fn invalid_inner_tag_size() {
+        let bytes = AlignedBytes([
+            24, 0, 0, 0, // total_size
+            0, 0, 0, 0, // reserved
+            1, 0, 0, 0, // command line tag type
+            24, 0, 0, 0, // tag size exceeds the remaining payload
+            0, 0, 0, 0, // tag data
+            0, 0, 0, 0, // tag data
+        ]);
+        let ptr = bytes.0.as_ptr();
+        let bi = unsafe { BootInformation::load(ptr.cast()) };
+
+        assert_eq!(
+            bi,
+            Err(LoadError::Memory(MemoryError::InvalidReportedTotalSize(
+                24, 16
+            )))
+        );
     }
 
     #[test]
