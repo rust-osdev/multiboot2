@@ -2,7 +2,6 @@
 
 use crate::{TagHeader, TagType};
 use core::fmt;
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// This tag contains VBE metadata, VBE controller information returned by the
@@ -31,7 +30,7 @@ impl VBEInfoTag {
         mode_info: VBEModeInfo,
     ) -> Self {
         Self {
-            header: TagHeader::new(Self::ID, mem::size_of::<Self>().try_into().unwrap()),
+            header: TagHeader::new(Self::ID, size_of::<Self>().try_into().unwrap()),
             mode,
             interface_segment,
             interface_offset,
@@ -86,7 +85,7 @@ impl VBEInfoTag {
 impl MaybeDynSized for VBEInfoTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<Self>();
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
 }

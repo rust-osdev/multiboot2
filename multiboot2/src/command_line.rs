@@ -3,7 +3,6 @@
 use crate::tag::TagHeader;
 use crate::{StringError, TagType, parse_slice_as_string};
 use core::fmt::{Debug, Formatter};
-use core::mem;
 use core::str;
 use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
@@ -72,7 +71,7 @@ impl Debug for CommandLineTag {
 impl MaybeDynSized for CommandLineTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<TagHeader>();
+    const BASE_SIZE: usize = size_of::<TagHeader>();
 
     fn dst_len(header: &TagHeader) -> usize {
         assert!(header.size as usize >= Self::BASE_SIZE);

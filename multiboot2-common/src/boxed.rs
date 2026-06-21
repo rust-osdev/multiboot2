@@ -3,7 +3,6 @@
 use crate::{ALIGNMENT, Header, MaybeDynSized, increase_to_alignment};
 use alloc::boxed::Box;
 use core::alloc::Layout;
-use core::mem;
 use core::ops::Deref;
 use core::ptr;
 
@@ -31,7 +30,7 @@ pub fn new_boxed<T: MaybeDynSized<Metadata = usize> + ?Sized>(
         .map(|b| b.len())
         .sum::<usize>();
 
-    let tag_size = mem::size_of::<T::Header>() + additional_size;
+    let tag_size = size_of::<T::Header>() + additional_size;
     header.set_size(tag_size);
 
     // Allocation size is multiple of alignment.
@@ -43,7 +42,7 @@ pub fn new_boxed<T: MaybeDynSized<Metadata = usize> + ?Sized>(
 
     // write header
     {
-        let len = mem::size_of::<T::Header>();
+        let len = size_of::<T::Header>();
         let ptr = core::ptr::addr_of!(header);
         unsafe {
             ptr::copy_nonoverlapping(ptr.cast::<u8>(), heap_ptr, len);
@@ -52,7 +51,7 @@ pub fn new_boxed<T: MaybeDynSized<Metadata = usize> + ?Sized>(
 
     // write body
     {
-        let mut write_offset = mem::size_of::<T::Header>();
+        let mut write_offset = size_of::<T::Header>();
         for &bytes in additional_bytes_slices {
             let len = bytes.len();
             let src = bytes.as_ptr();
@@ -71,7 +70,7 @@ pub fn new_boxed<T: MaybeDynSized<Metadata = usize> + ?Sized>(
     // If this panic triggers, there is a fundamental flaw in my logic. This is
     // not the fault of an API user.
     assert_eq!(
-        mem::size_of_val(reference.deref()),
+        size_of_val(reference.deref()),
         alloc_size,
         "Allocation should match Rusts expectation"
     );

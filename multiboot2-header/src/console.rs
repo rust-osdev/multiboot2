@@ -1,5 +1,4 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// Possible flags for [`ConsoleHeaderTag`].
@@ -61,7 +60,7 @@ impl ConsoleHeaderTag {
 impl MaybeDynSized for ConsoleHeaderTag {
     type Header = HeaderTagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<HeaderTagHeader>() + mem::size_of::<u32>();
+    const BASE_SIZE: usize = size_of::<HeaderTagHeader>() + size_of::<u32>();
 
     fn dst_len(_header: &Self::Header) -> Self::Metadata {}
 }

@@ -2,7 +2,6 @@ use crate::{HeaderTagFlag, HeaderTagHeader};
 use crate::{HeaderTagType, MbiTagTypeId};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
-use core::mem;
 #[cfg(feature = "builder")]
 use multiboot2_common::new_boxed;
 use multiboot2_common::{MaybeDynSized, Tag};
@@ -29,7 +28,7 @@ impl InformationRequestHeaderTag {
         let header = HeaderTagHeader::new(HeaderTagType::InformationRequest, flags, 0);
         let requests = unsafe {
             let ptr = ptr::addr_of!(*requests);
-            slice::from_raw_parts(ptr.cast::<u8>(), mem::size_of_val(requests))
+            slice::from_raw_parts(ptr.cast::<u8>(), size_of_val(requests))
         };
         new_boxed(header, &[requests])
     }
@@ -73,12 +72,12 @@ impl Debug for InformationRequestHeaderTag {
 impl MaybeDynSized for InformationRequestHeaderTag {
     type Header = HeaderTagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<HeaderTagHeader>();
+    const BASE_SIZE: usize = size_of::<HeaderTagHeader>();
 
     fn dst_len(header: &Self::Header) -> Self::Metadata {
         let dst_size = header.size() as usize - Self::BASE_SIZE;
-        assert_eq!(dst_size % mem::size_of::<MbiTagTypeId>(), 0);
-        dst_size / mem::size_of::<MbiTagTypeId>()
+        assert_eq!(dst_size % size_of::<MbiTagTypeId>(), 0);
+        dst_size / size_of::<MbiTagTypeId>()
     }
 }
 

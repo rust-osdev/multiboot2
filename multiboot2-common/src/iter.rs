@@ -4,7 +4,6 @@
 
 use crate::{ALIGNMENT, DynSizedStructure, Header, increase_to_alignment};
 use core::marker::PhantomData;
-use core::mem;
 
 /// Iterates over the tags (modelled by [`DynSizedStructure`]) of the underlying
 /// byte slice. Each tag is expected to have the same common [`Header`] with
@@ -64,7 +63,7 @@ impl<'a, H: Header + 'a> Iterator for TagIter<'a, H> {
         // See <https://doc.rust-lang.org/reference/type-layout.html>.
         let slice = {
             let from = self.next_tag_offset;
-            let len = mem::size_of::<H>() + tag_hdr.payload_len();
+            let len = size_of::<H>() + tag_hdr.payload_len();
             let to = from + len;
 
             // The size of (the allocation for) a value is always a multiple of

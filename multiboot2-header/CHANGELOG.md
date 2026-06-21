@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Fixed `Multiboot2Header::load` to validate the complete padded tag sequence.
+- Changed `Multiboot2Header::find_header` to scan the full 32 KiB search
+  window, validate candidate headers, and return the parsed header plus offset.
+- Added validation that loaded headers end with the mandatory end tag.
+- Changed checksum validation errors to include the actual and expected
+  checksum values.
+- Fixed `EndHeaderTag::new` and `Builder::build` so generated headers contain
+  the mandatory end tag.
 - Small code improvements
 
 

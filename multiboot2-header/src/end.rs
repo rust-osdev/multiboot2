@@ -1,5 +1,4 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// Terminates a list of optional tags in a Multiboot2 header.
@@ -20,9 +19,9 @@ impl EndHeaderTag {
     #[must_use]
     pub const fn new() -> Self {
         let header = HeaderTagHeader::new(
-            HeaderTagType::EntryAddress,
+            HeaderTagType::End,
             HeaderTagFlag::Required,
-            mem::size_of::<Self>() as u32,
+            size_of::<Self>() as u32,
         );
         Self { header }
     }
@@ -49,7 +48,7 @@ impl EndHeaderTag {
 impl MaybeDynSized for EndHeaderTag {
     type Header = HeaderTagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<Self>();
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_header: &Self::Header) -> Self::Metadata {}
 }
@@ -65,6 +64,6 @@ mod tests {
 
     #[test]
     fn test_assert_size() {
-        assert_eq!(core::mem::size_of::<EndHeaderTag>(), 2 + 2 + 4);
+        assert_eq!(size_of::<EndHeaderTag>(), 2 + 2 + 4);
     }
 }

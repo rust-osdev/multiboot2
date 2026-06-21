@@ -14,8 +14,6 @@
 
 use crate::TagType;
 use crate::tag::TagHeader;
-#[cfg(feature = "builder")]
-use core::mem::size_of;
 use core::slice;
 use core::str;
 use core::str::Utf8Error;

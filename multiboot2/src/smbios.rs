@@ -3,7 +3,6 @@
 use crate::TagType;
 use crate::tag::TagHeader;
 use core::fmt::Debug;
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
 use {alloc::boxed::Box, multiboot2_common::new_boxed};
@@ -50,8 +49,8 @@ impl SmbiosTag {
 
 impl MaybeDynSized for SmbiosTag {
     type Header = TagHeader;
-
-    const BASE_SIZE: usize = mem::size_of::<TagHeader>() + mem::size_of::<u8>() * 8;
+    #[expect(clippy::manual_bits)] // false positive
+    const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u8>() * 8;
 
     fn dst_len(header: &TagHeader) -> usize {
         assert!(header.size as usize >= Self::BASE_SIZE);

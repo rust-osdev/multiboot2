@@ -256,7 +256,6 @@ pub use iter::TagIter;
 pub use tag::{MaybeDynSized, Tag};
 
 use core::fmt::Debug;
-use core::mem;
 use core::ptr;
 use core::ptr::NonNull;
 use core::slice;
@@ -284,7 +283,7 @@ pub trait Header: Clone + Sized + PartialEq + Eq + Debug {
     /// plus [`Header::payload_len`].
     #[must_use]
     fn total_size(&self) -> usize {
-        mem::size_of::<Self>() + self.payload_len()
+        size_of::<Self>() + self.payload_len()
     }
 
     /// Updates the header with the given `total_size`.
@@ -334,15 +333,20 @@ impl<H: Header> DynSizedStructure<H> {
         let ptr = bytes.as_ptr().cast::<H>();
         let hdr = unsafe { &*ptr };
 
-        if hdr.payload_len() > bytes.len() {
-            return Err(MemoryError::InvalidReportedTotalSize);
+        let payload_len = hdr.payload_len();
+        let total_size = size_of::<H>() + payload_len;
+        if total_size > bytes.len() {
+            return Err(MemoryError::InvalidReportedTotalSize(
+                total_size,
+                bytes.len(),
+            ));
         }
 
         // At this point we know that the memory slice fulfills the base
         // assumptions and requirements. Now, we safety can create the fat
         // pointer.
 
-        let dst_size = hdr.payload_len();
+        let dst_size = payload_len;
         // Create fat pointer for the DST.
         let ptr = ptr_meta::from_raw_parts(ptr.cast(), dst_size);
         let reference = unsafe { &*ptr };
@@ -401,8 +405,6 @@ impl<H: Header> DynSizedStructure<H> {
     /// # Panics
     /// This panics if there is a size mismatch. However, this should never be
     /// the case if all types follow their documented requirements.
-    ///
-    /// [`size_of_val`]: mem::size_of_val
     pub fn cast<T: MaybeDynSized<Header = H> + ?Sized>(&self) -> &T {
         // Thin or fat pointer, depending on type.
         // However, only thin ptr is needed.
@@ -410,17 +412,77 @@ impl<H: Header> DynSizedStructure<H> {
 
         // This should be a compile-time assertion. However, this is the best
         // location to place it for now.
-        assert!(T::BASE_SIZE >= mem::size_of::<H>());
+        assert!(T::BASE_SIZE >= size_of::<H>());
 
         let t_dst_size = T::dst_len(self.header());
         // Creates thin or fat pointer, depending on type.
         let t_ptr = ptr_meta::from_raw_parts(base_ptr.cast(), t_dst_size);
         let t_ref = unsafe { &*t_ptr };
 
-        assert_eq!(mem::size_of_val(self), mem::size_of_val(t_ref));
+        assert_eq!(size_of_val(self), size_of_val(t_ref));
 
         t_ref
     }
+}
+
+/// Validates a sequence of padded Multiboot2 (header) tags.
+///
+/// Both Multiboot2 information tags and Multiboot2 header tags use an 8-byte
+/// tag header with the reported tag size stored in bytes 4..8. The reported
+/// size excludes alignment padding, but each following tag starts at the next
+/// 8-byte boundary.
+///
+/// Returns `Ok(true)` when a valid end tag is present exactly at the end of the
+/// provided byte range, and `Ok(false)` when the byte range ends without an end
+/// tag.
+pub fn validate_tag_sequence(
+    bytes: &[u8],
+    mut is_end_tag: impl FnMut(&[u8]) -> bool,
+) -> Result<bool, MemoryError> {
+    // Common header property for Multiboot2 and Multiboot2 header tags:
+    // The `size` property is always at offset 4..8 (the second u32).
+    const TAG_HEADER_SIZE: usize = size_of::<u32>() * 2;
+
+    if bytes.as_ptr().align_offset(ALIGNMENT) != 0 {
+        return Err(MemoryError::WrongAlignment);
+    }
+
+    let mut offset = 0;
+    while offset < bytes.len() {
+        let remaining = bytes.len() - offset;
+        if remaining < TAG_HEADER_SIZE {
+            return Err(MemoryError::ShorterThanHeader);
+        }
+
+        let tag = &bytes[offset..];
+        let total_size =
+            u32::from_ne_bytes(tag[4..8].try_into().expect("slice has exactly 4 bytes")) as usize;
+
+        if total_size < TAG_HEADER_SIZE {
+            return Err(MemoryError::SizeInsufficient(total_size, TAG_HEADER_SIZE));
+        }
+
+        let padded_size = total_size
+            .checked_add(ALIGNMENT - 1)
+            .map(|size| size & !(ALIGNMENT - 1))
+            .ok_or(MemoryError::InvalidReportedTotalSize(total_size, remaining))?;
+        if padded_size > remaining {
+            return Err(MemoryError::InvalidReportedTotalSize(
+                padded_size,
+                remaining,
+            ));
+        }
+
+        offset += padded_size;
+        if is_end_tag(&tag[..total_size]) {
+            if offset == bytes.len() {
+                return Ok(true);
+            }
+            return Err(MemoryError::InvalidReportedTotalSize(offset, bytes.len()));
+        }
+    }
+
+    Ok(false)
 }
 
 /// Errors that may occur when working with memory.
@@ -436,6 +498,9 @@ pub enum MemoryError {
     /// type.
     #[error("memory range is shorter than the size of the header structure")]
     ShorterThanHeader,
+    /// The size is insufficient to contain at least a valid minimal structure.
+    #[error("memory range is shorter than the size of the header structure")]
+    SizeInsufficient(usize /* actual */, usize /* expected */),
     /// The buffer misses the terminating padding to the next alignment
     /// boundary. The padding is relevant to satisfy Rustc/Miri, but also the
     /// spec mandates that the padding is added.
@@ -443,8 +508,10 @@ pub enum MemoryError {
     MissingPadding,
     /// The size-property has an illegal value that can't be fulfilled with the
     /// given bytes.
-    #[error("the header reports an invalid total size")]
-    InvalidReportedTotalSize,
+    #[error(
+        "header reports an invalid total size of 0x{0:x} while only 0x{1:x} bytes are available"
+    )]
+    InvalidReportedTotalSize(usize /* actual */, usize /* expected */),
 }
 
 /// Increases the given size to the next alignment boundary, if it is not a
@@ -487,7 +554,7 @@ mod tests {
         impl MaybeDynSized for CustomSizedTag {
             type Header = DummyTestHeader;
 
-            const BASE_SIZE: usize = mem::size_of::<Self>();
+            const BASE_SIZE: usize = size_of::<Self>();
 
             fn dst_len(_header: &DummyTestHeader) -> Self::Metadata {}
         }
@@ -502,7 +569,7 @@ mod tests {
         let tag = DynSizedStructure::ref_from_slice(bytes.borrow()).unwrap();
         let custom_tag = tag.cast::<CustomSizedTag>();
 
-        assert_eq!(mem::size_of_val(custom_tag), 16);
+        assert_eq!(size_of_val(custom_tag), 16);
         assert_eq!(custom_tag.a, 0xdead_beef);
         assert_eq!(custom_tag.b, 0x1337_1337);
     }
@@ -529,5 +596,25 @@ mod tests {
         let tag = tag.cast::<DynSizedStructure<DummyTestHeader>>();
         assert_eq!(tag.header().typ(), 0x1337);
         assert_eq!(tag.header().size(), 18);
+    }
+
+    #[test]
+    fn test_ref_from_slice_rejects_oversized_header() {
+        #[rustfmt::skip]
+        let bytes = AlignedBytes::new(
+            [
+                0x37, 0x13, 0, 0,
+                /* Tag size */
+                24, 0, 0, 0,
+                /* Only 8 bytes payload plus padding are available. */
+                0, 1, 2, 3,
+                4, 5, 6, 7,
+            ],
+        );
+
+        assert_eq!(
+            DynSizedStructure::<DummyTestHeader>::ref_from_slice(bytes.borrow()),
+            Err(MemoryError::InvalidReportedTotalSize(24, 16))
+        );
     }
 }

@@ -1,7 +1,6 @@
 //! Module for [`EndTag`].
 
 use crate::{TagHeader, TagType};
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// The end tag ends the information struct.
@@ -14,7 +13,7 @@ pub struct EndTag {
 impl Default for EndTag {
     fn default() -> Self {
         Self {
-            header: TagHeader::new(Self::ID, mem::size_of::<Self>() as u32),
+            header: TagHeader::new(Self::ID, size_of::<Self>() as u32),
         }
     }
 }
@@ -22,7 +21,7 @@ impl Default for EndTag {
 impl MaybeDynSized for EndTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<Self>();
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_: &TagHeader) {}
 }
@@ -36,12 +35,13 @@ impl Tag for EndTag {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::mem::transmute;
 
     #[test]
     /// Compile time test for [`EndTag`].
     fn test_end_tag_size() {
         unsafe {
-            core::mem::transmute::<[u8; 8], EndTag>([0u8; 8]);
+            transmute::<[u8; 8], EndTag>([0u8; 8]);
         }
     }
 }

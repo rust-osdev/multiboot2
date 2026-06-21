@@ -1,7 +1,6 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// Specifies the physical address to which the boot loader should jump in
@@ -61,7 +60,7 @@ impl Debug for EntryAddressHeaderTag {
 impl MaybeDynSized for EntryAddressHeaderTag {
     type Header = HeaderTagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<HeaderTagHeader>() + mem::size_of::<u32>();
+    const BASE_SIZE: usize = size_of::<HeaderTagHeader>() + size_of::<u32>();
 
     fn dst_len(_header: &Self::Header) -> Self::Metadata {}
 }

@@ -1,7 +1,6 @@
 //! Module for [`NetworkTag`].
 
 use crate::{TagHeader, TagType, TagTypeId};
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 use ptr_meta::Pointee;
 #[cfg(feature = "builder")]
@@ -29,7 +28,7 @@ impl NetworkTag {
 impl MaybeDynSized for NetworkTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<TagHeader>();
+    const BASE_SIZE: usize = size_of::<TagHeader>();
 
     fn dst_len(header: &TagHeader) -> usize {
         header.size as usize - Self::BASE_SIZE

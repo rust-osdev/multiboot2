@@ -3,7 +3,6 @@
 use crate::TagType;
 use crate::tag::TagHeader;
 use core::fmt::Debug;
-use core::mem;
 use core::slice;
 use multiboot2_common::{MaybeDynSized, Tag};
 use thiserror::Error;
@@ -182,7 +181,12 @@ impl FramebufferTag {
 
                 let palette = {
                     // Ensure the slice can be created without causing UB
-                    assert_eq!(mem::size_of::<FramebufferColor>(), 3);
+                    assert_eq!(size_of::<FramebufferColor>(), 3);
+                    let palette_len = num_colors as usize * size_of::<FramebufferColor>();
+                    assert!(
+                        self.buffer.len() - reader.off >= palette_len,
+                        "indexed framebuffer palette must fit in the tag"
+                    );
 
                     unsafe {
                         slice::from_raw_parts(
@@ -223,11 +227,11 @@ impl FramebufferTag {
 impl MaybeDynSized for FramebufferTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<TagHeader>()
-        + mem::size_of::<u64>()
-        + 3 * mem::size_of::<u32>()
-        + 2 * mem::size_of::<u8>()
-        + mem::size_of::<u16>();
+    const BASE_SIZE: usize = size_of::<TagHeader>()
+        + size_of::<u64>()
+        + 3 * size_of::<u32>()
+        + 2 * size_of::<u8>()
+        + size_of::<u16>();
 
     fn dst_len(header: &TagHeader) -> usize {
         assert!(header.size as usize >= Self::BASE_SIZE);
@@ -408,11 +412,14 @@ pub struct UnknownFramebufferType(u8);
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::GenericInfoTag;
+    use core::borrow::Borrow;
+    use multiboot2_common::test_utils::AlignedBytes;
 
     // Compile time test
     #[test]
     fn test_size() {
-        assert_eq!(mem::size_of::<FramebufferColor>(), 3)
+        assert_eq!(size_of::<FramebufferColor>(), 3)
     }
 
     #[test]
@@ -469,5 +476,36 @@ mod tests {
         );
         // Good test for Miri
         dbg!(tag);
+    }
+
+    #[test]
+    #[should_panic(expected = "indexed framebuffer palette must fit in the tag")]
+    fn indexed_palette_must_fit_in_tag() {
+        #[rustfmt::skip]
+        let bytes = AlignedBytes::new([
+            /* typ = framebuffer */
+            8, 0, 0, 0,
+            /* size = base size + num_colors + one palette entry */
+            37, 0, 0, 0,
+            /* address */
+            0, 0, 0, 0, 0, 0, 0, 0,
+            /* pitch, width, height */
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            /* bpp, type = indexed, padding */
+            0, 0, 0, 0,
+            /* num_colors = 2 */
+            2, 0,
+            /* only one 3-byte palette entry follows */
+            1, 2, 3,
+            /* padding */
+            0, 0, 0,
+        ]);
+        let tag = GenericInfoTag::ref_from_slice(bytes.borrow())
+            .unwrap()
+            .cast::<FramebufferTag>();
+
+        let _ = tag.buffer_type();
     }
 }

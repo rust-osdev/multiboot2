@@ -1,5 +1,4 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// Specifies the preferred graphics mode. If this tag
@@ -69,7 +68,7 @@ impl FramebufferHeaderTag {
 impl MaybeDynSized for FramebufferHeaderTag {
     type Header = HeaderTagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<HeaderTagHeader>() + 3 * mem::size_of::<u32>();
+    const BASE_SIZE: usize = size_of::<HeaderTagHeader>() + 3 * size_of::<u32>();
 
     fn dst_len(_header: &Self::Header) -> Self::Metadata {}
 }

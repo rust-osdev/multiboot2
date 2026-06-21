@@ -10,9 +10,10 @@ use crate::{
     TagIter, TagType, VBEInfoTag, module,
 };
 use core::fmt;
-use core::mem;
 use core::ptr::NonNull;
-use multiboot2_common::{DynSizedStructure, Header, MaybeDynSized, MemoryError, Tag};
+use multiboot2_common::{
+    DynSizedStructure, Header, MaybeDynSized, MemoryError, Tag, validate_tag_sequence,
+};
 use thiserror::Error;
 
 /// Errors that occur when a chunk of memory can't be parsed as
@@ -56,7 +57,8 @@ impl BootInformationHeader {
 
 impl Header for BootInformationHeader {
     fn payload_len(&self) -> usize {
-        self.total_size as usize - mem::size_of::<Self>()
+        assert!(self.total_size as usize >= size_of::<Self>());
+        self.total_size as usize - size_of::<Self>()
     }
 
     fn set_size(&mut self, total_size: usize) {
@@ -66,11 +68,19 @@ impl Header for BootInformationHeader {
 
 /// A Multiboot 2 Boot Information (MBI) accessor.
 #[repr(transparent)]
+#[derive(PartialEq, Eq)]
 pub struct BootInformation<'a>(&'a DynSizedStructure<BootInformationHeader>);
 
 impl<'a> BootInformation<'a> {
-    /// Loads the [`BootInformation`] from a pointer. The pointer must be valid
-    /// and aligned to an 8-byte boundary, as defined by the spec.
+    /// Loads the [`BootInformation`] from a pointer.
+    ///
+    /// If the boot information is invalid, it returns a [`LoadError`].
+    /// This may be because:
+    /// - `ptr` is a null pointer
+    /// - `ptr` is not 8-byte aligned
+    /// - the reported total size is invalid
+    /// - the tag sequence is incomplete or malformed
+    /// - the mandatory end tag is missing
     ///
     /// ## Example
     ///
@@ -85,11 +95,11 @@ impl<'a> BootInformation<'a> {
     /// }
     /// ```
     ///
-    /// ## Safety
-    /// * `ptr` must be valid for reading. Otherwise, this function might cause
-    ///   invalid machine state or crash your binary (kernel). This can be the
-    ///   case in environments with standard environment (segfault), but also in
-    ///   boot environments, such as UEFI.
+    /// # Safety
+    ///
+    /// * `ptr` must be valid for reading the complete reported boot
+    ///   information size. Otherwise, this function might cause invalid machine
+    ///   state or crash your binary.
     /// * The memory at `ptr` must not be modified after calling `load` or the
     ///   program may observe unsynchronized mutation.
     pub unsafe fn load(ptr: *const BootInformationHeader) -> Result<Self, LoadError> {
@@ -97,27 +107,20 @@ impl<'a> BootInformation<'a> {
         let inner = unsafe { DynSizedStructure::ref_from_ptr(ptr).map_err(LoadError::Memory)? };
 
         let this = Self(inner);
-        if !this.has_valid_end_tag() {
+        if !this.has_valid_tag_sequence().map_err(LoadError::Memory)? {
             return Err(LoadError::NoEndTag);
         }
         Ok(this)
     }
 
-    /// Checks if the MBI has a valid end tag by checking the end of the mbi's
-    /// bytes.
-    fn has_valid_end_tag(&self) -> bool {
-        let header = self.0.header();
-        let end_tag_ptr = unsafe {
-            self.0
-                .payload()
-                .as_ptr()
-                .add(header.payload_len())
-                .sub(mem::size_of::<EndTag>())
-                .cast::<TagHeader>()
-        };
-        let end_tag = unsafe { &*end_tag_ptr };
+    /// Checks if the MBI has a valid, complete tag sequence.
+    fn has_valid_tag_sequence(&self) -> Result<bool, MemoryError> {
+        validate_tag_sequence(self.0.payload(), |tag| {
+            let typ = u32::from_ne_bytes(tag[0..4].try_into().unwrap());
+            let size = u32::from_ne_bytes(tag[4..8].try_into().unwrap()) as usize;
 
-        end_tag.typ == EndTag::ID && end_tag.size as usize == mem::size_of::<EndTag>()
+            typ == TagType::End.val() && size == size_of::<EndTag>()
+        })
     }
 
     /// Get the start address of the boot info.
@@ -370,7 +373,7 @@ impl<'a> BootInformation<'a> {
     /// // Give the library hints how big this tag is.
     /// impl MaybeDynSized for CustomTag {
     ///     type Header = TagHeader;
-    ///     const BASE_SIZE: usize = mem::size_of::<TagHeader>() + mem::size_of::<u32>();
+    ///     const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
     ///
     ///     // This differs for DSTs and normal structs. See function
     ///     // documentation.

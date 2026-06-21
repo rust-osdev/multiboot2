@@ -2,8 +2,6 @@
 
 use crate::TagType;
 use crate::tag::TagHeader;
-#[cfg(feature = "builder")]
-use core::mem::size_of;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// The physical load address tag. Typically, this is only available if the

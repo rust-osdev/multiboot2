@@ -149,11 +149,12 @@ impl TagType {
 /// and [´TagType´].
 mod primitive_conversion_impls {
     use super::*;
+    use core::mem::transmute;
 
     impl From<u32> for TagTypeId {
         fn from(value: u32) -> Self {
             // SAFETY: the type has repr(transparent)
-            unsafe { core::mem::transmute(value) }
+            unsafe { transmute(value) }
         }
     }
 
@@ -294,7 +295,6 @@ mod partial_eq_impls {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::mem::{align_of, size_of};
 
     #[test]
     fn test_hashset() {

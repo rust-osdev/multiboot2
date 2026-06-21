@@ -1,5 +1,4 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
-use core::mem;
 use multiboot2_common::{MaybeDynSized, Tag};
 
 /// This tag indicates that payload supports starting without terminating UEFI boot services.
@@ -14,8 +13,7 @@ impl EfiBootServiceHeaderTag {
     /// Constructs a new tag.
     #[must_use]
     pub const fn new(flags: HeaderTagFlag) -> Self {
-        let header =
-            HeaderTagHeader::new(HeaderTagType::EfiBS, flags, mem::size_of::<Self>() as u32);
+        let header = HeaderTagHeader::new(HeaderTagType::EfiBS, flags, size_of::<Self>() as u32);
         Self { header }
     }
 
@@ -41,7 +39,7 @@ impl EfiBootServiceHeaderTag {
 impl MaybeDynSized for EfiBootServiceHeaderTag {
     type Header = HeaderTagHeader;
 
-    const BASE_SIZE: usize = mem::size_of::<Self>();
+    const BASE_SIZE: usize = size_of::<Self>();
 
     fn dst_len(_header: &Self::Header) -> Self::Metadata {}
 }
@@ -57,6 +55,6 @@ mod tests {
 
     #[test]
     fn test_assert_size() {
-        assert_eq!(core::mem::size_of::<EfiBootServiceHeaderTag>(), 2 + 2 + 4);
+        assert_eq!(size_of::<EfiBootServiceHeaderTag>(), 2 + 2 + 4);
     }
 }

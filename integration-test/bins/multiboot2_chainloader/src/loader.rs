@@ -20,11 +20,8 @@ pub fn load_module(mut modules: multiboot::information::ModuleIter) -> ! {
 
     // Check if a header is present.
     {
-        let hdr = multiboot2_header::Multiboot2Header::find_header(elf_bytes)
-            .unwrap()
+        let (hdr, _) = multiboot2_header::Multiboot2Header::find_header(elf_bytes)
             .expect("Should have Multiboot2 header");
-        let hdr =
-            unsafe { multiboot2_header::Multiboot2Header::load(hdr.0.as_ptr().cast()) }.unwrap();
         log::info!("Multiboot2 header:\n{hdr:#?}");
     }
 
@@ -91,9 +88,6 @@ fn map_memory(ph: ProgramHeaderEntry) {
     let dest_ptr = unsafe { dest_ptr.add(ph.filesz() as usize) };
 
     // Zero .bss memory
-    for _ in 0..(ph.memsz() - ph.filesz()) {
-        unsafe {
-            core::ptr::write(dest_ptr, 0);
-        }
-    }
+    assert!(ph.memsz() >= ph.filesz());
+    unsafe { core::ptr::write_bytes(dest_ptr, 0, (ph.memsz() - ph.filesz()) as usize) };
 }
