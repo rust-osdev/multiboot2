@@ -49,7 +49,7 @@ impl SmbiosTag {
 
 impl MaybeDynSized for SmbiosTag {
     type Header = TagHeader;
-
+    #[expect(clippy::manual_bits)] // false positive
     const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u8>() * 8;
 
     fn dst_len(header: &TagHeader) -> usize {
