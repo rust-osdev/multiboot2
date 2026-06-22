@@ -58,6 +58,8 @@ pub trait MaybeDynSized: Pointee {
     /// Returns the corresponding [`Header`].
     fn header(&self) -> &Self::Header {
         let ptr = core::ptr::addr_of!(*self);
+        // SAFETY: `self` is a valid reference and `Self::Header` is the
+        // prefix of this `repr(C)` structure at the same address.
         unsafe { &*ptr.cast::<Self::Header>() }
     }
 
@@ -75,6 +77,8 @@ pub trait MaybeDynSized: Pointee {
         let ptr = core::ptr::addr_of!(*self);
         // Actual tag size with optional terminating padding.
         let size = size_of_val(self);
+        // SAFETY: `ptr` points to `self`'s allocation and `size_of_val(self)`
+        // covers the initialized object representation, including padding.
         let slice = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), size) };
         // Unwrap is fine as this type can't exist without the underlying memory
         // guarantees.

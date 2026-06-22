@@ -52,7 +52,7 @@ impl<'a> Reader<'a> {
     }
 
     const fn current_ptr(&self) -> *const u8 {
-        unsafe { self.buffer.as_ptr().add(self.off) }
+        self.buffer.as_ptr().wrapping_add(self.off)
     }
 }
 
@@ -187,7 +187,7 @@ impl FramebufferTag {
                         self.buffer.len() - reader.off >= palette_len,
                         "indexed framebuffer palette must fit in the tag"
                     );
-
+                    // SAFETY: The memory we are using is valid.
                     unsafe {
                         slice::from_raw_parts(
                             reader.current_ptr().cast::<FramebufferColor>(),

@@ -31,6 +31,7 @@
     clippy::all,
     clippy::cargo,
     clippy::nursery,
+    clippy::undocumented_unsafe_blocks,
     clippy::must_use_candidate,
     // clippy::restriction,
     // clippy::pedantic

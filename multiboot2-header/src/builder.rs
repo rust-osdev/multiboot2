@@ -215,6 +215,8 @@ mod tests {
             ));
 
         let structure = builder.build();
+        // SAFETY: The builder emits a fully formed, aligned header
+        // buffer with a valid end tag.
         let header =
             unsafe { Multiboot2Header::load(structure.as_bytes().as_ref().as_ptr().cast()) }
                 .unwrap();

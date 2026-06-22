@@ -60,7 +60,14 @@ impl<'a, H: Header + 'a> Iterator for TagIter<'a, H> {
         }
         assert!(self.next_tag_offset < self.buffer.len());
 
-        let ptr = unsafe { self.buffer.as_ptr().add(self.next_tag_offset) }.cast::<H>();
+        let ptr = self
+            .buffer
+            .as_ptr()
+            .wrapping_add(self.next_tag_offset)
+            .cast::<H>();
+        // SAFETY: `new()` requires a validated, aligned tag chain and the
+        // current offset is checked to stay within the buffer before this
+        // dereference.
         let tag_hdr = unsafe { &*ptr };
 
         // Get relevant byte portion for the next tag. This includes padding

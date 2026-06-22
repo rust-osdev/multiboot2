@@ -372,6 +372,8 @@ mod tests {
 
         let structure = builder.build();
 
+        // SAFETY: The builder constructs a complete, aligned MBI with
+        // a valid end tag.
         let info = unsafe { BootInformation::load(structure.as_bytes().as_ptr().cast()) }.unwrap();
         for tag in info.tags() {
             // Mainly a test for Miri.

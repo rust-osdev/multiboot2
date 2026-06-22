@@ -4,6 +4,7 @@
     clippy::all,
     clippy::cargo,
     clippy::nursery,
+    clippy::undocumented_unsafe_blocks,
     clippy::must_use_candidate,
     // clippy::restriction,
     // clippy::pedantic
@@ -145,6 +146,8 @@ mod tests {
             8, 0, 0, 0, // end tag size
         ]);
         let ptr = bytes.0.as_ptr();
+        // SAFETY: The buffer is aligned and contains a complete
+        // synthetic MBI with a valid end tag.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
 
@@ -162,6 +165,8 @@ mod tests {
         ]);
         let ptr = bytes.0.as_ptr();
         let addr = ptr as usize;
+        // SAFETY: The buffer is aligned and contains a complete
+        // synthetic MBI with a valid end tag.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
@@ -183,6 +188,8 @@ mod tests {
             8, 0, 0, // end tag size
         ]);
         let ptr = bytes.0.as_ptr();
+        // SAFETY: The buffer is aligned; the invalidity is in its
+        // contents.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
 
         assert_eq!(bi, Err(LoadError::Memory(MemoryError::MissingPadding)));
@@ -197,6 +204,8 @@ mod tests {
             9, 0, 0, 0, // end tag size
         ]);
         let ptr = bytes.0.as_ptr();
+        // SAFETY: The buffer is aligned; the invalidity is in its
+        // contents.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
 
         assert_eq!(
@@ -218,6 +227,8 @@ mod tests {
             0, 0, 0, 0, // tag data
         ]);
         let ptr = bytes.0.as_ptr();
+        // SAFETY: The buffer is aligned; the invalidity is in its
+        // contents.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
 
         assert_eq!(
@@ -242,6 +253,8 @@ mod tests {
         ]);
         let ptr = bytes.0.as_ptr();
         let addr = ptr as usize;
+        // SAFETY: The buffer is aligned and contains a complete
+        // synthetic MBI with a valid end tag.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
@@ -283,6 +296,8 @@ mod tests {
         ]);
         let ptr = bytes.0.as_ptr();
         let addr = ptr as usize;
+        // SAFETY: The buffer is aligned and contains a valid synthetic
+        // MBI.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
@@ -347,6 +362,8 @@ mod tests {
         ]);
         let ptr = bytes.0.as_ptr();
         let addr = ptr as usize;
+        // SAFETY: The buffer is aligned and contains a valid synthetic
+        // MBI.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
@@ -462,6 +479,8 @@ mod tests {
 
         let ptr = bytes.0.as_ptr();
         let addr = ptr as usize;
+        // SAFETY: The buffer is aligned and contains a valid synthetic
+        // MBI.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
@@ -553,6 +572,7 @@ mod tests {
     #[test]
     /// Compile time test for [`VBEInfoTag`].
     fn vbe_info_tag_size() {
+        // SAFETY: The test only checks the fixed-size ABI layout.
         unsafe {
             // 16 for the start + 512 from `VBEControlInfo` + 256 from `VBEModeInfo`.
             transmute::<[u8; 784], VBEInfoTag>([0u8; 784]);
@@ -819,6 +839,8 @@ mod tests {
         }
         let ptr = bytes.0.as_ptr();
         let addr = ptr as usize;
+        // SAFETY: The buffer is aligned and contains a complete
+        // synthetic MBI with a valid end tag.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         test_grub2_boot_info(&bi, addr, string_addr, &bytes.0, &string_bytes.0);
@@ -1074,6 +1096,8 @@ mod tests {
         }
         let ptr = bytes.0.as_ptr();
         let addr = ptr as usize;
+        // SAFETY: The buffer is aligned and contains a complete
+        // synthetic MBI with a valid end tag.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
 
@@ -1144,6 +1168,8 @@ mod tests {
         ]);
         let ptr = bytes.0.as_ptr();
         let addr = ptr as usize;
+        // SAFETY: The buffer is aligned and contains a complete
+        // synthetic MBI with a valid end tag.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
@@ -1177,6 +1203,8 @@ mod tests {
             0, 0, 0, 0, // end tag type.
             8, 0, 0, 0, // end tag size.
         ]);
+        // SAFETY: The buffer is aligned and contains a complete
+        // synthetic MBI with a valid end tag.
         let bi = unsafe { BootInformation::load(bytes2.as_ptr().cast()) };
         let bi = bi.unwrap();
         let efi_mmap = bi.efi_memory_map_tag();
@@ -1249,6 +1277,8 @@ mod tests {
         ]);
         let ptr = bytes.0.as_ptr();
         let addr = ptr as usize;
+        // SAFETY: The buffer is aligned and contains a complete
+        // synthetic MBI with a valid end tag.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
@@ -1332,6 +1362,8 @@ mod tests {
         ]);
         let ptr = bytes.0.as_ptr();
         let addr = ptr as usize;
+        // SAFETY: The buffer is aligned and contains a complete
+        // synthetic MBI with a valid end tag.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
         assert_eq!(addr, bi.start_address());
@@ -1381,6 +1413,8 @@ mod tests {
         ]);
 
         let ptr = bytes.0.as_ptr();
+        // SAFETY: The buffer is aligned and contains a valid synthetic
+        // MBI.
         let bi = unsafe { BootInformation::load(ptr.cast()) };
         let bi = bi.unwrap();
 

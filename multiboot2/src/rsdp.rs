@@ -62,6 +62,7 @@ impl RsdpV1Tag {
     /// Validation of the RSDPv1 checksum
     #[must_use]
     pub fn checksum_is_valid(&self) -> bool {
+        // SAFETY: The memory we are using is valid.
         let bytes =
             unsafe { slice::from_raw_parts(self as *const _ as *const u8, RSDPV1_LENGTH + 8) };
         bytes[8..]
@@ -159,6 +160,7 @@ impl RsdpV2Tag {
     /// Validation of the RSDPv2 extended checksum
     #[must_use]
     pub fn checksum_is_valid(&self) -> bool {
+        // SAFETY: The memory we are using is valid.
         let bytes = unsafe {
             slice::from_raw_parts(self as *const _ as *const u8, self.length as usize + 8)
         };

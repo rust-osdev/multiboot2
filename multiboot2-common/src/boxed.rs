@@ -37,6 +37,7 @@ pub fn new_boxed<T: MaybeDynSized<Metadata = usize> + ?Sized>(
     // See <https://doc.rust-lang.org/reference/type-layout.html>
     let alloc_size = increase_to_alignment(tag_size);
     let layout = Layout::from_size_align(alloc_size, ALIGNMENT).unwrap();
+    // SAFETY: `layout` matches the requested allocation size and alignment.
     let heap_ptr = unsafe { alloc::alloc::alloc(layout) };
     assert!(!heap_ptr.is_null());
 
@@ -44,6 +45,8 @@ pub fn new_boxed<T: MaybeDynSized<Metadata = usize> + ?Sized>(
     {
         let len = size_of::<T::Header>();
         let ptr = core::ptr::addr_of!(header);
+        // SAFETY: `header` is a fully initialized stack value and `heap_ptr`
+        // points into the freshly allocated destination buffer.
         unsafe {
             ptr::copy_nonoverlapping(ptr.cast::<u8>(), heap_ptr, len);
         }
@@ -55,16 +58,21 @@ pub fn new_boxed<T: MaybeDynSized<Metadata = usize> + ?Sized>(
         for &bytes in additional_bytes_slices {
             let len = bytes.len();
             let src = bytes.as_ptr();
+            let dst = heap_ptr.wrapping_add(write_offset);
+            // SAFETY: `src` is a valid slice and `dst` stays inside the
+            // allocated object without overlapping `src`.
             unsafe {
-                let dst = heap_ptr.add(write_offset);
                 ptr::copy_nonoverlapping(src, dst, len);
-                write_offset += len;
             }
+            write_offset += len;
         }
     }
 
     // This is a fat pointer for DSTs and a thin pointer for sized `T`s.
+    // SAFETY: The allocation was sized for `T` and all bytes up to the
+    // reported dynamic length were initialized above.
     let ptr: *mut T = ptr_meta::from_raw_parts_mut(heap_ptr.cast(), T::dst_len(&header));
+    // SAFETY: `ptr` points to the initialized allocation described above.
     let reference = unsafe { Box::from_raw(ptr) };
 
     // If this panic triggers, there is a fundamental flaw in my logic. This is

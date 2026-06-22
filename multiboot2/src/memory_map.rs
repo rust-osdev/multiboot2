@@ -43,6 +43,8 @@ impl MemoryMapTag {
         let areas = {
             let ptr = areas.as_ptr().cast::<u8>();
             let len = size_of_val(areas);
+            // SAFETY: `areas` is a live slice; we only reinterpret its
+            // initialized bytes.
             unsafe { slice::from_raw_parts(ptr, len) }
         };
         new_boxed(header, &[&entry_size, &entry_version, areas])
@@ -334,6 +336,8 @@ impl EFIMemoryMapTag {
         let efi_mmap = {
             let ptr = descs.as_ptr().cast::<u8>();
             let len = size_of_val(descs);
+            // SAFETY: `descs` is a live slice; we only reinterpret its
+            // initialized bytes.
             unsafe { slice::from_raw_parts(ptr, len) }
         };
 
@@ -451,14 +455,16 @@ impl<'a> Iterator for EFIMemoryAreaIter<'a> {
             return None;
         }
 
-        let desc = unsafe {
-            self.mmap_tag
+        let desc = {
+            let ptr = self
+                .mmap_tag
                 .memory_map
                 .as_ptr()
-                .add(self.i * self.mmap_tag.desc_size as usize)
-                .cast::<EFIMemoryDesc>()
-                .as_ref()
-                .unwrap()
+                .wrapping_add(self.i * self.mmap_tag.desc_size as usize)
+                .cast::<EFIMemoryDesc>();
+            // SAFETY: The enclosing tag bounds the iterator, and `ptr`
+            // points into it.
+            unsafe { ptr.as_ref().unwrap() }
         };
 
         self.i += 1;
@@ -560,8 +566,10 @@ mod tests {
             10, 8433664, 0, 1, 15, 0, 7, 8437760, 0, 4, 15, 0, 10, 8454144, 0, 240, 15, 0,
         ];
         let buf = MMAP_RAW;
+        // SAFETY: `buf` is a plain array; we only reinterpret its
+        // initialized bytes.
         let buf = unsafe {
-            core::slice::from_raw_parts(buf.as_ptr().cast::<u8>(), buf.len() * size_of::<u64>())
+            slice::from_raw_parts(buf.as_ptr().cast::<u8>(), buf.len() * size_of::<u64>())
         };
         let tag = EFIMemoryMapTag::new_from_map(DESC_SIZE, DESC_VERSION, buf);
         let entries = tag.memory_areas().copied().collect::<alloc::vec::Vec<_>>();

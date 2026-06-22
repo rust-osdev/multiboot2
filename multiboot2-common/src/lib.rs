@@ -63,7 +63,7 @@
 //! indicates the total size of the structure. This is roughly translated to the
 //! following rusty base type:
 //!
-//! ```ignore
+//! ```rust,ignore
 //! #[repr(C, align(8))]
 //! struct DynStructure {
 //!     header: MyHeader,
@@ -91,7 +91,7 @@
 //!
 //! Note that we also have structures (tags) in Multiboot2 that looks like this:
 //!
-//! ```ignore
+//! ```rust,ignore
 //! #[repr(C, align(8))]
 //! struct DynStructure {
 //!     header: MyHeader,
@@ -102,7 +102,7 @@
 //!
 //! or
 //!
-//! ```ignore
+//! ```rust,ignore
 //! #[repr(C, align(8))]
 //! struct CommandLineTag {
 //!     header: TagHeader,
@@ -224,8 +224,9 @@
 #![deny(
     clippy::all,
     clippy::cargo,
-    clippy::must_use_candidate,
     clippy::nursery,
+    clippy::must_use_candidate,
+    clippy::undocumented_unsafe_blocks,
     missing_debug_implementations,
     missing_docs,
     rustdoc::all
@@ -333,6 +334,8 @@ impl<H: Header> DynSizedStructure<H> {
     /// from the given [`BytesRef`].
     pub fn ref_from_bytes(bytes: BytesRef<'_, H>) -> Result<&Self, MemoryError> {
         let ptr = bytes.as_ptr().cast::<H>();
+        // SAFETY: `BytesRef` guarantees alignment and that the buffer covers
+        // at least the fixed header size.
         let hdr = unsafe { &*ptr };
 
         let total_size = hdr.total_size();
@@ -355,6 +358,8 @@ impl<H: Header> DynSizedStructure<H> {
         let dst_size = payload_len;
         // Create fat pointer for the DST.
         let ptr = ptr_meta::from_raw_parts(ptr.cast(), dst_size);
+        // SAFETY: The allocation was sized from the validated reported total
+        // size, so the fat pointer refers to initialized memory.
         let reference = unsafe { &*ptr };
         Ok(reference)
     }
@@ -374,6 +379,8 @@ impl<H: Header> DynSizedStructure<H> {
     /// The caller must ensure that the function operates on valid memory.
     pub unsafe fn ref_from_ptr<'a>(ptr: NonNull<H>) -> Result<&'a Self, MemoryError> {
         let ptr = ptr.as_ptr().cast_const();
+        // SAFETY: `ptr` came from a valid pointer to the header; we only read
+        // the reported total size and immediately re-slice that range.
         let hdr = unsafe { &*ptr };
         let total_size = hdr.total_size();
         let header_size = size_of::<H>();
@@ -381,6 +388,8 @@ impl<H: Header> DynSizedStructure<H> {
             return Err(MemoryError::SizeInsufficient(total_size, header_size));
         }
 
+        // SAFETY: `total_size` came from the validated header and matches the
+        // readable byte range for the structure.
         let slice = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), total_size) };
         Self::ref_from_slice(slice)
     }
@@ -431,6 +440,8 @@ impl<H: Header> DynSizedStructure<H> {
         let t_dst_size = T::dst_len(self.header());
         // Creates thin or fat pointer, depending on type.
         let t_ptr = ptr_meta::from_raw_parts(base_ptr.cast(), t_dst_size);
+        // SAFETY: `self` is a valid reference and the cast keeps the same
+        // allocation; `T::dst_len` determines the matching tail length.
         let t_ref = unsafe { &*t_ptr };
 
         assert_eq!(size_of_val(self), size_of_val(t_ref));
