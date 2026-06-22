@@ -115,8 +115,8 @@ impl<'a> BootInformation<'a> {
     /// Checks if the MBI has a valid, complete tag sequence.
     fn has_valid_tag_sequence(&self) -> Result<bool, MemoryError> {
         validate_tag_sequence(self.0.payload(), |tag| {
-            let typ = u32::from_ne_bytes(tag[0..4].try_into().unwrap());
-            let size = u32::from_ne_bytes(tag[4..8].try_into().unwrap()) as usize;
+            let typ = u32::from_le_bytes(tag[0..4].try_into().unwrap());
+            let size = u32::from_le_bytes(tag[4..8].try_into().unwrap()) as usize;
 
             typ == TagType::End.val() && size == size_of::<EndTag>()
         })
@@ -417,7 +417,8 @@ impl<'a> BootInformation<'a> {
     /// tag getters as normal bootloaders provide most tags only once.
     #[must_use]
     pub fn tags(&self) -> TagIter<'_> {
-        TagIter::new(self.0.payload())
+        // SAFETY: We validated the chain of tags beforehand.
+        unsafe { TagIter::new(self.0.payload()) }
     }
 }
 

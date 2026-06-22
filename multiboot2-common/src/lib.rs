@@ -470,7 +470,7 @@ pub fn validate_tag_sequence(
 
         let tag = &bytes[offset..];
         let total_size =
-            u32::from_ne_bytes(tag[4..8].try_into().expect("slice has exactly 4 bytes")) as usize;
+            u32::from_le_bytes(tag[4..8].try_into().expect("slice has exactly 4 bytes")) as usize;
 
         if total_size < TAG_HEADER_SIZE {
             return Err(MemoryError::SizeInsufficient(total_size, TAG_HEADER_SIZE));

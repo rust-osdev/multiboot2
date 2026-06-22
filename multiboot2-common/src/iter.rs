@@ -31,10 +31,15 @@ pub struct TagIter<'a, H: Header> {
 
 impl<'a, H: Header> TagIter<'a, H> {
     /// Creates a new iterator.
+    ///
+    /// # Safety
+    ///
+    /// Callers must ensure that the whole chain of tags (with their reported
+    /// sizes) is valid and fits within the memory slice.
     #[must_use]
     // TODO we could take a BytesRef here, but the surrounding code should be
     //  bullet-proof enough.
-    pub fn new(mem: &'a [u8]) -> Self {
+    pub unsafe fn new(mem: &'a [u8]) -> Self {
         // Assert alignment.
         assert_eq!(mem.as_ptr().align_offset(ALIGNMENT), 0);
 
@@ -78,6 +83,7 @@ impl<'a, H: Header + 'a> Iterator for TagIter<'a, H> {
         };
 
         // unwrap: We should not fail at this point.
+        // In any ::load() before, we already validated the whole chain of tags.
         let tag = DynSizedStructure::ref_from_slice(slice).unwrap();
         Some(tag)
     }
@@ -108,7 +114,8 @@ mod tests {
                 8, 0, 0, 0,
             ],
         );
-        let mut iter = TagIter::<DummyTestHeader>::new(bytes.borrow());
+        // SAFETY: Chain of tags is valid.
+        let mut iter = unsafe { TagIter::<DummyTestHeader>::new(bytes.borrow()) };
         let first = iter.next().unwrap();
         assert_eq!(first.header().typ(), 0xff);
         assert_eq!(first.header().size(), 8);

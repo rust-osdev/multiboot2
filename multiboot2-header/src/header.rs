@@ -69,9 +69,9 @@ impl<'a> Multiboot2Header<'a> {
     /// Checks whether the header has a valid, complete tag sequence.
     fn has_valid_tag_sequence(&self) -> Result<bool, MemoryError> {
         validate_tag_sequence(self.0.payload(), |tag| {
-            let typ = u16::from_ne_bytes(tag[0..2].try_into().unwrap());
-            let flags = u16::from_ne_bytes(tag[2..4].try_into().unwrap());
-            let size = u32::from_ne_bytes(tag[4..8].try_into().unwrap()) as usize;
+            let typ = u16::from_le_bytes(tag[0..2].try_into().unwrap());
+            let flags = u16::from_le_bytes(tag[2..4].try_into().unwrap());
+            let size = u32::from_le_bytes(tag[4..8].try_into().unwrap()) as usize;
 
             typ == HeaderTagType::End as u16
                 && flags == crate::HeaderTagFlag::Required as u16
@@ -170,7 +170,8 @@ impl<'a> Multiboot2Header<'a> {
     /// Returns a [`TagIter`].
     #[must_use]
     pub fn iter(&self) -> TagIter<'_> {
-        TagIter::new(self.0.payload())
+        // SAFETY: We validated the chain of tags beforehand.
+        unsafe { TagIter::new(self.0.payload()) }
     }
 
     /// Wrapper around [`Multiboot2BasicHeader::verify_checksum`].

@@ -71,12 +71,12 @@ pub enum HeaderTagFlag {
 /// The common header that all header tags share. Specific tags may have
 /// additional fields that depend on the `typ` and the `size` field.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct HeaderTagHeader {
     typ: HeaderTagType,   /* u16 */
     flags: HeaderTagFlag, /* u16 */
     size: u32,
-    // Followed by optional additional tag specific fields.
+    // Followed by optional additional tag-specific fields.
 }
 
 impl HeaderTagHeader {
