@@ -97,6 +97,6 @@ impl<H: Header> MaybeDynSized for DynSizedStructure<H> {
     const BASE_SIZE: usize = size_of::<H>();
 
     fn dst_len(header: &Self::Header) -> Self::Metadata {
-        header.payload_len()
+        header.total_size() - size_of::<H>()
     }
 }

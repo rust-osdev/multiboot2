@@ -33,9 +33,8 @@ impl TagHeader {
 }
 
 impl Header for TagHeader {
-    fn payload_len(&self) -> usize {
-        assert!(self.size as usize >= size_of::<Self>());
-        self.size as usize - size_of::<Self>()
+    fn total_size(&self) -> usize {
+        self.size as usize
     }
 
     fn set_size(&mut self, total_size: usize) {

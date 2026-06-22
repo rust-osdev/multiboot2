@@ -56,9 +56,8 @@ impl BootInformationHeader {
 }
 
 impl Header for BootInformationHeader {
-    fn payload_len(&self) -> usize {
-        assert!(self.total_size as usize >= size_of::<Self>());
-        self.total_size as usize - size_of::<Self>()
+    fn total_size(&self) -> usize {
+        self.total_size as usize
     }
 
     fn set_size(&mut self, total_size: usize) {

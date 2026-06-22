@@ -274,16 +274,18 @@ pub const ALIGNMENT: usize = 8;
 /// The alignment of implementors **must** be the compatible with the demands
 /// for the corresponding structure, which typically is [`ALIGNMENT`].
 pub trait Header: Clone + Sized + PartialEq + Eq + Debug {
+    /// Returns the total size of the structure in bytes, including the fixed
+    /// header and any dynamic payload.
+    #[must_use]
+    fn total_size(&self) -> usize;
+
     /// Returns the length of the payload, i.e., the bytes that are additional
     /// to the header. The value is measured in bytes.
     #[must_use]
-    fn payload_len(&self) -> usize;
-
-    /// Returns the total size of the struct, thus the size of the header itself
-    /// plus [`Header::payload_len`].
-    #[must_use]
-    fn total_size(&self) -> usize {
-        size_of::<Self>() + self.payload_len()
+    fn payload_len(&self) -> usize {
+        let total_size = self.total_size();
+        assert!(total_size >= size_of::<Self>());
+        total_size - size_of::<Self>()
     }
 
     /// Updates the header with the given `total_size`.
@@ -294,7 +296,7 @@ pub trait Header: Clone + Sized + PartialEq + Eq + Debug {
 /// and a dynamic amount of bytes without hidden implicit padding.
 ///
 /// This structures combines a [`Header`] with the logically owned data by
-/// that header according to the reported [`Header::payload_len`]. Instances
+/// that header according to the reported [`Header::total_size`]. Instances
 /// guarantees that the memory requirements promised in the crates description
 /// are respected.
 ///
@@ -333,14 +335,18 @@ impl<H: Header> DynSizedStructure<H> {
         let ptr = bytes.as_ptr().cast::<H>();
         let hdr = unsafe { &*ptr };
 
-        let payload_len = hdr.payload_len();
-        let total_size = size_of::<H>() + payload_len;
+        let total_size = hdr.total_size();
+        let header_size = size_of::<H>();
+        if total_size < header_size {
+            return Err(MemoryError::SizeInsufficient(total_size, header_size));
+        }
         if total_size > bytes.len() {
             return Err(MemoryError::InvalidReportedTotalSize(
                 total_size,
                 bytes.len(),
             ));
         }
+        let payload_len = total_size - header_size;
 
         // At this point we know that the memory slice fulfills the base
         // assumptions and requirements. Now, we safety can create the fat
@@ -369,8 +375,13 @@ impl<H: Header> DynSizedStructure<H> {
     pub unsafe fn ref_from_ptr<'a>(ptr: NonNull<H>) -> Result<&'a Self, MemoryError> {
         let ptr = ptr.as_ptr().cast_const();
         let hdr = unsafe { &*ptr };
+        let total_size = hdr.total_size();
+        let header_size = size_of::<H>();
+        if total_size < header_size {
+            return Err(MemoryError::SizeInsufficient(total_size, header_size));
+        }
 
-        let slice = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), hdr.total_size()) };
+        let slice = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), total_size) };
         Self::ref_from_slice(slice)
     }
 
@@ -615,6 +626,26 @@ mod tests {
         assert_eq!(
             DynSizedStructure::<DummyTestHeader>::ref_from_slice(bytes.borrow()),
             Err(MemoryError::InvalidReportedTotalSize(24, 16))
+        );
+    }
+
+    #[test]
+    fn test_ref_from_slice_rejects_too_small_reported_size() {
+        #[rustfmt::skip]
+        let bytes = AlignedBytes::new(
+            [
+                0x37, 0x13, 0, 0,
+                /* Tag size */
+                4, 0, 0, 0,
+                /* Remaining bytes are irrelevant. */
+                0, 1, 2, 3,
+                0, 0, 0, 0,
+            ],
+        );
+
+        assert_eq!(
+            DynSizedStructure::<DummyTestHeader>::ref_from_slice(bytes.borrow()),
+            Err(MemoryError::SizeInsufficient(4, 8))
         );
     }
 }

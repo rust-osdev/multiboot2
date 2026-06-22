@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Breaking:** `Header` now requires `total_size()` and derives
+  `payload_len()` from it.
 - Added validation for complete padded tag sequences.
 - Added size details to memory validation errors.
 - Fixed validation for dynamically sized structures whose reported total size

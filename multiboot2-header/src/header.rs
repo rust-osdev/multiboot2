@@ -393,9 +393,8 @@ impl Multiboot2BasicHeader {
 }
 
 impl Header for Multiboot2BasicHeader {
-    fn payload_len(&self) -> usize {
-        assert!(self.length as usize >= size_of::<Self>());
-        self.length as usize - size_of::<Self>()
+    fn total_size(&self) -> usize {
+        self.length as usize
     }
 
     fn set_size(&mut self, total_size: usize) {

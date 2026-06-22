@@ -63,7 +63,7 @@ impl<'a, H: Header + 'a> Iterator for TagIter<'a, H> {
         // See <https://doc.rust-lang.org/reference/type-layout.html>.
         let slice = {
             let from = self.next_tag_offset;
-            let len = size_of::<H>() + tag_hdr.payload_len();
+            let len = tag_hdr.total_size();
             let to = from + len;
 
             // The size of (the allocation for) a value is always a multiple of
