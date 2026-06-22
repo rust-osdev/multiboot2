@@ -354,8 +354,8 @@ mod tests {
             .efi64(EFISdt64Tag::new(0x1000))
             .add_smbios(SmbiosTag::new(0, 0, &[1, 2, 3]))
             .add_smbios(SmbiosTag::new(1, 1, &[4, 5, 6]))
-            .rsdpv1(RsdpV1Tag::new(0, *b"abcdef", 5, 6))
-            .rsdpv2(RsdpV2Tag::new(0, *b"abcdef", 5, 6, 5, 4, 7))
+            .rsdpv1(RsdpV1Tag::new(*b"abcdef", 5, 6))
+            .rsdpv2(RsdpV2Tag::new(*b"abcdef", 5, 6, 5, 4))
             .efi_mmap(EFIMemoryMapTag::new_from_descs(&[
                 MemoryDescriptor::default(),
                 MemoryDescriptor::default(),
