@@ -49,8 +49,6 @@ impl MaybeDynSized for EndHeaderTag {
     type Header = HeaderTagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
-
-    fn dst_len(_header: &Self::Header) -> Self::Metadata {}
 }
 
 impl Tag for EndHeaderTag {

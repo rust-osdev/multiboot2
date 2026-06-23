@@ -401,7 +401,10 @@ impl<'a> BootInformation<'a> {
     #[must_use]
     pub fn get_tag<T: Tag<IDType = TagType, Header = TagHeader> + ?Sized + 'a>(
         &'a self,
-    ) -> Option<&'a T> {
+    ) -> Option<&'a T>
+    where
+        T::Metadata: Default,
+    {
         self.tags()
             .find(|tag| tag.header().typ == T::ID)
             .map(|tag| tag.cast::<T>())

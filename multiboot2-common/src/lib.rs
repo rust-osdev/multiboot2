@@ -416,7 +416,10 @@ impl<H: Header> DynSizedStructure<H> {
     /// # Panics
     /// This panics if there is a size mismatch. However, this should never be
     /// the case if all types follow their documented requirements.
-    pub fn cast<T: MaybeDynSized<Header = H> + ?Sized>(&self) -> &T {
+    pub fn cast<T: MaybeDynSized<Header = H> + ?Sized>(&self) -> &T
+    where
+        T::Metadata: Default,
+    {
         // Thin or fat pointer, depending on type.
         // However, only thin ptr is needed.
         let base_ptr = ptr::addr_of!(*self);

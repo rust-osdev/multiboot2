@@ -41,8 +41,6 @@ impl MaybeDynSized for EFISdt32Tag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
-
-    fn dst_len(_: &TagHeader) {}
 }
 
 impl Tag for EFISdt32Tag {
@@ -80,8 +78,6 @@ impl MaybeDynSized for EFISdt64Tag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
-
-    fn dst_len(_: &TagHeader) {}
 }
 
 impl Tag for EFISdt64Tag {
@@ -122,8 +118,6 @@ impl MaybeDynSized for EFIImageHandle32Tag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
-
-    fn dst_len(_: &TagHeader) {}
 }
 
 impl Tag for EFIImageHandle32Tag {
@@ -162,8 +156,6 @@ impl MaybeDynSized for EFIImageHandle64Tag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
-
-    fn dst_len(_: &TagHeader) {}
 }
 
 impl Tag for EFIImageHandle64Tag {
@@ -200,8 +192,6 @@ impl MaybeDynSized for EFIBootServicesNotExitedTag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
-
-    fn dst_len(_: &TagHeader) {}
 }
 
 impl Tag for EFIBootServicesNotExitedTag {

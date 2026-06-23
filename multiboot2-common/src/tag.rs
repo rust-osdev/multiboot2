@@ -9,7 +9,10 @@ use ptr_meta::Pointee;
 /// [`DynSizedStructure::cast`].
 ///
 /// Structs that are a DST must provide a **correct** [`MaybeDynSized::dst_len`]
-/// implementation.
+/// implementation. The needed metadata type is either `()` for sized types or
+/// `usize` for dynamically sized types. For sized types, there is a default
+/// implementation. Only dynamically sized types need to implement
+/// [`MaybeDynSized::dst_len`].
 ///
 /// # ABI
 /// Implementors **must** use `#[repr(C)]`. As there might be padding necessary
@@ -43,7 +46,14 @@ pub trait MaybeDynSized: Pointee {
     ///
     /// For sized tags, this just returns `()`. For DSTs, this returns an
     /// `usize`.
-    fn dst_len(header: &Self::Header) -> Self::Metadata;
+    fn dst_len(header: &Self::Header) -> Self::Metadata
+    where
+        // Either `()` or `usize`, never something else
+        Self::Metadata: Default,
+    {
+        let _ = header;
+        Default::default()
+    }
 
     /// Returns the corresponding [`Header`].
     fn header(&self) -> &Self::Header {

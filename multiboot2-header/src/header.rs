@@ -276,7 +276,10 @@ impl<'a> Multiboot2Header<'a> {
     #[must_use]
     fn get_tag<T: Tag<IDType = HeaderTagType, Header = HeaderTagHeader> + ?Sized + 'a>(
         &'a self,
-    ) -> Option<&'a T> {
+    ) -> Option<&'a T>
+    where
+        T::Metadata: Default,
+    {
         self.iter()
             .find(|tag| tag.header().typ() == T::ID)
             .map(|tag| tag.cast::<T>())

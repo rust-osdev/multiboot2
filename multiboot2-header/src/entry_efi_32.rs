@@ -70,8 +70,6 @@ impl MaybeDynSized for EntryEfi32HeaderTag {
     type Header = HeaderTagHeader;
 
     const BASE_SIZE: usize = size_of::<HeaderTagHeader>() + size_of::<u32>();
-
-    fn dst_len(_header: &Self::Header) -> Self::Metadata {}
 }
 
 impl Tag for EntryEfi32HeaderTag {

@@ -69,8 +69,6 @@ impl MaybeDynSized for FramebufferHeaderTag {
     type Header = HeaderTagHeader;
 
     const BASE_SIZE: usize = size_of::<HeaderTagHeader>() + 3 * size_of::<u32>();
-
-    fn dst_len(_header: &Self::Header) -> Self::Metadata {}
 }
 
 impl Tag for FramebufferHeaderTag {

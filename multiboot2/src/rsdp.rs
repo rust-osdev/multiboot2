@@ -92,8 +92,6 @@ impl MaybeDynSized for RsdpV1Tag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
-
-    fn dst_len(_: &TagHeader) {}
 }
 
 impl Tag for RsdpV1Tag {
@@ -200,8 +198,6 @@ impl MaybeDynSized for RsdpV2Tag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
-
-    fn dst_len(_: &TagHeader) {}
 }
 
 impl Tag for RsdpV2Tag {

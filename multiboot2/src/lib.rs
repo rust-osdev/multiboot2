@@ -1204,8 +1204,6 @@ mod tests {
             type Header = TagHeader;
 
             const BASE_SIZE: usize = size_of::<Self>();
-
-            fn dst_len(_: &TagHeader) -> Self::Metadata {}
         }
 
         impl Tag for CustomTag {
