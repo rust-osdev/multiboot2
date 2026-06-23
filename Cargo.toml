@@ -38,9 +38,9 @@ integration-test-util = { path = "./integration-test/bins/util" }
 qemu-exit = { version = "3.0", default-features = false }
 
 # Intra-workspace dependencies of upstream crates
-multiboot2 = { version = "0.24.0", default-features = false }
-multiboot2-common = { version = "0.3.0", default-features = false }
-multiboot2-header = { version = "0.7.0", default-features = false }
+multiboot2 = { version = "0.25.0", default-features = false }
+multiboot2-common = { version = "0.4.0", default-features = false }
+multiboot2-header = { version = "0.8.0", default-features = false }
 
 [profile.release-integration-test]
 inherits = "release"
