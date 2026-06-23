@@ -44,7 +44,7 @@ pub fn new_boxed<T: MaybeDynSized<Metadata = usize> + ?Sized>(
     // write header
     {
         let len = size_of::<T::Header>();
-        let ptr = core::ptr::addr_of!(header);
+        let ptr = &raw const header;
         // SAFETY: `header` is a fully initialized stack value and `heap_ptr`
         // points into the freshly allocated destination buffer.
         unsafe {

@@ -257,7 +257,6 @@ pub use iter::TagIter;
 pub use tag::{MaybeDynSized, Tag};
 
 use core::fmt::Debug;
-use core::ptr;
 use core::ptr::NonNull;
 use core::slice;
 use thiserror::Error;
@@ -431,7 +430,7 @@ impl<H: Header> DynSizedStructure<H> {
     {
         // Thin or fat pointer, depending on type.
         // However, only thin ptr is needed.
-        let base_ptr = ptr::addr_of!(*self);
+        let base_ptr = &raw const *self;
 
         // This should be a compile-time assertion. However, this is the best
         // location to place it for now.

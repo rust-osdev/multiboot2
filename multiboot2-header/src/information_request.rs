@@ -6,10 +6,7 @@ use core::fmt::{Debug, Formatter};
 use multiboot2_common::new_boxed;
 use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
-use {
-    alloc::boxed::Box,
-    core::{ptr, slice},
-};
+use {alloc::boxed::Box, core::slice};
 
 /// Specifies what specific tag types the bootloader should provide
 /// inside the mbi.
@@ -28,7 +25,7 @@ impl InformationRequestHeaderTag {
         let header = HeaderTagHeader::new(HeaderTagType::InformationRequest, flags, 0);
         // SAFETY: The memory we are using is valid.
         let requests = unsafe {
-            let ptr = ptr::addr_of!(*requests);
+            let ptr = &raw const *requests;
             slice::from_raw_parts(ptr.cast::<u8>(), size_of_val(requests))
         };
         new_boxed(header, &[requests])

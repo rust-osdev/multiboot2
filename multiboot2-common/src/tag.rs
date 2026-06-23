@@ -57,7 +57,7 @@ pub trait MaybeDynSized: Pointee {
 
     /// Returns the corresponding [`Header`].
     fn header(&self) -> &Self::Header {
-        let ptr = core::ptr::addr_of!(*self);
+        let ptr = &raw const *self;
         // SAFETY: `self` is a valid reference and `Self::Header` is the
         // prefix of this `repr(C)` structure at the same address.
         unsafe { &*ptr.cast::<Self::Header>() }
@@ -74,7 +74,7 @@ pub trait MaybeDynSized: Pointee {
     /// [`BytesRef`]. This includes padding bytes. To only get the "true" tag
     /// data, read the tag size from [`Self::header`] and create a sub slice.
     fn as_bytes(&self) -> BytesRef<'_, Self::Header> {
-        let ptr = core::ptr::addr_of!(*self);
+        let ptr = &raw const *self;
         // Actual tag size with optional terminating padding.
         let size = size_of_val(self);
         // SAFETY: `ptr` points to `self`'s allocation and `size_of_val(self)`

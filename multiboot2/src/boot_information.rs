@@ -134,7 +134,7 @@ impl<'a> BootInformation<'a> {
     /// Get the start address of the boot info as pointer.
     #[must_use]
     pub const fn as_ptr(&self) -> *const () {
-        core::ptr::addr_of!(*self.0).cast()
+        (&raw const *self.0).cast()
     }
 
     /// Get the end address of the boot info.
