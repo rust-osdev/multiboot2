@@ -2,7 +2,6 @@
 
 ## Unreleased
 
-- **Breaking:** The MSRV is now 1.87.0
 - Fixed `Multiboot2Header::load` to validate the complete padded tag sequence.
 - Changed `Multiboot2Header::find_header` to scan the full 32 KiB search
   window, validate candidate headers, and return the parsed header plus offset.
@@ -13,11 +12,13 @@
   the mandatory end tag.
 - Small code improvements
 
+
 ## v0.7.0 (2025-06-01)
 
 - **Breaking:** Removed the optional `unstable` feature (required nightly)
   - `core::error::Error` is now implemented unconditionally
 - **Breaking:** The MSRV is now 1.85
+
 
 ## v0.6.0 (2024-09-17)
 
@@ -25,9 +26,11 @@
 - **Breaking:** MSRV is now 1.75
 - misc metadata fixes
 
+
 ## v0.5.1 (2024-08-24)
 
 - Documentation improvements
+
 
 ## v0.5.0 (2024-05-20)
 
@@ -50,11 +53,13 @@ All previous versions have been marked as **YANKED**. `0.5.0` is the first
 version where all unit tests are passed by Miri, i.e., the first version
 without Undefined Behavior.
 
+
 ## 0.4.0 (2024-05-01) (**YANKED**)
 
 - added `EndHeaderTag::default()`
 - MSRV is 1.70
 - Can add multiple `TagType::Smbios` tags in the builder.
+
 
 ## 0.3.2 (2023-11-30) (**YANKED**)
 
@@ -63,9 +68,11 @@ without Undefined Behavior.
   anymore
 - doc update
 
+
 ## 0.3.1 (2023-06-28) (**YANKED**)
 
 - doc update
+
 
 ## 0.3.0 (2023-06-23) (**YANKED**)
 
@@ -80,6 +87,7 @@ without Undefined Behavior.
 - added the optional `unstable` feature (requires nightly)
   - implement `core::error::Error` for `LoadError`
 
+
 ## 0.2.0 (2022-05-03) (**YANKED**)
 
 - **BREAKING** renamed `EntryHeaderTag` to `EntryAddressHeaderTag`
@@ -87,6 +95,7 @@ without Undefined Behavior.
   to `multiboot2_header::builder`
   -> thus, import paths are much more logically now
 - internal code improvements
+
 
 ## 0.1.1 (2022-05-02) (**YANKED**)
 
@@ -96,9 +105,11 @@ without Undefined Behavior.
   (this feature can be disabled which will also remove the dependency to
   the `alloc` crate)
 
+
 ## 0.1.0 (2021-10-08) (**YANKED**)
 
 - initial release
+
 
 ## 0.0.0
 

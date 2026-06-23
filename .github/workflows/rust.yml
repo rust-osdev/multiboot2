@@ -7,7 +7,7 @@
 # and that it is as stable as possible.
 name: "Cargo workspace"
 # Run on every push (tag, branch) and pull_request
-on: [ pull_request, push, workflow_dispatch, merge_group ]
+on: [pull_request, push, workflow_dispatch, merge_group]
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
@@ -19,7 +19,7 @@ jobs:
     name: build (msrv)
     uses: ./.github/workflows/_build-rust.yml
     with:
-      rust-version: 1.87.0 # MSRV
+      rust-version: 1.85.1 # MSRV
       do-style-check: false
       features: builder
   build_stable:
@@ -42,7 +42,7 @@ jobs:
     needs: build_msrv
     uses: ./.github/workflows/_build-rust.yml
     with:
-      rust-version: 1.87.0 # MSRV
+      rust-version: 1.85.1 # MSRV
       do-style-check: false
       rust-target: thumbv7em-none-eabihf
       features: builder
@@ -94,7 +94,7 @@ jobs:
     needs: build_msrv
     uses: ./.github/workflows/_build-rust.yml
     with:
-      rust-version: 1.87.0 # MSRV
+      rust-version: 1.85.1 # MSRV
       do-style-check: true
       do-test: false
       features: builder
