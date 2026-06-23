@@ -44,7 +44,6 @@
 //! ## MSRV
 //! The MSRV is 1.85.1 stable.
 
-#[cfg_attr(feature = "builder", macro_use)]
 #[cfg(feature = "builder")]
 extern crate alloc;
 

@@ -53,7 +53,7 @@ impl Builder {
         Self {
             cmdline: None,
             bootloader: None,
-            modules: vec![],
+            modules: alloc::vec![],
             meminfo: None,
             bootdev: None,
             mmap: None,
@@ -63,7 +63,7 @@ impl Builder {
             apm: None,
             efi32: None,
             efi64: None,
-            smbios: vec![],
+            smbios: alloc::vec![],
             rsdpv1: None,
             rsdpv2: None,
             efi_mmap: None,
@@ -72,7 +72,7 @@ impl Builder {
             efi32_ih: None,
             efi64_ih: None,
             image_load_addr: None,
-            custom_tags: vec![],
+            custom_tags: alloc::vec![],
         }
     }
 
