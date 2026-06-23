@@ -69,8 +69,8 @@ impl DummyTestHeader {
 }
 
 impl Header for DummyTestHeader {
-    fn payload_len(&self) -> usize {
-        self.size as usize - size_of::<Self>()
+    fn total_size(&self) -> usize {
+        self.size as usize
     }
 
     fn set_size(&mut self, total_size: usize) {
@@ -116,8 +116,6 @@ impl Tag for DummyDstTag {
 
 #[cfg(test)]
 mod tests {
-    use core::ptr::addr_of;
-
     use crate::ALIGNMENT;
 
     use super::*;
@@ -128,17 +126,17 @@ mod tests {
 
         let bytes = AlignedBytes([0]);
         assert_eq!(bytes.as_ptr().align_offset(8), 0);
-        assert_eq!((addr_of!(bytes[0])).align_offset(8), 0);
+        assert_eq!((&raw const bytes[0]).align_offset(8), 0);
 
         let bytes = AlignedBytes([0, 1, 2, 3, 4, 5, 6, 7]);
         assert_eq!(bytes.as_ptr().align_offset(8), 0);
-        assert_eq!((addr_of!(bytes[0])).align_offset(8), 0);
+        assert_eq!((&raw const bytes[0]).align_offset(8), 0);
 
         let bytes = AlignedBytes([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
         assert_eq!(bytes.as_ptr().align_offset(8), 0);
-        assert_eq!((addr_of!(bytes[0])).align_offset(8), 0);
-        assert_eq!((addr_of!(bytes[7])).align_offset(8), 1);
-        assert_eq!((addr_of!(bytes[8])).align_offset(8), 0);
-        assert_eq!((addr_of!(bytes[9])).align_offset(8), 7);
+        assert_eq!((&raw const bytes[0]).align_offset(8), 0);
+        assert_eq!((&raw const bytes[7]).align_offset(8), 1);
+        assert_eq!((&raw const bytes[8]).align_offset(8), 0);
+        assert_eq!((&raw const bytes[9]).align_offset(8), 7);
     }
 }

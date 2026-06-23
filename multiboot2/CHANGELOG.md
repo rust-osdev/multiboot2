@@ -13,6 +13,8 @@
 - Added UserDefined section to `ElfSectionType`.
 - Added equality implementations for `BootInformation`.
 - Fixed `BootInformation::load` to validate the complete padded tag sequence.
+- Fixed RSDP tag constructors to compute their checksums automatically and
+  tightened checksum validation to avoid reading past malformed lengths.
 - Fixed indexed framebuffer parsing to reject palette metadata that exceeds
   the tag payload.
 - Fixed EFI memory map parsing to reject descriptor sizes that cannot safely

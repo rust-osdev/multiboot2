@@ -3,7 +3,7 @@ use multiboot2_common::{MaybeDynSized, Tag};
 
 /// Terminates a list of optional tags in a Multiboot2 header.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
+#[repr(C, align(8))]
 pub struct EndHeaderTag {
     header: HeaderTagHeader,
 }
@@ -49,8 +49,6 @@ impl MaybeDynSized for EndHeaderTag {
     type Header = HeaderTagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
-
-    fn dst_len(_header: &Self::Header) -> Self::Metadata {}
 }
 
 impl Tag for EndHeaderTag {

@@ -9,7 +9,10 @@ use ptr_meta::Pointee;
 /// [`DynSizedStructure::cast`].
 ///
 /// Structs that are a DST must provide a **correct** [`MaybeDynSized::dst_len`]
-/// implementation.
+/// implementation. The needed metadata type is either `()` for sized types or
+/// `usize` for dynamically sized types. For sized types, there is a default
+/// implementation. Only dynamically sized types need to implement
+/// [`MaybeDynSized::dst_len`].
 ///
 /// # ABI
 /// Implementors **must** use `#[repr(C)]`. As there might be padding necessary
@@ -43,11 +46,20 @@ pub trait MaybeDynSized: Pointee {
     ///
     /// For sized tags, this just returns `()`. For DSTs, this returns an
     /// `usize`.
-    fn dst_len(header: &Self::Header) -> Self::Metadata;
+    fn dst_len(header: &Self::Header) -> Self::Metadata
+    where
+        // Either `()` or `usize`, never something else
+        Self::Metadata: Default,
+    {
+        let _ = header;
+        Default::default()
+    }
 
     /// Returns the corresponding [`Header`].
     fn header(&self) -> &Self::Header {
-        let ptr = core::ptr::addr_of!(*self);
+        let ptr = &raw const *self;
+        // SAFETY: `self` is a valid reference and `Self::Header` is the
+        // prefix of this `repr(C)` structure at the same address.
         unsafe { &*ptr.cast::<Self::Header>() }
     }
 
@@ -62,9 +74,11 @@ pub trait MaybeDynSized: Pointee {
     /// [`BytesRef`]. This includes padding bytes. To only get the "true" tag
     /// data, read the tag size from [`Self::header`] and create a sub slice.
     fn as_bytes(&self) -> BytesRef<'_, Self::Header> {
-        let ptr = core::ptr::addr_of!(*self);
+        let ptr = &raw const *self;
         // Actual tag size with optional terminating padding.
         let size = size_of_val(self);
+        // SAFETY: `ptr` points to `self`'s allocation and `size_of_val(self)`
+        // covers the initialized object representation, including padding.
         let slice = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), size) };
         // Unwrap is fine as this type can't exist without the underlying memory
         // guarantees.

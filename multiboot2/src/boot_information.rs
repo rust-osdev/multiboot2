@@ -56,9 +56,8 @@ impl BootInformationHeader {
 }
 
 impl Header for BootInformationHeader {
-    fn payload_len(&self) -> usize {
-        assert!(self.total_size as usize >= size_of::<Self>());
-        self.total_size as usize - size_of::<Self>()
+    fn total_size(&self) -> usize {
+        self.total_size as usize
     }
 
     fn set_size(&mut self, total_size: usize) {
@@ -104,6 +103,8 @@ impl<'a> BootInformation<'a> {
     ///   program may observe unsynchronized mutation.
     pub unsafe fn load(ptr: *const BootInformationHeader) -> Result<Self, LoadError> {
         let ptr = NonNull::new(ptr.cast_mut()).ok_or(LoadError::Memory(MemoryError::Null))?;
+        // SAFETY: `ptr` was checked for null and `ref_from_ptr` validates the
+        // reported total size before constructing the DST reference.
         let inner = unsafe { DynSizedStructure::ref_from_ptr(ptr).map_err(LoadError::Memory)? };
 
         let this = Self(inner);
@@ -116,8 +117,8 @@ impl<'a> BootInformation<'a> {
     /// Checks if the MBI has a valid, complete tag sequence.
     fn has_valid_tag_sequence(&self) -> Result<bool, MemoryError> {
         validate_tag_sequence(self.0.payload(), |tag| {
-            let typ = u32::from_ne_bytes(tag[0..4].try_into().unwrap());
-            let size = u32::from_ne_bytes(tag[4..8].try_into().unwrap()) as usize;
+            let typ = u32::from_le_bytes(tag[0..4].try_into().unwrap());
+            let size = u32::from_le_bytes(tag[4..8].try_into().unwrap()) as usize;
 
             typ == TagType::End.val() && size == size_of::<EndTag>()
         })
@@ -133,7 +134,7 @@ impl<'a> BootInformation<'a> {
     /// Get the start address of the boot info as pointer.
     #[must_use]
     pub const fn as_ptr(&self) -> *const () {
-        core::ptr::addr_of!(*self.0).cast()
+        (&raw const *self.0).cast()
     }
 
     /// Get the end address of the boot info.
@@ -402,7 +403,10 @@ impl<'a> BootInformation<'a> {
     #[must_use]
     pub fn get_tag<T: Tag<IDType = TagType, Header = TagHeader> + ?Sized + 'a>(
         &'a self,
-    ) -> Option<&'a T> {
+    ) -> Option<&'a T>
+    where
+        T::Metadata: Default,
+    {
         self.tags()
             .find(|tag| tag.header().typ == T::ID)
             .map(|tag| tag.cast::<T>())
@@ -415,7 +419,8 @@ impl<'a> BootInformation<'a> {
     /// tag getters as normal bootloaders provide most tags only once.
     #[must_use]
     pub fn tags(&self) -> TagIter<'_> {
-        TagIter::new(self.0.payload())
+        // SAFETY: We validated the chain of tags beforehand.
+        unsafe { TagIter::new(self.0.payload()) }
     }
 }
 

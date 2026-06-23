@@ -11,7 +11,7 @@ use multiboot2_common::Header;
 ///
 /// It is the sized counterpart of `GenericTag`, an internal type.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[repr(C, align(8))] // Alignment also propagates to all tag types using this.
+#[repr(C, align(8))]
 pub struct TagHeader {
     /// The ABI-compatible [`TagType`].
     ///
@@ -33,9 +33,8 @@ impl TagHeader {
 }
 
 impl Header for TagHeader {
-    fn payload_len(&self) -> usize {
-        assert!(self.size as usize >= size_of::<Self>());
-        self.size as usize - size_of::<Self>()
+    fn total_size(&self) -> usize {
+        self.size as usize
     }
 
     fn set_size(&mut self, total_size: usize) {

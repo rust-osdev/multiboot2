@@ -50,6 +50,8 @@ impl<'a> Multiboot2Header<'a> {
     ///   program may observe unsynchronized mutation.
     pub unsafe fn load(ptr: *const Multiboot2BasicHeader) -> Result<Self, LoadError> {
         let ptr = NonNull::new(ptr.cast_mut()).ok_or(LoadError::Memory(MemoryError::Null))?;
+        // SAFETY: `ptr` was checked for null and the DST constructor
+        // validates size and layout.
         let inner = unsafe { DynSizedStructure::ref_from_ptr(ptr).map_err(LoadError::Memory)? };
         let this = Self(inner);
 
@@ -69,9 +71,9 @@ impl<'a> Multiboot2Header<'a> {
     /// Checks whether the header has a valid, complete tag sequence.
     fn has_valid_tag_sequence(&self) -> Result<bool, MemoryError> {
         validate_tag_sequence(self.0.payload(), |tag| {
-            let typ = u16::from_ne_bytes(tag[0..2].try_into().unwrap());
-            let flags = u16::from_ne_bytes(tag[2..4].try_into().unwrap());
-            let size = u32::from_ne_bytes(tag[4..8].try_into().unwrap()) as usize;
+            let typ = u16::from_le_bytes(tag[0..2].try_into().unwrap());
+            let flags = u16::from_le_bytes(tag[2..4].try_into().unwrap());
+            let size = u32::from_le_bytes(tag[4..8].try_into().unwrap()) as usize;
 
             typ == HeaderTagType::End as u16
                 && flags == crate::HeaderTagFlag::Required as u16
@@ -163,6 +165,8 @@ impl<'a> Multiboot2Header<'a> {
             .wrapping_add(magic_begin_idx)
             .cast::<Multiboot2BasicHeader>();
 
+        // SAFETY: `ptr` points into `buffer`, which has been checked
+        // for alignment and bounds.
         let header = unsafe { Self::load(ptr)? };
         Ok((header, magic_begin_idx))
     }
@@ -170,7 +174,9 @@ impl<'a> Multiboot2Header<'a> {
     /// Returns a [`TagIter`].
     #[must_use]
     pub fn iter(&self) -> TagIter<'_> {
-        TagIter::new(self.0.payload())
+        // SAFETY: `load()` validated the tag chain, and the iterator
+        // only walks that validated payload.
+        unsafe { TagIter::new(self.0.payload()) }
     }
 
     /// Wrapper around [`Multiboot2BasicHeader::verify_checksum`].
@@ -276,7 +282,10 @@ impl<'a> Multiboot2Header<'a> {
     #[must_use]
     fn get_tag<T: Tag<IDType = HeaderTagType, Header = HeaderTagHeader> + ?Sized + 'a>(
         &'a self,
-    ) -> Option<&'a T> {
+    ) -> Option<&'a T>
+    where
+        T::Metadata: Default,
+    {
         self.iter()
             .find(|tag| tag.header().typ() == T::ID)
             .map(|tag| tag.cast::<T>())
@@ -393,9 +402,8 @@ impl Multiboot2BasicHeader {
 }
 
 impl Header for Multiboot2BasicHeader {
-    fn payload_len(&self) -> usize {
-        assert!(self.length as usize >= size_of::<Self>());
-        self.length as usize - size_of::<Self>()
+    fn total_size(&self) -> usize {
+        self.length as usize
     }
 
     fn set_size(&mut self, total_size: usize) {
@@ -498,6 +506,8 @@ mod tests {
         let mut bytes = AlignedBytes::new([0; 24]);
         write_minimal_valid_header_tag(&mut bytes.0);
 
+        // SAFETY: The test buffer is aligned and contains a valid
+        // header layout.
         let header = unsafe { Multiboot2Header::load(bytes.as_ptr().cast()) };
 
         assert!(header.is_ok());
@@ -511,6 +521,8 @@ mod tests {
         bytes.0[8..12].copy_from_slice(&16_u32.to_le_bytes());
         bytes.0[12..16].copy_from_slice(&checksum.to_le_bytes());
 
+        // SAFETY: The test buffer is aligned and contains a valid
+        // header layout.
         let header = unsafe { Multiboot2Header::load(bytes.as_ptr().cast()) };
 
         assert!(matches!(header, Err(LoadError::NoEndTag)));
@@ -527,6 +539,8 @@ mod tests {
         bytes.0[16..18].copy_from_slice(&(HeaderTagType::InformationRequest as u16).to_le_bytes());
         bytes.0[20..24].copy_from_slice(&24_u32.to_le_bytes());
 
+        // SAFETY: The test buffer is aligned and contains a valid
+        // header layout.
         let header = unsafe { Multiboot2Header::load(bytes.as_ptr().cast()) };
 
         assert_eq!(

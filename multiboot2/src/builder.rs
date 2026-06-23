@@ -53,7 +53,7 @@ impl Builder {
         Self {
             cmdline: None,
             bootloader: None,
-            modules: vec![],
+            modules: alloc::vec![],
             meminfo: None,
             bootdev: None,
             mmap: None,
@@ -63,7 +63,7 @@ impl Builder {
             apm: None,
             efi32: None,
             efi64: None,
-            smbios: vec![],
+            smbios: alloc::vec![],
             rsdpv1: None,
             rsdpv2: None,
             efi_mmap: None,
@@ -72,7 +72,7 @@ impl Builder {
             efi32_ih: None,
             efi64_ih: None,
             image_load_addr: None,
-            custom_tags: vec![],
+            custom_tags: alloc::vec![],
         }
     }
 
@@ -354,8 +354,8 @@ mod tests {
             .efi64(EFISdt64Tag::new(0x1000))
             .add_smbios(SmbiosTag::new(0, 0, &[1, 2, 3]))
             .add_smbios(SmbiosTag::new(1, 1, &[4, 5, 6]))
-            .rsdpv1(RsdpV1Tag::new(0, *b"abcdef", 5, 6))
-            .rsdpv2(RsdpV2Tag::new(0, *b"abcdef", 5, 6, 5, 4, 7))
+            .rsdpv1(RsdpV1Tag::new(*b"abcdef", 5, 6))
+            .rsdpv2(RsdpV2Tag::new(*b"abcdef", 5, 6, 5, 4))
             .efi_mmap(EFIMemoryMapTag::new_from_descs(&[
                 MemoryDescriptor::default(),
                 MemoryDescriptor::default(),
@@ -372,6 +372,8 @@ mod tests {
 
         let structure = builder.build();
 
+        // SAFETY: The builder constructs a complete, aligned MBI with
+        // a valid end tag.
         let info = unsafe { BootInformation::load(structure.as_bytes().as_ptr().cast()) }.unwrap();
         for tag in info.tags() {
             // Mainly a test for Miri.

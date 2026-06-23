@@ -22,8 +22,6 @@ impl MaybeDynSized for EndTag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
-
-    fn dst_len(_: &TagHeader) {}
 }
 
 impl Tag for EndTag {
@@ -40,6 +38,8 @@ mod tests {
     #[test]
     /// Compile time test for [`EndTag`].
     fn test_end_tag_size() {
+        // SAFETY: `EndTag` is a plain `repr(C)` POD with the exact
+        // eight-byte end-tag layout.
         unsafe {
             transmute::<[u8; 8], EndTag>([0u8; 8]);
         }

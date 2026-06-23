@@ -6,9 +6,6 @@ mod multiboot;
 
 extern crate alloc;
 
-#[macro_use]
-extern crate integration_test_util;
-
 use integration_test_util::init_environment;
 
 core::arch::global_asm!(include_str!("start.S"), options(att_syntax));
