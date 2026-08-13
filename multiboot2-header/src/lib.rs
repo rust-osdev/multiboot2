@@ -18,10 +18,10 @@
 //! ## Example: Parsing a Header
 //!
 //! ```no_run
-//! use multiboot2_header::Multiboot2Header;
+//! use multiboot2_header::Header;
 //!
 //! let ptr = 0x1337_0000 as *const u8 /* use real ptr here */;
-//! let mb2_hdr = unsafe { Multiboot2Header::load(ptr.cast()) }.unwrap();
+//! let mb2_hdr = unsafe { Header::load(ptr.cast()) }.unwrap();
 //! for _tag in mb2_hdr.iter() {
 //!     //
 //! }

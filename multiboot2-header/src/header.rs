@@ -7,29 +7,31 @@ use crate::{
 use core::fmt::{Debug, Formatter};
 use core::ptr::NonNull;
 use multiboot2_common::{
-    ALIGNMENT, DynSizedStructure, Header, MemoryError, Tag, validate_tag_sequence,
+    ALIGNMENT, DynSizedStructure, Header as DynSizedHeader, MemoryError, Tag, validate_tag_sequence,
 };
 use thiserror::Error;
 
-/// Magic value for a [`Multiboot2Header`], as defined by the spec.
+/// Magic value for a [`Header`], as defined by the spec.
 pub const MAGIC: u32 = 0xe85250d6;
 /// Range from the beginning of an image in which bootloaders will search for a
 /// multiboot2 header.
 pub const HEADER_SEARCH_LIMIT: usize = 32768;
 
-/// Wrapper type around a pointer to the Multiboot2 header.
+/// A parsed complete Multiboot2 header.
 ///
-/// The Multiboot2 header is the [`Multiboot2BasicHeader`] followed
-/// by all tags (see [`HeaderTagType`]).
-/// Use this if you get a pointer to the header and just want
-/// to parse it. If you want to construct the type by yourself,
-/// use `Builder` (requires the `builder` feature).
+/// It consists of the fixed [`Multiboot2BasicHeader`] prefix followed by all
+/// header tags (see [`HeaderTagType`]). [`Multiboot2BasicHeader`] represents
+/// only that prefix; use this type when working with the complete, dynamically
+/// sized header.
+///
+/// Use this to parse a header from a pointer. To construct a header, use
+/// `Builder` (requires the `builder` feature).
 #[repr(transparent)]
 #[derive(PartialEq, Eq)]
-pub struct Multiboot2Header<'a>(&'a DynSizedStructure<Multiboot2BasicHeader>);
+pub struct Header<'a>(&'a DynSizedStructure<Multiboot2BasicHeader>);
 
-impl<'a> Multiboot2Header<'a> {
-    /// Loads the [`Multiboot2Header`] from a pointer.
+impl<'a> Header<'a> {
+    /// Loads a complete [`Header`] from a pointer.
     ///
     /// If the header is invalid, it returns a [`LoadError`].
     /// This may be because:
@@ -292,9 +294,9 @@ impl<'a> Multiboot2Header<'a> {
     }
 }
 
-impl Debug for Multiboot2Header<'_> {
+impl Debug for Header<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("Multiboot2Header")
+        f.debug_struct("Header")
             .field("magic", &self.header_magic())
             .field("arch", &self.arch())
             .field("length", &self.length())
@@ -306,7 +308,7 @@ impl Debug for Multiboot2Header<'_> {
 }
 
 /// Errors that occur when a chunk of memory can't be parsed as
-/// [`Multiboot2Header`].
+/// [`Header`].
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Error)]
 pub enum LoadError {
     /// The provided checksum does not match the expected value.
@@ -318,14 +320,17 @@ pub enum LoadError {
     /// Missing mandatory end tag.
     #[error("missing mandatory end tag")]
     NoEndTag,
-    /// The provided memory can't be parsed as [`Multiboot2Header`].
+    /// The provided memory can't be parsed as a complete [`Header`].
     /// See [`MemoryError`].
     #[error("memory can't be parsed as multiboot2 header")]
     Memory(#[source] MemoryError),
 }
 
-/// The "basic" Multiboot2 header. This means only the properties, that are known during
-/// compile time. All other information are derived during runtime from the size property.
+/// The fixed prefix of a Multiboot2 header.
+///
+/// This contains only fields with a compile-time-known layout. It is followed
+/// by a dynamically sized sequence of header tags, so it is not a complete
+/// Multiboot2 header. Use [`Header`] to parse the complete header.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, align(8))]
 pub struct Multiboot2BasicHeader {
@@ -401,7 +406,7 @@ impl Multiboot2BasicHeader {
     }
 }
 
-impl Header for Multiboot2BasicHeader {
+impl DynSizedHeader for Multiboot2BasicHeader {
     fn total_size(&self) -> usize {
         self.length as usize
     }
@@ -414,7 +419,7 @@ impl Header for Multiboot2BasicHeader {
 
 impl Debug for Multiboot2BasicHeader {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("Multiboot2Header")
+        f.debug_struct("Multiboot2BasicHeader")
             .field("header_magic", &{ self.header_magic })
             .field("arch", &{ self.arch })
             .field("length", &{ self.length })
@@ -426,9 +431,7 @@ impl Debug for Multiboot2BasicHeader {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        HeaderTagISA, HeaderTagType, LoadError, MAGIC, Multiboot2BasicHeader, Multiboot2Header,
-    };
+    use crate::{Header, HeaderTagISA, HeaderTagType, LoadError, MAGIC, Multiboot2BasicHeader};
     use core::borrow::Borrow;
     use multiboot2_common::MemoryError;
     use multiboot2_common::test_utils::AlignedBytes;
@@ -462,7 +465,7 @@ mod tests {
         let bytes = AlignedBytes::new([0; 16]);
 
         assert_eq!(
-            Multiboot2Header::find_header(bytes.borrow()),
+            Header::find_header(bytes.borrow()),
             Err(LoadError::MagicNotFound)
         );
     }
@@ -474,7 +477,7 @@ mod tests {
         bytes.0[8..12].copy_from_slice(&32_u32.to_le_bytes());
 
         assert_eq!(
-            Multiboot2Header::find_header(bytes.borrow()),
+            Header::find_header(bytes.borrow()),
             Err(LoadError::Memory(MemoryError::InvalidReportedTotalSize(
                 32, 16
             )))
@@ -486,7 +489,7 @@ mod tests {
         let mut bytes = AlignedBytes::new([0; 9000]);
         write_minimal_valid_header_tag(&mut bytes.0[8192..]);
 
-        let (_header, offset) = Multiboot2Header::find_header(bytes.borrow()).unwrap();
+        let (_header, offset) = Header::find_header(bytes.borrow()).unwrap();
         assert_eq!(offset, 8192);
     }
 
@@ -497,7 +500,7 @@ mod tests {
         bytes.0[4..8].copy_from_slice(&MAGIC.to_le_bytes());
         write_minimal_valid_header_tag(&mut bytes.0[8..]);
 
-        let (_header, offset) = Multiboot2Header::find_header(bytes.borrow()).unwrap();
+        let (_header, offset) = Header::find_header(bytes.borrow()).unwrap();
         assert_eq!(offset, 8);
     }
 
@@ -508,7 +511,7 @@ mod tests {
 
         // SAFETY: The test buffer is aligned and contains a valid
         // header layout.
-        let header = unsafe { Multiboot2Header::load(bytes.as_ptr().cast()) };
+        let header = unsafe { Header::load(bytes.as_ptr().cast()) };
 
         assert!(header.is_ok());
     }
@@ -523,7 +526,7 @@ mod tests {
 
         // SAFETY: The test buffer is aligned and contains a valid
         // header layout.
-        let header = unsafe { Multiboot2Header::load(bytes.as_ptr().cast()) };
+        let header = unsafe { Header::load(bytes.as_ptr().cast()) };
 
         assert!(matches!(header, Err(LoadError::NoEndTag)));
     }
@@ -541,7 +544,7 @@ mod tests {
 
         // SAFETY: The test buffer is aligned and contains a valid
         // header layout.
-        let header = unsafe { Multiboot2Header::load(bytes.as_ptr().cast()) };
+        let header = unsafe { Header::load(bytes.as_ptr().cast()) };
 
         assert_eq!(
             header,

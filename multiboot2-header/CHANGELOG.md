@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Breaking:** Renamed `multiboot2_header::Multiboot2Header` to
+  `multiboot2_header::Header`.
 - Standardized bootloader terminology.
 - Corrected the README example and API documentation.
 
