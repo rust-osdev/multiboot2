@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.9.0 (2026-08-13)
+
 - Expanded `Header` debug output with parsed tags and tag headers.
 - **Breaking:** Renamed `multiboot2_header::Multiboot2Header` to
   `multiboot2_header::Header`.
@@ -11,11 +13,11 @@
 ## v0.8.0 (2026-06-23)
 
 - Fixed `Multiboot2Header::load` to validate the complete padded tag sequence.
-- Changed `Multiboot2Header::find_header` to scan the full 32 KiB search
-  window, validate candidate headers, and return the parsed header plus offset.
+- Changed `Multiboot2Header::find_header` to scan the full 32 KiB search window,
+  validate candidate headers, and return the parsed header plus offset.
 - Added validation that loaded headers end with the mandatory end tag.
-- Changed checksum validation errors to include the actual and expected
-  checksum values.
+- Changed checksum validation errors to include the actual and expected checksum
+  values.
 - Fixed `EndHeaderTag::new` and `Builder::build` so generated headers contain
   the mandatory end tag.
 - Small code improvements
@@ -38,10 +40,10 @@
 
 ## v0.5.0 (2024-05-20)
 
-This release contains a major refactoring of the internals, guaranteeing
-even more sanity checks for correct behaviour and lack of UB. In this release,
-the `Builder` was rewritten and lots of corresponding UB in certain
-corner cases removed. Further, the builder's API was streamlined.
+This release contains a major refactoring of the internals, guaranteeing even
+more sanity checks for correct behaviour and lack of UB. In this release, the
+`Builder` was rewritten and lots of corresponding UB in certain corner cases
+removed. Further, the builder's API was streamlined.
 
 If you are interested in the internals of the major refactorings recently taken
 place, please head to the documentation of `multiboot2-common`.
@@ -54,8 +56,8 @@ place, please head to the documentation of `multiboot2-common`.
 - Updated to latest `multiboot2` dependency
 
 All previous versions have been marked as **YANKED**. `0.5.0` is the first
-version where all unit tests are passed by Miri, i.e., the first version
-without Undefined Behavior.
+version where all unit tests are passed by Miri, i.e., the first version without
+Undefined Behavior.
 
 ## 0.4.0 (2024-05-01) (**YANKED**)
 
@@ -99,8 +101,7 @@ without Undefined Behavior.
 
 - fixed a bug that prevented the usage of the crate in `no_std` environments
 - added a new default `builder`-feature to Cargo which requires the `alloc`
-  -crate
-  (this feature can be disabled which will also remove the dependency to
+  -crate (this feature can be disabled which will also remove the dependency to
   the `alloc` crate)
 
 ## 0.1.0 (2021-10-08) (**YANKED**)

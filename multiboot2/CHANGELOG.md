@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.25.1 (2026-08-13)
+
 - Expanded `BootInformation` debug output with tag headers.
 - Standardized bootloader terminology.
 - Corrected README and API documentation.
@@ -25,8 +27,8 @@
 - Fixed `BootInformation::load` to validate the complete padded tag sequence.
 - Fixed RSDP tag constructors to compute their checksums automatically and
   tightened checksum validation to avoid reading past malformed lengths.
-- Fixed indexed framebuffer parsing to reject palette metadata that exceeds
-  the tag payload.
+- Fixed indexed framebuffer parsing to reject palette metadata that exceeds the
+  tag payload.
 - Fixed EFI memory map parsing to reject descriptor sizes that cannot safely
   describe EFI memory descriptors.
 - Fixed some bugs.
@@ -75,8 +77,8 @@ Minor documentation fixes.
 
 This release contains another major refactoring of the internals, guaranteeing
 even more sanity checks for correct behaviour and lack of UB. In this release,
-the `Builder` was rewritten and lots of corresponding UB in certain
-corner cases removed. Further, the builder's API was streamlined.
+the `Builder` was rewritten and lots of corresponding UB in certain corner cases
+removed. Further, the builder's API was streamlined.
 
 If you are interested in the internals of the major refactorings recently taken
 place, please head to the documentation of `multiboot2-common`.
@@ -96,26 +98,26 @@ place, please head to the documentation of `multiboot2-common`.
 
 The major refactorings of release `0.21` and `0.22` were an incredible step
 forward in code quality and memory safety. We have a comprehensive test coverage
-and all tests are passed by Miri. It might be that by using fuzzing, more
-corner and niche cases where UB can occur get uncovered. However, for every-day
-usage with sane bootloaders that do not intentionally create malformed tags, you
-are now absolutely good to go.
+and all tests are passed by Miri. It might be that by using fuzzing, more corner
+and niche cases where UB can occur get uncovered. However, for every-day usage
+with sane bootloaders that do not intentionally create malformed tags, you are
+now absolutely good to go.
 
 Sorry for all the UB that silently slept insight many parts of the code base.
 This is a community project that has grown over the years. But now, the code
 base is in excellent shape!
 
 All previous versions have been marked as **YANKED**. `0.22.0` is the first
-version where all unit tests are passed by Miri, i.e., the first version
-without Undefined Behavior.
+version where all unit tests are passed by Miri, i.e., the first version without
+Undefined Behavior.
 
 ## 0.21.0 (2024-08-17) (**YANKED**)
 
 This release contains a massive refactoring of various internals. Now, almost
 all **unit tests pass Miri**, thus we removed lots of undefined behaviour and
 increased the memory safety! 🎉 Only a small part of these internal refactorings
-leak to the public interface. If you don't use external custom tags, you
-should be fine from any refactorings.
+leak to the public interface. If you don't use external custom tags, you should
+be fine from any refactorings.
 
 _**Edit**: The builder and the framebuffer still contain some UB. This is fixed
 in the next release._
@@ -125,8 +127,8 @@ contain UB. However, it is never clear how UB results in immediate incorrect
 behaviour and it _might_ work. **Nevertheless, please migrate to the latest
 release and you'll be fine!**
 
-- **Breaking:** All functions that returns something useful are
-  now `#[must_use]`
+- **Breaking:** All functions that returns something useful are now
+  `#[must_use]`
 - **Breaking:** More public fields in tags were replaced by public getters, such
   as `SmbiosTag::major()`
 - **Breaking:** Methods of `InformationBuilder` to add tags now consume
@@ -226,13 +228,13 @@ release and you'll be fine!**
 - **BREAKING** Renamed `EFISdt64` to `EFISdt64Tag`
 - **BREAKING** Renamed `EFIBootServicesNotExited`
   to `EFIBootServicesNotExitedTag`
-- **BREAKING** Renamed `CommandLineTag::command_line` renamed
-  to `CommandLineTag::cmdline`
+- **BREAKING** Renamed `CommandLineTag::command_line` renamed to
+  `CommandLineTag::cmdline`
 - **\[Might be\] BREAKING** Added `TagTrait` trait which enables to use DSTs as
-  multiboot2 tags. This is
-  mostly relevant for the command line tag, the modules tag, and the bootloader
-  name tag. However, this might also be relevant for users of custom multiboot2
-  tags that use DSTs as types. See the example provided in the doc of the
+  multiboot2 tags. This is mostly relevant for the command line tag, the modules
+  tag, and the bootloader name tag. However, this might also be relevant for
+  users of custom multiboot2 tags that use DSTs as types. See the example
+  provided in the doc of the
   `get_tag` method.
 - added a `builder` feature and a `builder` module with a
   `builder::InformationBuilder` struct
@@ -262,8 +264,7 @@ release and you'll be fine!**
 - **BREAKING** fixed lifetime issues: `VBEInfoTag` is no longer `&static`
 - **BREAKING:** `TagType` is now split into `TagTypeId` and `TagType`
   - `TagTypeId` is a binary-compatible form of a Multiboot2 tag id
-  - `TagType` is a higher-level abstraction for either specified or custom
-    tags
+  - `TagType` is a higher-level abstraction for either specified or custom tags
     but not ABI compatible.
   - There exists a seamless integration between `u32`, `TagType`, and
     `TagTypeId` via `From` and `PartialEq`-implementations.
@@ -282,14 +283,14 @@ release and you'll be fine!**
 
 - documentation fixes
 - `MbiLoadError` now implements `Display`
-- Added the `unstable` feature, which enables nightly-only functionality.
-  With this feature, `MbiLoadError` now implements `core::error::Error` and can
-  be used with `anyhow::Result` for example.
+- Added the `unstable` feature, which enables nightly-only functionality. With
+  this feature, `MbiLoadError` now implements `core::error::Error` and can be
+  used with `anyhow::Result` for example.
 
 ## 0.14.1 (2023-03-09) (**YANKED**)
 
-- fixed the calculation of the last area of the memory map
-  tag ([#119](https://github.com/rust-osdev/multiboot2/pull/119))
+- fixed the calculation of the last area of the memory map tag
+  ([#119](https://github.com/rust-osdev/multiboot2/pull/119))
   (Previously, iterating the EFI Memory map resulted in a superfluous entry as
   it ran over the next tag)
 
@@ -297,8 +298,7 @@ release and you'll be fine!**
 
 - **BREAKING CHANGES** \
   This version includes a few small breaking changes that brings more safety
-  when parsing strings from the
-  multiboot information structure.
+  when parsing strings from the multiboot information structure.
   - `BootLoaderNameTag::name` now returns a Result instead of just the value
   - `CommandLineTag::command_line` now returns a Result instead of just the
     value
@@ -357,8 +357,8 @@ release and you'll be fine!**
 
 - **breaking:** iterator functions (e.g. `ElfSectionsTag::sections()`)
   return `impl Iterator` instead of a concrete type
-- lib now contains `TagType`-enum that contains
-  all possible mbi tags that are specified (taken from spec)
+- lib now contains `TagType`-enum that contains all possible mbi tags that are
+  specified (taken from spec)
 - much improved debug-formatting of `BootInformation`
 - internal code improvements / formatting
 
@@ -369,12 +369,12 @@ release and you'll be fine!**
 
 ## 0.9.0 (2020-07-06)
 
-- Add a `checksum_is_valid` method to the RSDP
-  tags ([#64](https://github.com/rust-osdev/multiboot2/pull/64))
+- Add a `checksum_is_valid` method to the RSDP tags
+  ([#64](https://github.com/rust-osdev/multiboot2/pull/64))
 
 ## 0.8.2 (2022-03-02)
 
-- Add some basic
-  documentation ([#62](https://github.com/rust-osdev/multiboot2/pull/62))
+- Add some basic documentation
+  ([#62](https://github.com/rust-osdev/multiboot2/pull/62))
 - Add MemoryAreaType, to allow users to access memory area types in a type-safe
   way ([#61](https://github.com/rust-osdev/multiboot2/pull/61))

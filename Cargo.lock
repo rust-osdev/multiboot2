@@ -87,7 +87,7 @@ dependencies = [
 
 [[package]]
 name = "multiboot2"
-version = "0.25.0"
+version = "0.25.1"
 dependencies = [
  "bitflags",
  "elf",
@@ -100,7 +100,7 @@ dependencies = [
 
 [[package]]
 name = "multiboot2-common"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "ptr_meta",
  "thiserror",
@@ -108,7 +108,7 @@ dependencies = [
 
 [[package]]
 name = "multiboot2-header"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "multiboot2",
  "multiboot2-common",

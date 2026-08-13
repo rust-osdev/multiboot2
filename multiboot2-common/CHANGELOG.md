@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.4.1 (2026-08-13)
+
 - Clarified feature, stability, and memory-safety documentation.
 
 ## v0.4.0 (2026-06-23)
