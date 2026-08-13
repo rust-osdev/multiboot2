@@ -426,7 +426,7 @@ impl<'a> BootInformation<'a> {
 
 impl fmt::Debug for BootInformation<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut debug = f.debug_struct("Multiboot2BootInformation");
+        let mut debug = f.debug_struct("BootInformation");
         debug
             .field("start_address", &self.start_address())
             .field("end_address", &self.end_address())
