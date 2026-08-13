@@ -50,7 +50,7 @@ pub enum TagType {
     /// Tag `3`: Additional Multiboot modules, which are BLOBs provided in
     /// memory. For example an initial ram disk with essential drivers.
     Module,
-    /// Tag `4`: ‘mem_lower’ and ‘mem_upper’ indicate the amount of lower and
+    /// Tag `4`: `mem_lower` and `mem_upper` indicate the amount of lower and
     /// upper memory, respectively, in kilobytes. Lower memory starts at
     /// address 0, and upper memory starts at address 1 megabyte. The maximum
     /// possible value for lower memory is 640 kilobytes. The value returned
@@ -98,7 +98,7 @@ pub enum TagType {
     Apm,
     /// Tag `11`: This tag contains pointer to i386 EFI system table.
     Efi32,
-    /// Tag `21`: This tag contains pointer to amd64 EFI system table.
+    /// Tag `12`: This tag contains pointer to amd64 EFI system table.
     Efi64,
     /// Tag `13`: This tag contains a copy of SMBIOS tables as well as their
     /// version.
@@ -145,8 +145,8 @@ impl TagType {
     }
 }
 
-/// Relevant `From`-implementations for conversions between `u32`, [´TagTypeId´]
-/// and [´TagType´].
+/// Relevant `From` implementations for conversions between `u32`,
+/// [`TagTypeId`], and [`TagType`].
 mod primitive_conversion_impls {
     use super::*;
     use core::mem::transmute;
@@ -225,7 +225,8 @@ mod primitive_conversion_impls {
     }
 }
 
-/// `From`-implementations for conversions between [´TagTypeId´] and [´TagType´].
+/// `From` implementations for conversions between [`TagTypeId`] and
+/// [`TagType`].
 mod intermediate_conversion_impls {
     use super::*;
 
@@ -244,9 +245,9 @@ mod intermediate_conversion_impls {
     }
 }
 
-/// Implements `partial_eq` between [´TagTypeId´] and [´TagType´]. Two values
-/// are equal if their `u32` representation is equal. Additionally, `u32` can
-/// be compared with [´TagTypeId´].
+/// Implements `PartialEq` between [`TagTypeId`] and [`TagType`]. Two values are
+/// equal if their `u32` representation is equal. Additionally, `u32` can be
+/// compared with [`TagTypeId`].
 mod partial_eq_impls {
     use super::*;
 

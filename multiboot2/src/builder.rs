@@ -13,7 +13,7 @@ use alloc::boxed::Box;
 use alloc::vec::Vec;
 use multiboot2_common::{DynSizedStructure, MaybeDynSized, new_boxed};
 
-/// Builder for a Multiboot2 boot information (MBI.
+/// Builder for Multiboot2 boot information (MBI).
 #[derive(Debug)]
 pub struct Builder {
     cmdline: Option<Box<CommandLineTag>>,
@@ -235,7 +235,7 @@ impl Builder {
     }
 
     /// Returns properly aligned bytes on the heap representing a valid
-    /// Multiboot2 header structure.
+    /// Multiboot2 boot information structure.
     #[must_use]
     pub fn build(self) -> Box<DynSizedStructure<BootInformationHeader>> {
         let header = BootInformationHeader::new(0);

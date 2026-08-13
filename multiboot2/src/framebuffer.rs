@@ -65,7 +65,7 @@ pub struct FramebufferTag {
     /// Contains framebuffer physical address.
     ///
     /// This field is 64-bit wide but bootloader should set it under 4GiB if
-    /// possible for compatibility with payloads which aren’t aware of PAE or
+    /// possible for compatibility with payloads which aren't aware of PAE or
     /// amd64.
     address: u64,
 
@@ -132,7 +132,7 @@ impl FramebufferTag {
     /// Contains framebuffer physical address.
     ///
     /// This field is 64-bit wide but bootloader should set it under 4GiB if
-    /// possible for compatibility with payloads which aren’t aware of PAE or
+    /// possible for compatibility with payloads which aren't aware of PAE or
     /// amd64.
     #[must_use]
     pub const fn address(&self) -> u64 {

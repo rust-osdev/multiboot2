@@ -6,7 +6,7 @@ use ptr_meta::Pointee;
 #[cfg(feature = "builder")]
 use {alloc::boxed::Box, multiboot2_common::new_boxed};
 
-/// The end tag ends the information struct.
+/// Contains network information in the form of a DHCP packet.
 #[derive(Debug, Pointee)]
 #[repr(C, align(8))]
 pub struct NetworkTag {

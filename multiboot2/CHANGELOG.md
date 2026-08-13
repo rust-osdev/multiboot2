@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Corrected README and API documentation.
+
 ## v0.25.0 (2026-06-23)
 
 - **Breaking**: Renamed `VBEWindowAttributes::WRITABLE` (fix typo)

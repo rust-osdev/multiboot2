@@ -8,7 +8,7 @@ use multiboot2_common::{MaybeDynSized, Tag};
 use {alloc::boxed::Box, multiboot2_common::new_boxed};
 
 /// The module tag can occur multiple times and specifies passed boot modules
-/// (blobs in memory). The tag itself doesn't include the blog, but references
+/// (blobs in memory). The tag itself doesn't include the blob, but references
 /// its location.
 #[derive(ptr_meta::Pointee, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, align(8))]
@@ -41,13 +41,12 @@ impl ModuleTag {
 
     /// Reads the command line of the boot module as Rust string slice without
     /// the null-byte.
-    /// This is an null-terminated UTF-8 string. If this returns `Err` then perhaps the memory
-    /// is invalid or the bootloader doesn't follow the spec.
+    /// This is a null-terminated UTF-8 string. If this returns `Err`, the
+    /// memory may be invalid or the boot loader may not follow the
+    /// specification.
     ///
-    /// For example, this returns `"--test cmdline-option"`.if the GRUB config
-    /// contains  `"module2 /some_boot_module --test cmdline-option"`.
-    ///
-    /// If the function returns `Err` then perhaps the memory is invalid.
+    /// For example, this returns `"--test cmdline-option"` if the GRUB config
+    /// contains `"module2 /some_boot_module --test cmdline-option"`.
     pub fn cmdline(&self) -> Result<&str, StringError> {
         parse_slice_as_string(&self.cmdline)
     }

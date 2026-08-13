@@ -19,7 +19,7 @@
 
 //! Convenient and safe parsing of Multiboot2 Boot Information (MBI) structures
 //! and the contained information tags. Usable in `no_std` environments, such as
-//! a kernel. An optional builder feature also allows the construction of
+//! a kernel. The default `builder` feature also allows the construction of
 //! the corresponding structures.
 //!
 //! ## Design
@@ -27,6 +27,12 @@
 //! For every Multiboot2 structure, there is an ABI-compatible rusty type. This
 //! enables a zero-copying parsing design while also enabling the creation of
 //! these structures via convenient constructors on the corresponding types.
+//!
+//! ## Features and `no_std` Compatibility
+//!
+//! This library is always `no_std`. The default `builder` feature enables
+//! `alloc`; using it requires an `#[global_allocator]`. Remove that feature if
+//! you do not need to construct boot information structures.
 //!
 //! ## Example
 //!
