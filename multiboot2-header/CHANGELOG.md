@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Expanded `Header` debug output with parsed tags and tag headers.
+- **Breaking:** Renamed `multiboot2_header::Multiboot2Header` to
+  `multiboot2_header::Header`.
 - Standardized bootloader terminology.
 - Corrected the README example and API documentation.
 
@@ -44,8 +47,8 @@ If you are interested in the internals of the major refactorings recently taken
 place, please head to the documentation of `multiboot2-common`.
 
 - **Breaking** All functions that returns something useful are now `#[must_use]`
-- **Breaking** The builder type is now just called `Builder`. This needs the
-  `builder` feature.
+- **Breaking** Renamed `multiboot2_header::builder::HeaderBuilder` to
+  `multiboot2_header::Builder`. This needs the `builder` feature.
 - **Breaking:** The error type returned by `Multiboot2Header::load` has been
   changed.
 - Updated to latest `multiboot2` dependency

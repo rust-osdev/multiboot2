@@ -168,7 +168,7 @@ mod tests {
     use crate::ConsoleHeaderTagFlags::ConsoleRequired;
     use crate::HeaderTagFlag::{Optional, Required};
     use crate::RelocatableHeaderTagPreference::High;
-    use crate::{MbiTagType, Multiboot2Header};
+    use crate::{Header, MbiTagType};
 
     #[test]
     fn build_and_parse() {
@@ -219,8 +219,7 @@ mod tests {
         let header = {
             // SAFETY: The builder emits a fully formed, aligned header
             // buffer with a valid end tag.
-            unsafe { Multiboot2Header::load(structure.as_bytes().as_ref().as_ptr().cast()) }
-                .unwrap()
+            unsafe { Header::load(structure.as_bytes().as_ref().as_ptr().cast()) }.unwrap()
         };
 
         assert_eq!(header.verify_checksum(), Ok(()));

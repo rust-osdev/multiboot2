@@ -426,7 +426,7 @@ impl<'a> BootInformation<'a> {
 
 impl fmt::Debug for BootInformation<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut debug = f.debug_struct("Multiboot2BootInformation");
+        let mut debug = f.debug_struct("BootInformation");
         debug
             .field("start_address", &self.start_address())
             .field("end_address", &self.end_address())
@@ -462,6 +462,18 @@ impl fmt::Debug for BootInformation<'_> {
                     })
                     .count()
             })
+            .field("tag_headers", &DebugTagHeaders(self.tags()))
+            .finish()
+    }
+}
+
+/// Formats the on-wire boot information tag sequence without dumping payloads.
+struct DebugTagHeaders<'a>(TagIter<'a>);
+
+impl fmt::Debug for DebugTagHeaders<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list()
+            .entries(self.0.clone().map(|tag| tag.header()))
             .finish()
     }
 }

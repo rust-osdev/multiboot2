@@ -1,6 +1,6 @@
 use multiboot2_header::{
-    Builder, HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTag, MaybeDynSized, MbiTagType,
-    Multiboot2Header, RelocatableHeaderTag, RelocatableHeaderTagPreference,
+    Builder, Header, HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTag, MaybeDynSized,
+    MbiTagType, RelocatableHeaderTag, RelocatableHeaderTagPreference,
 };
 
 /// Small example that creates a Multiboot2 header and parses it afterwards.
@@ -25,6 +25,6 @@ fn main() {
         ))
         .build();
 
-    let header = unsafe { Multiboot2Header::load(header_bytes.as_ptr()) }.unwrap();
+    let header = unsafe { Header::load(header_bytes.as_ptr()) }.unwrap();
     println!("{header:#?}");
 }
