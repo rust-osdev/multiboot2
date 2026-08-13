@@ -276,6 +276,11 @@ mod tests {
                 .expect("must be valid utf8")
         );
         assert!(bi.command_line_tag().is_none());
+
+        let debug = format!("{bi:?}");
+        assert!(debug.contains("tag_headers"));
+        assert!(debug.contains("BootLoaderName"));
+        assert!(debug.contains("End"));
     }
 
     #[test]

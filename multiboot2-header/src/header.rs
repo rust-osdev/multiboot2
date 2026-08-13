@@ -301,8 +301,28 @@ impl Debug for Header<'_> {
             .field("arch", &self.arch())
             .field("length", &self.length())
             .field("checksum", &self.checksum())
-            // TODO better debug impl
-            .field("tags", &"<tags iter>")
+            .field("information_request", &self.information_request_tag())
+            .field("address", &self.address_tag())
+            .field("entry_address", &self.entry_address_tag())
+            .field("entry_address_efi32", &self.entry_address_efi32_tag())
+            .field("entry_address_efi64", &self.entry_address_efi64_tag())
+            .field("console_flags", &self.console_flags_tag())
+            .field("framebuffer", &self.framebuffer_tag())
+            .field("module_align", &self.module_align_tag())
+            .field("efi_boot_services", &self.efi_boot_services_tag())
+            .field("relocatable", &self.relocatable_tag())
+            .field("tag_headers", &DebugTagHeaders(self.iter()))
+            .finish()
+    }
+}
+
+/// Formats the on-wire header tag sequence without dumping tag payloads.
+struct DebugTagHeaders<'a>(TagIter<'a>);
+
+impl Debug for DebugTagHeaders<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.debug_list()
+            .entries(self.0.clone().map(|tag| tag.header()))
             .finish()
     }
 }
@@ -511,9 +531,11 @@ mod tests {
 
         // SAFETY: The test buffer is aligned and contains a valid
         // header layout.
-        let header = unsafe { Header::load(bytes.as_ptr().cast()) };
+        let header = unsafe { Header::load(bytes.as_ptr().cast()) }.unwrap();
 
-        assert!(header.is_ok());
+        let debug = format!("{header:?}");
+        assert!(debug.contains("tag_headers"));
+        assert!(debug.contains("End"));
     }
 
     #[test]

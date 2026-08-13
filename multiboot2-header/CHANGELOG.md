@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Expanded `Header` debug output with parsed tags and tag headers.
 - **Breaking:** Renamed `multiboot2_header::Multiboot2Header` to
   `multiboot2_header::Header`.
 - Standardized bootloader terminology.

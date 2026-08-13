@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Expanded `BootInformation` debug output with tag headers.
 - Standardized bootloader terminology.
 - Corrected README and API documentation.
 
