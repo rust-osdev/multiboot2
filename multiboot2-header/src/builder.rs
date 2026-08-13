@@ -10,7 +10,7 @@ use alloc::boxed::Box;
 use alloc::vec::Vec;
 use multiboot2_common::{DynSizedStructure, MaybeDynSized, new_boxed};
 
-/// Builder for a Multiboot2 header information.
+/// Builder for a Multiboot2 header.
 #[derive(Debug)]
 pub struct Builder {
     arch: HeaderTagISA,
@@ -28,7 +28,7 @@ pub struct Builder {
 }
 
 impl Builder {
-    /// Set the [`RelocatableHeaderTag`] tag.
+    /// Creates a new builder for the specified architecture.
     #[must_use]
     pub const fn new(arch: HeaderTagISA) -> Self {
         Self {

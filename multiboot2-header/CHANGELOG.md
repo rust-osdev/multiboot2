@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Corrected the README example and API documentation.
+
 ## v0.8.0 (2026-06-23)
 
 - Fixed `Multiboot2Header::load` to validate the complete padded tag sequence.
