@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Clarified feature, stability, and memory-safety documentation.
+
 ## v0.4.0 (2026-06-23)
 
 - **Breaking:** `Header` now requires `total_size()` and derives

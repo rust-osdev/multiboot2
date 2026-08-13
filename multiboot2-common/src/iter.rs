@@ -15,7 +15,7 @@ use core::marker::PhantomData;
 ///
 /// This iterator also emits end tags and doesn't treat them separately.
 ///
-/// This type ensures the memory safety guarantees promised by this crates
+/// This type ensures the memory safety guarantees promised by this crate's
 /// documentation.
 ///
 /// [`Tag`]: crate::Tag

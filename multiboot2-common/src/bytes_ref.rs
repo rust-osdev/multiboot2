@@ -7,10 +7,10 @@ use core::ops::Deref;
 /// Wraps a byte slice representing a Multiboot2 structure including an optional
 /// terminating padding, if necessary.
 ///
-/// This type helps that casts to a specific tag from the underlying bytes are
-/// either same-size casts or down-size casts, but never upsize-casts, which are
-/// illegal and UB! Instances of this type guarantee that the memory
-/// requirements promised in the crates description are respected.
+/// This type ensures that casts from the underlying bytes to a specific tag are
+/// either same-size or down-size casts, never invalid up-size casts. Instances
+/// guarantee that the memory requirements promised in the crate description
+/// are respected.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct BytesRef<'a, H: Header> {
