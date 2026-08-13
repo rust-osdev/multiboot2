@@ -49,11 +49,18 @@
 
         .align 8
         .Lmb2_header_tag_module_alignment_start:
-            .word  7       # type  (16bit)
+            .word  6       # type  (16bit)
             .word  0       # flags (16bit)
             .long  .Lmb2_header_tag_module_alignment_end - .Lmb2_header_tag_module_alignment_start # size  (32bit)
-            .long start
         .Lmb2_header_tag_module_alignment_end:
+
+        .align 8
+        .Lmb2_header_tag_entry_address_start:
+            .word  3       # type  (16bit)
+            .word  0       # flags (16bit)
+            .long  .Lmb2_header_tag_entry_address_end - .Lmb2_header_tag_entry_address_start # size  (32bit)
+            .long  start
+        .Lmb2_header_tag_entry_address_end:
         # ------------------------------------------------------------------------------------
 
         # REQUIRED END TAG
