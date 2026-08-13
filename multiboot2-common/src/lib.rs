@@ -1,25 +1,32 @@
 //! Common helpers for the `multiboot2` and `multiboot2-header` crates.
 //!
+//! # Features and `no_std` Compatibility
+//!
+//! This crate is always `no_std`. The `alloc` feature enables heap-allocation
+//! helpers. The default `builder` feature enables `alloc` for consistency with
+//! the two consuming crates. Disable default features for allocator-free
+//! parsing.
+//!
 //! # Value-add
 //!
 //! The main value-add of this crate is to abstract away the parsing and
-//! construction of Multiboot2 structures. This is more complex as it may sound
-//! at first due to the difficulties listed below. Further, functionality for
-//! the iteration of tags are provided.
+//! construction of Multiboot2 structures. This is more complex than it may
+//! sound at first due to the difficulties listed below. It also provides tag
+//! iteration.
 //!
-//! The abstractions provided by this crate serve as the base to work with the
-//! following structures in interaction:
+//! The abstractions provided by this crate serve as the base for the following
+//! related structures:
 //! - multiboot2:
 //!   - boot information
-//!   - boot information header (the fixed sized begin portion of a boot
+//!   - boot information header (the fixed-size beginning of boot
 //!     information)
 //!   - boot information tags
-//!   - boot information tag header (the fixed sized begin portion of a tag)
+//!   - boot information tag header (the fixed-size beginning of a tag)
 //! - multiboot2-header:
-//!   - header
-//!   - header header (the fixed sized begin portion of a header)
+//!   - Multiboot2 header
+//!   - basic header (the fixed-size beginning of a Multiboot2 header)
 //!   - header tags
-//!   - header tag header (the fixed sized begin portion of a tag)
+//!   - header tag header (the fixed-size beginning of a tag)
 //!
 //! # TL;DR: Specific Example
 //!
@@ -40,16 +47,15 @@
 //!
 //! # Design, Solved Problem, and Difficulties along the Way
 //!
-//! Firstly, the design choice to have ABI-compatible rusty types in
+//! The design choice to have ABI-compatible Rust types in
 //! `multiboot2` and `multiboot2-header` mainly influenced the requirements and
-//! difficulties along the way. These obstacles on the other side, influenced
-//! the design. The outcome is what we perceive as the optimal rusty and
-//! convenient solution.
+//! difficulties. These obstacles, in turn, influenced the design. The outcome
+//! is intended to provide a convenient, idiomatic Rust interface.
 //!
 //! ## Architecture Diagrams
 //!
 //! The figures in the [README](https://crates.io/crates/multiboot2-common)
-//! (currently not embeddable in lib.rs unfortunately) provides an overview of
+//! (currently not embeddable in lib.rs unfortunately) provide an overview of
 //! the parsing of Multiboot2 structures and how the definitions from this
 //! crate are used.
 //!
@@ -61,7 +67,7 @@
 //! Multiboot2 structures are a consecutive chunk of bytes in memory. They use
 //! the "header pattern", which means a fixed size and known [`Header`] type
 //! indicates the total size of the structure. This is roughly translated to the
-//! following rusty base type:
+//! following Rust base type:
 //!
 //! ```rust,ignore
 //! #[repr(C, align(8))]
@@ -73,11 +79,11 @@
 //!
 //! Note that these structures can also be nested. So for example, the
 //! Multiboot2 boot information contains Multiboot2 tags, and the Multiboot2
-//! header contains Multiboot2 header tags - both are itself **dynamically
-//! sized** structures. This means, you can know the size (and amount of
-//! elements) **only at runtime!**
+//! header contains Multiboot2 header tags - both are themselves **dynamically
+//! sized** structures. Their sizes and numbers of elements are known only at
+//! runtime.
 //!
-//! A final `[u8]` field in the structs is the most rusty way to model this.
+//! A final `[u8]` field in the structs is the most direct Rust representation.
 //! However, this makes the type a Dynamically Sized Type (DST). To create
 //! references to these types from a byte slice, one needs fat pointers. They
 //! are a language feature currently not constructable with stable Rust.
@@ -89,7 +95,7 @@
 //!
 //! ## Dynamic and Sized Structs in Rust
 //!
-//! Note that we also have structures (tags) in Multiboot2 that looks like this:
+//! Note that some Multiboot2 structures (tags) look like this:
 //!
 //! ```rust,ignore
 //! #[repr(C, align(8))]
@@ -117,9 +123,9 @@
 //!
 //! The overall common abstractions needed to solve the problems mentioned in
 //! this section are also mainly influenced by the fact that the `multiboot2`
-//! and `multiboot2-header` crates use a **zero-copy** design by parsing
-//! the corresponding raw bytes with **ABI-compatible types** owning all their
-//! memory.
+//! and `multiboot2-header` crates use a **zero-copy** design by parsing the
+//! corresponding raw bytes as **ABI-compatible types** that represent all of
+//! their memory.
 //!
 //! Further, by having ABI-compatible types that fully represent the reality, we
 //! can use the same type for parsing **and** for construction, as modelled in
@@ -143,8 +149,8 @@
 //! }
 //! ```
 //!
-//! Hence, the structures can also be build at runtime. This is what we
-//! consider **idiomatic and rusty**.
+//! Hence, the structures can also be built at runtime through the same types
+//! used for parsing.
 //!
 //! ## Creating Fat Pointers with [`ptr_meta`]
 //!
@@ -157,7 +163,7 @@
 //!
 //! To create fat pointers with [`ptr_meta`], each tag needs a `Metadata` type
 //! which is either `usize` (for DSTs) or `()`. A trait is needed to abstract
-//! above sized or unsized types. This is done by [`MaybeDynSized`].
+//! over sized and unsized types. This is done by [`MaybeDynSized`].
 //!
 //! ## Multiboot2 Requirements
 //!
@@ -171,16 +177,16 @@
 //! The required allocation space that Rust uses for types is a multiple of the
 //! alignment. This means that if we cast between byte slices and specific
 //! types, Rust doesn't just see the "trimmed down actual payload" defined by
-//! struct members, but also any necessary, but hidden, padding bytes. If we
-//! don't guarantee the correct is not the case, for example we cast the bytes
-//! from a `&[u8; 15]` to an 8-byte aligned struct, Miri will complain as it
-//! expects `&[u8; 16]`.
+//! struct members, but also any necessary hidden padding bytes. If we do not
+//! account for that padding, for example by casting bytes from a `&[u8; 15]`
+//! to an 8-byte-aligned struct, Miri will report an error because Rust expects
+//! the allocation to cover 16 bytes.
 //!
 //! See <https://doc.rust-lang.org/reference/type-layout.html> for information.
 //!
-//! Further, this also means that we can't cast references to smaller structs
-//! to bigger ones. Also, once we construct a `Box` on the heap and construct
-//! it using the [`new_boxed`] helper, we must ensure that the default
+//! Further, this means that we can't cast references to smaller structs to
+//! larger ones. Once we construct a `Box` using the `new_boxed` helper, we
+//! must also ensure that the default
 //! [`Layout`] for the underlying type equals the one we manually used for the
 //! allocation.
 //!
@@ -191,13 +197,12 @@
 //!
 //! First, we need byte slices which are guaranteed to be aligned and are a
 //! multiple of the alignment. We have [`BytesRef`] for that. With that, we can
-//! create a [`DynSizedStructure`]. This is a rusty type that owns all the bytes
-//! it owns, according to the size reported by its header. Using this type
-//! and with the help of [`MaybeDynSized`], we can call
+//! create a [`DynSizedStructure`]. This type covers exactly the bytes reported
+//! by its header. With the help of [`MaybeDynSized`], we can call
 //! [`DynSizedStructure::cast`] to cast this to arbitrary sized or unsized
 //! struct types fulfilling the corresponding requirements.
 //!
-//! This way, one can create nice rusty structs modeling the structure of the
+//! This way, one can create Rust structs modeling the structure of the
 //! tags, and we only need a single "complicated" type, namely
 //! [`DynSizedStructure`].
 //!
@@ -207,15 +212,17 @@
 //!
 //! # Memory Guarantees and Safety Promises
 //!
-//! For the parsing and construction of Multiboot2 structures, the alignment
-//! and necessary padding bytes as discussed above are guaranteed. When types
-//! are constructed, they return Results with appropriate error types. If
-//! during runtime something goes wrong, for example due to malformed tags,
-//! panics guarantee that no UB will happen.
+//! The parsing and construction APIs preserve the alignment and padding
+//! guarantees discussed above. Parsing APIs report malformed input with
+//! appropriate error types. Construction APIs establish the same invariants
+//! and may panic when their documented preconditions are violated. Neither
+//! malformed input nor a failed invariant may cause undefined behavior.
 //!
-//! # No Public API
+//! # Stability
 //!
-//! Not meant as stable public API for others outside Multiboot2.
+//! This crate primarily supports `multiboot2` and `multiboot2-header`. Its
+//! public API may evolve with their internals and is not intended as an
+//! independent stable abstraction.
 //!
 //! [`Layout`]: core::alloc::Layout
 
@@ -271,7 +278,7 @@ pub const ALIGNMENT: usize = 8;
 /// are fixed and not part of any optional terminating dynamic `[u8]` slice in a
 /// [`DynSizedStructure`].
 ///
-/// The alignment of implementors **must** be the compatible with the demands
+/// The alignment of implementors **must** be compatible with the requirements
 /// for the corresponding structure, which typically is [`ALIGNMENT`].
 pub trait Header: Clone + Sized + PartialEq + Eq + Debug {
     /// Returns the total size of the structure in bytes, including the fixed
@@ -292,19 +299,18 @@ pub trait Header: Clone + Sized + PartialEq + Eq + Debug {
     fn set_size(&mut self, total_size: usize);
 }
 
-/// An C ABI-compatible dynamically sized type with a common sized [`Header`]
+/// A C ABI-compatible dynamically sized type with a common sized [`Header`]
 /// and a dynamic amount of bytes without hidden implicit padding.
 ///
-/// This structures combines a [`Header`] with the logically owned data by
-/// that header according to the reported [`Header::total_size`]. Instances
-/// guarantees that the memory requirements promised in the crates description
-/// are respected.
+/// This structure combines a [`Header`] with the data described by that header
+/// according to [`Header::total_size`]. Instances guarantee that the memory
+/// requirements promised in the crate description are respected.
 ///
 /// This can be a Multiboot2 header tag, information tag, boot information, or
 /// a Multiboot2 header. It is the base for **same-size casts** to these
 /// corresponding structures using [`DynSizedStructure::cast`]. Depending on the
-/// context, the [`Header`] is different (header header, boot information
-/// header, header tag header, or boot information tag header).
+/// context, the [`Header`] is different (basic header, boot information header,
+/// header tag header, or boot information tag header).
 ///
 /// # ABI
 /// This type uses the C ABI. The fixed [`Header`] portion is always there.
@@ -351,7 +357,7 @@ impl<H: Header> DynSizedStructure<H> {
         let payload_len = total_size - header_size;
 
         // At this point we know that the memory slice fulfills the base
-        // assumptions and requirements. Now, we safety can create the fat
+        // assumptions and requirements. We can now safely create the fat
         // pointer.
 
         let dst_size = payload_len;
@@ -408,22 +414,12 @@ impl<H: Header> DynSizedStructure<H> {
     /// mostly semantic-free version to a specific type with fields that have
     /// a clear semantic.
     ///
-    /// The provided `T` of type [`MaybeDynSized`] might be may be sized type
-    /// or DST. This depends on the type. However, the source and the target
-    /// both will have the same actual payload size and the same
-    /// [`size_of_val`].
-    ///
-    /// # Panic
-    /// Panics if base assumptions are violated. For example, the
-    /// `T` of type [`MaybeDynSized`] must allow proper same-size casting to it.
-    ///
-    /// # Safety
-    /// This function is safe due to various sanity checks and the overall
-    /// memory assertions done while constructing this type.
+    /// The provided `T` may be sized or dynamically sized. The source and
+    /// target have the same actual payload size and [`size_of_val`].
     ///
     /// # Panics
-    /// This panics if there is a size mismatch. However, this should never be
-    /// the case if all types follow their documented requirements.
+    /// Panics if `T` cannot represent the same allocation size. This should not
+    /// happen when all types follow their documented requirements.
     pub fn cast<T: MaybeDynSized<Header = H> + ?Sized>(&self) -> &T
     where
         T::Metadata: Default,

@@ -11,15 +11,34 @@ use multiboot2_common::{MaybeDynSized, Tag};
 #[repr(C, align(8))]
 pub struct AddressHeaderTag {
     header: HeaderTagHeader,
-    /// Contains the address corresponding to the beginning of the Multiboot2 header — the physical memory location at which the magic value is supposed to be loaded. This field serves to synchronize the mapping between OS image offsets and physical memory addresses.
-    header_addr: u32,
-    /// Contains the physical address of the beginning of the text segment. The offset in the OS image file at which to start loading is defined by the offset at which the header was found, minus (header_addr - load_addr). load_addr must be less than or equal to header_addr.
+    /// Address corresponding to the beginning of the Multiboot2 header.
     ///
-    /// Special value -1 means that the file must be loaded from its beginning.
+    /// This is the physical memory location at which the magic value is
+    /// supposed to be loaded. It synchronizes the mapping between OS image
+    /// offsets and physical memory addresses.
+    header_addr: u32,
+    /// Physical address of the beginning of the text segment.
+    ///
+    /// The offset in the OS image file at which to start loading is the offset
+    /// at which the header was found, minus `header_addr - load_addr`.
+    /// `load_addr` must be less than or equal to `header_addr`.
+    ///
+    /// The special value -1 means that the file must be loaded from its
+    /// beginning.
     load_addr: u32,
-    /// Contains the physical address of the end of the data segment. (load_end_addr - load_addr) specifies how much data to load. This implies that the text and data segments must be consecutive in the OS image; this is true for existing a.out executable formats. If this field is zero, the boot loader assumes that the text and data segments occupy the whole OS image file.
+    /// Physical address of the end of the data segment.
+    ///
+    /// `load_end_addr - load_addr` specifies how much data to load. This
+    /// implies that the text and data segments must be consecutive in the OS
+    /// image, as they are in existing a.out executable formats. If this field
+    /// is zero, the bootloader assumes that the text and data segments occupy
+    /// the whole OS image file.
     load_end_addr: u32,
-    /// Contains the physical address of the end of the bss segment. The boot loader initializes this area to zero, and reserves the memory it occupies to avoid placing boot modules and other data relevant to the operating system in that area. If this field is zero, the boot loader assumes that no bss segment is present.
+    /// Physical address of the end of the BSS segment.
+    ///
+    /// The bootloader initializes this area to zero and reserves its memory
+    /// to avoid placing boot modules and other operating-system data there. If
+    /// this field is zero, the bootloader assumes that no BSS segment exists.
     bss_end_addr: u32,
 }
 

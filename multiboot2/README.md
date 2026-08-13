@@ -5,12 +5,12 @@
 
 Convenient and safe parsing of Multiboot2 Boot Information (MBI)
 structures and the contained information tags. Usable in `no_std` environments,
-such as a kernel. An optional `builder` feature also allows the construction of
+such as a kernel. The default `builder` feature also allows the construction of
 the corresponding structures.
 
-It follows the Multiboot 2.0 specification
-at https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html and the
-ELF 64 specification at http://www.uclibc.org/docs/elf-64-gen.pdf.
+It follows the [Multiboot 2.0 specification].
+
+[Multiboot 2.0 specification]: https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html
 
 ## Design
 
@@ -20,11 +20,9 @@ structures via convenient constructors on the corresponding types.
 
 ## Features and `no_std` Compatibility
 
-This library is always `no_std` without `alloc`. However, the default `builder`-
-feature requires the `alloc`-crate and an `#[global_allocator]` to be available.
-You need the `builder` only if you want to construct new boot information
-structures at runtime. For parsing, this is not relevant, and you can
-deactivate the default features.
+This library is always `no_std`. The default `builder` feature enables `alloc`;
+using it requires an `#[global_allocator]`. Remove that feature if you do not
+need to construct boot information structures.
 
 ## Background: The Multiboot 2 Information Structure
 

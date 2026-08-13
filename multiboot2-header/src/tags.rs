@@ -61,10 +61,10 @@ impl HeaderTagType {
 #[repr(u16)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HeaderTagFlag {
-    /// Bootloader must provide this tag. If this is not possible, the
-    /// bootloader will fail loading the kernel.
+    /// The bootloader must provide this tag. If this is not possible, the
+    /// bootloader will fail to load the kernel.
     Required = 0,
-    /// Bootloader should provide the tag if possible.
+    /// The bootloader should provide the tag if possible.
     Optional = 1,
 }
 

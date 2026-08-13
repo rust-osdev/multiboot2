@@ -16,6 +16,13 @@ use core::ptr;
 /// by this function using [`Header::set_size`]. However, it must contain all
 /// other relevant metadata or update it in the `set_size` callback.
 ///
+/// # Requirements
+///
+/// `T` must uphold the requirements of [`MaybeDynSized`], in particular a
+/// correct [`MaybeDynSized::BASE_SIZE`] and [`MaybeDynSized::dst_len`]
+/// implementation. These requirements ensure that the allocation made here
+/// matches the layout of `T`.
+///
 /// # Parameters
 /// - `additional_bytes_slices`: Array of byte slices that should be included
 ///   without additional padding in-between. You don't need to add the bytes

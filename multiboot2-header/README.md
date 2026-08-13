@@ -5,7 +5,7 @@
 
 Convenient and safe parsing of Multiboot2 Header structures and the
 contained header tags. Usable in `no_std` environments, such as a
-bootloader. An optional `builder` feature also allows the construction of
+bootloader. The default `builder` feature also allows the construction of
 the corresponding structures.
 
 ## Design
@@ -18,53 +18,55 @@ these structures via convenient constructors for the corresponding types.
 
 What this library is good for:
 
-- construct a Multiboot2 header at runtime (constructing one at build-time with
+- construct a Multiboot2 header at runtime (constructing one at build time with
   macros is not done yet, contributions are welcome!)
-- write a Multiboot2-bootloader that parses a Multiboot2-header
-- understanding Multiboot2 headers better
+- write a Multiboot2 bootloader that parses a Multiboot2 header
+- understand Multiboot2 headers better
 - analyze Multiboot2 headers at runtime
 
 ## Features and `no_std` Compatibility
 
-This library is always `no_std` without `alloc`. However, the default `builder`-
-feature requires the `alloc`-crate and an `#[global_allocator]` to be available.
-You need the `builder` only if you want to construct new headers at runtime.
-For parsing, the feature is not relevant, and you can deactivate it.
+This library is always `no_std`. The default `builder` feature enables `alloc`;
+using it requires an `#[global_allocator]`. Remove that feature if you do not
+need to construct headers.
 
 ```toml
-# without `builder`-feature (and without `alloc`-crate)
+# Without the `builder` feature or the `alloc` crate:
 multiboot2-header = { version = "<latest>", default-features = false }
-# else (requires `alloc`-crate)
+# With the default `builder` feature (requires the `alloc` crate):
 multiboot2-header = "<latest>"
 ```
 
 ## Example 1: Builder + Parse
 
 ```rust
-use multiboot2_header::builder::{InformationRequestHeaderTagBuilder, Multiboot2HeaderBuilder};
-use multiboot2_header::{HeaderTagFlag, HeaderTagISA, MbiTagType, RelocatableHeaderTag, RelocatableHeaderTagPreference, Multiboot2Header};
+use multiboot2_header::{
+    Builder, HeaderTagFlag, HeaderTagISA, InformationRequestHeaderTag,
+    MaybeDynSized, MbiTagType, Multiboot2Header, RelocatableHeaderTag,
+    RelocatableHeaderTagPreference,
+};
 
 /// Small example that creates a Multiboot2 header and parses it afterwards.
 fn main() {
-  // We create a Multiboot2 header during runtime here. A practical example is that your
-  // program gets the header from a file and parses it afterwards.
-  let mb2_hdr_bytes = Multiboot2HeaderBuilder::new(HeaderTagISA::I386)
-    .relocatable_tag(RelocatableHeaderTag::new(
-      HeaderTagFlag::Required,
-      0x1337,
-      0xdeadbeef,
-      4096,
-      RelocatableHeaderTagPreference::None,
-    ))
-    .information_request_tag(
-      InformationRequestHeaderTagBuilder::new(HeaderTagFlag::Required)
-        .add_irs(&[MbiTagType::Cmdline, MbiTagType::BootLoaderName]),
-    )
-    .build();
+    let header_bytes = Builder::new(HeaderTagISA::I386)
+        .relocatable_tag(RelocatableHeaderTag::new(
+            HeaderTagFlag::Required,
+            0x1337,
+            0xdeadbeef,
+            4096,
+            RelocatableHeaderTagPreference::None,
+        ))
+        .information_request_tag(InformationRequestHeaderTag::new(
+            HeaderTagFlag::Required,
+            &[
+                MbiTagType::Cmdline.into(),
+                MbiTagType::BootLoaderName.into(),
+            ],
+        ))
+        .build();
 
-  // Cast bytes in vector to Multiboot2 information structure
-  let mb2_hdr = unsafe { Multiboot2Header::from_addr(mb2_hdr_bytes.as_ptr().cast()) };
-  println!("{:#?}", mb2_hdr);
+    let header = unsafe { Multiboot2Header::load(header_bytes.as_ptr()) }.unwrap();
+    println!("{header:#?}");
 }
 ```
 
@@ -73,7 +75,7 @@ fn main() {
 You can use the builder, construct a Multiboot2 header, write it to a file and
 include it like this:
 
-```
+```rust
 #[used]
 #[unsafe(no_mangle)]
 #[link_section = ".text.multiboot2_header"]

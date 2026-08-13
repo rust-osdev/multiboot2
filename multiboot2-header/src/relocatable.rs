@@ -3,19 +3,17 @@ use core::fmt;
 use core::fmt::{Debug, Formatter};
 use multiboot2_common::{MaybeDynSized, Tag};
 
-/// It contains load address placement suggestion for bootloader.
-///
-/// Bootloader should follow it. ‘0’ means none, ‘1’ means load image at lowest
-/// possible address but not lower than min addr and ‘2’ means load image at
-/// highest possible address but not higher than max addr.
+/// Specifies the bootloader's preferred placement for a relocatable image.
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum RelocatableHeaderTagPreference {
-    /// Let boot loader decide.
+    /// Let the bootloader choose the image location.
     None = 0,
-    /// Locate at lower end of possible address space.
+    /// Load the image at the lowest possible address that is not below
+    /// `min_addr`.
     Low = 1,
-    /// Locate at higher end of possible address space.
+    /// Load the image at the highest possible address that does not end above
+    /// `max_addr`.
     High = 2,
 }
 
@@ -24,9 +22,13 @@ pub enum RelocatableHeaderTagPreference {
 #[repr(C, align(8))]
 pub struct RelocatableHeaderTag {
     header: HeaderTagHeader,
-    /// Lowest possible physical address at which image should be loaded. The bootloader cannot load any part of image below this address
+    /// Lowest physical address at which the image may be loaded.
+    ///
+    /// The bootloader cannot load any part of the image below this address.
     min_addr: u32,
-    /// Highest possible physical address at which loaded image should end. The bootloader cannot load any part of image above this address.
+    /// Highest physical address at which the loaded image may end.
+    ///
+    /// The bootloader cannot load any part of the image above this address.
     max_addr: u32,
     /// Image alignment in memory, e.g. 4096.
     align: u32,

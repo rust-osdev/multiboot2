@@ -1,6 +1,6 @@
 //! Convenient and safe parsing of Multiboot2 Header structures and the
 //! contained header tags. Usable in `no_std` environments, such as a
-//! bootloader. An optional builder feature also allows the construction of
+//! bootloader. The default `builder` feature also allows the construction of
 //! the corresponding structures.
 //!
 //! ## Design
@@ -9,7 +9,13 @@
 //! This enables a zero-copying parsing design while also enabling the creation
 //! of these structures via convenient constructors on the corresponding types.
 //!
-//! # Example: Parsing a Header
+//! ## Features and `no_std` Compatibility
+//!
+//! This library is always `no_std`. The default `builder` feature enables
+//! `alloc`; using it requires an `#[global_allocator]`. Remove that feature if
+//! you do not need to construct headers.
+//!
+//! ## Example: Parsing a Header
 //!
 //! ```no_run
 //! use multiboot2_header::Multiboot2Header;
@@ -51,10 +57,13 @@ extern crate alloc;
 #[cfg(test)]
 extern crate std;
 
-/// Iterator over the tags of a Multiboot2 boot information.
+/// Iterator over the tags of a Multiboot2 header.
 pub type TagIter<'a> = multiboot2_common::TagIter<'a, HeaderTagHeader>;
 
-/// A generic version of all boot information tags.
+/// Generic dynamically sized representation of a Multiboot2 header tag.
+///
+/// This represents an entire header tag, including its variable payload, not
+/// the fixed-size [`HeaderTagHeader`] prefix.
 #[cfg(test)]
 pub type GenericHeaderTag = multiboot2_common::DynSizedStructure<HeaderTagHeader>;
 

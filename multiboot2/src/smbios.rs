@@ -34,7 +34,7 @@ impl SmbiosTag {
         self.major
     }
 
-    /// Returns the major number.
+    /// Returns the minor number.
     #[must_use]
     pub const fn minor(&self) -> u8 {
         self.minor

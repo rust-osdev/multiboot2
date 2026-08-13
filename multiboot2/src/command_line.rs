@@ -37,8 +37,8 @@ impl CommandLineTag {
     /// Reads the command line of the kernel as Rust string slice without
     /// the null-byte.
     ///
-    /// For example, this returns `"console=ttyS0"`.if the GRUB config
-    /// contains  `"multiboot2 /mykernel console=ttyS0"`.
+    /// For example, this returns `"console=ttyS0"` if the GRUB config contains
+    /// `"multiboot2 /mykernel console=ttyS0"`.
     ///
     /// If the function returns `Err` then perhaps the memory is invalid.
     ///

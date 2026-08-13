@@ -20,7 +20,7 @@ use {alloc::boxed::Box, core::slice, multiboot2_common::new_boxed};
 /// by kernel, mbi, segments and modules. Kernel must take care not to
 /// overwrite these regions.
 ///
-/// This tag may not be provided by some boot loaders on EFI platforms if EFI
+/// This tag may not be provided by some bootloaders on EFI platforms if EFI
 /// boot services are enabled and available for the loaded image (The EFI boot
 /// services tag may exist in the Multiboot2 boot information structure).
 #[derive(ptr_meta::Pointee, Debug, PartialEq, Eq)]
@@ -251,8 +251,8 @@ impl PartialEq<MemoryAreaTypeId> for MemoryAreaType {
 /// upper memory: In Real Mode (modeled after the 8086), only the first 1MB of
 /// memory is accessible. Typically, the region between 640KB and 1MB is not
 /// freely usable, because it is used for memory-mapped IO, for instance. The
-/// term “lower memory” refers to those first 640KB of memory that are freely
-/// usable for an application in Real Mode. “Upper memory” then refers to the
+/// term "lower memory" refers to those first 640KB of memory that are freely
+/// usable for an application in Real Mode. "Upper memory" then refers to the
 /// next freely usable chunk of memory, starting at 1MB up to about 10MB, in
 /// practice. This is the memory an application running on a 286 (which had a
 /// 24-bit address bus) could use, historically.

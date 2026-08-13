@@ -88,8 +88,7 @@ impl ApmTag {
         self.flags
     }
 
-    /// Indicates the length, in bytes, of the data segment (`dseg`) used by
-    /// the APM BIOS
+    /// Indicates the length, in bytes, of the 32-bit code segment (`cseg`).
     #[must_use]
     pub const fn cseg_len(&self) -> u16 {
         self.cseg_len

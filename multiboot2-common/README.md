@@ -5,6 +5,12 @@
 
 Common helpers for the `multiboot2` and `multiboot2-header` crates.
 
+## Features and `no_std` Compatibility
+
+This crate is always `no_std`. The `alloc` feature enables heap-allocation
+helpers. The default `builder` feature enables `alloc` for consistency with the
+two consuming crates. Disable default features for allocator-free parsing.
+
 ## Architecture Diagrams
 
 The following figures, not displayable in `lib.rs` / on `docs.rs` unfortunately,
@@ -16,8 +22,8 @@ have a common header and a possible dynamic size, depending on the header.
 
 ![Overview Multiboot2 structures](./overview-multiboot2-structures.drawio.png "Overview of Multiboot2 structures and their memory properties")
 
-In the next figure, you see how the types from `multiboot2-common` are used
-to parse a raw byte slice as the corresponding Multiboot2 structure a safe
+In the next figure, you see how the types from `multiboot2-common` are used to
+parse a raw byte slice as the corresponding Multiboot2 structure in a safe
 manner. The `BytesRef` wrapper ensures basic memory guarantees for the
 underlying `&[u8]` slice, while `DynSizedStructure` can then be used to
 safely cast to the target type.
@@ -26,9 +32,8 @@ safely cast to the target type.
 
 The next figure is like the previous figure, but shows a more specific parsing
 flow by using example types of the `multiboot2` crate. Specifically, it shows
-how the header structs for each multiboot2 structure, each implementing
-the `Header` trait, are utilized as generic types to get the right size
-information of the final type tag type.
+how the header structs for each Multiboot2 structure implement the `Header`
+trait and provide the size information needed for the final tag type.
 
 Green shows the raw memory, purple boxes refer to logic in `multiboot2-common`,
 and red components show structs from the `multiboot2` crate.
@@ -36,13 +41,19 @@ and red components show structs from the `multiboot2` crate.
 ![Specific parsing flow overview](./parsing-flow-specific.drawio.png "Specific parsing flow overview: From raw bytes to multiboot2 structures")
 
 The last complex figure shows all traits and structs from `multiboot2-common`,
-their internal relation, and how consumers (`multiboot2` and
+their relationships, and how consumers (`multiboot2` and
 `multiboot2-header`) consume them. As this figure is quite complex, we recommend
 to first study the inner box (`multiboot2-common`) and then study how types from
 `multiboot2` (orange) and `multiboot2-header` (green) interface with
 `multiboot2-common`.
 
 ![Architecture overview](./architecture.drawio.png "Architecture overview")
+
+## Stability
+
+This crate primarily supports `multiboot2` and `multiboot2-header`. Its public
+API may evolve with their internals and is not intended as an independent
+stable abstraction.
 
 ## MSRV
 

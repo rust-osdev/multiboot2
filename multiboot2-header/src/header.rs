@@ -13,17 +13,17 @@ use thiserror::Error;
 
 /// Magic value for a [`Multiboot2Header`], as defined by the spec.
 pub const MAGIC: u32 = 0xe85250d6;
-/// Range from the beginning of an image in that bootloaders will search for a
+/// Range from the beginning of an image in which bootloaders will search for a
 /// multiboot2 header.
 pub const HEADER_SEARCH_LIMIT: usize = 32768;
 
 /// Wrapper type around a pointer to the Multiboot2 header.
 ///
 /// The Multiboot2 header is the [`Multiboot2BasicHeader`] followed
-/// by all tags (see [`crate::tags::HeaderTagType`]).
+/// by all tags (see [`HeaderTagType`]).
 /// Use this if you get a pointer to the header and just want
 /// to parse it. If you want to construct the type by yourself,
-/// please look at `HeaderBuilder` (requires the `builder` feature).
+/// use `Builder` (requires the `builder` feature).
 #[repr(transparent)]
 #[derive(PartialEq, Eq)]
 pub struct Multiboot2Header<'a>(&'a DynSizedStructure<Multiboot2BasicHeader>);
@@ -92,7 +92,7 @@ impl<'a> Multiboot2Header<'a> {
     /// On success, it returns the parsed header and an index into the original
     /// buffer pointing to where the header starts.
     ///
-    /// # Parameter
+    /// # Parameters
     /// - `buffer`: [64-bit aligned](ALIGNMENT) buffer describing the first
     ///   [`HEADER_SEARCH_LIMIT`] bytes of a potential Multiboot2 kernel image.
     pub fn find_header(buffer: &[u8]) -> Result<(Self, usize /* index in buffer */), LoadError> {

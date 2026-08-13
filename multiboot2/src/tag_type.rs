@@ -50,19 +50,19 @@ pub enum TagType {
     /// Tag `3`: Additional Multiboot modules, which are BLOBs provided in
     /// memory. For example an initial ram disk with essential drivers.
     Module,
-    /// Tag `4`: ‘mem_lower’ and ‘mem_upper’ indicate the amount of lower and
+    /// Tag `4`: `mem_lower` and `mem_upper` indicate the amount of lower and
     /// upper memory, respectively, in kilobytes. Lower memory starts at
     /// address 0, and upper memory starts at address 1 megabyte. The maximum
     /// possible value for lower memory is 640 kilobytes. The value returned
     /// for upper memory is maximally the address of the first upper memory
     /// hole minus 1 megabyte. It is not guaranteed to be this value.
     ///
-    /// This tag may not be provided by some boot loaders on EFI platforms if
+    /// This tag may not be provided by some bootloaders on EFI platforms if
     /// EFI boot services are enabled and available for the loaded image (EFI
     /// boot services not terminated tag exists in Multiboot2 information
     /// structure).
     BasicMeminfo,
-    /// Tag `5`: This tag indicates which BIOS disk device the boot loader
+    /// Tag `5`: This tag indicates which BIOS disk device the bootloader
     /// loaded the OS image from. If the OS image was not loaded from a BIOS
     /// disk, then this tag must not be present. The operating system may use
     /// this field as a hint for determining its own root device, but is not
@@ -73,7 +73,7 @@ pub enum TagType {
     /// includes the regions occupied by kernel, mbi, segments and modules.
     /// Kernel must take care not to overwrite these regions.
     ///
-    /// This tag may not be provided by some boot loaders on EFI platforms if
+    /// This tag may not be provided by some bootloaders on EFI platforms if
     /// EFI boot services are enabled and available for the loaded image (EFI
     /// boot services not terminated tag exists in Multiboot2 information
     /// structure).
@@ -98,7 +98,7 @@ pub enum TagType {
     Apm,
     /// Tag `11`: This tag contains pointer to i386 EFI system table.
     Efi32,
-    /// Tag `21`: This tag contains pointer to amd64 EFI system table.
+    /// Tag `12`: This tag contains pointer to amd64 EFI system table.
     Efi64,
     /// Tag `13`: This tag contains a copy of SMBIOS tables as well as their
     /// version.
@@ -114,7 +114,7 @@ pub enum TagType {
     /// per card.
     Network,
     /// Tag `17`: This tag contains EFI memory map as per EFI specification.
-    /// This tag may not be provided by some boot loaders on EFI platforms if
+    /// This tag may not be provided by some bootloaders on EFI platforms if
     /// EFI boot services are enabled and available for the loaded image (EFI
     /// boot services not terminated tag exists in Multiboot2 information
     /// structure).
@@ -122,10 +122,10 @@ pub enum TagType {
     /// Tag `18`: This tag indicates ExitBootServices wasn't called.
     EfiBs,
     /// Tag `19`: This tag contains pointer to EFI i386 image handle. Usually
-    /// it is boot loader image handle.
+    /// it is bootloader image handle.
     Efi32Ih,
     /// Tag `20`: This tag contains pointer to EFI amd64 image handle. Usually
-    /// it is boot loader image handle.
+    /// it is bootloader image handle.
     Efi64Ih,
     /// Tag `21`: This tag contains image load base physical address. The spec
     /// tells *"It is provided only if image has relocatable header tag."* but
@@ -145,8 +145,8 @@ impl TagType {
     }
 }
 
-/// Relevant `From`-implementations for conversions between `u32`, [´TagTypeId´]
-/// and [´TagType´].
+/// Relevant `From` implementations for conversions between `u32`,
+/// [`TagTypeId`], and [`TagType`].
 mod primitive_conversion_impls {
     use super::*;
     use core::mem::transmute;
@@ -225,7 +225,8 @@ mod primitive_conversion_impls {
     }
 }
 
-/// `From`-implementations for conversions between [´TagTypeId´] and [´TagType´].
+/// `From` implementations for conversions between [`TagTypeId`] and
+/// [`TagType`].
 mod intermediate_conversion_impls {
     use super::*;
 
@@ -244,9 +245,9 @@ mod intermediate_conversion_impls {
     }
 }
 
-/// Implements `partial_eq` between [´TagTypeId´] and [´TagType´]. Two values
-/// are equal if their `u32` representation is equal. Additionally, `u32` can
-/// be compared with [´TagTypeId´].
+/// Implements `PartialEq` between [`TagTypeId`] and [`TagType`]. Two values are
+/// equal if their `u32` representation is equal. Additionally, `u32` can be
+/// compared with [`TagTypeId`].
 mod partial_eq_impls {
     use super::*;
 

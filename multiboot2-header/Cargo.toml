@@ -2,8 +2,8 @@
 name = "multiboot2-header"
 description = """
 Convenient and safe parsing of Multiboot2 Header structures and the
-contained header tags. Usable in no_std environments, such as a
-bootloader. An optional builder feature also allows the construction of
+contained header tags. Usable in `no_std` environments, such as a
+bootloader. The default `builder` feature also allows the construction of
 the corresponding structures.
 """
 version = "0.8.0"

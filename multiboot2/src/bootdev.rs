@@ -3,7 +3,7 @@
 use crate::{TagHeader, TagType};
 use multiboot2_common::{MaybeDynSized, Tag};
 
-/// The end tag ends the information struct.
+/// Identifies the BIOS device and partition that supplied the OS image.
 #[derive(Debug)]
 #[repr(C, align(8))]
 pub struct BootdevTag {
