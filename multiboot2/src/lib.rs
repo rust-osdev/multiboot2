@@ -126,7 +126,7 @@ pub use vbe_info::{
     VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
 };
 
-/// Magic number that a Multiboot2-compliant boot loader will use to identify
+/// Magic number that a Multiboot2-compliant bootloader will use to identify
 /// the handoff. The location depends on the architecture and the targeted
 /// machine state.
 pub const MAGIC: u32 = 0x36d76289;
@@ -249,10 +249,10 @@ mod tests {
         let bytes = AlignedBytes([
             32, 0, 0, 0, // total_size
             0, 0, 0, 0, // reserved
-            2, 0, 0, 0, // boot loader name tag type
-            13, 0, 0, 0, // boot loader name tag size
-            110, 97, 109, 101, // boot loader name 'name'
-            0, 0, 0, 0, // boot loader name null + padding
+            2, 0, 0, 0, // bootloader name tag type
+            13, 0, 0, 0, // bootloader name tag size
+            110, 97, 109, 101, // bootloader name 'name'
+            0, 0, 0, 0, // bootloader name null + padding
             0, 0, 0, 0, // end tag type
             8, 0, 0, 0, // end tag size
         ]);
@@ -595,14 +595,14 @@ mod tests {
             9, 0, 0, 0, // boot command tag size
             0, 0, 0, 0, // boot command null + padding
             0, 0, 0, 0, // boot command padding
-            2, 0, 0, 0, // boot loader name tag type
-            26, 0, 0, 0, // boot loader name tag size
-            71, 82, 85, 66, // boot loader name
-            32, 50, 46, 48, // boot loader name
-            50, 126, 98, 101, // boot loader name
-            116, 97, 51, 45, // boot loader name
-            53, 0, 0, 0, // boot loader name null + padding
-            0, 0, 0, 0, // boot loader name padding
+            2, 0, 0, 0, // bootloader name tag type
+            26, 0, 0, 0, // bootloader name tag size
+            71, 82, 85, 66, // bootloader name
+            32, 50, 46, 48, // bootloader name
+            50, 126, 98, 101, // bootloader name
+            116, 97, 51, 45, // bootloader name
+            53, 0, 0, 0, // bootloader name null + padding
+            0, 0, 0, 0, // bootloader name padding
             10, 0, 0, 0, // APM tag type
             28, 0, 0, 0, // APM tag size
             2, 1, 0, 240, // APM version, cseg

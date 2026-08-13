@@ -20,7 +20,7 @@ What this library is good for:
 
 - construct a Multiboot2 header at runtime (constructing one at build time with
   macros is not done yet, contributions are welcome!)
-- write a Multiboot2 boot loader that parses a Multiboot2 header
+- write a Multiboot2 bootloader that parses a Multiboot2 header
 - understand Multiboot2 headers better
 - analyze Multiboot2 headers at runtime
 

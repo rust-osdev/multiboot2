@@ -8,7 +8,7 @@ use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
 use {alloc::boxed::Box, core::slice};
 
-/// Specifies what specific tag types the bootloader should provide
+/// Specifies which tag types the bootloader should provide
 /// inside the mbi.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, ptr_meta::Pointee)]
 #[repr(C, align(8))]

@@ -13,7 +13,7 @@ use thiserror::Error;
 
 /// Magic value for a [`Multiboot2Header`], as defined by the spec.
 pub const MAGIC: u32 = 0xe85250d6;
-/// Range from the beginning of an image in that bootloaders will search for a
+/// Range from the beginning of an image in which bootloaders will search for a
 /// multiboot2 header.
 pub const HEADER_SEARCH_LIMIT: usize = 32768;
 

@@ -86,7 +86,7 @@ impl Tag for EFISdt64Tag {
     const ID: TagType = TagType::Efi64;
 }
 
-/// Tag that contains the pointer to the boot loader's UEFI image handle
+/// Tag that contains the pointer to the bootloader's UEFI image handle
 /// (32-bit).
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, align(8))]
@@ -126,7 +126,7 @@ impl Tag for EFIImageHandle32Tag {
     const ID: TagType = TagType::Efi32Ih;
 }
 
-/// Tag that contains the pointer to the boot loader's UEFI image handle
+/// Tag that contains the pointer to the bootloader's UEFI image handle
 /// (64-bit).
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, align(8))]

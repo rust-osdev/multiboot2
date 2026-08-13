@@ -31,14 +31,14 @@ pub struct AddressHeaderTag {
     /// `load_end_addr - load_addr` specifies how much data to load. This
     /// implies that the text and data segments must be consecutive in the OS
     /// image, as they are in existing a.out executable formats. If this field
-    /// is zero, the boot loader assumes that the text and data segments occupy
+    /// is zero, the bootloader assumes that the text and data segments occupy
     /// the whole OS image file.
     load_end_addr: u32,
     /// Physical address of the end of the BSS segment.
     ///
-    /// The boot loader initializes this area to zero and reserves its memory
+    /// The bootloader initializes this area to zero and reserves its memory
     /// to avoid placing boot modules and other operating-system data there. If
-    /// this field is zero, the boot loader assumes that no BSS segment exists.
+    /// this field is zero, the bootloader assumes that no BSS segment exists.
     bss_end_addr: u32,
 }
 

@@ -20,7 +20,7 @@ use {alloc::boxed::Box, core::slice, multiboot2_common::new_boxed};
 /// by kernel, mbi, segments and modules. Kernel must take care not to
 /// overwrite these regions.
 ///
-/// This tag may not be provided by some boot loaders on EFI platforms if EFI
+/// This tag may not be provided by some bootloaders on EFI platforms if EFI
 /// boot services are enabled and available for the loaded image (The EFI boot
 /// services tag may exist in the Multiboot2 boot information structure).
 #[derive(ptr_meta::Pointee, Debug, PartialEq, Eq)]

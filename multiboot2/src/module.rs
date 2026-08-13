@@ -42,7 +42,7 @@ impl ModuleTag {
     /// Reads the command line of the boot module as Rust string slice without
     /// the null-byte.
     /// This is a null-terminated UTF-8 string. If this returns `Err`, the
-    /// memory may be invalid or the boot loader may not follow the
+    /// memory may be invalid or the bootloader may not follow the
     /// specification.
     ///
     /// For example, this returns `"--test cmdline-option"` if the GRUB config

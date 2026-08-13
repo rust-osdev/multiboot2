@@ -3,7 +3,7 @@ use core::fmt;
 use core::fmt::{Debug, Formatter};
 use multiboot2_common::{MaybeDynSized, Tag};
 
-/// Specifies the physical address to which the boot loader should jump in
+/// Specifies the physical address to which the bootloader should jump in
 /// order to start running the operating system. Not needed for ELF files.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, align(8))]

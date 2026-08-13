@@ -42,7 +42,7 @@ impl BootLoaderNameTag {
         self.header.size as usize
     }
 
-    /// Reads the name of the bootloader that is booting the kernel as Rust
+    /// Reads the name of the bootloader that is booting the kernel as a Rust
     /// string slice without the null-byte.
     ///
     /// For example, this returns `"GRUB 2.02~beta3-5"`.

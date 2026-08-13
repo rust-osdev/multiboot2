@@ -36,7 +36,7 @@ pub fn load_module(mut modules: multiboot::information::ModuleIter) -> ! {
     }
 
     // Currently, the MBI is not enriched with "real" information as requested.
-    // Subject here is not to write a feature-complete bootloader but to test
+    // The goal is not to write a feature-complete bootloader but to test
     // that the basic data structures are usable.
 
     // build MBI

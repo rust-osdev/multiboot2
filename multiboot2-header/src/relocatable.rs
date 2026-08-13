@@ -3,11 +3,11 @@ use core::fmt;
 use core::fmt::{Debug, Formatter};
 use multiboot2_common::{MaybeDynSized, Tag};
 
-/// Specifies the boot loader's preferred placement for a relocatable image.
+/// Specifies the bootloader's preferred placement for a relocatable image.
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum RelocatableHeaderTagPreference {
-    /// Let the boot loader choose the image location.
+    /// Let the bootloader choose the image location.
     None = 0,
     /// Load the image at the lowest possible address that is not below
     /// `min_addr`.
@@ -24,11 +24,11 @@ pub struct RelocatableHeaderTag {
     header: HeaderTagHeader,
     /// Lowest physical address at which the image may be loaded.
     ///
-    /// The boot loader cannot load any part of the image below this address.
+    /// The bootloader cannot load any part of the image below this address.
     min_addr: u32,
     /// Highest physical address at which the loaded image may end.
     ///
-    /// The boot loader cannot load any part of the image above this address.
+    /// The bootloader cannot load any part of the image above this address.
     max_addr: u32,
     /// Image alignment in memory, e.g. 4096.
     align: u32,

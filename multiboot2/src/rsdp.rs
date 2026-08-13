@@ -3,13 +3,14 @@
 //! Module for RSDP/ACPI. RSDP (Root System Description Pointer) is a data structure used in the
 //! ACPI programming interface.
 //!
-//! The tag that the bootloader passes will depend on the ACPI version the hardware supports.
+//! The tag that the bootloader passes depends on the ACPI version the hardware
+//! supports.
 //! For ACPI Version 1.0, a `RsdpV1Tag` will be provided, which can be accessed from
 //! `BootInformation` using the `rsdp_v1_tag` function. For subsequent versions of ACPI, a
 //! `RsdpV2Tag` will be provided, which can be accessed with `rsdp_v2_tag`.
 //!
-//! Even though the bootloader should give the address of the real RSDP/XSDT, the checksum and
-//! signature should be manually verified.
+//! Even though the bootloader should give the address of the real RSDP/XSDT,
+//! the checksum and signature should be manually verified.
 //!
 
 use crate::TagType;
