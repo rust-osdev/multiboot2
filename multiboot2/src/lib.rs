@@ -1230,7 +1230,7 @@ mod tests {
 
     /// Example for a custom tag.
     #[test]
-    fn get_custom_tag_from_mbi() {
+    fn get_repeated_custom_tags_from_mbi() {
         #[repr(C, align(8))]
         struct CustomTag {
             tag: TagTypeId,
@@ -1250,9 +1250,9 @@ mod tests {
             const ID: TagType = TagType::Custom(0x1337);
         }
 
-        // Raw bytes of a MBI that only contains the custom tag.
+        // Raw bytes of an MBI that contains the custom tag twice.
         let bytes = AlignedBytes([
-            32,
+            48,
             0,
             0,
             0, // end: total size
@@ -1275,7 +1275,23 @@ mod tests {
             0,
             0,
             0,
-            0, // 8 byte padding
+            0, // padding
+            CustomTag::ID.val().to_le_bytes()[0],
+            CustomTag::ID.val().to_le_bytes()[1],
+            CustomTag::ID.val().to_le_bytes()[2],
+            CustomTag::ID.val().to_le_bytes()[3], // end: second custom tag id
+            12,
+            0,
+            0,
+            0, // end: tag size
+            84,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0, // padding
             0,
             0,
             0,
@@ -1297,6 +1313,14 @@ mod tests {
 
         let tag = bi.get_tag::<CustomTag>().unwrap();
         assert_eq!(tag.foo, 42);
+
+        let tags = bi.get_tags::<CustomTag>();
+        let mut cloned_tags = tags.clone();
+        assert_eq!(cloned_tags.next().map(|tag| tag.foo), Some(42));
+        assert_eq!(cloned_tags.next().map(|tag| tag.foo), Some(84));
+        assert_eq!(cloned_tags.next().map(|tag| tag.foo), None);
+        assert_eq!(tags.count(), 2);
+        assert_eq!(bi.get_tags::<NetworkTag>().count(), 0);
     }
 
     /// Example for a custom DST tag.
