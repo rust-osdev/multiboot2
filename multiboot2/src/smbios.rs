@@ -66,7 +66,7 @@ impl Tag for SmbiosTag {
 
 impl Debug for SmbiosTag {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("BootLoaderNameTag")
+        f.debug_struct("SmbiosTag")
             .field("typ", &self.header.typ)
             .field("size", &self.header.size)
             .field("major", &self.major)

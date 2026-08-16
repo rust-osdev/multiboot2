@@ -303,31 +303,49 @@ impl<'a> BootInformation<'a> {
         module::module_iter(self.tags())
     }
 
-    /// Search for the [`NetworkTag`].
+    /// Returns an iterator over all [`NetworkTag`]s.
+    ///
+    /// The Multiboot2 specification permits one network tag per network card.
+    pub fn network_tags(&self) -> impl Iterator<Item = &NetworkTag> + Clone {
+        self.get_tags::<NetworkTag>()
+    }
+
+    /// Returns the first [`NetworkTag`], if present.
+    ///
+    /// Use [`Self::network_tags`] to access the tags for all network cards.
     #[must_use]
+    #[deprecated = "use `network_tags()` to access all network tags"]
     pub fn network_tag(&self) -> Option<&NetworkTag> {
         self.get_tag::<NetworkTag>()
     }
 
-    /// Search for the [`RsdpV1Tag`].
+    /// Returns the first [`RsdpV1Tag`], if present.
     #[must_use]
     pub fn rsdp_v1_tag(&self) -> Option<&RsdpV1Tag> {
         self.get_tag::<RsdpV1Tag>()
     }
 
-    /// Search for the [`RsdpV2Tag`].
+    /// Returns the first [`RsdpV2Tag`], if present.
     #[must_use]
     pub fn rsdp_v2_tag(&self) -> Option<&RsdpV2Tag> {
         self.get_tag::<RsdpV2Tag>()
     }
 
-    /// Search for the [`SmbiosTag`].
+    /// Returns an iterator over all [`SmbiosTag`]s.
+    pub fn smbios_tags(&self) -> impl Iterator<Item = &SmbiosTag> + Clone {
+        self.get_tags::<SmbiosTag>()
+    }
+
+    /// Returns the first [`SmbiosTag`], if present.
+    ///
+    /// Use [`Self::smbios_tags`] to access all SMBIOS tags.
     #[must_use]
+    #[deprecated = "use `smbios_tags()` to access all SMBIOS tags"]
     pub fn smbios_tag(&self) -> Option<&SmbiosTag> {
         self.get_tag::<SmbiosTag>()
     }
 
-    /// Search for the [`VBEInfoTag`].
+    /// Returns the first [`VBEInfoTag`], if present.
     #[must_use]
     pub fn vbe_info_tag(&self) -> Option<&VBEInfoTag> {
         self.get_tag::<VBEInfoTag>()
@@ -475,10 +493,10 @@ impl fmt::Debug for BootInformation<'_> {
             .field("load_base_addr", &self.load_base_addr_tag())
             .field("memory_map", &self.memory_map_tag())
             .field("modules", &self.module_tags())
-            .field("network", &self.network_tag())
+            .field("network", &DebugTags(self.network_tags()))
             .field("rsdp_v1", &self.rsdp_v1_tag())
             .field("rsdp_v2", &self.rsdp_v2_tag())
-            .field("smbios", &self.smbios_tag())
+            .field("smbios", &DebugTags(self.smbios_tags()))
             .field("vbe_info", &self.vbe_info_tag())
             // computed fields
             .field("custom_tags_count", &{
@@ -491,6 +509,19 @@ impl fmt::Debug for BootInformation<'_> {
             })
             .field("tag_headers", &DebugTagHeaders(self.tags()))
             .finish()
+    }
+}
+
+/// Formats a cloneable iterator without consuming the original value.
+struct DebugTags<I>(I);
+
+impl<I> fmt::Debug for DebugTags<I>
+where
+    I: Iterator + Clone,
+    I::Item: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.0.clone()).finish()
     }
 }
 

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Added `BootInformation::get_tags` for typed iteration over all occurrences of
+  standard and custom tags.
+- Added plural network and SMBIOS tag accessors; deprecated their singular,
+  first-occurrence accessors.
+- Added `Builder::add_network` for multiple network cards and fixed
+  `Builder::network` tags not being included in the built boot information.
+
 ## v0.25.1 (2026-08-13)
 
 - Expanded `BootInformation` debug output with tag headers.

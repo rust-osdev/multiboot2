@@ -31,7 +31,7 @@ pub struct Builder {
     smbios: Vec<Box<SmbiosTag>>,
     rsdpv1: Option<RsdpV1Tag>,
     rsdpv2: Option<RsdpV2Tag>,
-    network: Option<Box<NetworkTag>>,
+    network: Vec<Box<NetworkTag>>,
     efi_mmap: Option<Box<EFIMemoryMapTag>>,
     efi_bs: Option<EFIBootServicesNotExitedTag>,
     efi32_ih: Option<EFIImageHandle32Tag>,
@@ -67,7 +67,7 @@ impl Builder {
             rsdpv1: None,
             rsdpv2: None,
             efi_mmap: None,
-            network: None,
+            network: alloc::vec![],
             efi_bs: None,
             efi32_ih: None,
             efi64_ih: None,
@@ -188,10 +188,23 @@ impl Builder {
         self
     }
 
-    /// Sets the [`NetworkTag`] tag.
+    /// Sets the sole [`NetworkTag`] tag.
+    ///
+    /// This replaces any network tags previously added with
+    /// [`Self::add_network`].
     #[must_use]
     pub fn network(mut self, network: Box<NetworkTag>) -> Self {
-        self.network = Some(network);
+        self.network.clear();
+        self.network.push(network);
+        self
+    }
+
+    /// Adds a [`NetworkTag`] tag.
+    ///
+    /// The Multiboot2 specification permits one network tag per network card.
+    #[must_use]
+    pub fn add_network(mut self, network: Box<NetworkTag>) -> Self {
+        self.network.push(network);
         self
     }
 
@@ -285,6 +298,9 @@ impl Builder {
         if let Some(tag) = self.rsdpv2.as_ref() {
             byte_refs.push(tag.as_bytes().as_ref());
         }
+        for tag in &self.network {
+            byte_refs.push(tag.as_bytes().as_ref());
+        }
         if let Some(tag) = self.efi_mmap.as_ref() {
             byte_refs.push(tag.as_bytes().as_ref());
         }
@@ -375,10 +391,56 @@ mod tests {
         // SAFETY: The builder constructs a complete, aligned MBI with
         // a valid end tag.
         let info = unsafe { BootInformation::load(structure.as_bytes().as_ptr().cast()) }.unwrap();
+        assert_eq!(info.get_tags::<ModuleTag>().count(), 2);
+        assert_eq!(
+            info.smbios_tags()
+                .map(|tag| (tag.major(), tag.minor()))
+                .collect::<Vec<_>>(),
+            [(0, 0), (1, 1)]
+        );
+        assert_eq!(info.network_tags().count(), 1);
         for tag in info.tags() {
             // Mainly a test for Miri.
             dbg!(tag.header(), tag.payload().len());
         }
-        eprintln!("{info:#x?}")
+        let debug = std::format!("{info:#x?}");
+        assert_eq!(debug.matches("SmbiosTag").count(), 2);
+        assert_eq!(debug.matches("NetworkTag").count(), 1);
+        eprintln!("{debug}")
+    }
+
+    #[test]
+    fn build_multiple_network_tags_and_reset_them() {
+        let structure = Builder::new()
+            .add_network(NetworkTag::new(&[1]))
+            .add_network(NetworkTag::new(&[2, 3]))
+            .build();
+        // SAFETY: The builder constructs a complete, aligned MBI with
+        // a valid end tag.
+        let info = unsafe { BootInformation::load(structure.as_bytes().as_ptr().cast()) }.unwrap();
+        let tags = info.network_tags();
+        assert_eq!(
+            tags.clone()
+                .map(|tag| tag.header().size)
+                .collect::<Vec<_>>(),
+            [9, 10]
+        );
+        assert_eq!(tags.count(), 2);
+        assert_eq!(std::format!("{info:?}").matches("NetworkTag").count(), 2);
+
+        let structure = Builder::new()
+            .add_network(NetworkTag::new(&[1]))
+            .add_network(NetworkTag::new(&[2, 3]))
+            .network(NetworkTag::new(&[4, 5, 6]))
+            .build();
+        // SAFETY: The builder constructs a complete, aligned MBI with
+        // a valid end tag.
+        let info = unsafe { BootInformation::load(structure.as_bytes().as_ptr().cast()) }.unwrap();
+        assert_eq!(
+            info.network_tags()
+                .map(|tag| tag.header().size)
+                .collect::<Vec<_>>(),
+            [11]
+        );
     }
 }
