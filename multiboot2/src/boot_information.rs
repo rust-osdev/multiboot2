@@ -162,43 +162,43 @@ impl<'a> BootInformation<'a> {
     // ######################################################
     // ### BEGIN OF TAG GETTERS (in alphabetical order)
 
-    /// Search for the [`ApmTag`].
+    /// Returns the first [`ApmTag`], if present.
     #[must_use]
     pub fn apm_tag(&self) -> Option<&ApmTag> {
         self.get_tag::<ApmTag>()
     }
 
-    /// Search for the [`BasicMemoryInfoTag`].
+    /// Returns the first [`BasicMemoryInfoTag`], if present.
     #[must_use]
     pub fn basic_memory_info_tag(&self) -> Option<&BasicMemoryInfoTag> {
         self.get_tag::<BasicMemoryInfoTag>()
     }
 
-    /// Search for the [`BootLoaderNameTag`].
+    /// Returns the first [`BootLoaderNameTag`], if present.
     #[must_use]
     pub fn boot_loader_name_tag(&self) -> Option<&BootLoaderNameTag> {
         self.get_tag::<BootLoaderNameTag>()
     }
 
-    /// Search for the [`BootdevTag`].
+    /// Returns the first [`BootdevTag`], if present.
     #[must_use]
     pub fn bootdev_tag(&self) -> Option<&BootdevTag> {
         self.get_tag::<BootdevTag>()
     }
 
-    /// Search for the [`CommandLineTag`].
+    /// Returns the first [`CommandLineTag`], if present.
     #[must_use]
     pub fn command_line_tag(&self) -> Option<&CommandLineTag> {
         self.get_tag::<CommandLineTag>()
     }
 
-    /// Search for the [`EFIBootServicesNotExitedTag`].
+    /// Returns the first [`EFIBootServicesNotExitedTag`], if present.
     #[must_use]
     pub fn efi_bs_not_exited_tag(&self) -> Option<&EFIBootServicesNotExitedTag> {
         self.get_tag::<EFIBootServicesNotExitedTag>()
     }
 
-    /// Search for the [`EFIMemoryMapTag`], if the boot services were exited.
+    /// Returns the first [`EFIMemoryMapTag`], if the boot services were exited.
     /// Otherwise, if the [`TagType::EfiBs`] tag is present, this returns `None`
     /// as it is strictly recommended to get the memory map from `uefi`
     /// instead.
@@ -215,25 +215,25 @@ impl<'a> BootInformation<'a> {
                         })
     }
 
-    /// Search for the [`EFISdt32Tag`].
+    /// Returns the first [`EFISdt32Tag`], if present.
     #[must_use]
     pub fn efi_sdt32_tag(&self) -> Option<&EFISdt32Tag> {
         self.get_tag::<EFISdt32Tag>()
     }
 
-    /// Search for the [`EFISdt64Tag`].
+    /// Returns the first [`EFISdt64Tag`], if present.
     #[must_use]
     pub fn efi_sdt64_tag(&self) -> Option<&EFISdt64Tag> {
         self.get_tag::<EFISdt64Tag>()
     }
 
-    /// Search for the [`EFIImageHandle32Tag`].
+    /// Returns the first [`EFIImageHandle32Tag`], if present.
     #[must_use]
     pub fn efi_ih32_tag(&self) -> Option<&EFIImageHandle32Tag> {
         self.get_tag::<EFIImageHandle32Tag>()
     }
 
-    /// Search for the [`EFIImageHandle64Tag`].
+    /// Returns the first [`EFIImageHandle64Tag`], if present.
     #[must_use]
     pub fn efi_ih64_tag(&self) -> Option<&EFIImageHandle64Tag> {
         self.get_tag::<EFIImageHandle64Tag>()
@@ -266,14 +266,14 @@ impl<'a> BootInformation<'a> {
         })
     }
 
-    /// Search for the [`ElfSectionsTag`].
+    /// Returns the first [`ElfSectionsTag`], if present.
     #[must_use]
     pub fn elf_sections_tag(&self) -> Option<&ElfSectionsTag> {
         self.get_tag()
     }
 
-    /// Search for the [`FramebufferTag`]. The result is `Some(Err(e))`, if the
-    /// framebuffer type is unknown, while the framebuffer tag is present.
+    /// Returns the first [`FramebufferTag`], if present. The result is
+    /// `Some(Err(e))` if its framebuffer type is unknown.
     #[must_use]
     pub fn framebuffer_tag(&self) -> Option<Result<&FramebufferTag, UnknownFramebufferType>> {
         self.get_tag::<FramebufferTag>()
@@ -283,13 +283,13 @@ impl<'a> BootInformation<'a> {
             })
     }
 
-    /// Search for the [`ImageLoadPhysAddrTag`].
+    /// Returns the first [`ImageLoadPhysAddrTag`], if present.
     #[must_use]
     pub fn load_base_addr_tag(&self) -> Option<&ImageLoadPhysAddrTag> {
         self.get_tag::<ImageLoadPhysAddrTag>()
     }
 
-    /// Search for the [`MemoryMapTag`].
+    /// Returns the first [`MemoryMapTag`], if present.
     #[must_use]
     pub fn memory_map_tag(&self) -> Option<&MemoryMapTag> {
         self.get_tag::<MemoryMapTag>()
@@ -303,31 +303,49 @@ impl<'a> BootInformation<'a> {
         module::module_iter(self.tags())
     }
 
-    /// Search for the [`NetworkTag`].
+    /// Returns an iterator over all [`NetworkTag`]s.
+    ///
+    /// The Multiboot2 specification permits one network tag per network card.
+    pub fn network_tags(&self) -> impl Iterator<Item = &NetworkTag> + Clone {
+        self.get_tags::<NetworkTag>()
+    }
+
+    /// Returns the first [`NetworkTag`], if present.
+    ///
+    /// Use [`Self::network_tags`] to access the tags for all network cards.
     #[must_use]
+    #[deprecated = "use `network_tags()` to access all network tags"]
     pub fn network_tag(&self) -> Option<&NetworkTag> {
         self.get_tag::<NetworkTag>()
     }
 
-    /// Search for the [`RsdpV1Tag`].
+    /// Returns the first [`RsdpV1Tag`], if present.
     #[must_use]
     pub fn rsdp_v1_tag(&self) -> Option<&RsdpV1Tag> {
         self.get_tag::<RsdpV1Tag>()
     }
 
-    /// Search for the [`RsdpV2Tag`].
+    /// Returns the first [`RsdpV2Tag`], if present.
     #[must_use]
     pub fn rsdp_v2_tag(&self) -> Option<&RsdpV2Tag> {
         self.get_tag::<RsdpV2Tag>()
     }
 
-    /// Search for the [`SmbiosTag`].
+    /// Returns an iterator over all [`SmbiosTag`]s.
+    pub fn smbios_tags(&self) -> impl Iterator<Item = &SmbiosTag> + Clone {
+        self.get_tags::<SmbiosTag>()
+    }
+
+    /// Returns the first [`SmbiosTag`], if present.
+    ///
+    /// Use [`Self::smbios_tags`] to access all SMBIOS tags.
     #[must_use]
+    #[deprecated = "use `smbios_tags()` to access all SMBIOS tags"]
     pub fn smbios_tag(&self) -> Option<&SmbiosTag> {
         self.get_tag::<SmbiosTag>()
     }
 
-    /// Search for the [`VBEInfoTag`].
+    /// Returns the first [`VBEInfoTag`], if present.
     #[must_use]
     pub fn vbe_info_tag(&self) -> Option<&VBEInfoTag> {
         self.get_tag::<VBEInfoTag>()
@@ -336,15 +354,16 @@ impl<'a> BootInformation<'a> {
     // ### END OF TAG GETTERS
     // ######################################################
 
-    /// Public getter to find any Multiboot tag by its type, including
-    /// specified and custom ones.
+    /// Returns the first Multiboot tag of type `T`, including specified and
+    /// custom tags.
     ///
     /// # Specified or Custom Tags
     /// The Multiboot2 specification specifies a list of tags, see [`TagType`].
     /// However, it doesn't forbid to use custom tags. Because of this, there
     /// exists the [`TagType`] abstraction. It is recommended to use this
     /// getter only for custom tags. For specified tags, use getters, such as
-    /// [`Self::efi_ih64_tag`].
+    /// [`Self::efi_ih64_tag`]. Use [`Self::get_tags`] if a tag type may occur
+    /// multiple times.
     ///
     /// ## Use Custom Tags
     /// The following example shows how you may use this interface to parse
@@ -407,16 +426,42 @@ impl<'a> BootInformation<'a> {
     where
         T::Metadata: Default,
     {
+        self.get_tags::<T>().next()
+    }
+
+    /// Returns an iterator over all Multiboot tags of type `T`, including
+    /// specified and custom tags.
+    ///
+    /// Tags are returned lazily in their original wire order. This is the
+    /// typed counterpart to [`Self::tags`]. It performs no allocation and does
+    /// not apply the additional policies of convenience getters such as
+    /// [`Self::efi_memory_map_tag`] or [`Self::framebuffer_tag`].
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use multiboot2::{BootInformation, BootInformationHeader, NetworkTag};
+    /// # let ptr = 0xdeadbeef as *const BootInformationHeader;
+    /// # let boot_info = unsafe { BootInformation::load(ptr).unwrap() };
+    /// for network in boot_info.get_tags::<NetworkTag>() {
+    ///     println!("Network information: {network:?}");
+    /// }
+    /// ```
+    pub fn get_tags<'b, T>(&'b self) -> impl Iterator<Item = &'b T> + Clone
+    where
+        T: Tag<IDType = TagType, Header = TagHeader> + ?Sized + 'b,
+        T::Metadata: Default,
+    {
         self.tags()
-            .find(|tag| tag.header().typ == T::ID)
+            .filter(|tag| tag.header().typ == T::ID)
             .map(|tag| tag.cast::<T>())
     }
 
-    /// Returns an iterator over all tags.
+    /// Returns an untyped iterator over all tags.
     ///
-    /// This is public to enable users to iterate over tags that appear multiple
-    /// times, even tho this is unusual. However, it is recommended to use the
-    /// tag getters as normal bootloaders provide most tags only once.
+    /// Prefer [`Self::get_tags`] when all occurrences of a known standard or
+    /// custom tag type are needed. This lower-level iterator is useful when tag
+    /// types are not known in advance.
     #[must_use]
     pub fn tags(&self) -> TagIter<'_> {
         // SAFETY: We validated the chain of tags beforehand.
@@ -448,10 +493,10 @@ impl fmt::Debug for BootInformation<'_> {
             .field("load_base_addr", &self.load_base_addr_tag())
             .field("memory_map", &self.memory_map_tag())
             .field("modules", &self.module_tags())
-            .field("network", &self.network_tag())
+            .field("network", &DebugTags(self.network_tags()))
             .field("rsdp_v1", &self.rsdp_v1_tag())
             .field("rsdp_v2", &self.rsdp_v2_tag())
-            .field("smbios", &self.smbios_tag())
+            .field("smbios", &DebugTags(self.smbios_tags()))
             .field("vbe_info", &self.vbe_info_tag())
             // computed fields
             .field("custom_tags_count", &{
@@ -464,6 +509,19 @@ impl fmt::Debug for BootInformation<'_> {
             })
             .field("tag_headers", &DebugTagHeaders(self.tags()))
             .finish()
+    }
+}
+
+/// Formats a cloneable iterator without consuming the original value.
+struct DebugTags<I>(I);
+
+impl<I> fmt::Debug for DebugTags<I>
+where
+    I: Iterator + Clone,
+    I::Item: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.0.clone()).finish()
     }
 }
 
