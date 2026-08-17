@@ -11,9 +11,9 @@ PHDRS
 
 SECTIONS {
     /* Chainloader linked at 8M, payload at 16M */
-    .text 8M : AT(8M) ALIGN(4K)
+    .text 12M : AT(12M) ALIGN(4K)
     {
-        KEEP(*(.multiboot_header));
+        KEEP(*(.multiboot2_header));
         *(.text .text.*)
     } : kernel_rx
 

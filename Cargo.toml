@@ -1,5 +1,5 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
   "integration-test/bins/multiboot2_chainloader",
   "integration-test/bins/multiboot2_payload",
@@ -27,11 +27,11 @@ elf = { version = "0.8", default-features = false }
 log = { version = "~0.4", default-features = false }
 ptr_meta = { version = "~0.3", default-features = false }
 thiserror = { version = "2.0", default-features = false }
-uefi-raw = { version = "~0.15", default-features = false }
+# https://github.com/rust-osdev/uefi-rs/pull/2035/changes/6424087aa5e886f70c2533680b1cb6271128a46d
+uefi-raw = { git = "https://github.com/rust-osdev/uefi-rs", rev = "6424087aa5e886f70c2533680b1cb6271128a46d", default-features = false }
 
 # Dependencies for integration tests
 anyhow = { version = "1.0", default-features = false }
-multiboot = { version = "0.8", default-features = false }
 elf_rs = { version = "0.3", default-features = false }
 good_memory_allocator = { version = "0.1", default-features = false }
 integration-test-util = { path = "./integration-test/bins/util" }
