@@ -27,7 +27,8 @@ elf = { version = "0.8", default-features = false }
 log = { version = "~0.4", default-features = false }
 ptr_meta = { version = "~0.3", default-features = false }
 thiserror = { version = "2.0", default-features = false }
-uefi-raw = { version = "~0.15", default-features = false }
+# https://github.com/rust-osdev/uefi-rs/pull/2035/changes/6424087aa5e886f70c2533680b1cb6271128a46d
+uefi-raw = { git = "https://github.com/rust-osdev/uefi-rs", rev = "6424087aa5e886f70c2533680b1cb6271128a46d", default-features = false }
 
 # Dependencies for integration tests
 anyhow = { version = "1.0", default-features = false }

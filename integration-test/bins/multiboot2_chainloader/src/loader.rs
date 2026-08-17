@@ -61,7 +61,7 @@ pub fn load_module(mbi: &multiboot2::BootInformation) -> ! {
     {
         let (hdr, _) = multiboot2_header::Header::find_header(elf_bytes)
             .expect("Should have Multiboot2 header");
-        log::info!("Multiboot2 header:\n{hdr:#?}");
+        log::info!("Multiboot2 header:\n{hdr:#x?}");
     }
 
     // Load the load segments into memory (at their corresponding link address).
