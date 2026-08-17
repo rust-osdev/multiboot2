@@ -21,8 +21,8 @@ QEMU_ARGS_BASE=(
    -display none `# relevant for the CI`
 )
 
-# rustc 1.89 (nightly).
-RUSTUP_NIGHTLY_TOOLCHAIN="nightly-2025-05-31"
+# rustc 1.100.0 (nightly).
+RUSTUP_NIGHTLY_TOOLCHAIN="nightly-2026-08-16"
 
 function fn_main() {
     git submodule update --init
@@ -36,9 +36,10 @@ function fn_main() {
 
 function fn_build_limine_hosttool() {
     cd limine-bootloader
-    make
-    test -f ./limine
-    file --brief ./limine | grep -q "ELF 64-bit LSB executable"
+    set -x
+    make -j $(nproc) limine
+    test -x ./limine
+    file --brief ./limine | grep "ELF 64-bit" | grep "executable" > /dev/null
     cd -
 }
 
@@ -56,18 +57,19 @@ function fn_build_rust_bins() {
         --target ./bins/x86-unknown-none.json \
         -Z build-std=core,alloc,compiler_builtins \
         -Z build-std-features=compiler-builtins-mem \
+        -Z json-target-spec \
         --profile release-integration-test \
         -p multiboot2_chainloader \
         -p multiboot2_payload
 
     echo "Verifying multiboot2_chainloader ..."
     test -f $BINS_DIR/multiboot2_chainloader
-    file --brief $BINS_DIR/multiboot2_chainloader | grep -q "ELF 32-bit LSB executable"
+    file --brief $BINS_DIR/multiboot2_chainloader | grep "ELF 32-bit LSB executable" > /dev/null
     grub-file --is-x86-multiboot2 $BINS_DIR/multiboot2_chainloader
 
     echo "Verifying multiboot2_payload ..."
     test -f $BINS_DIR/multiboot2_payload
-    file --brief $BINS_DIR/multiboot2_payload | grep -q "ELF 32-bit LSB executable"
+    file --brief $BINS_DIR/multiboot2_payload | grep "ELF 32-bit LSB executable" > /dev/null
     grub-file --is-x86-multiboot2 $BINS_DIR/multiboot2_payload
 }
 
@@ -75,7 +77,7 @@ function fn_prepare_test_vol() {
     TEST_VOL="$TEST_DIR/.vol"
     rm -rf $TEST_VOL
     mkdir -p $TEST_VOL
-    cp $TEST_DIR/limine.cfg $TEST_VOL
+    cp $TEST_DIR/limine.conf $TEST_VOL
 
     # copy limine artifacts
     mkdir -p $TEST_VOL/limine
@@ -106,7 +108,7 @@ function fn_run_qemu() {
 
     # As QEMU can't print serial and debugcon to stdout simultaneously, I
     # add a background task watching serial.txt
-    rm serial.txt
+    rm -f serial.txt
     touch serial.txt
     tail -f serial.txt &
 
