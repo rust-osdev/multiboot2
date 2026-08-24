@@ -381,11 +381,20 @@ impl<H: Header> DynSizedStructure<H> {
     /// from the header.
     ///
     /// # Safety
-    /// The caller must ensure that the function operates on valid memory.
+    /// The caller must ensure that `ptr` is readable for at least the size of
+    /// [`Header`], and, once its reported total size is known, for that whole
+    /// range.
     pub unsafe fn ref_from_ptr<'a>(ptr: NonNull<H>) -> Result<&'a Self, MemoryError> {
         let ptr = ptr.as_ptr().cast_const();
-        // SAFETY: `ptr` came from a valid pointer to the header; we only read
-        // the reported total size and immediately re-slice that range.
+
+        // Alignment check. All headers are `align(8)`.
+        if ptr.cast::<u8>().align_offset(ALIGNMENT) != 0 {
+            return Err(MemoryError::WrongAlignment);
+        }
+
+        // SAFETY: `ptr` is non-null (from `NonNull`) and now known to be
+        // aligned; we only read the reported total size and immediately
+        // re-slice that range.
         let hdr = unsafe { &*ptr };
         let total_size = hdr.total_size();
         let header_size = size_of::<H>();
@@ -623,6 +632,19 @@ mod tests {
         let tag = tag.cast::<DynSizedStructure<DummyTestHeader>>();
         assert_eq!(tag.header().typ(), 0x1337);
         assert_eq!(tag.header().size(), 18);
+    }
+
+    #[test]
+    fn test_ref_from_ptr_rejects_misaligned() {
+        // A misaligned pointer must be reported as an error, not dereferenced
+        // (which would be UB, caught by Miri).
+        let bytes = AlignedBytes([0x37, 0x13, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        // Guaranteed misaligned: offset 4 into an 8-byte-aligned buffer.
+        let misaligned = (&raw const bytes.0[4]).cast::<DummyTestHeader>();
+        let ptr = NonNull::new(misaligned.cast_mut()).unwrap();
+        // SAFETY: `ptr` is non-null and the constructor will reject the misalignment..
+        let result = unsafe { DynSizedStructure::<DummyTestHeader>::ref_from_ptr(ptr) };
+        assert_eq!(result, Err(MemoryError::WrongAlignment));
     }
 
     #[test]

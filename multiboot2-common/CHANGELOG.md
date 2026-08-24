@@ -8,6 +8,11 @@
 - Fixed undefined behavior in `new_boxed`: the trailing alignment padding is now
   zero-initialized, so reading it back through `MaybeDynSized::as_bytes` or
   `payload` no longer reads uninitialized memory.
+- Fixed undefined behavior in `DynSizedStructure::ref_from_ptr`: a misaligned
+  pointer is now reported as `MemoryError::WrongAlignment` before the header is
+  dereferenced, instead of forming a misaligned reference. This makes the
+  documented "misaligned pointer returns an error" contract of
+  `BootInformation::load` and `Header::load` hold.
 
 ## v0.4.1 (2026-08-13)
 
