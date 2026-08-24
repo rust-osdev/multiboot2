@@ -18,7 +18,7 @@ impl BootdevTag {
     #[must_use]
     pub fn new(biosdev: u32, slice: u32, part: u32) -> Self {
         Self {
-            header: TagHeader::new(Self::ID, size_of::<Self>() as u32),
+            header: TagHeader::new(Self::ID, Self::BASE_SIZE as u32),
             biosdev,
             slice,
             part,
@@ -54,11 +54,26 @@ impl BootdevTag {
 impl MaybeDynSized for BootdevTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = size_of::<Self>();
+    // Spec size (20), excluding the trailing padding that `size_of::<Self>()`
+    // (24) would add.
+    const BASE_SIZE: usize = size_of::<TagHeader>() + 3 * size_of::<u32>();
 }
 
 impl Tag for BootdevTag {
     type IDType = TagType;
 
     const ID: TagType = TagType::Bootdev;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reported_size_matches_spec() {
+        // The Multiboot2 spec mandates size 20 (excluding padding), not the
+        // 24 bytes that `size_of::<BootdevTag>()` would report.
+        let tag = BootdevTag::new(0x80, 0, 0xffff_ffff);
+        assert_eq!(tag.header.size, 20);
+    }
 }
