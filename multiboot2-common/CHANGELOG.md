@@ -5,6 +5,9 @@
 - Fixed undefined behavior in `DynSizedStructure::cast`: the target size is now
   validated before the reference is created, so casting a too-small (e.g.
   malformed or truncated) structure panics instead of retagging out of bounds.
+- Fixed undefined behavior in `new_boxed`: the trailing alignment padding is now
+  zero-initialized, so reading it back through `MaybeDynSized::as_bytes` or
+  `payload` no longer reads uninitialized memory.
 
 ## v0.4.1 (2026-08-13)
 

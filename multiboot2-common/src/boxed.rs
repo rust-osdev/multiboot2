@@ -44,8 +44,13 @@ pub fn new_boxed<T: MaybeDynSized<Metadata = usize> + ?Sized>(
     // See <https://doc.rust-lang.org/reference/type-layout.html>
     let alloc_size = increase_to_alignment(tag_size);
     let layout = Layout::from_size_align(alloc_size, ALIGNMENT).unwrap();
+    // Use a zeroed allocation so that the trailing padding in
+    // `[tag_size, alloc_size)` is initialized. The header and body writes
+    // below only cover `[0, tag_size)`; without zeroing, reading the padding
+    // through the safe `MaybeDynSized::as_bytes`/`payload` accessors would be
+    // undefined behavior. The Multiboot2 spec also mandates zero padding.
     // SAFETY: `layout` matches the requested allocation size and alignment.
-    let heap_ptr = unsafe { alloc::alloc::alloc(layout) };
+    let heap_ptr = unsafe { alloc::alloc::alloc_zeroed(layout) };
     assert!(!heap_ptr.is_null());
 
     // write header
@@ -117,6 +122,18 @@ mod tests {
         let tag = new_boxed::<DummyDstTag>(header, &[&[0], &[1], &[2, 3]]);
         assert_eq!(tag.header().typ(), 0xdead_beef);
         assert_eq!(tag.payload(), &[0, 1, 2, 3]);
+    }
+
+    #[test]
+    fn test_new_boxed_zeroes_padding() {
+        // A payload of 1 byte yields a 9-byte tag, padded to 16 bytes. The
+        // 7 trailing padding bytes must be initialized (to zero); otherwise
+        // reading them via `as_bytes()` is UB (caught by Miri).
+        let header = DummyTestHeader::new(DummyDstTag::ID, 0);
+        let tag = new_boxed::<DummyDstTag>(header, &[&[0xff]]);
+        let bytes = tag.as_bytes();
+        assert_eq!(bytes.len(), 16);
+        assert_eq!(&bytes[9..16], &[0, 0, 0, 0, 0, 0, 0]);
     }
 
     #[test]
