@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.10.0 (2026-08-24)
+
 - Fixed `Header::load` rejecting a valid header whose end tag has a non-zero
   flags field. The spec only requires the end tag to have type 0 and size 8, so
   the flags field is no longer constrained.

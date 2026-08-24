@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.26.0 / v0.26.1 (2026-08-24)
+
 - Fixed `BootdevTag` and `ApmTag` reporting a tag size that included Rust struct
   padding (24 and 32 bytes). They now report the spec-mandated sizes of 20 and
   28 bytes, which exclude padding.

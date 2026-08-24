@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.5.0 (2026-08-24)
+
 - Fixed undefined behavior in `DynSizedStructure::cast`: the target size is now
   validated before the reference is created, so casting a too-small (e.g.
   malformed or truncated) structure panics instead of retagging out of bounds.
