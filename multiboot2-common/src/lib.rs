@@ -432,11 +432,18 @@ impl<H: Header> DynSizedStructure<H> {
         // location to place it for now.
         assert!(T::BASE_SIZE >= size_of::<H>());
 
+        // Check the size of the allocation is big enough.
+        assert!(
+            size_of_val(self) >= T::BASE_SIZE,
+            "source is too small to be cast to the target type"
+        );
+
         let t_dst_size = T::dst_len(self.header());
         // Creates thin or fat pointer, depending on type.
         let t_ptr = ptr_meta::from_raw_parts(base_ptr.cast(), t_dst_size);
         // SAFETY: `self` is a valid reference and the cast keeps the same
-        // allocation; `T::dst_len` determines the matching tail length.
+        // allocation; `T::dst_len` determines the matching tail length. The
+        // assertion above guarantees the retagged extent stays in bounds.
         let t_ref = unsafe { &*t_ptr };
 
         assert_eq!(size_of_val(self), size_of_val(t_ref));
@@ -616,6 +623,34 @@ mod tests {
         let tag = tag.cast::<DynSizedStructure<DummyTestHeader>>();
         assert_eq!(tag.header().typ(), 0x1337);
         assert_eq!(tag.header().size(), 18);
+    }
+
+    #[test]
+    #[should_panic(expected = "source is too small to be cast to the target type")]
+    fn test_cast_rejects_too_small_source() {
+        // A sized target larger than the (validly terminated but truncated)
+        // source must be rejected before the reference is created, rather
+        // than retagging out of bounds (which would be UB under Miri).
+        #[repr(C, align(8))]
+        struct CustomSizedTag {
+            tag_header: DummyTestHeader,
+            a: u32,
+            b: u32,
+        }
+
+        impl MaybeDynSized for CustomSizedTag {
+            type Header = DummyTestHeader;
+
+            const BASE_SIZE: usize = size_of::<Self>();
+
+            fn dst_len(_header: &DummyTestHeader) -> Self::Metadata {}
+        }
+
+        // Reports a total size of only 8 bytes, i.e., just the header.
+        let bytes = AlignedBytes([0x37, 0x13, 0, 0, 8, 0, 0, 0]);
+        let tag = DynSizedStructure::ref_from_slice(bytes.borrow()).unwrap();
+        // `CustomSizedTag` needs 16 bytes; casting must panic, not read OOB.
+        let _ = tag.cast::<CustomSizedTag>();
     }
 
     #[test]
