@@ -27,7 +27,6 @@ impl<'a, H: Header> TryFrom<&'a [u8]> for BytesRef<'a, H> {
         if bytes.len() < size_of::<H>() {
             return Err(MemoryError::ShorterThanHeader);
         }
-        // Doesn't work as expected: if align_of_val(&value[0]) < ALIGNMENT {
         if bytes.as_ptr().align_offset(ALIGNMENT) != 0 {
             return Err(MemoryError::WrongAlignment);
         }

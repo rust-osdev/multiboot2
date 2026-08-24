@@ -35,7 +35,7 @@ impl ApmTag {
         dseg_len: u16,
     ) -> Self {
         Self {
-            header: TagHeader::new(Self::ID, size_of::<Self>() as u32),
+            header: TagHeader::new(Self::ID, Self::BASE_SIZE as u32),
             version,
             cseg,
             offset,
@@ -112,11 +112,26 @@ impl ApmTag {
 impl MaybeDynSized for ApmTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = size_of::<Self>();
+    // Spec size (28), excluding the trailing padding that `size_of::<Self>()`
+    // (32) would add. Payload: eight `u16` fields plus the `u32` offset.
+    const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<[u16; 8]>() + size_of::<u32>();
 }
 
 impl Tag for ApmTag {
     type IDType = TagType;
 
     const ID: TagType = TagType::Apm;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reported_size_matches_spec() {
+        // The Multiboot2 spec mandates size 28 (excluding padding), not the
+        // 32 bytes that `size_of::<ApmTag>()` would report.
+        let tag = ApmTag::new(1, 2, 3, 4, 5, 6, 7, 8, 9);
+        assert_eq!(tag.header.size, 28);
+    }
 }

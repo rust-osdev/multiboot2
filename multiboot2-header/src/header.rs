@@ -74,12 +74,11 @@ impl<'a> Header<'a> {
     fn has_valid_tag_sequence(&self) -> Result<bool, MemoryError> {
         validate_tag_sequence(self.0.payload(), |tag| {
             let typ = u16::from_le_bytes(tag[0..2].try_into().unwrap());
-            let flags = u16::from_le_bytes(tag[2..4].try_into().unwrap());
             let size = u32::from_le_bytes(tag[4..8].try_into().unwrap()) as usize;
 
-            typ == HeaderTagType::End as u16
-                && flags == crate::HeaderTagFlag::Required as u16
-                && size == size_of::<HeaderTagHeader>()
+            // The spec only requires the end tag to have type 0 and size 8; it
+            // does not constrain the flags field.
+            typ == HeaderTagType::End as u16 && size == size_of::<HeaderTagHeader>()
         })
     }
 
@@ -536,6 +535,21 @@ mod tests {
         let debug = format!("{header:?}");
         assert!(debug.contains("tag_headers"));
         assert!(debug.contains("End"));
+    }
+
+    #[test]
+    fn load_accepts_end_tag_with_optional_flag() {
+        // The spec does not constrain the end tag's flags field, so an end tag
+        // with the optional bit set must still be accepted.
+        let mut bytes = AlignedBytes::new([0; 24]);
+        write_minimal_valid_header_tag(&mut bytes.0);
+        // End tag: flags = optional (bit 0 set).
+        bytes.0[18..20].copy_from_slice(&1_u16.to_le_bytes());
+
+        // SAFETY: The test buffer is aligned and contains a valid
+        // header layout.
+        let header = unsafe { Header::load(bytes.as_ptr().cast()) };
+        assert!(header.is_ok());
     }
 
     #[test]
