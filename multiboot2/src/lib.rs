@@ -111,7 +111,7 @@ pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, Frameb
 pub use image_load_addr::ImageLoadPhysAddrTag;
 pub use memory_map::{
     BasicMemoryInfoTag, EFIMemoryAreaType, EFIMemoryAttribute, EFIMemoryDesc, EFIMemoryMapTag,
-    MemoryArea, MemoryAreaType, MemoryAreaTypeId, MemoryMapTag,
+    MemoryArea, MemoryAreaType, MemoryAreaTypeRaw, MemoryMapTag,
 };
 pub use module::{ModuleIter, ModuleTag};
 pub use network::NetworkTag;
