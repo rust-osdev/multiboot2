@@ -22,6 +22,12 @@
   value other than 0 or 1. `HeaderTagHeader` now stores the new
   `HeaderTagFlagRaw` newtype; the `flags()` getters keep returning
   `HeaderTagFlag`, which gained a `Custom` variant.
+- Fixed undefined behavior and a spec violation in `ConsoleHeaderTagFlags`:
+  the enum discriminants did not match the specification. **Breaking:**
+  `ConsoleRequired` now serializes to `1` (was `0`) and `EgaTextSupported` to
+  `2` (was `1`), matching the example C code of the specification; the enum
+  gained a `Custom` variant and the tag stores the new
+  `ConsoleHeaderTagFlagsRaw` newtype.
 
 ## v0.10.0 (2026-08-24)
 

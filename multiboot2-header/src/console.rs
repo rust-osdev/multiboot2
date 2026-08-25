@@ -1,14 +1,23 @@
 use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use multiboot2_common::{MaybeDynSized, Tag};
 
-/// Possible flags for [`ConsoleHeaderTag`].
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum ConsoleHeaderTagFlags {
-    /// Console required.
-    ConsoleRequired = 0,
-    /// EGA text support.
-    EgaTextSupported = 1,
+multiboot2_common::raw_type! {
+    /// Serialized form of [`ConsoleHeaderTagFlags`] that matches the binary
+    /// representation (`u32`).
+    pub struct ConsoleHeaderTagFlagsRaw(u32);
+
+    /// Possible flags for [`ConsoleHeaderTag`].
+    ///
+    /// The values are taken from the example C code at the bottom of the
+    /// Multiboot2 specification.
+    pub enum ConsoleHeaderTagFlags {
+        /// At least one of the consoles supported by the bootloader must be
+        /// present and information about it must be available in the boot
+        /// information.
+        ConsoleRequired = 1,
+        /// The OS image has EGA text support.
+        EgaTextSupported = 2,
+    }
 }
 
 /// Tells that a console must be available in MBI.
@@ -17,7 +26,7 @@ pub enum ConsoleHeaderTagFlags {
 #[repr(C, align(8))]
 pub struct ConsoleHeaderTag {
     header: HeaderTagHeader,
-    console_flags: ConsoleHeaderTagFlags,
+    console_flags: ConsoleHeaderTagFlagsRaw,
 }
 
 impl ConsoleHeaderTag {
@@ -28,7 +37,7 @@ impl ConsoleHeaderTag {
             HeaderTagHeader::new(HeaderTagType::ConsoleFlags, flags, Self::BASE_SIZE as u32);
         Self {
             header,
-            console_flags,
+            console_flags: ConsoleHeaderTagFlagsRaw::new(console_flags.val()),
         }
     }
 
@@ -53,7 +62,7 @@ impl ConsoleHeaderTag {
     /// Returns the [`ConsoleHeaderTagFlags`].
     #[must_use]
     pub const fn console_flags(&self) -> ConsoleHeaderTagFlags {
-        self.console_flags
+        ConsoleHeaderTagFlags::from_val(self.console_flags.get())
     }
 }
 
@@ -66,4 +75,44 @@ impl MaybeDynSized for ConsoleHeaderTag {
 impl Tag for ConsoleHeaderTag {
     type IDType = HeaderTagType;
     const ID: HeaderTagType = HeaderTagType::ConsoleFlags;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::GenericHeaderTag;
+    use core::borrow::Borrow;
+    use multiboot2_common::test_utils::AlignedBytes;
+
+    /// The console flag values must match the example C code of the
+    /// specification.
+    #[test]
+    fn console_flags_match_spec_values() {
+        assert_eq!(ConsoleHeaderTagFlags::ConsoleRequired.val(), 1);
+        assert_eq!(ConsoleHeaderTagFlags::EgaTextSupported.val(), 2);
+    }
+
+    /// A tag with a console flags value unknown to the specification must be
+    /// parsable without undefined behavior.
+    #[test]
+    fn unknown_console_flags_are_not_ub() {
+        #[rustfmt::skip]
+        let bytes = AlignedBytes::new([
+            /* typ = console flags */
+            4, 0,
+            /* flags */
+            0, 0,
+            /* size */
+            12, 0, 0, 0,
+            /* console_flags = 3 (unknown) */
+            3, 0, 0, 0,
+            /* padding to alignment */
+            0, 0, 0, 0,
+        ]);
+        let tag = GenericHeaderTag::ref_from_slice(bytes.borrow())
+            .unwrap()
+            .cast::<ConsoleHeaderTag>();
+
+        assert_eq!(tag.console_flags(), ConsoleHeaderTagFlags::Custom(3));
+    }
 }
