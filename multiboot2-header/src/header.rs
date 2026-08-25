@@ -1,8 +1,8 @@
 use crate::{
     AddressHeaderTag, ConsoleHeaderTag, EfiBootServiceHeaderTag, EntryAddressHeaderTag,
     EntryEfi32HeaderTag, EntryEfi64HeaderTag, FramebufferHeaderTag, HeaderTagHeader, HeaderTagISA,
-    HeaderTagType, InformationRequestHeaderTag, ModuleAlignHeaderTag, RelocatableHeaderTag,
-    TagIter,
+    HeaderTagISARaw, HeaderTagType, InformationRequestHeaderTag, ModuleAlignHeaderTag,
+    RelocatableHeaderTag, TagIter,
 };
 use core::fmt::{Debug, Formatter};
 use core::ptr::NonNull;
@@ -355,7 +355,7 @@ pub enum LoadError {
 pub struct Multiboot2BasicHeader {
     /// Must be the value of [`MAGIC`].
     header_magic: u32,
-    arch: HeaderTagISA,
+    arch: HeaderTagISARaw,
     length: u32,
     checksum: u32,
     // Followed by dynamic amount of dynamically sized header tags.
@@ -370,7 +370,7 @@ impl Multiboot2BasicHeader {
         let checksum = Self::calc_checksum(magic, arch, length);
         Self {
             header_magic: magic,
-            arch,
+            arch: HeaderTagISARaw::new(arch.val()),
             length,
             checksum,
         }
@@ -386,7 +386,7 @@ impl Multiboot2BasicHeader {
             u32, /* expected checksum */
         ),
     > {
-        let check = Self::calc_checksum(self.header_magic, self.arch, self.length);
+        let check = Self::calc_checksum(self.header_magic, self.arch(), self.length);
         if check == self.checksum {
             Ok(())
         } else {
@@ -397,7 +397,7 @@ impl Multiboot2BasicHeader {
     /// Calculates the checksum as described in the spec.
     #[must_use]
     pub const fn calc_checksum(magic: u32, arch: HeaderTagISA, length: u32) -> u32 {
-        (0x100000000 - magic as u64 - arch as u64 - length as u64) as u32
+        (0x100000000 - magic as u64 - arch.val() as u64 - length as u64) as u32
     }
 
     /// Returns the header magic.
@@ -409,7 +409,7 @@ impl Multiboot2BasicHeader {
     /// Returns the [`HeaderTagISA`].
     #[must_use]
     pub const fn arch(&self) -> HeaderTagISA {
-        self.arch
+        HeaderTagISA::from_val(self.arch.get())
     }
 
     /// Returns the length.
@@ -432,7 +432,7 @@ impl DynSizedHeader for Multiboot2BasicHeader {
 
     fn set_size(&mut self, total_size: usize) {
         self.length = total_size as u32;
-        self.checksum = Self::calc_checksum(self.header_magic, self.arch, total_size as u32);
+        self.checksum = Self::calc_checksum(self.header_magic, self.arch(), total_size as u32);
     }
 }
 
@@ -461,7 +461,7 @@ mod tests {
         // Aligned magic
         buffer[0..4].copy_from_slice(&MAGIC.to_le_bytes());
         // Architecture
-        buffer[4..8].copy_from_slice(&(HeaderTagISA::I386 as u32).to_le_bytes());
+        buffer[4..8].copy_from_slice(&HeaderTagISA::I386.val().to_le_bytes());
         // Total size
         buffer[8..12].copy_from_slice(&24_u32.to_le_bytes());
         // Checksum
@@ -552,6 +552,27 @@ mod tests {
         assert!(header.is_ok());
     }
 
+    /// A header with an architecture unknown to the specification must be
+    /// parsable without undefined behavior.
+    #[test]
+    fn load_accepts_unknown_architecture() {
+        let mut bytes = AlignedBytes::new([0; 24]);
+        write_minimal_valid_header_tag(&mut bytes.0);
+        // Architecture unknown to the specification.
+        bytes.0[4..8].copy_from_slice(&3_u32.to_le_bytes());
+        let checksum = Multiboot2BasicHeader::calc_checksum(MAGIC, HeaderTagISA::Custom(3), 24);
+        bytes.0[12..16].copy_from_slice(&checksum.to_le_bytes());
+
+        // SAFETY: The test buffer is aligned and contains a valid
+        // header layout.
+        let header = unsafe { Header::load(bytes.as_ptr().cast()) }.unwrap();
+
+        assert_eq!(header.arch(), HeaderTagISA::Custom(3));
+        // The Debug implementation must also cope with unknown values.
+        let debug = format!("{header:?}");
+        assert!(debug.contains("Custom(3)"));
+    }
+
     /// A header containing a tag with a type unknown to the specification
     /// must be parsable and iterable without undefined behavior.
     #[test]
@@ -598,7 +619,7 @@ mod tests {
         let mut bytes = AlignedBytes::new([0; 32]);
         let checksum = Multiboot2BasicHeader::calc_checksum(MAGIC, HeaderTagISA::I386, 32);
         bytes.0[0..4].copy_from_slice(&MAGIC.to_le_bytes());
-        bytes.0[4..8].copy_from_slice(&(HeaderTagISA::I386 as u32).to_le_bytes());
+        bytes.0[4..8].copy_from_slice(&HeaderTagISA::I386.val().to_le_bytes());
         bytes.0[8..12].copy_from_slice(&32_u32.to_le_bytes());
         bytes.0[12..16].copy_from_slice(&checksum.to_le_bytes());
         bytes.0[16..18].copy_from_slice(&HeaderTagType::InformationRequest.val().to_le_bytes());

@@ -4,17 +4,22 @@
 
 use multiboot2_common::Header;
 
-/// ISA/ARCH in Multiboot2 header.
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum HeaderTagISA {
-    /// Spec: "means 32-bit (protected) mode of i386".
-    /// Caution: This is confusing. If you use the EFI64-tag
-    /// on an UEFI system, the machine will boot into `64-bit long mode`.
-    /// Therefore this tag should be understood as "arch=x86|x86_64".
-    I386 = 0,
-    /// 32-bit MIPS
-    MIPS32 = 4,
+multiboot2_common::raw_type! {
+    /// Serialized form of [`HeaderTagISA`] that matches the binary
+    /// representation (`u32`). This value stands in the `arch` property of
+    /// [`crate::Multiboot2BasicHeader`].
+    pub struct HeaderTagISARaw(u32);
+
+    /// ISA/ARCH in Multiboot2 header.
+    pub enum HeaderTagISA {
+        /// Spec: "means 32-bit (protected) mode of i386".
+        /// Caution: This is confusing. If you use the EFI64-tag
+        /// on an UEFI system, the machine will boot into `64-bit long mode`.
+        /// Therefore this tag should be understood as "arch=x86|x86_64".
+        I386 = 0,
+        /// 32-bit MIPS
+        MIPS32 = 4,
+    }
 }
 
 multiboot2_common::raw_type! {

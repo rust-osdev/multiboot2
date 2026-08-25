@@ -10,6 +10,10 @@
   `HeaderTagTypeRaw` newtype; the `typ()` getters keep returning
   `HeaderTagType`, which gained a `Custom` variant. **Breaking:** the now
   meaningless `HeaderTagType::count()` was removed.
+- Fixed undefined behavior when parsing a header with an architecture unknown
+  to the specification. `Multiboot2BasicHeader` now stores the new
+  `HeaderTagISARaw` newtype; the `arch()` getters keep returning
+  `HeaderTagISA`, which gained a `Custom` variant.
 
 ## v0.10.0 (2026-08-24)
 
