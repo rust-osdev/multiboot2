@@ -17,43 +17,39 @@ pub enum HeaderTagISA {
     MIPS32 = 4,
 }
 
-/// Possible types for header tags of a Multiboot2 header.
-///
-/// The names and values are taken from the example C code at the bottom of the
-/// Multiboot2 specification. This value stands in the `typ` property of
-/// [`HeaderTagHeader`].
-#[repr(u16)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum HeaderTagType {
-    /// Type for [`crate::EndHeaderTag`].
-    End = 0,
-    /// Type for [`crate::InformationRequestHeaderTag`].
-    InformationRequest = 1,
-    /// Type for [`crate::AddressHeaderTag`].
-    Address = 2,
-    /// Type for [`crate::EntryAddressHeaderTag`].
-    EntryAddress = 3,
-    /// Type for [`crate::ConsoleHeaderTag`].
-    ConsoleFlags = 4,
-    /// Type for [`crate::FramebufferHeaderTag`].
-    Framebuffer = 5,
-    /// Type for [`crate::ModuleAlignHeaderTag`].
-    ModuleAlign = 6,
-    /// Type for [`crate::EfiBootServiceHeaderTag`].
-    EfiBS = 7,
-    /// Type for [`crate::EntryEfi32HeaderTag`].
-    EntryAddressEFI32 = 8,
-    /// Type for [`crate::EntryEfi64HeaderTag`].
-    EntryAddressEFI64 = 9,
-    /// Type for [`crate::RelocatableHeaderTag`].
-    Relocatable = 10,
-}
+multiboot2_common::raw_type! {
+    /// Serialized form of [`HeaderTagType`] that matches the binary
+    /// representation (`u16`). This value stands in the `typ` property of
+    /// [`HeaderTagHeader`].
+    pub struct HeaderTagTypeRaw(u16);
 
-impl HeaderTagType {
-    /// Returns the number of possible variants.
-    #[must_use]
-    pub const fn count() -> u32 {
-        11
+    /// Possible types for header tags of a Multiboot2 header.
+    ///
+    /// The names and values are taken from the example C code at the bottom of
+    /// the Multiboot2 specification.
+    pub enum HeaderTagType {
+        /// Type for [`crate::EndHeaderTag`].
+        End = 0,
+        /// Type for [`crate::InformationRequestHeaderTag`].
+        InformationRequest = 1,
+        /// Type for [`crate::AddressHeaderTag`].
+        Address = 2,
+        /// Type for [`crate::EntryAddressHeaderTag`].
+        EntryAddress = 3,
+        /// Type for [`crate::ConsoleHeaderTag`].
+        ConsoleFlags = 4,
+        /// Type for [`crate::FramebufferHeaderTag`].
+        Framebuffer = 5,
+        /// Type for [`crate::ModuleAlignHeaderTag`].
+        ModuleAlign = 6,
+        /// Type for [`crate::EfiBootServiceHeaderTag`].
+        EfiBS = 7,
+        /// Type for [`crate::EntryEfi32HeaderTag`].
+        EntryAddressEFI32 = 8,
+        /// Type for [`crate::EntryEfi64HeaderTag`].
+        EntryAddressEFI64 = 9,
+        /// Type for [`crate::RelocatableHeaderTag`].
+        Relocatable = 10,
     }
 }
 
@@ -73,8 +69,8 @@ pub enum HeaderTagFlag {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, align(8))]
 pub struct HeaderTagHeader {
-    typ: HeaderTagType,   /* u16 */
-    flags: HeaderTagFlag, /* u16 */
+    typ: HeaderTagTypeRaw, /* u16 */
+    flags: HeaderTagFlag,  /* u16 */
     size: u32,
     // Followed by optional additional tag-specific fields.
 }
@@ -83,13 +79,17 @@ impl HeaderTagHeader {
     /// Creates a new header.
     #[must_use]
     pub const fn new(typ: HeaderTagType, flags: HeaderTagFlag, size: u32) -> Self {
-        Self { typ, flags, size }
+        Self {
+            typ: HeaderTagTypeRaw::new(typ.val()),
+            flags,
+            size,
+        }
     }
 
     /// Returns the [`HeaderTagType`].
     #[must_use]
     pub const fn typ(&self) -> HeaderTagType {
-        self.typ
+        HeaderTagType::from_val(self.typ.get())
     }
 
     /// Returns the [`HeaderTagFlag`]s.

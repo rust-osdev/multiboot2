@@ -5,6 +5,11 @@
 - **Breaking:** `InformationRequestHeaderTag::new()` now takes
   `&[MbiTagType]` and `requests()` returns an iterator over `MbiTagType`.
   The `MbiTagTypeId` re-export was renamed to `MbiTagTypeRaw`.
+- Fixed undefined behavior when parsing a header containing a tag with a type
+  unknown to the specification. `HeaderTagHeader` now stores the new
+  `HeaderTagTypeRaw` newtype; the `typ()` getters keep returning
+  `HeaderTagType`, which gained a `Custom` variant. **Breaking:** the now
+  meaningless `HeaderTagType::count()` was removed.
 
 ## v0.10.0 (2026-08-24)
 

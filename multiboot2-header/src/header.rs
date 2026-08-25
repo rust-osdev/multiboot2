@@ -78,7 +78,7 @@ impl<'a> Header<'a> {
 
             // The spec only requires the end tag to have type 0 and size 8; it
             // does not constrain the flags field.
-            typ == HeaderTagType::End as u16 && size == size_of::<HeaderTagHeader>()
+            typ == HeaderTagType::End.val() && size == size_of::<HeaderTagHeader>()
         })
     }
 
@@ -552,6 +552,32 @@ mod tests {
         assert!(header.is_ok());
     }
 
+    /// A header containing a tag with a type unknown to the specification
+    /// must be parsable and iterable without undefined behavior.
+    #[test]
+    fn load_accepts_unknown_tag_type() {
+        let mut bytes = AlignedBytes::new([0; 32]);
+        let checksum = Multiboot2BasicHeader::calc_checksum(MAGIC, HeaderTagISA::I386, 32);
+        bytes.0[0..4].copy_from_slice(&MAGIC.to_le_bytes());
+        bytes.0[8..12].copy_from_slice(&32_u32.to_le_bytes());
+        bytes.0[12..16].copy_from_slice(&checksum.to_le_bytes());
+        // Tag with a type unknown to the specification.
+        bytes.0[16..18].copy_from_slice(&0x1337_u16.to_le_bytes());
+        bytes.0[20..24].copy_from_slice(&8_u32.to_le_bytes());
+        // End tag.
+        bytes.0[28..32].copy_from_slice(&8_u32.to_le_bytes());
+
+        // SAFETY: The test buffer is aligned and contains a valid
+        // header layout.
+        let header = unsafe { Header::load(bytes.as_ptr().cast()) }.unwrap();
+
+        let tag = header.iter().next().unwrap();
+        assert_eq!(tag.header().typ(), HeaderTagType::Custom(0x1337));
+        // The Debug implementation must also cope with unknown types.
+        let debug = format!("{header:?}");
+        assert!(debug.contains("Custom(4919)"));
+    }
+
     #[test]
     fn load_rejects_missing_end_tag() {
         let mut bytes = AlignedBytes::new([0; 16]);
@@ -575,7 +601,7 @@ mod tests {
         bytes.0[4..8].copy_from_slice(&(HeaderTagISA::I386 as u32).to_le_bytes());
         bytes.0[8..12].copy_from_slice(&32_u32.to_le_bytes());
         bytes.0[12..16].copy_from_slice(&checksum.to_le_bytes());
-        bytes.0[16..18].copy_from_slice(&(HeaderTagType::InformationRequest as u16).to_le_bytes());
+        bytes.0[16..18].copy_from_slice(&HeaderTagType::InformationRequest.val().to_le_bytes());
         bytes.0[20..24].copy_from_slice(&24_u32.to_le_bytes());
 
         // SAFETY: The test buffer is aligned and contains a valid
