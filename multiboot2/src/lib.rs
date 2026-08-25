@@ -119,7 +119,7 @@ pub use ptr_meta::Pointee;
 pub use rsdp::{RsdpV1Tag, RsdpV2Tag};
 pub use smbios::SmbiosTag;
 pub use tag::TagHeader;
-pub use tag_type::{TagType, TagTypeId};
+pub use tag_type::{TagType, TagTypeRaw};
 pub use util::{StringError, parse_slice_as_string};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
@@ -1233,7 +1233,7 @@ mod tests {
     fn get_repeated_custom_tags_from_mbi() {
         #[repr(C, align(8))]
         struct CustomTag {
-            tag: TagTypeId,
+            tag: TagTypeRaw,
             size: u32,
             foo: u32,
         }
@@ -1329,7 +1329,7 @@ mod tests {
         #[repr(C)]
         #[derive(crate::Pointee)]
         struct CustomTag {
-            tag: TagTypeId,
+            tag: TagTypeRaw,
             size: u32,
             name: [u8],
         }
@@ -1408,7 +1408,7 @@ mod tests {
         assert_eq!(tag.name(), Ok("hello"));
     }
 
-    /// Tests that `get_tag` can consume multiple types that implement `Into<TagTypeId>`
+    /// Tests that `get_tag` can consume multiple types that implement `Into<TagType>`
     #[test]
     fn get_tag_into_variants() {
         let bytes = AlignedBytes([

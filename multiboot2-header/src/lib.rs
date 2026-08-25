@@ -103,4 +103,4 @@ pub use self::uefi_bs::*;
 pub use builder::Builder;
 
 /// Re-export of [`multiboot2::TagType`] from `multiboot2`-crate.
-pub use multiboot2::{TagType as MbiTagType, TagTypeId as MbiTagTypeId};
+pub use multiboot2::{TagType as MbiTagType, TagTypeRaw as MbiTagTypeRaw};

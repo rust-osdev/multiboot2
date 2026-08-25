@@ -1,6 +1,6 @@
 //! Module for the base tag definition [`TagHeader`].
 
-use crate::TagTypeId;
+use crate::{TagType, TagTypeRaw};
 use core::fmt::Debug;
 use multiboot2_common::Header;
 
@@ -16,7 +16,7 @@ pub struct TagHeader {
     /// The ABI-compatible [`TagType`].
     ///
     /// [`TagType`]: crate::TagType
-    pub typ: TagTypeId, /* u32 */
+    pub typ: TagTypeRaw, /* u32 */
     /// The total size of the tag including the header.
     pub size: u32,
     // Followed by optional additional tag specific fields.
@@ -24,9 +24,9 @@ pub struct TagHeader {
 
 impl TagHeader {
     /// Creates a new header.
-    pub fn new(typ: impl Into<TagTypeId>, size: u32) -> Self {
+    pub fn new(typ: impl Into<TagType>, size: u32) -> Self {
         Self {
-            typ: typ.into(),
+            typ: TagTypeRaw::new(typ.into().val()),
             size,
         }
     }

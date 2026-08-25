@@ -1,5 +1,5 @@
 use crate::{HeaderTagFlag, HeaderTagHeader};
-use crate::{HeaderTagType, MbiTagTypeId};
+use crate::{HeaderTagType, MbiTagTypeRaw};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 #[cfg(feature = "builder")]
@@ -14,14 +14,14 @@ use {alloc::boxed::Box, core::slice};
 #[repr(C, align(8))]
 pub struct InformationRequestHeaderTag {
     header: HeaderTagHeader,
-    requests: [MbiTagTypeId],
+    requests: [MbiTagTypeRaw],
 }
 
 impl InformationRequestHeaderTag {
     /// Creates a new object.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new(flags: HeaderTagFlag, requests: &[MbiTagTypeId]) -> Box<Self> {
+    pub fn new(flags: HeaderTagFlag, requests: &[MbiTagTypeRaw]) -> Box<Self> {
         let header = HeaderTagHeader::new(HeaderTagType::InformationRequest, flags, 0);
         // SAFETY: The memory we are using is valid.
         let requests = unsafe {
@@ -51,7 +51,7 @@ impl InformationRequestHeaderTag {
 
     /// Returns the requests as array
     #[must_use]
-    pub const fn requests(&self) -> &[MbiTagTypeId] {
+    pub const fn requests(&self) -> &[MbiTagTypeRaw] {
         &self.requests
     }
 }
@@ -74,8 +74,8 @@ impl MaybeDynSized for InformationRequestHeaderTag {
 
     fn dst_len(header: &Self::Header) -> Self::Metadata {
         let dst_size = header.size() as usize - Self::BASE_SIZE;
-        assert_eq!(dst_size % size_of::<MbiTagTypeId>(), 0);
-        dst_size / size_of::<MbiTagTypeId>()
+        assert_eq!(dst_size % size_of::<MbiTagTypeRaw>(), 0);
+        dst_size / size_of::<MbiTagTypeRaw>()
     }
 }
 

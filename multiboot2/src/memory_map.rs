@@ -6,7 +6,7 @@ pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
 pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
 
 use crate::tag::TagHeader;
-use crate::{TagType, TagTypeId};
+use crate::{TagType, TagTypeRaw};
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use multiboot2_common::{MaybeDynSized, Tag};
@@ -407,7 +407,7 @@ impl Debug for EFIMemoryMapTag {
 impl MaybeDynSized for EFIMemoryMapTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = size_of::<TagTypeId>() + 3 * size_of::<u32>();
+    const BASE_SIZE: usize = size_of::<TagTypeRaw>() + 3 * size_of::<u32>();
 
     fn dst_len(header: &TagHeader) -> usize {
         assert!(header.size as usize >= Self::BASE_SIZE);
