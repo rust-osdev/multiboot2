@@ -126,7 +126,7 @@ pub use tag_type::{TagType, TagTypeRaw};
 pub use util::{StringError, parse_slice_as_string};
 pub use vbe_info::{
     VBECapabilities, VBEControlInfo, VBEDirectColorAttributes, VBEField, VBEInfoTag,
-    VBEMemoryModel, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
+    VBEMemoryModel, VBEMemoryModelRaw, VBEModeAttributes, VBEModeInfo, VBEWindowAttributes,
 };
 
 /// Magic number that a Multiboot2-compliant bootloader will use to identify
