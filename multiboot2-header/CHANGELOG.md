@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Breaking:** `InformationRequestHeaderTag::new()` now takes
+  `&[MbiTagType]` and `requests()` returns an iterator over `MbiTagType`.
+  The `MbiTagTypeId` re-export was renamed to `MbiTagTypeRaw`.
+
 ## v0.10.0 (2026-08-24)
 
 - Fixed `Header::load` rejecting a valid header whose end tag has a non-zero

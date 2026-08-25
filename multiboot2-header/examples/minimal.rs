@@ -18,10 +18,7 @@ fn main() {
         ))
         .information_request_tag(InformationRequestHeaderTag::new(
             HeaderTagFlag::Required,
-            &[
-                MbiTagType::Cmdline.into(),
-                MbiTagType::BootLoaderName.into(),
-            ],
+            &[MbiTagType::Cmdline, MbiTagType::BootLoaderName],
         ))
         .build();
 

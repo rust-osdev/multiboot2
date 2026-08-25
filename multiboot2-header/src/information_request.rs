@@ -1,12 +1,12 @@
-use crate::{HeaderTagFlag, HeaderTagHeader};
-use crate::{HeaderTagType, MbiTagTypeRaw};
+use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
+use crate::{MbiTagType, MbiTagTypeRaw};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 #[cfg(feature = "builder")]
 use multiboot2_common::new_boxed;
 use multiboot2_common::{MaybeDynSized, Tag};
 #[cfg(feature = "builder")]
-use {alloc::boxed::Box, core::slice};
+use {alloc::boxed::Box, alloc::vec::Vec};
 
 /// Specifies which tag types the bootloader should provide
 /// inside the mbi.
@@ -21,14 +21,13 @@ impl InformationRequestHeaderTag {
     /// Creates a new object.
     #[cfg(feature = "builder")]
     #[must_use]
-    pub fn new(flags: HeaderTagFlag, requests: &[MbiTagTypeRaw]) -> Box<Self> {
+    pub fn new(flags: HeaderTagFlag, requests: &[MbiTagType]) -> Box<Self> {
         let header = HeaderTagHeader::new(HeaderTagType::InformationRequest, flags, 0);
-        // SAFETY: The memory we are using is valid.
-        let requests = unsafe {
-            let ptr = &raw const *requests;
-            slice::from_raw_parts(ptr.cast::<u8>(), size_of_val(requests))
-        };
-        new_boxed(header, &[requests])
+        let requests = requests
+            .iter()
+            .flat_map(|request| request.val().to_ne_bytes())
+            .collect::<Vec<_>>();
+        new_boxed(header, &[requests.as_slice()])
     }
 
     /// Returns the [`HeaderTagType`].
@@ -49,10 +48,19 @@ impl InformationRequestHeaderTag {
         self.header.size()
     }
 
-    /// Returns the requests as array
-    #[must_use]
-    pub const fn requests(&self) -> &[MbiTagTypeRaw] {
-        &self.requests
+    /// Returns an iterator over the requested tag types.
+    pub fn requests(&self) -> impl Iterator<Item = MbiTagType> + '_ {
+        self.requests.iter().map(|&raw| MbiTagType::from(raw))
+    }
+}
+
+/// Debug-formats the requests of an [`InformationRequestHeaderTag`] as a list
+/// of [`MbiTagType`].
+struct RequestsDebug<'a>(&'a InformationRequestHeaderTag);
+
+impl Debug for RequestsDebug<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.0.requests()).finish()
     }
 }
 
@@ -62,7 +70,7 @@ impl Debug for InformationRequestHeaderTag {
             .field("type", &self.typ())
             .field("flags", &self.flags())
             .field("size", &self.size())
-            .field("requests", &self.requests())
+            .field("requests", &RequestsDebug(self))
             .finish()
     }
 }
@@ -88,37 +96,35 @@ impl Tag for InformationRequestHeaderTag {
 #[cfg(feature = "builder")]
 mod tests {
     use super::*;
-    use crate::MbiTagType;
 
     #[test]
     fn creation() {
-        // Main objective here is to satisfy Miri.
-        let _ir = InformationRequestHeaderTag::new(
-            HeaderTagFlag::Optional,
-            &[
-                MbiTagType::Cmdline.into(),
-                MbiTagType::BootLoaderName.into(),
-                MbiTagType::Module.into(),
-                MbiTagType::BasicMeminfo.into(),
-                MbiTagType::Bootdev.into(),
-                MbiTagType::Mmap.into(),
-                MbiTagType::Vbe.into(),
-                MbiTagType::Framebuffer.into(),
-                MbiTagType::ElfSections.into(),
-                MbiTagType::Apm.into(),
-                MbiTagType::Efi32.into(),
-                MbiTagType::Efi64.into(),
-                MbiTagType::Smbios.into(),
-                MbiTagType::AcpiV1.into(),
-                MbiTagType::AcpiV2.into(),
-                MbiTagType::Network.into(),
-                MbiTagType::EfiMmap.into(),
-                MbiTagType::EfiBs.into(),
-                MbiTagType::Efi32Ih.into(),
-                MbiTagType::Efi64Ih.into(),
-                MbiTagType::LoadBaseAddr.into(),
-                MbiTagType::Custom(0x1337).into(),
-            ],
-        );
+        let requests = [
+            MbiTagType::Cmdline,
+            MbiTagType::BootLoaderName,
+            MbiTagType::Module,
+            MbiTagType::BasicMeminfo,
+            MbiTagType::Bootdev,
+            MbiTagType::Mmap,
+            MbiTagType::Vbe,
+            MbiTagType::Framebuffer,
+            MbiTagType::ElfSections,
+            MbiTagType::Apm,
+            MbiTagType::Efi32,
+            MbiTagType::Efi64,
+            MbiTagType::Smbios,
+            MbiTagType::AcpiV1,
+            MbiTagType::AcpiV2,
+            MbiTagType::Network,
+            MbiTagType::EfiMmap,
+            MbiTagType::EfiBs,
+            MbiTagType::Efi32Ih,
+            MbiTagType::Efi64Ih,
+            MbiTagType::LoadBaseAddr,
+            MbiTagType::Custom(0x1337),
+        ];
+        // Statement also is a good test for Miri.
+        let ir = InformationRequestHeaderTag::new(HeaderTagFlag::Optional, &requests);
+        assert!(ir.requests().eq(requests.iter().copied()));
     }
 }
