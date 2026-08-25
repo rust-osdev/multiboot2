@@ -107,7 +107,10 @@ pub use elf_sections::{
     ElfSectionExt, ElfSectionFlags, ElfSectionIter, ElfSectionType, ElfSectionsTag,
 };
 pub use end::EndTag;
-pub use framebuffer::{FramebufferColor, FramebufferField, FramebufferTag, FramebufferType};
+pub use framebuffer::{
+    FramebufferColor, FramebufferField, FramebufferKind, FramebufferTag, FramebufferType,
+    FramebufferTypeRaw, UnknownFramebufferType,
+};
 pub use image_load_addr::ImageLoadPhysAddrTag;
 pub use memory_map::{
     BasicMemoryInfoTag, EFIMemoryAreaType, EFIMemoryAttribute, EFIMemoryDesc, EFIMemoryMapTag,

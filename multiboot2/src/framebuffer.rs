@@ -81,16 +81,12 @@ pub struct FramebufferTag {
     /// Contains number of bits per pixel.
     bpp: u8,
 
-    /// The type of framebuffer. See [`FramebufferTypeId`].
-    // TODO: Strictly speaking this causes UB for invalid values. However, no
-    //  sane bootloader puts something illegal there at the moment. When we
-    //  refactor this (newtype pattern?), we should also streamline other
-    //  parts in the code base accordingly.
-    framebuffer_type: FramebufferTypeId,
+    /// The type of framebuffer. See [`FramebufferKind`].
+    framebuffer_type: FramebufferTypeRaw,
 
     _padding: u16,
 
-    /// This optional data and its meaning depend on the [`FramebufferTypeId`].
+    /// This optional data and its meaning depends on [`FramebufferTypeRaw`].
     buffer: [u8],
 }
 
@@ -122,7 +118,7 @@ impl FramebufferTag {
                 &width,
                 &height,
                 &[bpp],
-                &[buffer_type_id as u8],
+                &[buffer_type_id.get()],
                 &padding,
                 &optional_buffer,
             ],
@@ -167,13 +163,8 @@ impl FramebufferTag {
     pub fn buffer_type(&self) -> Result<FramebufferType<'_>, UnknownFramebufferType> {
         let mut reader = Reader::new(&self.buffer);
 
-        // TODO: We should use the newtype pattern instead or so to properly
-        //  solve this.
-        let fb_type_raw = self.framebuffer_type as u8;
-        let fb_type = FramebufferTypeId::try_from(fb_type_raw)?;
-
-        match fb_type {
-            FramebufferTypeId::Indexed => {
+        match FramebufferKind::from(self.framebuffer_type) {
+            FramebufferKind::Indexed => {
                 // TODO we can create a struct for this and implement
                 //  DynSizedStruct for it to leverage the already existing
                 //  functionality
@@ -197,7 +188,7 @@ impl FramebufferTag {
                 };
                 Ok(FramebufferType::Indexed { palette })
             }
-            FramebufferTypeId::RGB => {
+            FramebufferKind::RGB => {
                 let red_pos = reader.read_next_u8(); // These refer to the bit positions of the LSB of each field
                 let red_mask = reader.read_next_u8(); // And then the length of the field from LSB to MSB
                 let green_pos = reader.read_next_u8();
@@ -219,7 +210,8 @@ impl FramebufferTag {
                     },
                 })
             }
-            FramebufferTypeId::Text => Ok(FramebufferType::Text),
+            FramebufferKind::Text => Ok(FramebufferType::Text),
+            FramebufferKind::Custom(val) => Err(UnknownFramebufferType(val)),
         }
     }
 }
@@ -273,37 +265,30 @@ impl PartialEq for FramebufferTag {
     }
 }
 
-/// ABI-compatible framebuffer type.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(u8)]
-#[expect(clippy::upper_case_acronyms)]
-pub enum FramebufferTypeId {
-    Indexed = 0,
-    RGB = 1,
-    Text = 2,
-    // spec says: there may be more variants in the future
-}
+multiboot2_common::raw_type! {
+    /// ABI-compatible framebuffer type.
+    pub struct FramebufferTypeRaw(u8);
 
-impl TryFrom<u8> for FramebufferTypeId {
-    type Error = UnknownFramebufferType;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::Indexed),
-            1 => Ok(Self::RGB),
-            2 => Ok(Self::Text),
-            val => Err(UnknownFramebufferType(val)),
-        }
+    /// Higher level abstraction for [`FramebufferTypeRaw`] that assigns each
+    /// possible value to a specific semantic according to the specification.
+    ///
+    /// Unlike [`FramebufferType`], this only describes the kind of
+    /// framebuffer and not its payload.
+    #[allow(clippy::upper_case_acronyms)]
+    pub enum FramebufferKind {
+        /// Indexed color.
+        Indexed = 0,
+        /// Direct RGB color.
+        RGB = 1,
+        /// EGA Text.
+        Text = 2,
+        // spec says: there may be more variants in the future
     }
 }
 
-impl From<FramebufferType<'_>> for FramebufferTypeId {
+impl From<FramebufferType<'_>> for FramebufferTypeRaw {
     fn from(value: FramebufferType) -> Self {
-        match value {
-            FramebufferType::Indexed { .. } => Self::Indexed,
-            FramebufferType::RGB { .. } => Self::RGB,
-            FramebufferType::Text => Self::Text,
-        }
+        value.id()
     }
 }
 
@@ -336,13 +321,13 @@ pub enum FramebufferType<'a> {
 
 impl FramebufferType<'_> {
     #[must_use]
-    #[cfg(feature = "builder")]
-    const fn id(&self) -> FramebufferTypeId {
-        match self {
-            FramebufferType::Indexed { .. } => FramebufferTypeId::Indexed,
-            FramebufferType::RGB { .. } => FramebufferTypeId::RGB,
-            FramebufferType::Text => FramebufferTypeId::Text,
-        }
+    const fn id(&self) -> FramebufferTypeRaw {
+        let kind = match self {
+            FramebufferType::Indexed { .. } => FramebufferKind::Indexed,
+            FramebufferType::RGB { .. } => FramebufferKind::RGB,
+            FramebufferType::Text => FramebufferKind::Text,
+        };
+        FramebufferTypeRaw::new(kind.val())
     }
 
     #[must_use]
@@ -404,7 +389,7 @@ pub struct FramebufferColor {
     pub blue: u8,
 }
 
-/// Error when an unknown [`FramebufferTypeId`] is found.
+/// Error when an unknown framebuffer type is found.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Error)]
 #[error("Unknown framebuffer type {0}")]
 pub struct UnknownFramebufferType(u8);
@@ -476,6 +461,36 @@ mod tests {
         );
         // Good test for Miri
         dbg!(tag);
+    }
+
+    /// A tag with a framebuffer type unknown to the specification must be
+    /// parsable without undefined behavior and report the unknown type as
+    /// an error.
+    #[test]
+    fn unknown_framebuffer_type_is_not_ub() {
+        #[rustfmt::skip]
+        let bytes = AlignedBytes::new([
+            /* typ = framebuffer */
+            8, 0, 0, 0,
+            /* size = base size */
+            32, 0, 0, 0,
+            /* address */
+            0, 0, 0, 0, 0, 0, 0, 0,
+            /* pitch, width, height */
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            /* bpp, type = 0x40 (unknown), padding */
+            0, 0x40, 0, 0,
+        ]);
+        let tag = GenericInfoTag::ref_from_slice(bytes.borrow())
+            .unwrap()
+            .cast::<FramebufferTag>();
+
+        assert_eq!(tag.buffer_type(), Err(UnknownFramebufferType(0x40)));
+        // The Debug implementation must also cope with unknown values.
+        let debug = format!("{tag:?}");
+        assert!(debug.contains("UnknownFramebufferType"));
     }
 
     #[test]
