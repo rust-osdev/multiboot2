@@ -14,6 +14,10 @@
   to the specification. `Multiboot2BasicHeader` now stores the new
   `HeaderTagISARaw` newtype; the `arch()` getters keep returning
   `HeaderTagISA`, which gained a `Custom` variant.
+- Fixed undefined behavior when parsing a `RelocatableHeaderTag` with a
+  placement preference unknown to the specification. The tag now stores the
+  new `RelocatableHeaderTagPreferenceRaw` newtype; `preference()` keeps
+  returning `RelocatableHeaderTagPreference`, which gained a `Custom` variant.
 
 ## v0.10.0 (2026-08-24)
 

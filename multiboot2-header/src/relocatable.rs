@@ -3,18 +3,22 @@ use core::fmt;
 use core::fmt::{Debug, Formatter};
 use multiboot2_common::{MaybeDynSized, Tag};
 
-/// Specifies the bootloader's preferred placement for a relocatable image.
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum RelocatableHeaderTagPreference {
-    /// Let the bootloader choose the image location.
-    None = 0,
-    /// Load the image at the lowest possible address that is not below
-    /// `min_addr`.
-    Low = 1,
-    /// Load the image at the highest possible address that does not end above
-    /// `max_addr`.
-    High = 2,
+multiboot2_common::raw_type! {
+    /// Serialized form of [`RelocatableHeaderTagPreference`] that matches the
+    /// binary representation (`u32`).
+    pub struct RelocatableHeaderTagPreferenceRaw(u32);
+
+    /// Specifies the bootloader's preferred placement for a relocatable image.
+    pub enum RelocatableHeaderTagPreference {
+        /// Let the bootloader choose the image location.
+        None = 0,
+        /// Load the image at the lowest possible address that is not below
+        /// `min_addr`.
+        Low = 1,
+        /// Load the image at the highest possible address that does not end above
+        /// `max_addr`.
+        High = 2,
+    }
 }
 
 /// This tag indicates that the image is relocatable.
@@ -32,7 +36,7 @@ pub struct RelocatableHeaderTag {
     max_addr: u32,
     /// Image alignment in memory, e.g. 4096.
     align: u32,
-    preference: RelocatableHeaderTagPreference,
+    preference: RelocatableHeaderTagPreferenceRaw,
 }
 
 impl RelocatableHeaderTag {
@@ -52,7 +56,7 @@ impl RelocatableHeaderTag {
             min_addr,
             max_addr,
             align,
-            preference,
+            preference: RelocatableHeaderTagPreferenceRaw::new(preference.val()),
         }
     }
 
@@ -95,7 +99,7 @@ impl RelocatableHeaderTag {
     /// Return the preference.
     #[must_use]
     pub const fn preference(&self) -> RelocatableHeaderTagPreference {
-        self.preference
+        RelocatableHeaderTagPreference::from_val(self.preference.get())
     }
 }
 
@@ -127,10 +131,42 @@ impl Tag for RelocatableHeaderTag {
 
 #[cfg(test)]
 mod tests {
-    use crate::RelocatableHeaderTag;
+    use super::*;
+    use crate::GenericHeaderTag;
+    use core::borrow::Borrow;
+    use multiboot2_common::test_utils::AlignedBytes;
 
     #[test]
     fn test_assert_size() {
         assert_eq!(size_of::<RelocatableHeaderTag>(), 2 + 2 + 4 + 4 + 4 + 4 + 4);
+    }
+
+    /// A tag with a placement preference unknown to the specification must
+    /// be parsable without undefined behavior.
+    #[test]
+    fn unknown_preference_is_not_ub() {
+        #[rustfmt::skip]
+        let bytes = AlignedBytes::new([
+            /* typ = relocatable */
+            10, 0,
+            /* flags */
+            0, 0,
+            /* size */
+            24, 0, 0, 0,
+            /* min_addr, max_addr, align */
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            /* preference = 99 (unknown) */
+            99, 0, 0, 0,
+        ]);
+        let tag = GenericHeaderTag::ref_from_slice(bytes.borrow())
+            .unwrap()
+            .cast::<RelocatableHeaderTag>();
+
+        assert_eq!(tag.preference(), RelocatableHeaderTagPreference::Custom(99));
+        // The Debug implementation must also cope with unknown values.
+        let debug = format!("{tag:?}");
+        assert!(debug.contains("Custom(99)"));
     }
 }
