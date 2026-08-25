@@ -58,15 +58,20 @@ multiboot2_common::raw_type! {
     }
 }
 
-/// Flags for Multiboot2 header tags.
-#[repr(u16)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum HeaderTagFlag {
-    /// The bootloader must provide this tag. If this is not possible, the
-    /// bootloader will fail to load the kernel.
-    Required = 0,
-    /// The bootloader should provide the tag if possible.
-    Optional = 1,
+multiboot2_common::raw_type! {
+    /// Serialized form of [`HeaderTagFlag`] that matches the binary
+    /// representation (`u16`). This value stands in the `flags` property of
+    /// [`HeaderTagHeader`].
+    pub struct HeaderTagFlagRaw(u16);
+
+    /// Flags for Multiboot2 header tags.
+    pub enum HeaderTagFlag {
+        /// The bootloader must provide this tag. If this is not possible, the
+        /// bootloader will fail to load the kernel.
+        Required = 0,
+        /// The bootloader should provide the tag if possible.
+        Optional = 1,
+    }
 }
 
 /// The common header that all header tags share. Specific tags may have
@@ -74,8 +79,8 @@ pub enum HeaderTagFlag {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C, align(8))]
 pub struct HeaderTagHeader {
-    typ: HeaderTagTypeRaw, /* u16 */
-    flags: HeaderTagFlag,  /* u16 */
+    typ: HeaderTagTypeRaw,   /* u16 */
+    flags: HeaderTagFlagRaw, /* u16 */
     size: u32,
     // Followed by optional additional tag-specific fields.
 }
@@ -86,7 +91,7 @@ impl HeaderTagHeader {
     pub const fn new(typ: HeaderTagType, flags: HeaderTagFlag, size: u32) -> Self {
         Self {
             typ: HeaderTagTypeRaw::new(typ.val()),
-            flags,
+            flags: HeaderTagFlagRaw::new(flags.val()),
             size,
         }
     }
@@ -100,7 +105,7 @@ impl HeaderTagHeader {
     /// Returns the [`HeaderTagFlag`]s.
     #[must_use]
     pub const fn flags(&self) -> HeaderTagFlag {
-        self.flags
+        HeaderTagFlag::from_val(self.flags.get())
     }
 
     /// Returns the size.

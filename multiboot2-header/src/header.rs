@@ -552,6 +552,25 @@ mod tests {
         assert!(header.is_ok());
     }
 
+    /// A tag with a flags value unknown to the specification must be
+    /// parsable without undefined behavior, preserving the value.
+    #[test]
+    fn load_accepts_unknown_flags_value() {
+        use crate::HeaderTagFlag;
+
+        let mut bytes = AlignedBytes::new([0; 24]);
+        write_minimal_valid_header_tag(&mut bytes.0);
+        // End tag: flags value without a specified meaning.
+        bytes.0[18..20].copy_from_slice(&0xFFFF_u16.to_le_bytes());
+
+        // SAFETY: The test buffer is aligned and contains a valid
+        // header layout.
+        let header = unsafe { Header::load(bytes.as_ptr().cast()) }.unwrap();
+
+        let flags = header.iter().next().unwrap().header().flags();
+        assert_eq!(flags, HeaderTagFlag::Custom(0xFFFF));
+    }
+
     /// A header with an architecture unknown to the specification must be
     /// parsable without undefined behavior.
     #[test]

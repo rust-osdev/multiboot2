@@ -18,6 +18,10 @@
   placement preference unknown to the specification. The tag now stores the
   new `RelocatableHeaderTagPreferenceRaw` newtype; `preference()` keeps
   returning `RelocatableHeaderTagPreference`, which gained a `Custom` variant.
+- Fixed undefined behavior when parsing a header tag whose flags field holds a
+  value other than 0 or 1. `HeaderTagHeader` now stores the new
+  `HeaderTagFlagRaw` newtype; the `flags()` getters keep returning
+  `HeaderTagFlag`, which gained a `Custom` variant.
 
 ## v0.10.0 (2026-08-24)
 
