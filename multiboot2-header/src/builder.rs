@@ -236,6 +236,13 @@ mod tests {
 
         let structure = builder.build();
 
+        #[cfg(miri)]
+        let _all_initialized = structure
+            .as_bytes()
+            .iter()
+            .map(|&byte| byte as u64)
+            .sum::<u64>();
+
         let header = {
             // SAFETY: The builder emits a fully formed, aligned header
             // buffer with a valid end tag.
