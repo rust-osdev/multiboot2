@@ -47,7 +47,9 @@ impl SmbiosTag {
     }
 }
 
-impl MaybeDynSized for SmbiosTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for SmbiosTag {
     type Header = TagHeader;
     #[expect(clippy::manual_bits)] // false positive
     const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u8>() * 8;

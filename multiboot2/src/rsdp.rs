@@ -112,7 +112,9 @@ impl RsdpV1Tag {
     }
 }
 
-impl MaybeDynSized for RsdpV1Tag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for RsdpV1Tag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
@@ -248,7 +250,9 @@ impl RsdpV2Tag {
     }
 }
 
-impl MaybeDynSized for RsdpV2Tag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for RsdpV2Tag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();

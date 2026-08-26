@@ -24,6 +24,8 @@
 - **Breaking:** `ElfSectionsTag::string_table()` is now an `unsafe fn`. The
   string table is not part of the tag itself; the caller must ensure that the
   referenced section memory is still loaded and valid.
+- **Breaking:** The re-exported `MaybeDynSized` trait is now an `unsafe`
+  trait; implementations for custom tag types must now use `unsafe impl`.
 
 ## v0.26.0 / v0.26.1 (2026-08-24)
 

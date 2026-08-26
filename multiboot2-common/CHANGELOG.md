@@ -5,6 +5,9 @@
 - Added the `raw_type!` macro that generates an ABI-safe `#[repr(transparent)]`
   newtype plus a corresponding high-level open-set enum, including all
   conversions between them and the underlying integer.
+- **Breaking:** `Header` and `MaybeDynSized` are now `unsafe` traits, as this
+  crate creates references from raw memory based on their implementations.
+  The safety contracts implementors must uphold are now documented.
 
 ## v0.5.0 (2026-08-24)
 

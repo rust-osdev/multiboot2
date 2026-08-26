@@ -14,16 +14,21 @@ use ptr_meta::Pointee;
 /// implementation. Only dynamically sized types need to implement
 /// [`MaybeDynSized::dst_len`].
 ///
-/// # ABI
-/// Implementors **must** use `#[repr(C)]`. As there might be padding necessary
-/// for the proper Rust layout, `size_of_val(&self)` might report additional
-/// padding bytes that are not reflected by the actual payload. These additional
-/// padding bytes however will be reflected in corresponding [`BytesRef`]
-/// instances.
+/// # Safety
+///
+/// Implementors must be `#[repr(C)]`, start with `Self::Header`, have an
+/// alignment of at most [`ALIGNMENT`], and allow every bit pattern.
+///
+/// [`MaybeDynSized::BASE_SIZE`], [`MaybeDynSized::dst_len`], and
+/// [`Header::total_size`] must correctly describe the initialized,
+/// contiguous memory backing the value. Incorrect sizes or implicit padding
+/// within the reported range can cause out-of-bounds references. Trailing
+/// padding beyond that range is fine.
 ///
 /// [`ID`]: Tag::ID
+/// [`ALIGNMENT`]: crate::ALIGNMENT
 /// [`DynSizedStructure`]: crate::DynSizedStructure
-pub trait MaybeDynSized: Pointee {
+pub unsafe trait MaybeDynSized: Pointee {
     /// The associated [`Header`] of this tag.
     type Header: Header;
 
@@ -105,7 +110,9 @@ pub trait Tag: MaybeDynSized {
 
 // This implementation is not needed for parsing but for creation, when
 // downstream types just wrap this type.
-impl<H: Header> MaybeDynSized for DynSizedStructure<H> {
+// SAFETY: `DynSizedStructure` is repr(C) with the header as first field,
+// any bit pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl<H: Header> MaybeDynSized for DynSizedStructure<H> {
     type Header = H;
 
     const BASE_SIZE: usize = size_of::<H>();

@@ -55,7 +55,9 @@ impl BootInformationHeader {
     }
 }
 
-impl Header for BootInformationHeader {
+// SAFETY: The header is a padding-free repr(C) struct of raw integers, and
+// any bit pattern is valid for it.
+unsafe impl Header for BootInformationHeader {
     fn total_size(&self) -> usize {
         self.total_size as usize
     }
@@ -391,7 +393,9 @@ impl<'a> BootInformation<'a> {
     /// }
     ///
     /// // Give the library hints how big this tag is.
-    /// impl MaybeDynSized for CustomTag {
+    /// // SAFETY: The tag is repr(C) with the header as first field, any bit
+    /// // pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+    /// unsafe impl MaybeDynSized for CustomTag {
     ///     type Header = TagHeader;
     ///     const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
     ///

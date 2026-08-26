@@ -70,7 +70,9 @@ impl ModuleTag {
     }
 }
 
-impl MaybeDynSized for ModuleTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for ModuleTag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<TagHeader>() + 2 * size_of::<u32>();

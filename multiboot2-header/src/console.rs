@@ -67,7 +67,9 @@ impl ConsoleHeaderTag {
     }
 }
 
-impl MaybeDynSized for ConsoleHeaderTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for ConsoleHeaderTag {
     type Header = HeaderTagHeader;
 
     const BASE_SIZE: usize = size_of::<HeaderTagHeader>() + size_of::<u32>();

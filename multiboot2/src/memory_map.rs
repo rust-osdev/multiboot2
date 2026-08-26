@@ -74,7 +74,9 @@ impl MemoryMapTag {
     }
 }
 
-impl MaybeDynSized for MemoryMapTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for MemoryMapTag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<TagHeader>() + 2 * size_of::<u32>();
@@ -229,7 +231,9 @@ impl BasicMemoryInfoTag {
     }
 }
 
-impl MaybeDynSized for BasicMemoryInfoTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for BasicMemoryInfoTag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
@@ -342,7 +346,9 @@ impl Debug for EFIMemoryMapTag {
     }
 }
 
-impl MaybeDynSized for EFIMemoryMapTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for EFIMemoryMapTag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<TagTypeRaw>() + 3 * size_of::<u32>();

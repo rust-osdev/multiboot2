@@ -65,7 +65,9 @@ impl FramebufferHeaderTag {
     }
 }
 
-impl MaybeDynSized for FramebufferHeaderTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for FramebufferHeaderTag {
     type Header = HeaderTagHeader;
 
     const BASE_SIZE: usize = size_of::<HeaderTagHeader>() + 3 * size_of::<u32>();

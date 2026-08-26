@@ -30,6 +30,8 @@
   `ConsoleHeaderTagFlagsRaw` newtype.
 - Fixed a possible size underflow in `InformationRequestHeaderTag` parsing
   when the tag reports a size smaller than the tag header.
+- **Breaking:** The re-exported `MaybeDynSized` trait is now an `unsafe`
+  trait; implementations for custom tag types must now use `unsafe impl`.
 
 ## v0.10.0 (2026-08-24)
 

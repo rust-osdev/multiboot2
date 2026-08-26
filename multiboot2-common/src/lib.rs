@@ -281,7 +281,13 @@ pub const ALIGNMENT: usize = 8;
 ///
 /// The alignment of implementors **must** be compatible with the requirements
 /// for the corresponding structure, which typically is [`ALIGNMENT`].
-pub trait Header: Clone + Sized + PartialEq + Eq + Debug {
+///
+/// # Safety
+///
+/// Implementors must be `#[repr(C)]`, have no padding bytes or interior
+/// mutability, allow every bit pattern, and have an alignment of at most
+/// [`ALIGNMENT`]. Headers are referenced from raw memory and copied byte-wise.
+pub unsafe trait Header: Clone + Sized + PartialEq + Eq + Debug {
     /// Returns the total size of the structure in bytes, including the fixed
     /// header and any dynamic payload.
     #[must_use]
@@ -588,7 +594,9 @@ mod tests {
             b: u32,
         }
 
-        impl MaybeDynSized for CustomSizedTag {
+        // SAFETY: The tag is repr(C) with the header as first field, any
+        // bit pattern is valid, and `BASE_SIZE` matches the ABI.
+        unsafe impl MaybeDynSized for CustomSizedTag {
             type Header = DummyTestHeader;
 
             const BASE_SIZE: usize = size_of::<Self>();
@@ -661,7 +669,9 @@ mod tests {
             b: u32,
         }
 
-        impl MaybeDynSized for CustomSizedTag {
+        // SAFETY: The tag is repr(C) with the header as first field, any
+        // bit pattern is valid, and `BASE_SIZE` matches the ABI.
+        unsafe impl MaybeDynSized for CustomSizedTag {
             type Header = DummyTestHeader;
 
             const BASE_SIZE: usize = size_of::<Self>();

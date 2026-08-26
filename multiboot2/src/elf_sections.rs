@@ -114,7 +114,9 @@ impl ElfSectionsTag {
     }
 }
 
-impl MaybeDynSized for ElfSectionsTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for ElfSectionsTag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<TagHeader>() + 3 * size_of::<u32>();
