@@ -19,6 +19,8 @@
 - **Breaking:** `EFIMemoryDesc` (re-exported from `uefi-raw` crate) has a new
   padding field which is required for correct type layout on some non-UEFI
   32-bit targets.
+- Fixed a possible size underflow in `NetworkTag` parsing when the tag reports
+  a size smaller than the tag header.
 
 ## v0.26.0 / v0.26.1 (2026-08-24)
 

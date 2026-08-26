@@ -31,6 +31,7 @@ impl MaybeDynSized for NetworkTag {
     const BASE_SIZE: usize = size_of::<TagHeader>();
 
     fn dst_len(header: &TagHeader) -> usize {
+        assert!(header.size as usize >= Self::BASE_SIZE);
         header.size as usize - Self::BASE_SIZE
     }
 }
@@ -39,4 +40,16 @@ impl Tag for NetworkTag {
     type IDType = TagType;
 
     const ID: TagType = TagType::Network;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn dst_len_rejects_undersized_header() {
+        let header = TagHeader::new(TagType::Network, 4);
+        let _ = <NetworkTag as MaybeDynSized>::dst_len(&header);
+    }
 }
