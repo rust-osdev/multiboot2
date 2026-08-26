@@ -362,6 +362,8 @@ pub struct Multiboot2BasicHeader {
     // At minimum, the end tag.
 }
 
+const _: () = assert!(size_of::<Multiboot2BasicHeader>() == 4 + 4 + 4 + 4);
+
 impl Multiboot2BasicHeader {
     #[cfg(feature = "builder")]
     /// Constructor for the basic header.
@@ -472,11 +474,6 @@ mod tests {
         buffer[18..20].copy_from_slice(&0_u16.to_le_bytes());
         // End tag: Size
         buffer[20..24].copy_from_slice(&8_u32.to_le_bytes());
-    }
-
-    #[test]
-    fn test_assert_size() {
-        assert_eq!(size_of::<Multiboot2BasicHeader>(), 4 + 4 + 4 + 4);
     }
 
     #[test]

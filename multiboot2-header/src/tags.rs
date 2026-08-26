@@ -85,6 +85,8 @@ pub struct HeaderTagHeader {
     // Followed by optional additional tag-specific fields.
 }
 
+const _: () = assert!(size_of::<HeaderTagHeader>() == 2 + 2 + 4);
+
 impl HeaderTagHeader {
     /// Creates a new header.
     #[must_use]
@@ -122,15 +124,5 @@ impl Header for HeaderTagHeader {
 
     fn set_size(&mut self, total_size: usize) {
         self.size = total_size as u32;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::HeaderTagHeader;
-
-    #[test]
-    fn test_assert_size() {
-        assert_eq!(size_of::<HeaderTagHeader>(), 2 + 2 + 4);
     }
 }

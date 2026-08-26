@@ -8,6 +8,8 @@ pub struct EndHeaderTag {
     header: HeaderTagHeader,
 }
 
+const _: () = assert!(size_of::<EndHeaderTag>() == 2 + 2 + 4);
+
 impl Default for EndHeaderTag {
     fn default() -> Self {
         Self::new()
@@ -54,14 +56,4 @@ impl MaybeDynSized for EndHeaderTag {
 impl Tag for EndHeaderTag {
     type IDType = HeaderTagType;
     const ID: HeaderTagType = HeaderTagType::End;
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::EndHeaderTag;
-
-    #[test]
-    fn test_assert_size() {
-        assert_eq!(size_of::<EndHeaderTag>(), 2 + 2 + 4);
-    }
 }

@@ -39,6 +39,8 @@ pub struct RelocatableHeaderTag {
     preference: RelocatableHeaderTagPreferenceRaw,
 }
 
+const _: () = assert!(size_of::<RelocatableHeaderTag>() == 2 + 2 + 4 + 4 + 4 + 4 + 4);
+
 impl RelocatableHeaderTag {
     /// Constructs a new tag.
     #[must_use]
@@ -135,11 +137,6 @@ mod tests {
     use crate::GenericHeaderTag;
     use core::borrow::Borrow;
     use multiboot2_common::test_utils::AlignedBytes;
-
-    #[test]
-    fn test_assert_size() {
-        assert_eq!(size_of::<RelocatableHeaderTag>(), 2 + 2 + 4 + 4 + 4 + 4 + 4);
-    }
 
     /// A tag with a placement preference unknown to the specification must
     /// be parsable without undefined behavior.

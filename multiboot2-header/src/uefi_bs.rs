@@ -9,6 +9,8 @@ pub struct EfiBootServiceHeaderTag {
     header: HeaderTagHeader,
 }
 
+const _: () = assert!(size_of::<EfiBootServiceHeaderTag>() == 2 + 2 + 4);
+
 impl EfiBootServiceHeaderTag {
     /// Constructs a new tag.
     #[must_use]
@@ -45,14 +47,4 @@ impl MaybeDynSized for EfiBootServiceHeaderTag {
 impl Tag for EfiBootServiceHeaderTag {
     type IDType = HeaderTagType;
     const ID: HeaderTagType = HeaderTagType::EfiBS;
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::EfiBootServiceHeaderTag;
-
-    #[test]
-    fn test_assert_size() {
-        assert_eq!(size_of::<EfiBootServiceHeaderTag>(), 2 + 2 + 4);
-    }
 }

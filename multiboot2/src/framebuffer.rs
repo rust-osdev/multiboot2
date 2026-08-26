@@ -389,6 +389,8 @@ pub struct FramebufferColor {
     pub blue: u8,
 }
 
+const _: () = assert!(size_of::<FramebufferColor>() == 3);
+
 /// Error when an unknown framebuffer type is found.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Error)]
 #[error("Unknown framebuffer type {0}")]
@@ -400,12 +402,6 @@ mod tests {
     use crate::GenericInfoTag;
     use core::borrow::Borrow;
     use multiboot2_common::test_utils::AlignedBytes;
-
-    // Compile time test
-    #[test]
-    fn test_size() {
-        assert_eq!(size_of::<FramebufferColor>(), 3)
-    }
 
     #[test]
     #[cfg(feature = "builder")]

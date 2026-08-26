@@ -142,6 +142,8 @@ pub struct VBEControlInfo {
     oem_data: [u8; 256],
 }
 
+const _: () = assert!(size_of::<VBEControlInfo>() == 512);
+
 impl fmt::Debug for VBEControlInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("VBEControlInfo")
@@ -274,6 +276,8 @@ pub struct VBEModeInfo {
     /// Remainder of mode info block
     reserved1: [u8; 206],
 }
+
+const _: () = assert!(size_of::<VBEModeInfo>() == 256);
 
 impl fmt::Debug for VBEModeInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -480,13 +484,6 @@ multiboot2_common::raw_type! {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    /// The sizes of the structs given in the VBE specification.
-    #[test]
-    fn test_layout() {
-        assert_eq!(size_of::<VBEControlInfo>(), 512);
-        assert_eq!(size_of::<VBEModeInfo>(), 256);
-    }
 
     /// A mode info block with a memory model unknown to the specification
     /// must be readable without undefined behavior.

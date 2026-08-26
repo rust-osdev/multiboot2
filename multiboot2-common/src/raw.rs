@@ -225,12 +225,9 @@ mod tests {
         }
     }
 
-    /// The newtype must be binary compatible with the underlying integer.
-    #[test]
-    fn test_layout() {
-        assert_eq!(size_of::<TestRaw>(), size_of::<u16>());
-        assert_eq!(align_of::<TestRaw>(), align_of::<u16>());
-    }
+    // The newtype must be binary compatible with the underlying integer.
+    const _: () = assert!(size_of::<TestRaw>() == size_of::<u16>());
+    const _: () = assert!(align_of::<TestRaw>() == align_of::<u16>());
 
     #[test]
     fn test_const_constructors_and_getters() {
