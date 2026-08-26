@@ -3,23 +3,24 @@
 //! The relevant exports of this module are [`TagTypeRaw`] and [`TagType`].
 
 multiboot2_common::raw_type! {
-    /// Serialized form of [`TagType`] that matches the binary representation
-    /// (`u32`).
+    /// ABI compatible representation of the type of a boot information tag.
     ///
-    /// The abstraction corresponds to the `typ`/`type` field of a Multiboot2
-    /// [`TagHeader`]. This type can easily be created from or converted to
-    /// [`TagType`].
+    /// This type matches the binary representation (`u32`) and corresponds
+    /// to the `typ`/`type` field of a Multiboot2 [`TagHeader`]. It can
+    /// easily be created from or converted to [`TagType`].
     ///
     /// [`TagHeader`]: crate::TagHeader
     pub struct TagTypeRaw(u32);
 
-    /// Higher level abstraction for [`TagTypeRaw`] that assigns each possible
-    /// value to a specific semantic according to the specification.
+    /// The type of a boot information tag.
     ///
-    /// Additionally, it allows to use the [`TagType::Custom`] variant for
-    /// custom tag types `> 21`. The Multiboot2 spec doesn't explicitly allow
-    /// or disallow them; bootloader and OS developers are free to use custom
-    /// tags. It is **not binary compatible** with [`TagTypeRaw`].
+    /// This assigns each possible value a specific semantic according to the
+    /// Multiboot2 spec. Custom tag types `> 21` are mapped to
+    /// [`TagType::Custom`]; the spec doesn't explicitly allow or disallow
+    /// them.
+    ///
+    /// This is a higher level abstraction for [`TagTypeRaw`] and **not
+    /// binary compatible** with it.
     pub enum TagType {
         /// Tag `0`: Marks the end of the tags.
         End = 0,

@@ -150,16 +150,19 @@ impl Debug for MemoryArea {
 }
 
 multiboot2_common::raw_type! {
-    /// ABI-friendly version of [`MemoryAreaType`].
+    /// ABI compatible representation of the type of a memory area.
+    ///
+    /// This type matches the binary representation (`u32`).
     pub struct MemoryAreaTypeRaw(u32);
 
-    /// Abstraction over defined memory types for the memory map as well as
-    /// custom ones. Types 1 to 5 are defined in the Multiboot2 spec and
-    /// correspond to the entry types of e820 memory maps; other values are
-    /// mapped to [`MemoryAreaType::Custom`].
+    /// The type of a memory area of the memory map.
     ///
-    /// This is not binary compatible with the Multiboot2 spec. Please use
-    /// [`MemoryAreaTypeRaw`] instead.
+    /// Types 1 to 5 are defined in the Multiboot2 spec and correspond to the
+    /// entry types of e820 memory maps; other values are mapped to
+    /// [`MemoryAreaType::Custom`].
+    ///
+    /// This is a higher level abstraction for [`MemoryAreaTypeRaw`] and not
+    /// binary compatible with the Multiboot2 spec.
     pub enum MemoryAreaType {
         /// Available memory free to be used by the OS.
         Available = 1,

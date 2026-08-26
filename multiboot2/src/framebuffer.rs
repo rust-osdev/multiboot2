@@ -266,14 +266,18 @@ impl PartialEq for FramebufferTag {
 }
 
 multiboot2_common::raw_type! {
-    /// ABI-compatible framebuffer type.
+    /// ABI compatible representation of the framebuffer type of the
+    /// framebuffer tag.
+    ///
+    /// This type matches the binary representation (`u8`).
     pub struct FramebufferTypeRaw(u8);
 
-    /// Higher level abstraction for [`FramebufferTypeRaw`] that assigns each
-    /// possible value to a specific semantic according to the specification.
+    /// The kind of framebuffer described by the framebuffer tag according to
+    /// the Multiboot2 spec.
     ///
-    /// Unlike [`FramebufferType`], this only describes the kind of
-    /// framebuffer and not its payload.
+    /// This is a higher level abstraction for [`FramebufferTypeRaw`]. Unlike
+    /// [`FramebufferType`], it only describes the kind of framebuffer and
+    /// not its payload.
     #[allow(clippy::upper_case_acronyms)]
     pub enum FramebufferKind {
         /// Indexed color.

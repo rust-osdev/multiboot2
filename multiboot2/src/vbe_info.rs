@@ -448,16 +448,19 @@ bitflags! {
 }
 
 multiboot2_common::raw_type! {
-    /// ABI-compatible form of [`VBEMemoryModel`] that matches the binary
-    /// representation (`u8`).
+    /// ABI compatible representation of the VBE memory model.
+    ///
+    /// This type matches the binary representation (`u8`).
     #[derive(Default)]
     pub struct VBEMemoryModelRaw(u8);
 
-    /// The MemoryModel field specifies the general type of memory organization used in modes.
+    /// The general type of memory organization used in a VBE mode.
     ///
-    /// Values `0x08..=0x0F` are reserved and values `0x10..=0xFF` are defined
-    /// by the OEM according to the VBE specification. Both are mapped to
+    /// Reserved values (`0x08..=0x0F`) and OEM-defined values
+    /// (`0x10..=0xFF`) of the VBE spec are mapped to
     /// [`VBEMemoryModel::Custom`].
+    ///
+    /// This is a higher level abstraction for [`VBEMemoryModelRaw`].
     #[derive(Default)]
     #[allow(clippy::upper_case_acronyms)]
     pub enum VBEMemoryModel {
