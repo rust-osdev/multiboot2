@@ -421,6 +421,13 @@ mod tests {
 
         let structure = builder.build();
 
+        #[cfg(miri)]
+        let _all_initialized = structure
+            .as_bytes()
+            .iter()
+            .map(|&byte| byte as u64)
+            .sum::<u64>();
+
         // SAFETY: The builder constructs a complete, aligned MBI with
         // a valid end tag.
         let info = unsafe { BootInformation::load(structure.as_bytes().as_ptr().cast()) }.unwrap();
