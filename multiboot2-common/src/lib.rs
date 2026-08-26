@@ -255,6 +255,7 @@ pub mod test_utils;
 mod boxed;
 mod bytes_ref;
 mod iter;
+mod raw;
 mod tag;
 
 #[cfg(feature = "alloc")]

@@ -142,6 +142,8 @@ pub struct VBEControlInfo {
     oem_data: [u8; 256],
 }
 
+const _: () = assert!(size_of::<VBEControlInfo>() == 512);
+
 impl fmt::Debug for VBEControlInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("VBEControlInfo")
@@ -228,7 +230,7 @@ pub struct VBEModeInfo {
     pub number_of_banks: u8,
 
     /// Memory model type
-    pub memory_model: VBEMemoryModel,
+    pub memory_model: VBEMemoryModelRaw,
 
     /// Bank size (Measured in Kilobytes.)
     pub bank_size: u8,
@@ -274,6 +276,8 @@ pub struct VBEModeInfo {
     /// Remainder of mode info block
     reserved1: [u8; 206],
 }
+
+const _: () = assert!(size_of::<VBEModeInfo>() == 256);
 
 impl fmt::Debug for VBEModeInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -443,18 +447,61 @@ bitflags! {
     }
 }
 
-/// The MemoryModel field specifies the general type of memory organization used in modes.
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(u8)]
-#[expect(missing_docs)]
-pub enum VBEMemoryModel {
-    #[default]
-    Text = 0x00,
-    CGAGraphics = 0x01,
-    HerculesGraphics = 0x02,
-    Planar = 0x03,
-    PackedPixel = 0x04,
-    Unchained = 0x05,
-    DirectColor = 0x06,
-    YUV = 0x07,
+multiboot2_common::raw_type! {
+    /// ABI compatible representation of the VBE memory model.
+    ///
+    /// This type matches the binary representation (`u8`).
+    #[derive(Default)]
+    pub struct VBEMemoryModelRaw(u8);
+
+    /// The general type of memory organization used in a VBE mode.
+    ///
+    /// Reserved values (`0x08..=0x0F`) and OEM-defined values
+    /// (`0x10..=0xFF`) of the VBE spec are mapped to
+    /// [`VBEMemoryModel::Custom`].
+    ///
+    /// This is a higher level abstraction for [`VBEMemoryModelRaw`].
+    #[derive(Default)]
+    #[allow(clippy::upper_case_acronyms)]
+    pub enum VBEMemoryModel {
+        /// Text mode.
+        #[default]
+        Text = 0x00,
+        /// CGA graphics.
+        CGAGraphics = 0x01,
+        /// Hercules graphics.
+        HerculesGraphics = 0x02,
+        /// Planar.
+        Planar = 0x03,
+        /// Packed pixel.
+        PackedPixel = 0x04,
+        /// Non-chain 4, 256 color.
+        Unchained = 0x05,
+        /// Direct color.
+        DirectColor = 0x06,
+        /// YUV.
+        YUV = 0x07,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A mode info block with a memory model unknown to the specification
+    /// must be readable without undefined behavior.
+    #[test]
+    fn unknown_memory_model_is_not_ub() {
+        let mut bytes = [0_u8; size_of::<VBEModeInfo>()];
+        // Offset of `memory_model` within the packed struct.
+        bytes[27] = 0x42;
+
+        // SAFETY: The struct is `repr(C, packed)`, one byte aligned, and
+        // since the fix every bit pattern is a valid instance.
+        let mode_info = unsafe { core::ptr::read_unaligned(bytes.as_ptr().cast::<VBEModeInfo>()) };
+
+        assert_eq!(mode_info.memory_model, VBEMemoryModel::Custom(0x42));
+        let debug = format!("{mode_info:?}");
+        assert!(debug.contains("Custom(66)"));
+    }
 }

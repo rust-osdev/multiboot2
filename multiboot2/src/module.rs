@@ -139,7 +139,7 @@ mod tests {
     use multiboot2_common::test_utils::AlignedBytes;
 
     #[rustfmt::skip]
-    fn get_bytes() -> AlignedBytes<24> {
+    const fn get_bytes() -> AlignedBytes<24> {
         AlignedBytes::new([
             TagType::Module.val() as u8, 0, 0, 0,
             22, 0, 0, 0,

@@ -42,6 +42,8 @@ pub struct AddressHeaderTag {
     bss_end_addr: u32,
 }
 
+const _: () = assert!(size_of::<AddressHeaderTag>() == 2 + 2 + 4 + 4 + 4 + 4 + 4);
+
 impl AddressHeaderTag {
     /// Constructs a new tag.
     #[must_use]
@@ -114,14 +116,4 @@ impl MaybeDynSized for AddressHeaderTag {
 impl Tag for AddressHeaderTag {
     type IDType = HeaderTagType;
     const ID: HeaderTagType = HeaderTagType::Address;
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::AddressHeaderTag;
-
-    #[test]
-    fn test_assert_size() {
-        assert_eq!(size_of::<AddressHeaderTag>(), 2 + 2 + 4 + 4 + 4 + 4 + 4);
-    }
 }

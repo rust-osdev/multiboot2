@@ -1,6 +1,6 @@
 //! Module for [`NetworkTag`].
 
-use crate::{TagHeader, TagType, TagTypeId};
+use crate::{TagHeader, TagType, TagTypeRaw};
 use multiboot2_common::{MaybeDynSized, Tag};
 use ptr_meta::Pointee;
 #[cfg(feature = "builder")]
@@ -10,7 +10,7 @@ use {alloc::boxed::Box, multiboot2_common::new_boxed};
 #[derive(Debug, Pointee)]
 #[repr(C, align(8))]
 pub struct NetworkTag {
-    typ: TagTypeId,
+    typ: TagTypeRaw,
     size: u32,
     dhcpack: [u8],
 }

@@ -15,6 +15,8 @@ use core::ops::Deref;
 #[repr(C, align(8))]
 pub struct AlignedBytes<const N: usize>(pub [u8; N]);
 
+const _: () = assert!(align_of::<AlignedBytes<0>>() == crate::ALIGNMENT);
+
 impl<const N: usize> AlignedBytes<N> {
     /// Creates a new type.
     #[must_use]
@@ -116,14 +118,10 @@ impl Tag for DummyDstTag {
 
 #[cfg(test)]
 mod tests {
-    use crate::ALIGNMENT;
-
     use super::*;
 
     #[test]
     fn abi() {
-        assert_eq!(align_of::<AlignedBytes<0>>(), ALIGNMENT);
-
         let bytes = AlignedBytes([0]);
         assert_eq!(bytes.as_ptr().align_offset(8), 0);
         assert_eq!((&raw const bytes[0]).align_offset(8), 0);

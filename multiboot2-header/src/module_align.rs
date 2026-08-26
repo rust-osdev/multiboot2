@@ -8,6 +8,8 @@ pub struct ModuleAlignHeaderTag {
     header: HeaderTagHeader,
 }
 
+const _: () = assert!(size_of::<ModuleAlignHeaderTag>() == 2 + 2 + 4);
+
 impl ModuleAlignHeaderTag {
     /// Constructs a new tag.
     #[must_use]
@@ -45,14 +47,4 @@ impl MaybeDynSized for ModuleAlignHeaderTag {
 impl Tag for ModuleAlignHeaderTag {
     type IDType = HeaderTagType;
     const ID: HeaderTagType = HeaderTagType::ModuleAlign;
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::ModuleAlignHeaderTag;
-
-    #[test]
-    fn test_assert_size() {
-        assert_eq!(size_of::<ModuleAlignHeaderTag>(), 2 + 2 + 4);
-    }
 }

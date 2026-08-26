@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+- **Breaking:** `InformationRequestHeaderTag::new()` now takes
+  `&[MbiTagType]` and `requests()` returns an iterator over `MbiTagType`.
+  The `MbiTagTypeId` re-export was renamed to `MbiTagTypeRaw`.
+- Fixed undefined behavior when parsing a header containing a tag with a type
+  unknown to the specification. `HeaderTagHeader` now stores the new
+  `HeaderTagTypeRaw` newtype; the `typ()` getters keep returning
+  `HeaderTagType`, which gained a `Custom` variant. **Breaking:** the now
+  meaningless `HeaderTagType::count()` was removed.
+- Fixed undefined behavior when parsing a header with an architecture unknown
+  to the specification. `Multiboot2BasicHeader` now stores the new
+  `HeaderTagISARaw` newtype; the `arch()` getters keep returning
+  `HeaderTagISA`, which gained a `Custom` variant.
+- Fixed undefined behavior when parsing a `RelocatableHeaderTag` with a
+  placement preference unknown to the specification. The tag now stores the
+  new `RelocatableHeaderTagPreferenceRaw` newtype; `preference()` keeps
+  returning `RelocatableHeaderTagPreference`, which gained a `Custom` variant.
+- Fixed undefined behavior when parsing a header tag whose flags field holds a
+  value other than 0 or 1. `HeaderTagHeader` now stores the new
+  `HeaderTagFlagRaw` newtype; the `flags()` getters keep returning
+  `HeaderTagFlag`, which gained a `Custom` variant.
+- Fixed undefined behavior and a spec violation in `ConsoleHeaderTagFlags`:
+  the enum discriminants did not match the specification. **Breaking:**
+  `ConsoleRequired` now serializes to `1` (was `0`) and `EgaTextSupported` to
+  `2` (was `1`), matching the example C code of the specification; the enum
+  gained a `Custom` variant and the tag stores the new
+  `ConsoleHeaderTagFlagsRaw` newtype.
+
 ## v0.10.0 (2026-08-24)
 
 - Fixed `Header::load` rejecting a valid header whose end tag has a non-zero

@@ -6,7 +6,7 @@ pub use uefi_raw::table::boot::MemoryDescriptor as EFIMemoryDesc;
 pub use uefi_raw::table::boot::MemoryType as EFIMemoryAreaType;
 
 use crate::tag::TagHeader;
-use crate::{TagType, TagTypeId};
+use crate::{TagType, TagTypeRaw};
 use core::fmt::{Debug, Formatter};
 use core::marker::PhantomData;
 use multiboot2_common::{MaybeDynSized, Tag};
@@ -99,17 +99,17 @@ impl Tag for MemoryMapTag {
 pub struct MemoryArea {
     base_addr: u64,
     length: u64,
-    typ: MemoryAreaTypeId,
+    typ: MemoryAreaTypeRaw,
     _reserved: u32,
 }
 
 impl MemoryArea {
     /// Create a new MemoryArea.
-    pub fn new(base_addr: u64, length: u64, typ: impl Into<MemoryAreaTypeId>) -> Self {
+    pub fn new(base_addr: u64, length: u64, typ: impl Into<MemoryAreaType>) -> Self {
         Self {
             base_addr,
             length,
-            typ: typ.into(),
+            typ: MemoryAreaTypeRaw::new(typ.into().val()),
             _reserved: 0,
         }
     }
@@ -134,8 +134,8 @@ impl MemoryArea {
 
     /// The type of the memory region.
     #[must_use]
-    pub const fn typ(&self) -> MemoryAreaTypeId {
-        self.typ
+    pub const fn typ(&self) -> MemoryAreaType {
+        MemoryAreaType::from_val(self.typ.get())
     }
 }
 
@@ -149,99 +149,37 @@ impl Debug for MemoryArea {
     }
 }
 
-/// ABI-friendly version of [`MemoryAreaType`].
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(C)]
-pub struct MemoryAreaTypeId(u32);
+multiboot2_common::raw_type! {
+    /// ABI compatible representation of the type of a memory area.
+    ///
+    /// This type matches the binary representation (`u32`).
+    pub struct MemoryAreaTypeRaw(u32);
 
-impl From<u32> for MemoryAreaTypeId {
-    fn from(value: u32) -> Self {
-        Self(value)
-    }
-}
+    /// The type of a memory area of the memory map.
+    ///
+    /// Types 1 to 5 are defined in the Multiboot2 spec and correspond to the
+    /// entry types of e820 memory maps; other values are mapped to
+    /// [`MemoryAreaType::Custom`].
+    ///
+    /// This is a higher level abstraction for [`MemoryAreaTypeRaw`] and not
+    /// binary compatible with the Multiboot2 spec.
+    pub enum MemoryAreaType {
+        /// Available memory free to be used by the OS.
+        Available = 1,
 
-impl From<MemoryAreaTypeId> for u32 {
-    fn from(value: MemoryAreaTypeId) -> Self {
-        value.0
-    }
-}
+        /// A reserved area that must not be used.
+        Reserved = 2,
 
-impl Debug for MemoryAreaTypeId {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        let mt = MemoryAreaType::from(*self);
-        Debug::fmt(&mt, f)
-    }
-}
+        /// Usable memory holding ACPI information.
+        AcpiAvailable = 3,
 
-/// Abstraction over defined memory types for the memory map as well as custom
-/// ones. Types 1 to 5 are defined in the Multiboot2 spec and correspond to the
-/// entry types of e820 memory maps.
-///
-/// This is not binary compatible with the Multiboot2 spec. Please use
-/// [`MemoryAreaTypeId`] instead.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum MemoryAreaType {
-    /// Available memory free to be used by the OS.
-    Available, /* 1 */
+        /// Reserved memory which needs to be preserved on hibernation.
+        /// Also called NVS in spec, which stands for "Non-Volatile Sleep/Storage",
+        /// which is part of ACPI specification.
+        ReservedHibernate = 4,
 
-    /// A reserved area that must not be used.
-    Reserved, /* 2, */
-
-    /// Usable memory holding ACPI information.
-    AcpiAvailable, /* 3, */
-
-    /// Reserved memory which needs to be preserved on hibernation.
-    /// Also called NVS in spec, which stands for "Non-Volatile Sleep/Storage",
-    /// which is part of ACPI specification.
-    ReservedHibernate, /* 4, */
-
-    /// Memory which is occupied by defective RAM modules.
-    Defective, /* = 5, */
-
-    /// Custom memory map type.
-    Custom(u32),
-}
-
-impl From<MemoryAreaTypeId> for MemoryAreaType {
-    fn from(value: MemoryAreaTypeId) -> Self {
-        match value.0 {
-            1 => Self::Available,
-            2 => Self::Reserved,
-            3 => Self::AcpiAvailable,
-            4 => Self::ReservedHibernate,
-            5 => Self::Defective,
-            val => Self::Custom(val),
-        }
-    }
-}
-
-impl From<MemoryAreaType> for MemoryAreaTypeId {
-    fn from(value: MemoryAreaType) -> Self {
-        let integer = match value {
-            MemoryAreaType::Available => 1,
-            MemoryAreaType::Reserved => 2,
-            MemoryAreaType::AcpiAvailable => 3,
-            MemoryAreaType::ReservedHibernate => 4,
-            MemoryAreaType::Defective => 5,
-            MemoryAreaType::Custom(val) => val,
-        };
-        integer.into()
-    }
-}
-
-impl PartialEq<MemoryAreaType> for MemoryAreaTypeId {
-    fn eq(&self, other: &MemoryAreaType) -> bool {
-        let val: Self = (*other).into();
-        let val: u32 = val.0;
-        self.0.eq(&val)
-    }
-}
-
-impl PartialEq<MemoryAreaTypeId> for MemoryAreaType {
-    fn eq(&self, other: &MemoryAreaTypeId) -> bool {
-        let val: MemoryAreaTypeId = (*self).into();
-        let val: u32 = val.0;
-        other.0.eq(&val)
+        /// Memory which is occupied by defective RAM modules.
+        Defective = 5,
     }
 }
 
@@ -407,7 +345,7 @@ impl Debug for EFIMemoryMapTag {
 impl MaybeDynSized for EFIMemoryMapTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = size_of::<TagTypeId>() + 3 * size_of::<u32>();
+    const BASE_SIZE: usize = size_of::<TagTypeRaw>() + 3 * size_of::<u32>();
 
     fn dst_len(header: &TagHeader) -> usize {
         assert!(header.size as usize >= Self::BASE_SIZE);

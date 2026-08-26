@@ -372,7 +372,7 @@ impl<'a> BootInformation<'a> {
     ///
     /// ```no_run
     /// use std::mem;
-    /// use multiboot2::{BootInformation, BootInformationHeader, parse_slice_as_string, StringError, TagHeader, TagType, TagTypeId};    ///
+    /// use multiboot2::{BootInformation, BootInformationHeader, parse_slice_as_string, StringError, TagHeader, TagType, TagTypeRaw};    ///
     /// use multiboot2_common::{MaybeDynSized, Tag};
     ///
     /// #[repr(C)]
