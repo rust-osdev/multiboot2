@@ -4,11 +4,16 @@ use core::fmt::{Debug, Formatter};
 use multiboot2_common::{MaybeDynSized, Tag};
 
 multiboot2_common::raw_type! {
-    /// Serialized form of [`RelocatableHeaderTagPreference`] that matches the
-    /// binary representation (`u32`).
+    /// ABI compatible representation of the placement preference of the
+    /// relocatable header tag.
+    ///
+    /// This type matches the binary representation (`u32`).
     pub struct RelocatableHeaderTagPreferenceRaw(u32);
 
-    /// Specifies the bootloader's preferred placement for a relocatable image.
+    /// The bootloader's preferred placement for a relocatable image.
+    ///
+    /// This is a higher level abstraction for
+    /// [`RelocatableHeaderTagPreferenceRaw`].
     pub enum RelocatableHeaderTagPreference {
         /// Let the bootloader choose the image location.
         None = 0,

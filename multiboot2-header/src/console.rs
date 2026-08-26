@@ -2,14 +2,15 @@ use crate::{HeaderTagFlag, HeaderTagHeader, HeaderTagType};
 use multiboot2_common::{MaybeDynSized, Tag};
 
 multiboot2_common::raw_type! {
-    /// Serialized form of [`ConsoleHeaderTagFlags`] that matches the binary
-    /// representation (`u32`).
+    /// ABI compatible representation of the console flags of the
+    /// [`ConsoleHeaderTag`].
+    ///
+    /// This type matches the binary representation (`u32`).
     pub struct ConsoleHeaderTagFlagsRaw(u32);
 
-    /// Possible flags for [`ConsoleHeaderTag`].
+    /// The console flags of the [`ConsoleHeaderTag`].
     ///
-    /// The values are taken from the example C code at the bottom of the
-    /// Multiboot2 specification.
+    /// This is a higher level abstraction for [`ConsoleHeaderTagFlagsRaw`].
     pub enum ConsoleHeaderTagFlags {
         /// At least one of the consoles supported by the bootloader must be
         /// present and information about it must be available in the boot
@@ -84,7 +85,7 @@ mod tests {
     use core::borrow::Borrow;
     use multiboot2_common::test_utils::AlignedBytes;
 
-    /// The console flag values must match the example C code of the
+    /// The console flag values must match the values mandated by the
     /// specification.
     #[test]
     fn console_flags_match_spec_values() {

@@ -1,16 +1,18 @@
-//! Definition for all types of "Multiboot2 header tags". The values are taken from the example C
-//! code at the end of the official Multiboot2 spec. These tags follow in memory right after
-//! [`crate::Multiboot2BasicHeader`].
+//! Definition for all types of "Multiboot2 header tags". These tags follow in
+//! memory right after [`crate::Multiboot2BasicHeader`].
 
 use multiboot2_common::Header;
 
 multiboot2_common::raw_type! {
-    /// Serialized form of [`HeaderTagISA`] that matches the binary
-    /// representation (`u32`). This value stands in the `arch` property of
-    /// [`crate::Multiboot2BasicHeader`].
+    /// ABI compatible representation of the ISA/ARCH of a Multiboot2 header.
+    ///
+    /// This type matches the binary representation (`u32`) and stands in the
+    /// `arch` property of [`crate::Multiboot2BasicHeader`].
     pub struct HeaderTagISARaw(u32);
 
-    /// ISA/ARCH in Multiboot2 header.
+    /// The ISA/ARCH a Multiboot2 image targets.
+    ///
+    /// This is a higher level abstraction for [`HeaderTagISARaw`].
     pub enum HeaderTagISA {
         /// Spec: "means 32-bit (protected) mode of i386".
         /// Caution: This is confusing. If you use the EFI64-tag
@@ -23,15 +25,15 @@ multiboot2_common::raw_type! {
 }
 
 multiboot2_common::raw_type! {
-    /// Serialized form of [`HeaderTagType`] that matches the binary
-    /// representation (`u16`). This value stands in the `typ` property of
-    /// [`HeaderTagHeader`].
+    /// ABI compatible representation of the type of a Multiboot2 header tag.
+    ///
+    /// This type matches the binary representation (`u16`) and stands in the
+    /// `typ` property of [`HeaderTagHeader`].
     pub struct HeaderTagTypeRaw(u16);
 
-    /// Possible types for header tags of a Multiboot2 header.
+    /// The type of a Multiboot2 header tag.
     ///
-    /// The names and values are taken from the example C code at the bottom of
-    /// the Multiboot2 specification.
+    /// This is a higher level abstraction for [`HeaderTagTypeRaw`].
     pub enum HeaderTagType {
         /// Type for [`crate::EndHeaderTag`].
         End = 0,
@@ -59,12 +61,19 @@ multiboot2_common::raw_type! {
 }
 
 multiboot2_common::raw_type! {
-    /// Serialized form of [`HeaderTagFlag`] that matches the binary
-    /// representation (`u16`). This value stands in the `flags` property of
-    /// [`HeaderTagHeader`].
+    /// ABI compatible representation of the flags of a Multiboot2 header
+    /// tag.
+    ///
+    /// This type matches the binary representation (`u16`) and stands in the
+    /// `flags` property of [`HeaderTagHeader`].
     pub struct HeaderTagFlagRaw(u16);
 
-    /// Flags for Multiboot2 header tags.
+    /// Flags of a Multiboot2 header tag.
+    ///
+    /// These flags tell whether a tag is required or optional for the
+    /// bootloader.
+    ///
+    /// This is a higher level abstraction for [`HeaderTagFlagRaw`].
     pub enum HeaderTagFlag {
         /// The bootloader must provide this tag. If this is not possible, the
         /// bootloader will fail to load the kernel.
