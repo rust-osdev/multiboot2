@@ -876,7 +876,9 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.len(), bi.end_address());
         assert_eq!(bytes.len(), bi.total_size());
-        let strtab = bi.elf_sections_tag().unwrap().string_table().unwrap();
+        // SAFETY: The test patched `sh_addr` of the string table section to
+        // point at a live, initialized buffer.
+        let strtab = unsafe { bi.elf_sections_tag().unwrap().string_table() }.unwrap();
         let mut es = bi.elf_sections_tag().unwrap().sections();
 
         let _s0 = es.next().expect("Should have one more section");
@@ -1119,7 +1121,9 @@ mod tests {
         assert_eq!(addr, bi.start_address());
         assert_eq!(addr + bytes.0.len(), bi.end_address());
         assert_eq!(bytes.0.len(), bi.total_size());
-        let strtab = bi.elf_sections_tag().unwrap().string_table().unwrap();
+        // SAFETY: The test patched `sh_addr` of the string table section to
+        // point at a live, initialized buffer.
+        let strtab = unsafe { bi.elf_sections_tag().unwrap().string_table() }.unwrap();
         let mut es = bi.elf_sections_tag().unwrap().sections();
 
         let s0 = es.next().expect("Should have one more sections");

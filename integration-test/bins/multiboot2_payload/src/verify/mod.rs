@@ -55,7 +55,9 @@ pub(self) fn print_elf_info(mbi: &BootInformation) -> anyhow::Result<()> {
     let string_table = mbi
         .elf_sections_tag()
         .ok_or("Should have elf sections")
-        .map(|tag| tag.string_table())
+        // SAFETY: The bootloader loaded the ELF sections at their reported
+        // addresses in identity-mapped memory.
+        .map(|tag| unsafe { tag.string_table() })
         .map_err(anyhow::Error::msg)?
         .ok_or("String table section should be present")
         .map_err(anyhow::Error::msg)?;

@@ -61,8 +61,17 @@ impl ElfSectionsTag {
     }
 
     /// Returns the string table data, if it's present.
+    ///
+    /// The string table is not part of the tag: the tag only stores the
+    /// physical address (`sh_addr`) and size of the section holding it.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that the string table section is still loaded
+    /// at its reported `sh_addr`, identity-mapped, readable for `sh_size`
+    /// bytes, and not modified for the lifetime of the returned slice.
     #[must_use]
-    pub fn string_table(&self) -> Option<&[u8]> {
+    pub unsafe fn string_table(&self) -> Option<&[u8]> {
         let shdr_table = SectionHeaderTable::new(NativeEndian, self.class(), &self.sections);
 
         // Info for this here
@@ -76,8 +85,8 @@ impl ElfSectionsTag {
         let strtab_hdr = shdr_table.get(strtab_index).ok()?;
         // todo: Should this check that `strtab_hdr.sh_type == elf::abi::SHT_STRTAB`?
 
-        // SAFETY: The multiboot2 spec defines that sections are always loaded at `sh_addr`.
-        // Casting through `usize` will not truncate data on 32bit systems because the multiboot2 loads all sections below u32::MAX
+        // SAFETY: The caller guarantees that the section is loaded at
+        // `sh_addr` and readable for `sh_size` bytes.
         Some(unsafe {
             core::slice::from_raw_parts(
                 core::ptr::with_exposed_provenance(strtab_hdr.sh_addr as usize),
@@ -186,6 +195,18 @@ impl ElfSectionExt for SectionHeader {
         name: &'a [u8],
     ) -> Result<&'a CStr, FromBytesUntilNulError> {
         CStr::from_bytes_until_nul(&name[self.sh_name as usize..])
+    }
+}
+
+#[cfg(all(test, feature = "builder"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn string_table_returns_none_for_undef_shndx() {
+        let tag = ElfSectionsTag::new(0, size_of::<elf::section::Elf64_Shdr>() as u32, 0, &[]);
+        // SAFETY: With `shndx == SHN_UNDEF`, no memory is dereferenced.
+        assert_eq!(unsafe { tag.string_table() }, None);
     }
 }
 
