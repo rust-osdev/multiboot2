@@ -21,10 +21,12 @@
 ///
 /// ```
 /// multiboot2_common::raw_type! {
-///     /// Binary representation of a demo type.
+///     /// ABI compatible representation of a demo type.
 ///     pub struct DemoTypeRaw(u32);
 ///
-///     /// High-level abstraction of the possible demo types.
+///     /// The type of a demo item.
+///     ///
+///     /// This is a higher level abstraction for [`DemoTypeRaw`].
 ///     pub enum DemoType {
 ///         /// The first defined type.
 ///         Foo = 0,
@@ -213,10 +215,12 @@ mod tests {
     use std::collections::{BTreeSet, HashSet};
 
     crate::raw_type! {
-        /// Binary representation of a test type.
+        /// ABI compatible representation of a test type.
         pub struct TestRaw(u16);
 
-        /// High-level abstraction of a test type.
+        /// The type of a test item.
+        ///
+        /// This is a higher level abstraction for [`TestRaw`].
         pub enum TestType {
             /// The first defined value.
             Foo = 0,
