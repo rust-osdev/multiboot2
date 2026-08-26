@@ -81,6 +81,7 @@ impl MaybeDynSized for InformationRequestHeaderTag {
     const BASE_SIZE: usize = size_of::<HeaderTagHeader>();
 
     fn dst_len(header: &Self::Header) -> Self::Metadata {
+        assert!(header.size() as usize >= Self::BASE_SIZE);
         let dst_size = header.size() as usize - Self::BASE_SIZE;
         assert_eq!(dst_size % size_of::<MbiTagTypeRaw>(), 0);
         dst_size / size_of::<MbiTagTypeRaw>()
@@ -96,6 +97,17 @@ impl Tag for InformationRequestHeaderTag {
 #[cfg(feature = "builder")]
 mod tests {
     use super::*;
+
+    #[test]
+    #[should_panic]
+    fn dst_len_rejects_undersized_header() {
+        let header = HeaderTagHeader::new(
+            HeaderTagType::InformationRequest,
+            HeaderTagFlag::Optional,
+            4,
+        );
+        let _ = <InformationRequestHeaderTag as MaybeDynSized>::dst_len(&header);
+    }
 
     #[test]
     fn creation() {

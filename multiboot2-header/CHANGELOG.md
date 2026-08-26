@@ -28,6 +28,8 @@
   `2` (was `1`), matching the example C code of the specification; the enum
   gained a `Custom` variant and the tag stores the new
   `ConsoleHeaderTagFlagsRaw` newtype.
+- Fixed a possible size underflow in `InformationRequestHeaderTag` parsing
+  when the tag reports a size smaller than the tag header.
 
 ## v0.10.0 (2026-08-24)
 
