@@ -13,9 +13,12 @@
   was replaced by the `FramebufferTypeRaw` newtype and the open-set
   `FramebufferKind` enum; `UnknownFramebufferType` is now exported.
 - Fixed undefined behavior when reading a `VBEModeInfo` with a reserved or
-  OEM-defined memory model. **Breaking:** the `memory_model` field is now
-  typed as the new `VBEMemoryModelRaw` newtype; `VBEMemoryModel` gained a
+  OEM-defined memory model. **Breaking:** the `memory_model` field is now typed
+  as the new `VBEMemoryModelRaw` newtype; `VBEMemoryModel` gained a
   `Custom` variant.
+- **Breaking:** `EFIMemoryDesc` (re-exported from `uefi-raw` crate) has a new
+  padding field which is required for correct type layout on some non-UEFI
+  32-bit targets.
 
 ## v0.26.0 / v0.26.1 (2026-08-24)
 

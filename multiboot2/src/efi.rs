@@ -237,6 +237,7 @@ mod tests {
         let tag = EFIMemoryMapTag::new_from_descs(&[
             EFIMemoryDesc {
                 ty: MemoryType::BOOT_SERVICES_CODE,
+                padding: 0,
                 phys_start: 0x1000,
                 virt_start: 0x1000,
                 page_count: 1,
@@ -244,6 +245,7 @@ mod tests {
             },
             EFIMemoryDesc {
                 ty: MemoryType::LOADER_DATA,
+                padding: 0,
                 phys_start: 0x2000,
                 virt_start: 0x2000,
                 page_count: 2,

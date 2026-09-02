@@ -447,6 +447,7 @@ mod tests {
         let descs = [
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::CONVENTIONAL,
+                padding: 0,
                 phys_start: 0x1000,
                 virt_start: 0x1000,
                 page_count: 1,
@@ -454,6 +455,7 @@ mod tests {
             },
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::LOADER_DATA,
+                padding: 0,
                 phys_start: 0x2000,
                 virt_start: 0x2000,
                 page_count: 3,
@@ -514,6 +516,7 @@ mod tests {
         let expected = [
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::BOOT_SERVICES_CODE,
+                padding: 0,
                 phys_start: 0x0,
                 virt_start: 0x0,
                 page_count: 0x1,
@@ -524,6 +527,7 @@ mod tests {
             },
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::CONVENTIONAL,
+                padding: 0,
                 phys_start: 0x1000,
                 virt_start: 0x0,
                 page_count: 0x86,
@@ -534,6 +538,7 @@ mod tests {
             },
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::BOOT_SERVICES_DATA,
+                padding: 0,
                 phys_start: 0x87000,
                 virt_start: 0x0,
                 page_count: 0x1,
@@ -544,6 +549,7 @@ mod tests {
             },
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::CONVENTIONAL,
+                padding: 0,
                 phys_start: 0x88000,
                 virt_start: 0x0,
                 page_count: 0x18,
@@ -554,6 +560,7 @@ mod tests {
             },
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::CONVENTIONAL,
+                padding: 0,
                 phys_start: 0x100000,
                 virt_start: 0x0,
                 page_count: 0x700,
@@ -564,6 +571,7 @@ mod tests {
             },
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::ACPI_NON_VOLATILE,
+                padding: 0,
                 phys_start: 0x800000,
                 virt_start: 0x0,
                 page_count: 0x8,
@@ -574,6 +582,7 @@ mod tests {
             },
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::CONVENTIONAL,
+                padding: 0,
                 phys_start: 0x808000,
                 virt_start: 0x0,
                 page_count: 0x3,
@@ -584,6 +593,7 @@ mod tests {
             },
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::ACPI_NON_VOLATILE,
+                padding: 0,
                 phys_start: 0x80b000,
                 virt_start: 0x0,
                 page_count: 0x1,
@@ -594,6 +604,7 @@ mod tests {
             },
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::CONVENTIONAL,
+                padding: 0,
                 phys_start: 0x80c000,
                 virt_start: 0x0,
                 page_count: 0x4,
@@ -604,6 +615,7 @@ mod tests {
             },
             EFIMemoryDesc {
                 ty: EFIMemoryAreaType::ACPI_NON_VOLATILE,
+                padding: 0,
                 phys_start: 0x810000,
                 virt_start: 0x0,
                 page_count: 0xf0,
