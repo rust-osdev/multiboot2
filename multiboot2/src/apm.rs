@@ -136,4 +136,20 @@ mod tests {
         let tag = ApmTag::new(1, 2, 3, 4, 5, 6, 7, 8, 9);
         assert_eq!(tag.header.size, 28);
     }
+
+    /// Representative test for all stack-constructed sized tags: the bytes
+    /// exposed for a tag built via its constructor must cover exactly the
+    /// reported tag size and exclude the implicit trailing padding of the
+    /// Rust type layout, which is uninitialized memory that must never be
+    /// read (verified by Miri).
+    #[test]
+    fn as_bytes_covers_exactly_the_reported_tag_size() {
+        let tag = ApmTag::new(1, 2, 3, 4, 5, 6, 7, 8, 9);
+        let bytes = tag.as_bytes();
+        assert_eq!(bytes.len(), 28);
+        assert!(bytes.len() < size_of::<ApmTag>());
+        // Reading every single byte must be defined behavior.
+        let byte_sum = bytes.iter().map(|&byte| byte as u64).sum::<u64>();
+        assert!(byte_sum > 0);
+    }
 }
