@@ -170,15 +170,13 @@ mod tests {
     #[cfg(feature = "builder")]
     fn test_build_str() {
         let tag = ModuleTag::new(0xff00, 0xffff, "hello");
-        let bytes = tag.as_bytes().as_ref();
-        let bytes = &bytes[..tag.header.size as usize];
+        let bytes = tag.as_bytes();
         assert_eq!(bytes, &get_bytes()[..tag.header().size as usize]);
         assert_eq!(tag.cmdline(), Ok("hello"));
 
         // With terminating null.
         let tag = ModuleTag::new(0xff00, 0xffff, "hello\0");
-        let bytes = tag.as_bytes().as_ref();
-        let bytes = &bytes[..tag.header.size as usize];
+        let bytes = tag.as_bytes();
         assert_eq!(bytes, &get_bytes()[..tag.header().size as usize]);
         assert_eq!(tag.cmdline(), Ok("hello"));
 

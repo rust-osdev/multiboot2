@@ -1,6 +1,6 @@
 //! Module for the traits [`MaybeDynSized`] and [`Tag`].
 
-use crate::{BytesRef, DynSizedStructure, Header};
+use crate::{DynSizedStructure, Header};
 use core::slice;
 use ptr_meta::Pointee;
 
@@ -69,25 +69,31 @@ pub unsafe trait MaybeDynSized: Pointee {
     }
 
     /// Returns the payload, i.e., all memory that is not occupied by the
-    /// [`Header`] of the type.
+    /// [`Header`] of the type. Implicit trailing padding beyond the
+    /// structure size reported in the header is not part of the payload.
+    ///
+    /// # Panics
+    /// Panics if the size reported in the header is smaller than the size of
+    /// the [`Header`] itself, which can only happen for oddly formed values.
     fn payload(&self) -> &[u8] {
         let from = size_of::<Self::Header>();
         &self.as_bytes()[from..]
     }
 
-    /// Returns the whole allocated bytes for this structure encapsulated in
-    /// [`BytesRef`]. This includes padding bytes. To only get the "true" tag
-    /// data, read the tag size from [`Self::header`] and create a sub slice.
-    fn as_bytes(&self) -> BytesRef<'_, Self::Header> {
+    /// Returns the bytes of the structure, i.e., the header and the payload,
+    /// up to the structure size reported by [`Self::header`].
+    ///
+    /// Implicit trailing padding that the Rust memory layout might add beyond
+    /// that size is excluded, as it may be uninitialized for stack-constructed
+    /// values and must never be read.
+    fn as_bytes(&self) -> &[u8] {
         let ptr = &raw const *self;
-        // Actual tag size with optional terminating padding.
-        let size = size_of_val(self);
-        // SAFETY: `ptr` points to `self`'s allocation and `size_of_val(self)`
-        // covers the initialized object representation, including padding.
-        let slice = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), size) };
-        // Unwrap is fine as this type can't exist without the underlying memory
-        // guarantees.
-        BytesRef::try_from(slice).unwrap()
+        // Clamp to the allocation: a corrupt header size must never cause an
+        // out-of-bounds slice.
+        let size = self.header().total_size().min(size_of_val(self));
+        // SAFETY: `ptr` points to `self`'s allocation, `size` is in bounds,
+        // and the first `total_size()` bytes of a value are initialized.
+        unsafe { slice::from_raw_parts(ptr.cast::<u8>(), size) }
     }
 
     /// Returns a pointer to this structure.

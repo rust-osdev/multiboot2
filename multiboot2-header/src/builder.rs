@@ -8,7 +8,7 @@ use crate::{
 };
 use alloc::boxed::Box;
 use alloc::vec::Vec;
-use multiboot2_common::{DynSizedStructure, MaybeDynSized, new_boxed};
+use multiboot2_common::{DynSizedStructure, MaybeDynSized, increase_to_alignment, new_boxed};
 
 /// Builder for a Multiboot2 header.
 #[derive(Debug)]
@@ -123,42 +123,62 @@ impl Builder {
     /// Multiboot2 header structure.
     #[must_use]
     pub fn build(self) -> Box<DynSizedStructure<Multiboot2BasicHeader>> {
+        fn fill_zeroes_to_alignment(vec: &mut Vec<u8>) {
+            let pad = increase_to_alignment(vec.len()) - vec.len();
+            for _ in 0..pad {
+                vec.push(0);
+            }
+        }
+
         let header = Multiboot2BasicHeader::new(self.arch, 0);
-        let mut byte_refs = Vec::new();
+        // Vec to be filled with the serialized tags, each zero-padded to the
+        // alignment.
+        let mut buffer_tags = Vec::<u8>::new();
         if let Some(tag) = self.information_request_tag.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.address_tag.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.entry_tag.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.console_tag.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.framebuffer_tag.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.module_align_tag.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.efi_bs_tag.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.efi_32_tag.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.efi_64_tag.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.relocatable_tag.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         // TODO add support for custom tags once someone requests it.
         let end_tag = EndHeaderTag::new();
-        byte_refs.push(end_tag.as_bytes().as_ref());
-        new_boxed(header, byte_refs.as_slice())
+
+        buffer_tags.extend_from_slice(end_tag.as_bytes());
+        new_boxed(header, &[buffer_tags.as_slice()])
     }
 }
 
@@ -219,7 +239,7 @@ mod tests {
         let header = {
             // SAFETY: The builder emits a fully formed, aligned header
             // buffer with a valid end tag.
-            unsafe { Header::load(structure.as_bytes().as_ref().as_ptr().cast()) }.unwrap()
+            unsafe { Header::load(structure.as_bytes().as_ptr().cast()) }.unwrap()
         };
 
         assert_eq!(header.verify_checksum(), Ok(()));
