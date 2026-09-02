@@ -1,5 +1,5 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
   "integration-test/bins/multiboot2_chainloader",
   "integration-test/bins/multiboot2_payload",
@@ -38,9 +38,9 @@ integration-test-util = { path = "./integration-test/bins/util" }
 qemu-exit = { version = "3.0", default-features = false }
 
 # Intra-workspace dependencies of upstream crates
-multiboot2 = { version = "0.26.1", default-features = false }
-multiboot2-common = { version = "0.5.0", default-features = false }
-multiboot2-header = { version = "0.10.0", default-features = false }
+multiboot2 = { version = "0.27.0", default-features = false }
+multiboot2-common = { version = "0.6.0", default-features = false }
+multiboot2-header = { version = "0.11.0", default-features = false }
 
 [profile.release-integration-test]
 inherits = "release"

@@ -2,30 +2,32 @@
 
 ## Unreleased
 
+## v0.11.0 (2026-09-02)
+
 - Fixed undefined behavior when serializing stack-constructed sized tags with
   trailing struct padding (`ConsoleHeaderTag`, `EntryAddressHeaderTag`,
   `EntryEfi32HeaderTag`, `EntryEfi64HeaderTag`, `FramebufferHeaderTag`): the
   padding is uninitialized memory that `as_bytes()` - and thus
-  `Builder::build()` - exposed. `as_bytes()` now covers exactly the reported
-  tag size, and `Builder::build()` writes explicit zeroed padding between
-  tags. The built header is byte-wise identical, except that its inter-tag
-  padding is now guaranteed to be zeroed.
+  `Builder::build()` - exposed. `as_bytes()` now covers exactly the reported tag
+  size, and `Builder::build()` writes explicit zeroed padding between tags. The
+  built header is byte-wise identical, except that its inter-tag padding is now
+  guaranteed to be zeroed.
 - **Breaking:** `InformationRequestHeaderTag::new()` now takes
-  `&[MbiTagType]` and `requests()` returns an iterator over `MbiTagType`.
-  The `MbiTagTypeId` re-export was renamed to `MbiTagTypeRaw`.
+  `&[MbiTagType]` and `requests()` returns an iterator over `MbiTagType`. The
+  `MbiTagTypeId` re-export was renamed to `MbiTagTypeRaw`.
 - Fixed undefined behavior when parsing a header containing a tag with a type
   unknown to the specification. `HeaderTagHeader` now stores the new
   `HeaderTagTypeRaw` newtype; the `typ()` getters keep returning
   `HeaderTagType`, which gained a `Custom` variant. **Breaking:** the now
   meaningless `HeaderTagType::count()` was removed.
-- Fixed undefined behavior when parsing a header with an architecture unknown
-  to the specification. `Multiboot2BasicHeader` now stores the new
+- Fixed undefined behavior when parsing a header with an architecture unknown to
+  the specification. `Multiboot2BasicHeader` now stores the new
   `HeaderTagISARaw` newtype; the `arch()` getters keep returning
   `HeaderTagISA`, which gained a `Custom` variant.
 - Fixed undefined behavior when parsing a `RelocatableHeaderTag` with a
-  placement preference unknown to the specification. The tag now stores the
-  new `RelocatableHeaderTagPreferenceRaw` newtype; `preference()` keeps
-  returning `RelocatableHeaderTagPreference`, which gained a `Custom` variant.
+  placement preference unknown to the specification. The tag now stores the new
+  `RelocatableHeaderTagPreferenceRaw` newtype; `preference()` keeps returning
+  `RelocatableHeaderTagPreference`, which gained a `Custom` variant.
 - Fixed undefined behavior when parsing a header tag whose flags field holds a
   value other than 0 or 1. `HeaderTagHeader` now stores the new
   `HeaderTagFlagRaw` newtype; the `flags()` getters keep returning
@@ -36,8 +38,8 @@
   `2` (was `1`), matching the example C code of the specification; the enum
   gained a `Custom` variant and the tag stores the new
   `ConsoleHeaderTagFlagsRaw` newtype.
-- Fixed a possible size underflow in `InformationRequestHeaderTag` parsing
-  when the tag reports a size smaller than the tag header.
+- Fixed a possible size underflow in `InformationRequestHeaderTag` parsing when
+  the tag reports a size smaller than the tag header.
 - **Breaking:** The re-exported `MaybeDynSized` trait is now an `unsafe`
   trait; implementations for custom tag types must now use `unsafe impl`.
 
