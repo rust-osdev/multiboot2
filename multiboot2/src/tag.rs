@@ -32,7 +32,9 @@ impl TagHeader {
     }
 }
 
-impl Header for TagHeader {
+// SAFETY: The header is a padding-free repr(C) struct of raw integers, and
+// any bit pattern is valid for it.
+unsafe impl Header for TagHeader {
     fn total_size(&self) -> usize {
         self.size as usize
     }

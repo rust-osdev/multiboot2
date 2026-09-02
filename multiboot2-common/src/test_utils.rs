@@ -70,7 +70,9 @@ impl DummyTestHeader {
     }
 }
 
-impl Header for DummyTestHeader {
+// SAFETY: The header is a padding-free repr(C) struct of raw integers, and
+// any bit pattern is valid for it.
+unsafe impl Header for DummyTestHeader {
     fn total_size(&self) -> usize {
         self.size as usize
     }
@@ -101,7 +103,9 @@ impl DummyDstTag {
     }
 }
 
-impl MaybeDynSized for DummyDstTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for DummyDstTag {
     type Header = DummyTestHeader;
 
     const BASE_SIZE: usize = size_of::<DummyTestHeader>();

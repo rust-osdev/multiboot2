@@ -57,7 +57,9 @@ impl Debug for EntryAddressHeaderTag {
     }
 }
 
-impl MaybeDynSized for EntryAddressHeaderTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for EntryAddressHeaderTag {
     type Header = HeaderTagHeader;
 
     const BASE_SIZE: usize = size_of::<HeaderTagHeader>() + size_of::<u32>();

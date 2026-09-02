@@ -37,7 +37,9 @@ impl EFISdt32Tag {
     }
 }
 
-impl MaybeDynSized for EFISdt32Tag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for EFISdt32Tag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
@@ -74,7 +76,9 @@ impl EFISdt64Tag {
     }
 }
 
-impl MaybeDynSized for EFISdt64Tag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for EFISdt64Tag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
@@ -114,7 +118,9 @@ impl EFIImageHandle32Tag {
     }
 }
 
-impl MaybeDynSized for EFIImageHandle32Tag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for EFIImageHandle32Tag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
@@ -152,7 +158,9 @@ impl EFIImageHandle64Tag {
     }
 }
 
-impl MaybeDynSized for EFIImageHandle64Tag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for EFIImageHandle64Tag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
@@ -188,7 +196,9 @@ impl Default for EFIBootServicesNotExitedTag {
     }
 }
 
-impl MaybeDynSized for EFIBootServicesNotExitedTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for EFIBootServicesNotExitedTag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();

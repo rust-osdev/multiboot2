@@ -125,7 +125,9 @@ impl Debug for RelocatableHeaderTag {
     }
 }
 
-impl MaybeDynSized for RelocatableHeaderTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for RelocatableHeaderTag {
     type Header = HeaderTagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();

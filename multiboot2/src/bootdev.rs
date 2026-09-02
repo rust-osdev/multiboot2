@@ -51,7 +51,9 @@ impl BootdevTag {
     }
 }
 
-impl MaybeDynSized for BootdevTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for BootdevTag {
     type Header = TagHeader;
 
     // Spec size (20), excluding the trailing padding that `size_of::<Self>()`

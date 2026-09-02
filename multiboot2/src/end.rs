@@ -18,7 +18,9 @@ impl Default for EndTag {
     }
 }
 
-impl MaybeDynSized for EndTag {
+// SAFETY: The tag is repr(C) with the header as first field, any bit
+// pattern is valid, and `BASE_SIZE`/`dst_len` match the ABI.
+unsafe impl MaybeDynSized for EndTag {
     type Header = TagHeader;
 
     const BASE_SIZE: usize = size_of::<Self>();
