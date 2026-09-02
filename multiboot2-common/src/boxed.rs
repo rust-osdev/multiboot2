@@ -145,11 +145,17 @@ mod tests {
 
     #[test]
     fn test_clone_tag() {
+        // A 5-byte payload, so that the reported tag size (13) is no
+        // multiple of the alignment.
         let header = DummyTestHeader::new(DummyDstTag::ID, 0);
-        let tag = new_boxed::<DummyDstTag>(header, &[&[0, 1, 2, 3]]);
+        let tag = new_boxed::<DummyDstTag>(header, &[&[0, 1, 2, 3, 4]]);
         assert_eq!(tag.header().typ(), 42);
-        assert_eq!(tag.payload(), &[0, 1, 2, 3]);
+        assert_eq!(tag.payload(), &[0, 1, 2, 3, 4]);
 
-        let _cloned = clone_dyn(tag.as_ref());
+        let cloned = clone_dyn(tag.as_ref());
+        // The clone must round-trip exactly; especially, the reported size
+        // must not grow to the padded allocation size.
+        assert_eq!(cloned.header(), tag.header());
+        assert_eq!(cloned.payload(), tag.payload());
     }
 }
