@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Breaking:** Fixed undefined behavior when serializing stack-constructed
+  structures with implicit trailing padding: `MaybeDynSized::as_bytes` now
+  returns a plain `&[u8]` that covers exactly the structure size reported in
+  the header (clamped to the allocation) instead of a `BytesRef` over the
+  whole allocation, whose trailing padding is uninitialized memory for
+  stack-constructed values. `payload()` follows suit. As a side effect,
+  `clone_dyn` now preserves the reported size exactly instead of growing it
+  to the padded allocation size.
 - Added the `raw_type!` macro that generates an ABI-safe `#[repr(transparent)]`
   newtype plus a corresponding high-level open-set enum, including all
   conversions between them and the underlying integer.

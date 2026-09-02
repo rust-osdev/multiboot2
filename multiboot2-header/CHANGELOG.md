@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Fixed undefined behavior when serializing stack-constructed sized tags with
+  trailing struct padding (`ConsoleHeaderTag`, `EntryAddressHeaderTag`,
+  `EntryEfi32HeaderTag`, `EntryEfi64HeaderTag`, `FramebufferHeaderTag`): the
+  padding is uninitialized memory that `as_bytes()` - and thus
+  `Builder::build()` - exposed. `as_bytes()` now covers exactly the reported
+  tag size, and `Builder::build()` writes explicit zeroed padding between
+  tags. The built header is byte-wise identical, except that its inter-tag
+  padding is now guaranteed to be zeroed.
 - **Breaking:** `InformationRequestHeaderTag::new()` now takes
   `&[MbiTagType]` and `requests()` returns an iterator over `MbiTagType`.
   The `MbiTagTypeId` re-export was renamed to `MbiTagTypeRaw`.

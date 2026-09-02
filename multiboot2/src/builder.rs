@@ -11,7 +11,7 @@ use crate::{
 };
 use alloc::boxed::Box;
 use alloc::vec::Vec;
-use multiboot2_common::{DynSizedStructure, MaybeDynSized, new_boxed};
+use multiboot2_common::{DynSizedStructure, MaybeDynSized, increase_to_alignment, new_boxed};
 
 /// Builder for Multiboot2 boot information (MBI).
 #[derive(Debug)]
@@ -251,77 +251,110 @@ impl Builder {
     /// Multiboot2 boot information structure.
     #[must_use]
     pub fn build(self) -> Box<DynSizedStructure<BootInformationHeader>> {
+        fn fill_zeroes_to_alignment(vec: &mut Vec<u8>) {
+            let pad = increase_to_alignment(vec.len()) - vec.len();
+            for _ in 0..pad {
+                vec.push(0);
+            }
+        }
+
         let header = BootInformationHeader::new(0);
-        let mut byte_refs = Vec::new();
+        // Vec to be filled with the serialized tags, each zero-padded to the
+        // alignment.
+        let mut buffer_tags = Vec::<u8>::new();
         if let Some(tag) = self.cmdline.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.bootloader.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
-        for i in &self.modules {
-            byte_refs.push(i.as_bytes().as_ref());
+        for tag in &self.modules {
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.meminfo.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.bootdev.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.mmap.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.vbe.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.framebuffer.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.elf_sections.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.apm.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.efi32.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.efi64.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
-        for i in &self.smbios {
-            byte_refs.push(i.as_bytes().as_ref());
+        for tag in &self.smbios {
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.rsdpv1.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.rsdpv2.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         for tag in &self.network {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.efi_mmap.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.efi_bs.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.efi32_ih.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.efi64_ih.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         if let Some(tag) = self.image_load_addr.as_ref() {
-            byte_refs.push(tag.as_bytes().as_ref());
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
-        for i in &self.custom_tags {
-            byte_refs.push(i.as_bytes().as_ref());
+        for tag in &self.custom_tags {
+            buffer_tags.extend_from_slice(tag.as_bytes());
+            fill_zeroes_to_alignment(&mut buffer_tags);
         }
         let end_tag = EndTag::default();
-        byte_refs.push(end_tag.as_bytes().as_ref());
-        new_boxed(header, byte_refs.as_slice())
+
+        buffer_tags.extend_from_slice(end_tag.as_bytes());
+
+        new_boxed(header, &[buffer_tags.as_slice()])
     }
 }
 
@@ -387,6 +420,13 @@ mod tests {
             ));
 
         let structure = builder.build();
+
+        #[cfg(miri)]
+        let _all_initialized = structure
+            .as_bytes()
+            .iter()
+            .map(|&byte| byte as u64)
+            .sum::<u64>();
 
         // SAFETY: The builder constructs a complete, aligned MBI with
         // a valid end tag.

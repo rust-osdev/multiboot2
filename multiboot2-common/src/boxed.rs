@@ -109,6 +109,7 @@ mod tests {
     use super::*;
     use crate::Tag;
     use crate::test_utils::{DummyDstTag, DummyTestHeader};
+    use core::slice;
 
     #[test]
     fn test_new_boxed() {
@@ -126,23 +127,35 @@ mod tests {
 
     #[test]
     fn test_new_boxed_zeroes_padding() {
-        // A payload of 1 byte yields a 9-byte tag, padded to 16 bytes. The
-        // 7 trailing padding bytes must be initialized (to zero); otherwise
-        // reading them via `as_bytes()` is UB (caught by Miri).
+        // A payload of 1 byte yields a 9-byte tag in a 16-byte allocation.
+        // `as_bytes()` must exclude the 7 trailing padding bytes, while the
+        // allocation itself must be zeroed there (guaranteed by
+        // `alloc_zeroed`), as the Multiboot2 spec mandates zeroed padding
+        // between tags.
         let header = DummyTestHeader::new(DummyDstTag::ID, 0);
         let tag = new_boxed::<DummyDstTag>(header, &[&[0xff]]);
-        let bytes = tag.as_bytes();
-        assert_eq!(bytes.len(), 16);
-        assert_eq!(&bytes[9..16], &[0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(tag.as_bytes().len(), 9);
+        let ptr = (&raw const *tag).cast::<u8>();
+        // SAFETY: The allocation spans `size_of_val` bytes and is fully
+        // initialized by `new_boxed` (zeroed allocation).
+        let all_bytes = unsafe { slice::from_raw_parts(ptr, size_of_val(&*tag)) };
+        assert_eq!(all_bytes.len(), 16);
+        assert_eq!(&all_bytes[9..16], &[0, 0, 0, 0, 0, 0, 0]);
     }
 
     #[test]
     fn test_clone_tag() {
+        // A 5-byte payload, so that the reported tag size (13) is no
+        // multiple of the alignment.
         let header = DummyTestHeader::new(DummyDstTag::ID, 0);
-        let tag = new_boxed::<DummyDstTag>(header, &[&[0, 1, 2, 3]]);
+        let tag = new_boxed::<DummyDstTag>(header, &[&[0, 1, 2, 3, 4]]);
         assert_eq!(tag.header().typ(), 42);
-        assert_eq!(tag.payload(), &[0, 1, 2, 3]);
+        assert_eq!(tag.payload(), &[0, 1, 2, 3, 4]);
 
-        let _cloned = clone_dyn(tag.as_ref());
+        let cloned = clone_dyn(tag.as_ref());
+        // The clone must round-trip exactly; especially, the reported size
+        // must not grow to the padded allocation size.
+        assert_eq!(cloned.header(), tag.header());
+        assert_eq!(cloned.payload(), tag.payload());
     }
 }
