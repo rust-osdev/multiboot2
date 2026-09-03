@@ -461,9 +461,8 @@ impl<H: Header> DynSizedStructure<H> {
         let t_dst_size = T::dst_len(self.header());
         // Creates thin or fat pointer, depending on type.
         let t_ptr = ptr_meta::from_raw_parts(base_ptr.cast(), t_dst_size);
-        // SAFETY: `self` is a valid reference and the cast keeps the same
-        // allocation; `T::dst_len` determines the matching tail length. The
-        // assertion above guarantees the retagged extent stays in bounds.
+        // SAFETY: The guarantees of DynSizedStructure ensures that the cast is
+        // valid and in bounds. The assertions above double check that.
         let t_ref = unsafe { &*t_ptr };
 
         assert_eq!(size_of_val(self), size_of_val(t_ref));
