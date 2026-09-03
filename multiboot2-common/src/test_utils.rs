@@ -111,6 +111,7 @@ unsafe impl MaybeDynSized for DummyDstTag {
     const BASE_SIZE: usize = size_of::<DummyTestHeader>();
 
     fn dst_len(header: &Self::Header) -> Self::Metadata {
+        assert!(header.size as usize >= Self::BASE_SIZE);
         header.size as usize - Self::BASE_SIZE
     }
 }
