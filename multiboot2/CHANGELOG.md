@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Breaking:** The `VBEModeInfo` fields `resolution: (u16, u16)` and
+  `character_size: (u8, u8)` were split into the four fields `x_resolution`,
+  `y_resolution`, `x_char_size`, and `y_char_size`, following the VBE spec
+  names. Tuples have no layout guarantee in Rust, so their use in the
+  ABI-compatible struct was formally incorrect.
 - The `MaybeDynSized::BASE_SIZE` constants of `EFISdt32Tag`,
   `EFIImageHandle32Tag`, `ImageLoadPhysAddrTag`, `RsdpV1Tag`, and `RsdpV2Tag`
   now report the spec-mandated structure size (12, 12, 12, 28, and 44 bytes)
