@@ -37,7 +37,7 @@ impl MemoryMapTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(areas: &[MemoryArea]) -> Box<Self> {
-        let header = TagHeader::new(Self::ID, 0);
+        let header = TagHeader::new(Self::ID, 0 /* filled by new_boxed */);
         let entry_size = (size_of::<MemoryArea>() as u32).to_ne_bytes();
         let entry_version = 0_u32.to_ne_bytes();
         let areas = {
@@ -294,7 +294,7 @@ impl EFIMemoryMapTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new_from_map(desc_size: u32, desc_version: u32, efi_mmap: &[u8]) -> Box<Self> {
-        let header = TagHeader::new(Self::ID, 0);
+        let header = TagHeader::new(Self::ID, 0 /* filled by new_boxed */);
         assert_ne!(desc_size, 0);
         let desc_size = desc_size.to_ne_bytes();
         let desc_version = desc_version.to_ne_bytes();

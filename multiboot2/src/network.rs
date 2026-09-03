@@ -20,7 +20,7 @@ impl NetworkTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(dhcp_pack: &[u8]) -> Box<Self> {
-        let header = TagHeader::new(Self::ID, 0);
+        let header = TagHeader::new(Self::ID, 0 /* filled by new_boxed */);
         new_boxed(header, &[dhcp_pack])
     }
 }

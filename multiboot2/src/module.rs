@@ -25,7 +25,7 @@ impl ModuleTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(start: u32, end: u32, cmdline: &str) -> Box<Self> {
-        let header = TagHeader::new(Self::ID, 0);
+        let header = TagHeader::new(Self::ID, 0 /* filled by new_boxed */);
         assert!(end > start, "must have a size");
 
         let start = start.to_ne_bytes();

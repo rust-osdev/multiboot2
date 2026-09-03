@@ -435,7 +435,7 @@ unsafe impl DynSizedHeader for Multiboot2BasicHeader {
     }
 
     fn set_size(&mut self, total_size: usize) {
-        self.length = total_size as u32;
+        self.length = u32::try_from(total_size).unwrap();
         self.checksum = Self::calc_checksum(self.header_magic, self.arch(), total_size as u32);
     }
 }

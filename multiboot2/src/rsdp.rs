@@ -211,12 +211,12 @@ impl RsdpV2Tag {
         // SAFETY: `self` is a valid reference, and we only read the
         // initialized raw representation of the fixed-size layout.
         let bytes =
-            unsafe { slice::from_raw_parts((self as *const Self).cast::<u8>(), size_of::<Self>()) };
-        let length = self.length as usize;
-        if length != Self::BASE_SIZE - size_of::<TagHeader>() {
+            unsafe { slice::from_raw_parts((self as *const Self).cast::<u8>(), Self::BASE_SIZE) };
+        let rsdp_length = self.length as usize;
+        if rsdp_length != Self::BASE_SIZE - size_of::<TagHeader>() {
             return false;
         }
-        let ext_end = size_of::<TagHeader>() + length;
+        let ext_end = size_of::<TagHeader>() + rsdp_length;
         if ext_end > bytes.len() {
             return false;
         }

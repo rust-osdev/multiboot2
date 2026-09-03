@@ -63,7 +63,7 @@ unsafe impl Header for BootInformationHeader {
     }
 
     fn set_size(&mut self, total_size: usize) {
-        self.total_size = total_size as u32;
+        self.total_size = u32::try_from(total_size).unwrap();
     }
 }
 

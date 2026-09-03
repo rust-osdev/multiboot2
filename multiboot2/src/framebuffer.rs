@@ -102,7 +102,7 @@ impl FramebufferTag {
         bpp: u8,
         buffer_type: FramebufferType,
     ) -> Box<Self> {
-        let header = TagHeader::new(Self::ID, 0);
+        let header = TagHeader::new(Self::ID, 0 /* filled by new_boxed */);
         let address = address.to_ne_bytes();
         let pitch = pitch.to_ne_bytes();
         let width = width.to_ne_bytes();

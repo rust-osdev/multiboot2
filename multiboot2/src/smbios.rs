@@ -23,7 +23,7 @@ impl SmbiosTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(major: u8, minor: u8, tables: &[u8]) -> Box<Self> {
-        let header = TagHeader::new(Self::ID, 0);
+        let header = TagHeader::new(Self::ID, 0 /* filled by new_boxed */);
         let reserved = [0, 0, 0, 0, 0, 0];
         new_boxed(header, &[&[major, minor], &reserved, tables])
     }
