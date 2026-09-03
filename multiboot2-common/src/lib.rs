@@ -303,6 +303,10 @@ pub unsafe trait Header: Clone + Sized + PartialEq + Eq + Debug {
     }
 
     /// Updates the header with the given `total_size`.
+    ///
+    /// Implementations should either store the size losslessly or panic on
+    /// overflow. Construction helpers such as `new_boxed` verify that the
+    /// size round-trips through the header and panic otherwise.
     fn set_size(&mut self, total_size: usize);
 }
 
