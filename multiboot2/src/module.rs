@@ -64,8 +64,16 @@ impl ModuleTag {
     }
 
     /// The size of the module/the BLOB in memory.
+    ///
+    /// # Panics
+    /// Panics if the tag reports an end address below the start address,
+    /// which can only happen for oddly formed tags.
     #[must_use]
     pub const fn module_size(&self) -> u32 {
+        assert!(
+            self.mod_end >= self.mod_start,
+            "the module end address should not be below its start address"
+        );
         self.mod_end - self.mod_start
     }
 }

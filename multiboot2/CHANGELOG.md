@@ -7,6 +7,9 @@
   `y_resolution`, `x_char_size`, and `y_char_size`, following the VBE spec
   names. Tuples have no layout guarantee in Rust, so their use in the
   ABI-compatible struct was formally incorrect.
+- `ModuleTag::module_size` now always panics with a clear message if the tag
+  reports an end address below the start address. Previously, the subtraction
+  wrapped silently in release builds.
 - The `MaybeDynSized::BASE_SIZE` constants of `EFISdt32Tag`,
   `EFIImageHandle32Tag`, `ImageLoadPhysAddrTag`, `RsdpV1Tag`, and `RsdpV2Tag`
   now report the spec-mandated structure size (12, 12, 12, 28, and 44 bytes)
