@@ -15,8 +15,6 @@ pub struct ImageLoadPhysAddrTag {
 }
 
 impl ImageLoadPhysAddrTag {
-    const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
-
     /// Constructs a new tag.
     #[must_use]
     pub fn new(load_base_addr: u32) -> Self {
@@ -37,7 +35,7 @@ impl ImageLoadPhysAddrTag {
 unsafe impl MaybeDynSized for ImageLoadPhysAddrTag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = size_of::<Self>();
+    const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
 }
 
 impl Tag for ImageLoadPhysAddrTag {
@@ -51,6 +49,14 @@ mod tests {
     use super::ImageLoadPhysAddrTag;
 
     const ADDR: u32 = 0xABCDEF;
+
+    /// The tag must report the spec-mandated size (12), not the padded Rust
+    /// type size (16).
+    #[test]
+    fn base_size_excludes_trailing_padding() {
+        use multiboot2_common::MaybeDynSized;
+        assert_eq!(<ImageLoadPhysAddrTag as MaybeDynSized>::BASE_SIZE, 12);
+    }
 
     #[test]
     fn test_build_load_addr() {

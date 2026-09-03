@@ -19,8 +19,6 @@ pub struct EFISdt32Tag {
 }
 
 impl EFISdt32Tag {
-    const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
-
     /// Create a new tag to pass the EFI32 System Table pointer.
     #[must_use]
     pub fn new(pointer: u32) -> Self {
@@ -42,7 +40,9 @@ impl EFISdt32Tag {
 unsafe impl MaybeDynSized for EFISdt32Tag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = size_of::<Self>();
+    // Spec size (12), excluding the trailing padding that `size_of::<Self>()`
+    // (16) would add.
+    const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
 }
 
 impl Tag for EFISdt32Tag {
@@ -100,8 +100,6 @@ pub struct EFIImageHandle32Tag {
 }
 
 impl EFIImageHandle32Tag {
-    const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
-
     /// Constructs a new tag.
     #[must_use]
     pub fn new(pointer: u32) -> Self {
@@ -123,7 +121,7 @@ impl EFIImageHandle32Tag {
 unsafe impl MaybeDynSized for EFIImageHandle32Tag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = size_of::<Self>();
+    const BASE_SIZE: usize = size_of::<TagHeader>() + size_of::<u32>();
 }
 
 impl Tag for EFIImageHandle32Tag {
@@ -217,6 +215,15 @@ mod tests {
     use uefi_raw::table::boot::{MemoryAttribute, MemoryType};
 
     const ADDR: usize = 0xABCDEF;
+
+    /// The tags must report the spec-mandated size (12), not the padded Rust
+    /// type size (16).
+    #[test]
+    fn base_size_excludes_trailing_padding() {
+        use multiboot2_common::MaybeDynSized;
+        assert_eq!(<EFISdt32Tag as MaybeDynSized>::BASE_SIZE, 12);
+        assert_eq!(<EFIImageHandle32Tag as MaybeDynSized>::BASE_SIZE, 12);
+    }
 
     #[test]
     fn test_build_eftsdt32() {

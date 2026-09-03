@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- The `MaybeDynSized::BASE_SIZE` constants of `EFISdt32Tag`,
+  `EFIImageHandle32Tag`, `ImageLoadPhysAddrTag`, `RsdpV1Tag`, and `RsdpV2Tag`
+  now report the spec-mandated structure size (12, 12, 12, 28, and 44 bytes)
+  instead of the padded Rust type size, matching the documented trait contract
+  and the other sized tags. The reported tag sizes and the built boot
+  information are unchanged.
+
 ## v0.27.0 (2026-09-02)
 
 - Fixed undefined behavior when serializing stack-constructed sized tags with

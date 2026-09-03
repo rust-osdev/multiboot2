@@ -48,8 +48,6 @@ impl RsdpV1Tag {
     /// Signature of RSDP v1.
     pub const SIGNATURE: [u8; 8] = *b"RSD PTR ";
 
-    const BASE_SIZE: usize = size_of::<TagHeader>() + 16 + 4;
-
     /// Constructs a new tag.
     #[must_use]
     pub fn new(oem_id: [u8; 6], revision: u8, rsdt_address: u32) -> Self {
@@ -117,7 +115,7 @@ impl RsdpV1Tag {
 unsafe impl MaybeDynSized for RsdpV1Tag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = size_of::<Self>();
+    const BASE_SIZE: usize = size_of::<TagHeader>() + 16 + 4;
 }
 
 impl Tag for RsdpV1Tag {
@@ -146,9 +144,6 @@ pub struct RsdpV2Tag {
 impl RsdpV2Tag {
     /// Signature of RSDP v2.
     pub const SIGNATURE: [u8; 8] = *b"RSD PTR ";
-
-    const BASE_SIZE: usize =
-        size_of::<TagHeader>() + 16 + 2 * size_of::<u32>() + size_of::<u64>() + 4;
 
     /// Constructs a new tag.
     #[must_use]
@@ -255,7 +250,10 @@ impl RsdpV2Tag {
 unsafe impl MaybeDynSized for RsdpV2Tag {
     type Header = TagHeader;
 
-    const BASE_SIZE: usize = size_of::<Self>();
+    // Spec size (44), excluding the trailing padding that `size_of::<Self>()`
+    // (48) would add.
+    const BASE_SIZE: usize =
+        size_of::<TagHeader>() + 16 + 2 * size_of::<u32>() + size_of::<u64>() + 4;
 }
 
 impl Tag for RsdpV2Tag {
@@ -267,6 +265,17 @@ impl Tag for RsdpV2Tag {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The tags must report the spec-mandated size, not the padded Rust type
+    /// size. The trailing padding is uninitialized memory for
+    /// stack-constructed values and must never be read.
+    #[test]
+    fn base_size_excludes_trailing_padding() {
+        assert_eq!(<RsdpV1Tag as MaybeDynSized>::BASE_SIZE, 28);
+        assert_eq!(size_of::<RsdpV1Tag>(), 32);
+        assert_eq!(<RsdpV2Tag as MaybeDynSized>::BASE_SIZE, 44);
+        assert_eq!(size_of::<RsdpV2Tag>(), 48);
+    }
 
     #[test]
     fn v1_new_computes_valid_checksum() {
