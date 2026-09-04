@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.28.0 (2026-09-04)
+
 - **Breaking:** The `VBEModeInfo` fields `resolution: (u16, u16)` and
   `character_size: (u8, u8)` were split into the four fields `x_resolution`,
   `y_resolution`, `x_char_size`, and `y_char_size`, following the VBE spec
@@ -9,8 +11,8 @@
   ABI-compatible struct was formally incorrect.
 - The deprecated `BootInformation::elf_sections` no longer asserts a relation
   between `entry_size`, `shndx`, and the tag size. The check could wrap and
-  guarded nothing; the section iterator is bounds-checked anyway. It now
-  behaves like `elf_sections_tag()` plus `sections()`.
+  guarded nothing; the section iterator is bounds-checked anyway. It now behaves
+  like `elf_sections_tag()` plus `sections()`.
 - `ModuleTag::module_size` now always panics with a clear message if the tag
   reports an end address below the start address. Previously, the subtraction
   wrapped silently in release builds.
