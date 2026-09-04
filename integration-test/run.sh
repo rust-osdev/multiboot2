@@ -7,8 +7,8 @@ IFS=$'\n\t'
 DIR=$(dirname "$(realpath "$0")")
 cd "$DIR" || exit
 
-# rustc 1.89 (nightly).
-RUSTUP_NIGHTLY_TOOLCHAIN="nightly-2025-05-31"
+# rustc 1.100 (nightly).
+RUSTUP_NIGHTLY_TOOLCHAIN="nightly-2026-08-31"
 
 function fn_main() {
     fn_prepare_rustup
@@ -28,6 +28,7 @@ function fn_build_rust_bins() {
     RUSTUP_TOOLCHAIN="$RUSTUP_NIGHTLY_TOOLCHAIN" \
     cargo build \
         --verbose \
+        -Z json-target-spec \
         --target ./bins/x86-unknown-none.json \
         -Z build-std=core,alloc,compiler_builtins \
         -Z build-std-features=compiler-builtins-mem \
