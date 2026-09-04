@@ -78,7 +78,7 @@ unsafe impl Header for DummyTestHeader {
     }
 
     fn set_size(&mut self, total_size: usize) {
-        self.size = total_size as u32;
+        self.size = u32::try_from(total_size).unwrap();
     }
 }
 
@@ -111,6 +111,7 @@ unsafe impl MaybeDynSized for DummyDstTag {
     const BASE_SIZE: usize = size_of::<DummyTestHeader>();
 
     fn dst_len(header: &Self::Header) -> Self::Metadata {
+        assert!(header.size as usize >= Self::BASE_SIZE);
         header.size as usize - Self::BASE_SIZE
     }
 }

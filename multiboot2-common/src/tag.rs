@@ -25,6 +25,11 @@ use ptr_meta::Pointee;
 /// within the reported range can cause out-of-bounds references. Trailing
 /// padding beyond that range is fine.
 ///
+/// Note that for sized implementors, the requirements above imply that
+/// `size_of::<Self>()` exceeds [`MaybeDynSized::BASE_SIZE`] at most by
+/// trailing padding up to the type's alignment. Same-size casts rely on this
+/// to keep the created reference within the source allocation.
+///
 /// [`ID`]: Tag::ID
 /// [`ALIGNMENT`]: crate::ALIGNMENT
 /// [`DynSizedStructure`]: crate::DynSizedStructure

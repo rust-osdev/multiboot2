@@ -11,9 +11,7 @@ use crate::{
 };
 use core::fmt;
 use core::ptr::NonNull;
-use multiboot2_common::{
-    DynSizedStructure, Header, MaybeDynSized, MemoryError, Tag, validate_tag_sequence,
-};
+use multiboot2_common::{DynSizedStructure, Header, MemoryError, Tag, validate_tag_sequence};
 use thiserror::Error;
 
 /// Errors that occur when a chunk of memory can't be parsed as
@@ -63,7 +61,7 @@ unsafe impl Header for BootInformationHeader {
     }
 
     fn set_size(&mut self, total_size: usize) {
-        self.total_size = total_size as u32;
+        self.total_size = u32::try_from(total_size).unwrap();
     }
 }
 
@@ -261,11 +259,7 @@ impl<'a> BootInformation<'a> {
     #[must_use]
     #[deprecated = "Use elf_sections_tag() instead and corresponding getters"]
     pub fn elf_sections(&self) -> Option<ElfSectionIter<'_>> {
-        let tag = self.get_tag::<ElfSectionsTag>();
-        tag.map(|t| {
-            assert!((t.entry_size() * t.shndx()) <= t.header().size);
-            t.sections()
-        })
+        self.get_tag::<ElfSectionsTag>().map(|t| t.sections())
     }
 
     /// Returns the first [`ElfSectionsTag`], if present.

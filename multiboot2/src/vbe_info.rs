@@ -216,11 +216,17 @@ pub struct VBEModeInfo {
     /// Bytes per scan line
     pub pitch: u16,
 
-    /// Horizontal and vertical resolution in pixels or characters.
-    pub resolution: (u16, u16),
+    /// Horizontal resolution in pixels or characters.
+    pub x_resolution: u16,
 
-    /// Character cell width and height in pixels.
-    pub character_size: (u8, u8),
+    /// Vertical resolution in pixels or characters.
+    pub y_resolution: u16,
+
+    /// Character cell width in pixels.
+    pub x_char_size: u8,
+
+    /// Character cell height in pixels.
+    pub y_char_size: u8,
 
     /// Number of memory planes.
     pub number_of_planes: u8,
@@ -293,8 +299,10 @@ impl fmt::Debug for VBEModeInfo {
             .field("window_b_segment", &{ self.window_b_segment })
             .field("window_function_ptr", &{ self.window_function_ptr })
             .field("pitch", &{ self.pitch })
-            .field("resolution", &{ self.resolution })
-            .field("character_size", &self.character_size)
+            .field("x_resolution", &{ self.x_resolution })
+            .field("y_resolution", &{ self.y_resolution })
+            .field("x_char_size", &self.x_char_size)
+            .field("y_char_size", &self.y_char_size)
             .field("number_of_planes", &self.number_of_planes)
             .field("bpp", &self.bpp)
             .field("number_of_banks", &self.number_of_banks)
@@ -325,8 +333,10 @@ impl Default for VBEModeInfo {
             window_b_segment: 0,
             window_function_ptr: 0,
             pitch: 0,
-            resolution: (0, 0),
-            character_size: (0, 0),
+            x_resolution: 0,
+            y_resolution: 0,
+            x_char_size: 0,
+            y_char_size: 0,
             number_of_planes: 0,
             bpp: 0,
             number_of_banks: 0,

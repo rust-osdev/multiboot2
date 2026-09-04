@@ -30,7 +30,7 @@ impl ElfSectionsTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(number_of_sections: u32, entry_size: u32, shndx: u32, sections: &[u8]) -> Box<Self> {
-        let header = TagHeader::new(Self::ID, 0);
+        let header = TagHeader::new(Self::ID, 0 /* filled by new_boxed */);
         let number_of_sections = number_of_sections.to_ne_bytes();
         let entry_size = entry_size.to_ne_bytes();
         let shndx = shndx.to_ne_bytes();

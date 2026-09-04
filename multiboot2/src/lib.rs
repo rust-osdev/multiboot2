@@ -537,8 +537,10 @@ mod tests {
         assert_eq!({ vbe.mode_info().window_a_segment }, 40960);
         assert_eq!({ vbe.mode_info().window_function_ptr }, 3221247162);
         assert_eq!({ vbe.mode_info().pitch }, 5120);
-        assert_eq!({ vbe.mode_info().resolution }, (1280, 800));
-        assert_eq!(vbe.mode_info().character_size, (8, 16));
+        assert_eq!({ vbe.mode_info().x_resolution }, 1280);
+        assert_eq!({ vbe.mode_info().y_resolution }, 800);
+        assert_eq!(vbe.mode_info().x_char_size, 8);
+        assert_eq!(vbe.mode_info().y_char_size, 16);
         assert_eq!(vbe.mode_info().number_of_planes, 1);
         assert_eq!(vbe.mode_info().bpp, 32);
         assert_eq!(vbe.mode_info().number_of_banks, 1);

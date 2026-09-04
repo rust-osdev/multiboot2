@@ -39,6 +39,12 @@ pub fn new_boxed<T: MaybeDynSized<Metadata = usize> + ?Sized>(
 
     let tag_size = size_of::<T::Header>() + additional_size;
     header.set_size(tag_size);
+    // Protect against incorrect set_size() implementations:
+    assert_eq!(
+        header.total_size(),
+        tag_size,
+        "the reported size should round-trip through the header"
+    );
 
     // Allocation size is multiple of alignment.
     // See <https://doc.rust-lang.org/reference/type-layout.html>
@@ -141,6 +147,41 @@ mod tests {
         let all_bytes = unsafe { slice::from_raw_parts(ptr, size_of_val(&*tag)) };
         assert_eq!(all_bytes.len(), 16);
         assert_eq!(&all_bytes[9..16], &[0, 0, 0, 0, 0, 0, 0]);
+    }
+
+    /// Header whose size field is artificially small, mimicking a lossy
+    /// `set_size` implementation without needing a huge allocation.
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[repr(C)]
+    struct TinySizeHeader {
+        size: u8,
+        _pad: [u8; 7],
+    }
+
+    // SAFETY: The header is a padding-free repr(C) struct of raw integers,
+    // and any bit pattern is valid for it.
+    unsafe impl crate::Header for TinySizeHeader {
+        fn total_size(&self) -> usize {
+            self.size as usize
+        }
+
+        fn set_size(&mut self, total_size: usize) {
+            self.size = total_size as u8;
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "round-trip")]
+    fn test_new_boxed_rejects_lossy_set_size() {
+        // A total size the header can't store must cause a panic before the
+        // allocation happens. Continuing with a truncated size would create a
+        // `Box` whose layout disagrees with the allocation, which is
+        // undefined behavior when the `Box` is deallocated.
+        let header = TinySizeHeader {
+            size: 0,
+            _pad: [0; 7],
+        };
+        let _ = new_boxed::<crate::DynSizedStructure<TinySizeHeader>>(header, &[&[0_u8; 256]]);
     }
 
     #[test]

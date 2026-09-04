@@ -134,6 +134,6 @@ unsafe impl Header for HeaderTagHeader {
     }
 
     fn set_size(&mut self, total_size: usize) {
-        self.size = total_size as u32;
+        self.size = u32::try_from(total_size).unwrap();
     }
 }

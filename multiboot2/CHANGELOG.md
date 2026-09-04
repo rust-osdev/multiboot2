@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+- **Breaking:** The `VBEModeInfo` fields `resolution: (u16, u16)` and
+  `character_size: (u8, u8)` were split into the four fields `x_resolution`,
+  `y_resolution`, `x_char_size`, and `y_char_size`, following the VBE spec
+  names. Tuples have no layout guarantee in Rust, so their use in the
+  ABI-compatible struct was formally incorrect.
+- The deprecated `BootInformation::elf_sections` no longer asserts a relation
+  between `entry_size`, `shndx`, and the tag size. The check could wrap and
+  guarded nothing; the section iterator is bounds-checked anyway. It now
+  behaves like `elf_sections_tag()` plus `sections()`.
+- `ModuleTag::module_size` now always panics with a clear message if the tag
+  reports an end address below the start address. Previously, the subtraction
+  wrapped silently in release builds.
+- The `MaybeDynSized::BASE_SIZE` constants of `EFISdt32Tag`,
+  `EFIImageHandle32Tag`, `ImageLoadPhysAddrTag`, `RsdpV1Tag`, and `RsdpV2Tag`
+  now report the spec-mandated structure size (12, 12, 12, 28, and 44 bytes)
+  instead of the padded Rust type size, matching the documented trait contract
+  and the other sized tags. The reported tag sizes and the built boot
+  information are unchanged.
+
 ## v0.27.0 (2026-09-02)
 
 - Fixed undefined behavior when serializing stack-constructed sized tags with

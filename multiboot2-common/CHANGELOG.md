@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- `new_boxed` now panics if the total structure size does not round-trip
+  through `Header::set_size`/`Header::total_size`, for example due to a lossy
+  `set_size` implementation. Previously, such a mismatch led to a `Box` whose
+  layout disagrees with the allocation, which is undefined behavior on
+  deallocation.
+
 ## v0.6.0 (2026-09-02)
 
 - **Breaking:** Fixed undefined behavior when serializing stack-constructed

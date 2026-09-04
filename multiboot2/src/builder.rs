@@ -388,7 +388,6 @@ mod tests {
                 VBEControlInfo::default(),
                 VBEModeInfo::default(),
             ))
-            // Currently causes UB.
             .framebuffer(FramebufferTag::new(
                 0x1000,
                 1,

@@ -25,7 +25,7 @@ impl CommandLineTag {
     #[cfg(feature = "builder")]
     #[must_use]
     pub fn new(command_line: &str) -> Box<Self> {
-        let header = TagHeader::new(Self::ID, 0);
+        let header = TagHeader::new(Self::ID, 0 /* filled by new_boxed */);
         let bytes = command_line.as_bytes();
         if bytes.ends_with(&[0]) {
             new_boxed(header, &[bytes])
